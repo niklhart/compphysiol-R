@@ -1,0 +1,22 @@
+Package: compphysiol
+Type: Package
+Title: R version of computational physiology toolbox
+Version: 0.1.0
+Authors@R: c(
+    person(
+      "Jane", "Doe",
+      email = "jane@example.com",
+      role = c("aut", "cre")
+    )
+  )
+Imports:
+    R6,
+    deSolve
+Description: More about what it does (maybe more than one line).
+    Continuation lines should be indented.
+License: MIT
+Encoding: UTF-8
+LazyData: true
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
