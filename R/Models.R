@@ -1,5 +1,5 @@
 
-#' Pre-built 12-CMT PBPK model with well-stirred tissue distribution
+#' 12-CMT PBPK model with well-stirred tissue distribution
 #'
 #' This example demonstrates a full workflow from loading the model,
 #' setting parameters, running a simulation, and plotting compartment amounts
@@ -17,8 +17,11 @@
 #'
 #' # Define parameters
 #' paramValues <- list(
-#'     Q_L = 1.5, V_C = 5, V_L = 2,
-#'     Q_K = 1.0, V_K = 1,
+#'     CL = 1,
+#'     co = 5,
+#'     V_L = 2,
+#'     Q_K = 1.0,
+#'     V_K = 1,
 #'     Vc = 5  # volume of central compartment for concentration observable
 #' )
 #'
@@ -108,7 +111,7 @@ sMD_PBPK_12CMT_wellstirred <- function() {
     M$addReaction("art", "ski", "Qski * art / Vart", "art2ski")
     M$addReaction("art", "spl", "Qspl * art / Vart", "art2spl")
 
-    # handle liver topology
+    # handle organ topology w.r.t. liver
     M$addReaction("art", "liv", "(Qliv-Qgut-Qspl) * art / Vart", "art2liv")
     M$addReaction("gut", "liv", "Qgut * gut / (Vgut * Kgut)",    "gut2liv")
     M$addReaction("spl", "liv", "Qspl * spl / (Vspl * Kspl)",    "spl2liv")
@@ -131,4 +134,10 @@ sMD_PBPK_12CMT_wellstirred <- function() {
 
     # output
     M
+}
+
+#' Test model for sysdata workflow
+#' @export
+test_model_sysdata <- function() {
+    .models$test_model_sysdata$clone(deep = TRUE)
 }

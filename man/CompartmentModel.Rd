@@ -2,11 +2,11 @@
 % Please edit documentation in R/CompartmentModel-class.R
 \name{CompartmentModel}
 \alias{CompartmentModel}
-\title{CompartmentModel Class}
+\title{\code{CompartmentModel} class}
 \description{
-CompartmentModel Class
+\code{CompartmentModel} class
 
-CompartmentModel Class
+\code{CompartmentModel} class
 }
 \details{
 Represents a compartmental model.

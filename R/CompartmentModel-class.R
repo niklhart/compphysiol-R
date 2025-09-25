@@ -1,4 +1,4 @@
-#' CompartmentModel Class
+#' `CompartmentModel` class
 #'
 #' Represents a compartmental model.
 #'

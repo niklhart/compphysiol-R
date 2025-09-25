@@ -2,7 +2,7 @@
 % Please edit documentation in R/Models.R
 \name{sMD_PBPK_12CMT_wellstirred}
 \alias{sMD_PBPK_12CMT_wellstirred}
-\title{Pre-built 12-CMT PBPK model with well-stirred tissue distribution}
+\title{12-CMT PBPK model with well-stirred tissue distribution}
 \usage{
 sMD_PBPK_12CMT_wellstirred()
 }
@@ -24,8 +24,11 @@ M <- sMD_PBPK_12CMT_wellstirred()
 
 # Define parameters
 paramValues <- list(
-    Q_L = 1.5, V_C = 5, V_L = 2,
-    Q_K = 1.0, V_K = 1,
+    CL = 1,
+    co = 5,
+    V_L = 2,
+    Q_K = 1.0,
+    V_K = 1,
     Vc = 5  # volume of central compartment for concentration observable
 )
 
