@@ -1,0 +1,14 @@
+﻿ID;Species;Strain;Sex
+rat250;rat;F344;male
+rat475;rat;F344;male
+human0u;human;;unisex
+human1u;human;;unisex
+human5u;human;;unisex
+human10f;human;;female
+human10m;human;;male
+human15f;human;;female
+human15m;human;;male
+human35f;human;;female
+human35m;human;;male
+mouse25;mouse;B6C3F1;male
+mouse40;mouse;B6C3F1;male

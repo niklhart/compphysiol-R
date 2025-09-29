@@ -1,0 +1,190 @@
+ID;Parameter;Tissue;Value;Unit;Reference;Assumption
+rat250;Age;;10;wk;Brown1997;
+rat250;BW;;250;g;Brown1997;
+rat475;Age;;70;wk;Brown1997;
+rat475;BW;;475;g;Brown1997;
+rat;dens;adi;0,916;kg/L;ICRP1975;Assumed identical to human density data
+rat;dens;bon;1,3;kg/L;ICRP2002;Assumed identical to human density data
+rat;dens;bra;1;kg/L;Brown1997;Assumed identical to human density data
+rat;dens;gut;1;kg/L;Brown1997;Assumed identical to human density data
+rat;dens;hea;1;kg/L;Brown1997;Assumed identical to human density data
+rat;dens;kid;1;kg/L;Brown1997;Assumed identical to human density data
+rat;dens;liv;1;kg/L;Brown1997;Assumed identical to human density data
+rat;dens;lun;1;kg/L;Brown1997;Assumed identical to human density data
+rat;dens;mus;1;kg/L;Brown1997;Assumed identical to human density data
+rat;dens;ski;1;kg/L;Brown1997;Assumed identical to human density data
+rat;dens;spl;1;kg/L;Brown1997;Assumed identical to human density data
+rat;dens;tbl;1;kg/L;Brown1997;Assumed identical to human density data
+rat250;fowtisBW;adi;10,6;percent;Brown1997;
+rat475;fowtisBW;adi;16;percent;Brown1997;
+rat;fowtisBW;bon;7,3;percent;Brown1997;
+rat;fowtisBW;bra;0,57;percent;Brown1997;
+rat;fowtisBW;gut;2,7;percent;Brown1997;
+rat;fowtisBW;hea;0,33;percent;Brown1997;
+rat;fowtisBW;kid;0,73;percent;Brown1997;
+rat;fowtisBW;liv;3,66;percent;Brown1997;
+rat;fowtisBW;lun;0,5;percent;Brown1997;
+rat;fowtisBW;mus;40,43;percent;Brown1997;
+rat;fowtisBW;ski;19,03;percent;Brown1997;
+rat;fowtisBW;spl;0,2;percent;Brown1997;
+rat;ftblBW;;6,4;percent;Brown1997;
+rat;pH;pla;7,4;;Rodgers2005;
+rat;pH;ery;7,22;;Rodgers2005;
+rat;pH;adi;7;;;pH assumed to be tissue independent (as in Rodgers2005)
+rat;pH;bon;7;;;pH assumed to be tissue independent (as in Rodgers2005)
+rat;pH;bra;7;;;pH assumed to be tissue independent (as in Rodgers2005)
+rat;pH;gut;7;;;pH assumed to be tissue independent (as in Rodgers2005)
+rat;pH;hea;7;;;pH assumed to be tissue independent (as in Rodgers2005)
+rat;pH;kid;7;;;pH assumed to be tissue independent (as in Rodgers2005)
+rat;pH;liv;7;;;pH assumed to be tissue independent (as in Rodgers2005)
+rat;pH;lun;7;;;pH assumed to be tissue independent (as in Rodgers2005)
+rat;pH;mus;7;;;pH assumed to be tissue independent (as in Rodgers2005)
+rat;pH;ski;7;;;pH assumed to be tissue independent (as in Rodgers2005)
+rat;pH;spl;7;;;pH assumed to be tissue independent (as in Rodgers2005)
+rat;fvasOWtot;adi;0,01;;Kawai1994;
+rat;fvasOWtot;bon;0,041;;Kawai1994;
+rat;fvasOWtot;bra;0,037;;Kawai1994;
+rat;fvasOWtot;gut;0,024;;Kawai1994;
+rat;fvasOWtot;hea;0,262;;Kawai1994;
+rat;fvasOWtot;kid;0,105;;Kawai1994;
+rat;fvasOWtot;liv;0,115;;Kawai1994;
+rat;fvasOWtot;lun;0,262;;Kawai1994;
+rat;fvasOWtot;mus;0,026;;Kawai1994;
+rat;fvasOWtot;ski;0,019;;Kawai1994;
+rat;fvasOWtot;spl;0,282;;Kawai1994;
+rat;fvasOWtot;pan;0,18;;Kawai1994;
+rat;fvasOWtot;thy;0,03;;Kawai1994;
+rat;fintOWtot;adi;0,135;;Kawai1994;
+rat;fintOWtot;bon;0,1;;Kawai1994;
+rat;fintOWtot;bra;0,004;;Kawai1994;
+rat;fintOWtot;gut;0,094;;Kawai1994;
+rat;fintOWtot;hea;0,1;;Kawai1994;
+rat;fintOWtot;kid;0,2;;Kawai1994;
+rat;fintOWtot;liv;0,163;;Kawai1994;
+rat;fintOWtot;lun;0,188;;Kawai1994;
+rat;fintOWtot;mus;0,12;;Kawai1994;
+rat;fintOWtot;ski;0,302;;Kawai1994;
+rat;fintOWtot;spl;0,15;;Kawai1994;
+rat;fintOWtot;pan;0,12;;Kawai1994;
+rat;fintOWtot;thy;0,15;;Kawai1994;
+rat;fresOWrbt;adi;0,005;;Kawai1994;
+rat;fresOWrbt;bon;0,019;;Kawai1994;
+rat;fresOWrbt;bra;0,014;;Kawai1994;
+rat;fresOWrbt;gut;0,01;;Kawai1994;
+rat;fresOWrbt;hea;0,061;;Kawai1994;
+rat;fresOWrbt;kid;0,046;;Kawai1994;
+rat;fresOWrbt;liv;0,057;;Kawai1994;
+rat;fresOWrbt;lun;0,175;;Kawai1994;
+rat;fresOWrbt;mus;0,004;;Kawai1994;
+rat;fresOWrbt;ski;0,002;;Kawai1994;
+rat;fresOWrbt;spl;0,321;;Kawai1994;
+rat;fvenVtbl;;0,666666667;;;Assumed that venous and arterial blood are 2/3 and 1/3 of total blood
+rat;fartVtbl;;0,333333333;;;Assumed that venous and arterial blood are 2/3 and 1/3 of total blood
+rat;hct;;0,43;;Windberger2003;
+rat;fqbloCO;adi;7;percent;;
+rat;fqbloCO;bon;12,2;percent;;
+rat;fqbloCO;bra;2;percent;;
+rat;fqbloCO;gut;13,1;percent;;
+rat;fqbloCO;hea;4,9;percent;;
+rat;fqbloCO;kid;14,1;percent;;
+rat;fqbloCO;liv;17,4;percent;;
+rat;fqbloCO;mus;27,8;percent;;
+rat;fqbloCO;ski;5,8;percent;;
+rat;fqbloCO;spl;2;percent;Poulin2002;
+rat250;co;;0,083085;L/min;Brown1997;Derived via formula 0,235 L/min * (BW/kg)^0.75 by Brown et al. (1997), p. 441
+rat475;co;;0,13446;L/min;Brown1997;
+rat;fwtotVtis;adi;0,144;;Rodgers2006;
+rat;fwtotVtis;bon;0,417;;Rodgers2006;
+rat;fwtotVtis;bra;0,753;;Rodgers2006;
+rat;fwtotVtis;gut;0,738;;Rodgers2006;
+rat;fwtotVtis;hea;0,568;;Rodgers2006;
+rat;fwtotVtis;kid;0,672;;Rodgers2006;
+rat;fwtotVtis;liv;0,642;;Rodgers2006;
+rat;fwtotVtis;lun;0,574;;Rodgers2006;
+rat;fwtotVtis;mus;0,726;;Rodgers2006;
+rat;fwtotVtis;ski;0,658;;Rodgers2006;
+rat;fwtotVtis;spl;0,562;;Rodgers2006;
+rat;fwecVrbt;adi;0,135;;Rodgers2005;
+rat;fwecVrbt;bon;0,1;;Rodgers2005;
+rat;fwecVrbt;bra;0,162;;Rodgers2005;
+rat;fwecVrbt;gut;0,282;;Rodgers2005;
+rat;fwecVrbt;hea;0,32;;Rodgers2005;
+rat;fwecVrbt;kid;0,273;;Rodgers2005;
+rat;fwecVrbt;liv;0,161;;Rodgers2005;
+rat;fwecVrbt;lun;0,336;;Rodgers2005;
+rat;fwecVrbt;mus;0,118;;Rodgers2005;
+rat;fwecVrbt;ski;0,382;;Rodgers2005;
+rat;fwecVrbt;spl;0,207;;Rodgers2005;
+rat;fwecVrbt;ery;0;;Rodgers2005;
+rat;fwicVrbt;adi;0,017;;Rodgers2005;
+rat;fwicVrbt;bon;0,346;;Rodgers2005;
+rat;fwicVrbt;bra;0,62;;Rodgers2005;
+rat;fwicVrbt;gut;0,475;;Rodgers2005;
+rat;fwicVrbt;hea;0,456;;Rodgers2005;
+rat;fwicVrbt;kid;0,483;;Rodgers2005;
+rat;fwicVrbt;liv;0,573;;Rodgers2005;
+rat;fwicVrbt;lun;0,446;;Rodgers2005;
+rat;fwicVrbt;mus;0,63;;Rodgers2005;
+rat;fwicVrbt;ski;0,291;;Rodgers2005;
+rat;fwicVrbt;spl;0,579;;Rodgers2005;
+rat;fwicVrbt;ery;0,603;;Rodgers2005;
+rat;fnlVtis;adi;0,853;;Rodgers2006;
+rat;fnlVtis;bon;0,0174;;Rodgers2006;
+rat;fnlVtis;bra;0,0391;;Rodgers2006;
+rat;fnlVtis;gut;0,0375;;Rodgers2006;
+rat;fnlVtis;hea;0,0135;;Rodgers2006;
+rat;fnlVtis;kid;0,0121;;Rodgers2006;
+rat;fnlVtis;liv;0,0135;;Rodgers2006;
+rat;fnlVtis;lun;0,0215;;Rodgers2006;
+rat;fnlVtis;mus;0,01;;Rodgers2006;
+rat;fnlVtis;ski;0,0603;;Rodgers2006;
+rat;fnlVtis;spl;0,0071;;Rodgers2006;
+rat;fnlVtis;pla;0,0023;;Rodgers2006;
+rat;fnlVtis;ery;0,0017;;Rodgers2006;
+rat;fnpVtis;adi;0,0016;;Rodgers2006;
+rat;fnpVtis;bon;0,0016;;Rodgers2006;
+rat;fnpVtis;bra;0,0015;;Rodgers2006;
+rat;fnpVtis;gut;0,0124;;Rodgers2006;
+rat;fnpVtis;hea;0,0106;;Rodgers2006;
+rat;fnpVtis;kid;0,024;;Rodgers2006;
+rat;fnpVtis;liv;0,0238;;Rodgers2006;
+rat;fnpVtis;lun;0,0123;;Rodgers2006;
+rat;fnpVtis;mus;0,0072;;Rodgers2006;
+rat;fnpVtis;ski;0,0044;;Rodgers2006;
+rat;fnpVtis;spl;0,0107;;Rodgers2006;
+rat;fnpVtis;pla;0,0013;;Rodgers2006;
+rat;fnpVtis;ery;0,0029;;Rodgers2006;
+rat;fapOWtis;adi;0,4;Permil;Rodgers2005;
+rat;fapOWtis;bon;0,67;Permil;Rodgers2005;
+rat;fapOWtis;bra;0,4;Permil;Rodgers2005;
+rat;fapOWtis;gut;2,41;Permil;Rodgers2005;
+rat;fapOWtis;hea;2,25;Permil;Rodgers2005;
+rat;fapOWtis;kid;5,03;Permil;Rodgers2005;
+rat;fapOWtis;liv;4,56;Permil;Rodgers2005;
+rat;fapOWtis;lun;3,91;Permil;Rodgers2005;
+rat;fapOWtis;mus;1,53;Permil;Rodgers2005;
+rat;fapOWtis;ski;1,32;Permil;Rodgers2005;
+rat;fapOWtis;spl;3,18;Permil;Rodgers2005;
+rat;fapOWtis;ery;0,5;Permil;Rodgers2005;
+rat;rtpAlb;adi;0,049;;Rodgers2006;Assumed that values have been corrected for residual blood
+rat;rtpAlb;bon;0,1;;Rodgers2006;Assumed that values have been corrected for residual blood
+rat;rtpAlb;bra;0,048;;Rodgers2006;Assumed that values have been corrected for residual blood
+rat;rtpAlb;gut;0,158;;Rodgers2006;Assumed that values have been corrected for residual blood
+rat;rtpAlb;hea;0,157;;Rodgers2006;Assumed that values have been corrected for residual blood
+rat;rtpAlb;kid;0,13;;Rodgers2006;Assumed that values have been corrected for residual blood
+rat;rtpAlb;liv;0,086;;Rodgers2006;Assumed that values have been corrected for residual blood
+rat;rtpAlb;lun;0,212;;Rodgers2006;Assumed that values have been corrected for residual blood
+rat;rtpAlb;mus;0,064;;Rodgers2006;Assumed that values have been corrected for residual blood
+rat;rtpAlb;ski;0,277;;Rodgers2006;Assumed that values have been corrected for residual blood
+rat;rtpAlb;spl;0,097;;Rodgers2006;Assumed that values have been corrected for residual blood
+rat;rtpLip;adi;0,068;;Rodgers2006;Assumed that values have been corrected for residual blood
+rat;rtpLip;bon;0,05;;Rodgers2006;Assumed that values have been corrected for residual blood
+rat;rtpLip;bra;0,041;;Rodgers2006;Assumed that values have been corrected for residual blood
+rat;rtpLip;gut;0,141;;Rodgers2006;Assumed that values have been corrected for residual blood
+rat;rtpLip;hea;0,16;;Rodgers2006;Assumed that values have been corrected for residual blood
+rat;rtpLip;kid;0,137;;Rodgers2006;Assumed that values have been corrected for residual blood
+rat;rtpLip;liv;0,161;;Rodgers2006;Assumed that values have been corrected for residual blood
+rat;rtpLip;lun;0,168;;Rodgers2006;Assumed that values have been corrected for residual blood
+rat;rtpLip;mus;0,059;;Rodgers2006;Assumed that values have been corrected for residual blood
+rat;rtpLip;ski;0,096;;Rodgers2006;Assumed that values have been corrected for residual blood
+rat;rtpLip;spl;0,207;;Rodgers2006;Assumed that values have been corrected for residual blood

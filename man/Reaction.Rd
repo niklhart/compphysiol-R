@@ -10,6 +10,7 @@ Represents a model reaction.
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-Reaction-new}{\code{Reaction$new()}}
+\item \href{#method-Reaction-print}{\code{Reaction$print()}}
 \item \href{#method-Reaction-clone}{\code{Reaction$clone()}}
 }
 }
@@ -18,7 +19,16 @@ Represents a model reaction.
 \if{latex}{\out{\hypertarget{method-Reaction-new}{}}}
 \subsection{Method \code{new()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Reaction$new(from, to, rate, name = "")}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Reaction$new(from, to, rate)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Reaction-print"></a>}}
+\if{latex}{\out{\hypertarget{method-Reaction-print}{}}}
+\subsection{Method \code{print()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Reaction$print(...)}\if{html}{\out{</div>}}
 }
 
 }

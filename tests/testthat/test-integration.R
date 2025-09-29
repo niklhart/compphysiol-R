@@ -5,7 +5,7 @@ test_that("Full simulation with bolus dosing works", {
     M <- CompartmentModel$new()
     M$addCompartment("Central", 0)
     M$addCompartment("Peripheral", 0)
-    M$addReaction("Central", "Peripheral", "k12 * Central", "k12_forward")
+    M$addReaction("Central", "Peripheral", "k12 * Central")
 
     # Add bolus dose
     M$addDosing(Dosing$new("Central", amount = 100, time = 0))
@@ -28,7 +28,7 @@ test_that("Full simulation with infusion dosing works", {
     M <- CompartmentModel$new()
     M$addCompartment("Central", 0)
     M$addCompartment("Peripheral", 0)
-    M$addReaction("Central", "Peripheral", "k12 * Central", "k12_forward")
+    M$addReaction("Central", "Peripheral", "k12 * Central")
 
     # Add infusion: rate=10 units/h, duration=5h, start at t=0
     M$addDosing(Dosing$new("Central", rate = 10, duration = 5, time = 0))

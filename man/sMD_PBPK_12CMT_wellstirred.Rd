@@ -24,41 +24,62 @@ M <- sMD_PBPK_12CMT_wellstirred()
 
 # Define parameters
 paramValues <- list(
-    CL = 1,
+    BP = 1,
+    CL = 5,
     co = 5,
-    V_L = 2,
-    Q_K = 1.0,
-    V_K = 1,
-    Vc = 5  # volume of central compartment for concentration observable
+    Kadi = 1,
+    Kbon = 1,
+    Kgut = 1,
+    Khea = 1,
+    Kkid = 1,
+    Kliv = 1,
+    Klun = 1,
+    Kmus = 1,
+    Kski = 1,
+    Kspl = 1,
+    Qadi = 0.5,
+    Qbon = 0.5,
+    Qgut = 0.5,
+    Qhea = 0.5,
+    Qkid = 0.5,
+    Qliv = 1,
+    Qmus = 0.5,
+    Qski = 0.5,
+    Qspl = 0.5,
+    Vadi = 1,
+    Vart = 1,
+    Vbon = 1,
+    Vgut = 1,
+    Vhea = 1,
+    Vkid = 1,
+    Vliv = 1,
+    Vlun = 1,
+    Vmus = 1,
+    Vski = 1,
+    Vspl = 1,
+    Vven = 1
 )
 
-# Add an observable: plasma concentration = Central / Vc
-M$addObservable("Plasma", "Central / Vc")
+# Dosing
+M$addDosing(Dosing$new(target = "ven", time = 0, amount = 1))
 
-# Generate ODE function and observables
+# Add plasma concentration as an observable
+M$addObservable("Cpla", "BP * ven / Vven")
+
+# Generate ODE function and auxiliary structures
 odeinfo <- M$toODE(paramValues)
-
-# Initial state vector
-y0 <- M$getInitialState()
-
-# Dosing events
-events <- M$dosing_to_events()$data
 
 # Run simulation
 times <- seq(0, 24, by = 0.1)
 out <- ode(
-    y = y0,
+    y = odeinfo$y0,
     times = times,
     func = odeinfo$odefun,
     parms = paramValues,
-    events = list(data = events)
+    events = odeinfo$events
 )
 
 out_df <- as.data.frame(out)
-
-# Evaluate observables at each time point
-obs_df <- as.data.frame(sapply(odeinfo$obsFuncs, function(f) f(out_df$time, as.matrix(out_df[, -1]), paramValues)))
-obs_df$time <- out_df$time
 
 # Plot compartment amounts
 matplot(
@@ -66,7 +87,7 @@ matplot(
     out_df[, -1],
     type = "l",
     lty = 1,
-    col = c("blue", "green", "red"),
+    col = 1:12,
     xlab = "Time (h)",
     ylab = "Amount",
     main = "PBPK Model Compartments"
@@ -74,14 +95,19 @@ matplot(
 legend(
     "topright",
     legend = colnames(out_df)[-1],
-    col = c("blue", "green", "red"),
+    col = 1:12,
     lty = 1
 )
+
+# Evaluate observables at each time point
+obs_df <- as.data.frame(sapply(odeinfo$obsFuncs, function(f) f(out_df$time, as.matrix(out_df[, -1]), paramValues)))
+names(obs_df) <- names(odeinfo$obsFuncs)
+obs_df$time <- out_df$time
 
 # Plot plasma concentration
 plot(
     obs_df$time,
-    obs_df$Plasma,
+    obs_df$Cpla,
     type = "l",
     col = "black",
     lwd = 2,

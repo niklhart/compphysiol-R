@@ -15,8 +15,6 @@ Represents a compartmental model.
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-CompartmentModel-new}{\code{CompartmentModel$new()}}
-\item \href{#method-CompartmentModel-getInitials}{\code{CompartmentModel$getInitials()}}
-\item \href{#method-CompartmentModel-getStateNames}{\code{CompartmentModel$getStateNames()}}
 \item \href{#method-CompartmentModel-toODE}{\code{CompartmentModel$toODE()}}
 \item \href{#method-CompartmentModel-addCompartment}{\code{CompartmentModel$addCompartment()}}
 \item \href{#method-CompartmentModel-addReaction}{\code{CompartmentModel$addReaction()}}
@@ -24,6 +22,7 @@ Represents a compartmental model.
 \item \href{#method-CompartmentModel-addDosing}{\code{CompartmentModel$addDosing()}}
 \item \href{#method-CompartmentModel-dosing_to_events}{\code{CompartmentModel$dosing_to_events()}}
 \item \href{#method-CompartmentModel-getInitialState}{\code{CompartmentModel$getInitialState()}}
+\item \href{#method-CompartmentModel-getStateNames}{\code{CompartmentModel$getStateNames()}}
 \item \href{#method-CompartmentModel-clone}{\code{CompartmentModel$clone()}}
 }
 }
@@ -38,30 +37,10 @@ Initialize a new CompartmentModel.
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-CompartmentModel-getInitials"></a>}}
-\if{latex}{\out{\hypertarget{method-CompartmentModel-getInitials}{}}}
-\subsection{Method \code{getInitials()}}{
-Get compartment initials as numeric vector.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$getInitials()}\if{html}{\out{</div>}}
-}
-
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-CompartmentModel-getStateNames"></a>}}
-\if{latex}{\out{\hypertarget{method-CompartmentModel-getStateNames}{}}}
-\subsection{Method \code{getStateNames()}}{
-Get compartment names.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$getStateNames()}\if{html}{\out{</div>}}
-}
-
-}
-\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-CompartmentModel-toODE"></a>}}
 \if{latex}{\out{\hypertarget{method-CompartmentModel-toODE}{}}}
 \subsection{Method \code{toODE()}}{
-Generate ODE function, observables, and free parameters.
+Generate ODE function, initial values, observables, and free parameters.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$toODE(paramValues = list())}\if{html}{\out{</div>}}
 }
@@ -88,7 +67,7 @@ Generate ODE function, observables, and free parameters.
 \if{latex}{\out{\hypertarget{method-CompartmentModel-addReaction}{}}}
 \subsection{Method \code{addReaction()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$addReaction(from, to, rate, name = "")}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$addReaction(from, to, rate)}\if{html}{\out{</div>}}
 }
 
 }
@@ -124,7 +103,16 @@ Generate ODE function, observables, and free parameters.
 \if{latex}{\out{\hypertarget{method-CompartmentModel-getInitialState}{}}}
 \subsection{Method \code{getInitialState()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$getInitialState()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$getInitialState(named = TRUE)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CompartmentModel-getStateNames"></a>}}
+\if{latex}{\out{\hypertarget{method-CompartmentModel-getStateNames}{}}}
+\subsection{Method \code{getStateNames()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$getStateNames()}\if{html}{\out{</div>}}
 }
 
 }

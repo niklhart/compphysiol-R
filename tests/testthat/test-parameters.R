@@ -3,7 +3,7 @@ test_that("Scalar parameter substitution works in ODE", {
     M <- CompartmentModel$new()
     M$addCompartment("Central", 10)
     M$addCompartment("Peripheral", 0)
-    M$addReaction("Central", "Peripheral", "k12 * Central", "k12_forward")
+    M$addReaction("Central", "Peripheral", "k12 * Central")
 
     # Provide k12 as scalar
     odeinfo <- M$toODE(paramValues = list(k12 = 0.2))
@@ -20,7 +20,7 @@ test_that("Free parameters remain in ODE", {
     M <- CompartmentModel$new()
     M$addCompartment("Central", 10)
     M$addCompartment("Peripheral", 0)
-    M$addReaction("Central", "Peripheral", "k12 * Central", "k12_forward")
+    M$addReaction("Central", "Peripheral", "k12 * Central")
 
     # Do not provide k12
     odeinfo <- M$toODE(paramValues = list())

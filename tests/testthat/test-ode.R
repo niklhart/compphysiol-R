@@ -3,7 +3,7 @@ test_that("ODE function is generated correctly", {
     M <- CompartmentModel$new()
     M$addCompartment("Central", 10)
     M$addCompartment("Peripheral", 0)
-    M$addReaction("Central", "Peripheral", "k12 * Central", "k12_forward")
+    M$addReaction("Central", "Peripheral", "k12 * Central")
 
     odeinfo <- M$toODE(paramValues = list(k12 = 0.1))
     expect_true(is.function(odeinfo$odefun))
@@ -14,7 +14,7 @@ test_that("ODE can be evaluated", {
     M <- CompartmentModel$new()
     M$addCompartment("Central", 10)
     M$addCompartment("Peripheral", 0)
-    M$addReaction("Central", "Peripheral", "k12 * Central", "k12_forward")
+    M$addReaction("Central", "Peripheral", "k12 * Central")
 
     odeinfo <- M$toODE(paramValues = list(k12 = 0.1))
     y0 <- sapply(M$compartments, function(c) c$initial)

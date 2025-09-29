@@ -1,4 +1,20 @@
 #' @description
+#' Get initial states for simulation as a named vector.
+#' @param named A boolean, should the initial states be named?
+CompartmentModel$set("public", "getInitialState", function(named = TRUE) {
+    y0 <- sapply(self$compartments, function(c) c$initial)
+    if (named) {
+        setNames(y0, nm = self$getStateNames())
+    } else y0
+})
+
+#' @description
+#' Get compartment names.
+CompartmentModel$set("public", "getStateNames", function() {
+    sapply(self$compartments, function(c) c$name)
+})
+
+#' @description
 #' Add a compartment to the model.
 #' @param name Name of the compartment
 #' @param initial Initial amount (default 0)
@@ -13,8 +29,8 @@ CompartmentModel$set("public", "addCompartment", function(name, initial = 0) {
 #' @param to Target compartment
 #' @param rate Rate expression as character
 #' @param name Optional name
-CompartmentModel$set("public", "addReaction", function(from, to, rate, name = "") {
-    self$reactions[[length(self$reactions) + 1]] <- Reaction$new(from, to, rate, name)
+CompartmentModel$set("public", "addReaction", function(from, to, rate) {
+    self$reactions[[length(self$reactions) + 1]] <- Reaction$new(from, to, rate)
     invisible(self)
 })
 
@@ -94,13 +110,5 @@ CompartmentModel$set("public", "dosing_to_events", function() {
     # sort by time
     events <- events[order(events$time), ]
     list(data = events)
-})
-
-#' @description
-#' Get initial states for simulation as a named vector.
-CompartmentModel$set("public", "getInitialState", function() {
-    y0 <- sapply(self$compartments, function(c) c$initial)
-    names(y0) <- sapply(self$compartments, function(c) c$name)
-    y0
 })
 
