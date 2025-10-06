@@ -38,22 +38,53 @@ Reaction <- R6::R6Class("Reaction",
     )
 )
 
-
-
 Reaction$set("public", "isLinear", function(stateNames) {
     expr <- self$rate
+    src_state <- self$from
 
-    # Recursively collect state symbols in the expression
-    collectStates <- function(e) {
-        if (is.symbol(e)) return(as.character(e))
-        if (is.call(e)) return(unlist(lapply(as.list(e[-1]), collectStates)))
-        character(0)
+    isLinearRec <- function(e, mult_context = TRUE) {
+        # Base case: symbol
+        if (is.symbol(e)) {
+            nm <- as.character(e)
+            if (nm %in% stateNames) {
+                return(list(states = nm, ok = mult_context && nm == src_state))
+            } else {
+                return(list(states = character(0), ok = TRUE))
+            }
+        }
+
+        # If not a call, nothing to do
+        if (!is.call(e))
+            return(list(states = character(0), ok = TRUE))
+
+        fn <- as.character(e[[1]])
+        args <- as.list(e[-1])
+
+        # Parentheses are transparent — just recurse into inner expression
+        if (fn == "(")
+            return(isLinearRec(args[[1]], mult_context))
+
+        # Multiplicative operators keep the multiplicative context for subterms
+        # Additive or nonlinear operators reset it
+        next_context <- mult_context && fn %in% c("*", "/")
+
+        res <- lapply(args, function(a) isLinearRec(a, mult_context = next_context))
+        states <- unique(unlist(lapply(res, `[[`, "states")))
+        ok <- all(vapply(res, `[[`, logical(1), "ok"))
+
+        # Addition, subtraction, power or nonlinear calls destroy linearity if state appears
+        if ((fn %in% c("+", "-", "^")) && any(states == src_state))
+            ok <- FALSE
+        if (!(fn %in% c("+", "-", "*", "/", "(")) && any(states == src_state))
+            ok <- FALSE
+
+        list(states = states, ok = ok)
     }
 
-    states_in_expr <- intersect(collectStates(expr), stateNames)
-    # Linear if exactly one state appears and it is r$from
-    length(states_in_expr) == 1 && states_in_expr == self$from
+    res <- isLinearRec(expr)
+    length(res$states) == 1 && res$states == src_state && res$ok
 })
+
 
 Reaction$set("public", "rateConstant", function(stateNames) {
     if (!self$isLinear(stateNames)) return(NA_character_)

@@ -24,4 +24,7 @@ test_that("Reaction linearity detection works", {
     r6 <- Reaction$new(from = "C1", to = "C2", rate = quote(CL * (C1 / V)))
     expect_equal(r6$rateConstant(stateNames), "CL * (1/V)")
 
+    r7 <- Reaction$new(from = "C1", to = "C2", rate = quote(k12+C1))
+    expect_false(r7$isLinear(stateNames)) # not multiplicative → not linear
+
 })
