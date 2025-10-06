@@ -11,6 +11,8 @@ Represents a model reaction.
 \itemize{
 \item \href{#method-Reaction-new}{\code{Reaction$new()}}
 \item \href{#method-Reaction-print}{\code{Reaction$print()}}
+\item \href{#method-Reaction-isLinear}{\code{Reaction$isLinear()}}
+\item \href{#method-Reaction-rateConstant}{\code{Reaction$rateConstant()}}
 \item \href{#method-Reaction-clone}{\code{Reaction$clone()}}
 }
 }
@@ -29,6 +31,24 @@ Represents a model reaction.
 \subsection{Method \code{print()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Reaction$print(...)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Reaction-isLinear"></a>}}
+\if{latex}{\out{\hypertarget{method-Reaction-isLinear}{}}}
+\subsection{Method \code{isLinear()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Reaction$isLinear(stateNames)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Reaction-rateConstant"></a>}}
+\if{latex}{\out{\hypertarget{method-Reaction-rateConstant}{}}}
+\subsection{Method \code{rateConstant()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Reaction$rateConstant(stateNames)}\if{html}{\out{</div>}}
 }
 
 }

@@ -1,3 +1,58 @@
+
+
+CompartmentModel$set("public", "print", function(...) {
+    cat("<CompartmentModel>\n")
+
+    # compartments
+    if (length(self$compartments) > 0) {
+        cat(" Compartments:\n")
+        for (c in self$compartments) {
+            cat("   -", c$name, "(initial =", c$initial, ")\n")
+        }
+    } else {
+        cat(" Compartments: (none)\n")
+    }
+
+    # reactions
+    if (length(self$reactions) > 0) {
+        cat(" Reactions:\n")
+        for (r in self$reactions) {
+            from <- if (!is.null(r$from) && r$from != "") r$from else "∅"
+            to   <- if (!is.null(r$to)   && r$to   != "") r$to   else "∅"
+            cat("   -", from, "→", to, ":", deparse(r$rate), "\n")
+        }
+    } else {
+        cat(" Reactions: (none)\n")
+    }
+
+    # observables
+    if (length(self$observables) > 0) {
+        cat(" Observables:\n")
+        for (o in self$observables) {
+            cat("   -", o$name, "=", deparse(o$expr), "\n")
+        }
+    } else {
+        cat(" Observables: (none)\n")
+    }
+
+    # dosing (boluses + infusions unified)
+    events <- self$dosing_to_events()$data
+    if (nrow(events) > 0) {
+        cat(" Dosing events:\n")
+        for (i in seq_len(nrow(events))) {
+            ev <- events[i, ]
+            cat("   - at t =", ev$time,
+                ":", ev$method, ev$value, "→", ev$var, "\n")
+        }
+    } else {
+        cat(" Dosing: (none)\n")
+    }
+
+    invisible(self)
+})
+
+
+
 #' @description
 #' Get initial states for simulation as a named vector.
 #' @param named A boolean, should the initial states be named?
@@ -89,7 +144,7 @@ CompartmentModel$set("public", "addDosing", function(dose) {
 })
 
 #' @description
-#' Generate events data.frame for deSolve from stored dosing.
+#' Generate events data.frame for `deSolve` from stored dosing.
 CompartmentModel$set("public", "dosing_to_events", function() {
     events <- data.frame(var=character(), time=numeric(), value=numeric(), method=character(),
                          stringsAsFactors = FALSE)

@@ -6,6 +6,22 @@ CompartmentModel$set("public", "toODE", function(paramValues = list()) {
      stateNames <- self$getStateNames()
      name2idx <- setNames(seq_along(stateNames), stateNames)
 
+     # ---- Validation: check that all reactions point to known compartments ----
+     check_comp <- function(nm) {
+         if (!is.null(nm) && nzchar(nm) && !(nm %in% stateNames)) {
+             stop(
+                 "Reaction references unknown compartment '", nm, "'. ",
+                 "Compartment names in this model: ",
+                 paste(stateNames, collapse = ", "), ". ",
+                 "Did you mean to merge this model with another?"
+             )
+         }
+     }
+     for (r in self$reactions) {
+         check_comp(r$from)
+         check_comp(r$to)
+     }
+
      # Environment container for free parameters
      freeParams <- new.env(parent = emptyenv())
      freeParams$list <- character()
@@ -48,8 +64,9 @@ CompartmentModel$set("public", "toODE", function(paramValues = list()) {
 
      # Observables (same substitution logic)
      obsFuncs <- lapply(self$observables, function(o) {
-         expr <- makeFun(o$expr, obsFunc = TRUE)
-         eval(parse(text = paste0("function(t,y,params) ", expr)))
+         expr_lang <- makeFun(o$expr, obsFunc = TRUE)
+         expr_str  <- paste(deparse(expr_lang, width.cutoff = 500), collapse = " ")
+         eval(parse(text = paste0("function(t,y,params) ", expr_str)))
      })
      names(obsFuncs) <- vapply(self$observables, function(o) o$name, "")
 

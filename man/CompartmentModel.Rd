@@ -11,18 +11,38 @@
 \details{
 Represents a compartmental model.
 }
+\section{Public fields}{
+\if{html}{\out{<div class="r6-fields">}}
+\describe{
+\item{\code{compartments}}{A list of \code{Compartment} objects}
+
+\item{\code{reactions}}{A list of \code{Reaction} objects}
+
+\item{\code{observables}}{A list of \code{Observable} objects}
+
+\item{\code{doses}}{List of dosing objects. Includes bolus doses into model
+compartments, as well as bolus-to-bag doses used to implement infusions.}
+
+\item{\code{infusionEvents}}{Data frame of infusion rate adjustment events
+(start and stop of zero-order input). Generated automatically when
+infusions are defined.}
+}
+\if{html}{\out{</div>}}
+}
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-CompartmentModel-new}{\code{CompartmentModel$new()}}
-\item \href{#method-CompartmentModel-toODE}{\code{CompartmentModel$toODE()}}
+\item \href{#method-CompartmentModel-print}{\code{CompartmentModel$print()}}
+\item \href{#method-CompartmentModel-getInitialState}{\code{CompartmentModel$getInitialState()}}
+\item \href{#method-CompartmentModel-getStateNames}{\code{CompartmentModel$getStateNames()}}
 \item \href{#method-CompartmentModel-addCompartment}{\code{CompartmentModel$addCompartment()}}
 \item \href{#method-CompartmentModel-addReaction}{\code{CompartmentModel$addReaction()}}
 \item \href{#method-CompartmentModel-addObservable}{\code{CompartmentModel$addObservable()}}
 \item \href{#method-CompartmentModel-addDosing}{\code{CompartmentModel$addDosing()}}
 \item \href{#method-CompartmentModel-dosing_to_events}{\code{CompartmentModel$dosing_to_events()}}
-\item \href{#method-CompartmentModel-getInitialState}{\code{CompartmentModel$getInitialState()}}
-\item \href{#method-CompartmentModel-getStateNames}{\code{CompartmentModel$getStateNames()}}
+\item \href{#method-CompartmentModel-toAnalytical}{\code{CompartmentModel$toAnalytical()}}
+\item \href{#method-CompartmentModel-toODE}{\code{CompartmentModel$toODE()}}
 \item \href{#method-CompartmentModel-clone}{\code{CompartmentModel$clone()}}
 }
 }
@@ -30,28 +50,38 @@ Represents a compartmental model.
 \if{html}{\out{<a id="method-CompartmentModel-new"></a>}}
 \if{latex}{\out{\hypertarget{method-CompartmentModel-new}{}}}
 \subsection{Method \code{new()}}{
-Initialize a new CompartmentModel.
+Initialize a new \code{CompartmentModel} object.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$new()}\if{html}{\out{</div>}}
 }
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-CompartmentModel-toODE"></a>}}
-\if{latex}{\out{\hypertarget{method-CompartmentModel-toODE}{}}}
-\subsection{Method \code{toODE()}}{
-Generate ODE function, initial values, observables, and free parameters.
+\if{html}{\out{<a id="method-CompartmentModel-print"></a>}}
+\if{latex}{\out{\hypertarget{method-CompartmentModel-print}{}}}
+\subsection{Method \code{print()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$toODE(paramValues = list())}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$print(...)}\if{html}{\out{</div>}}
 }
 
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{paramValues}}{Named list of parameter values to inline in ODEs.}
 }
-\if{html}{\out{</div>}}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CompartmentModel-getInitialState"></a>}}
+\if{latex}{\out{\hypertarget{method-CompartmentModel-getInitialState}{}}}
+\subsection{Method \code{getInitialState()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$getInitialState(named = TRUE)}\if{html}{\out{</div>}}
 }
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CompartmentModel-getStateNames"></a>}}
+\if{latex}{\out{\hypertarget{method-CompartmentModel-getStateNames}{}}}
+\subsection{Method \code{getStateNames()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$getStateNames()}\if{html}{\out{</div>}}
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-CompartmentModel-addCompartment"></a>}}
@@ -99,20 +129,20 @@ Generate ODE function, initial values, observables, and free parameters.
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-CompartmentModel-getInitialState"></a>}}
-\if{latex}{\out{\hypertarget{method-CompartmentModel-getInitialState}{}}}
-\subsection{Method \code{getInitialState()}}{
+\if{html}{\out{<a id="method-CompartmentModel-toAnalytical"></a>}}
+\if{latex}{\out{\hypertarget{method-CompartmentModel-toAnalytical}{}}}
+\subsection{Method \code{toAnalytical()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$getInitialState(named = TRUE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$toAnalytical(paramValues = list())}\if{html}{\out{</div>}}
 }
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-CompartmentModel-getStateNames"></a>}}
-\if{latex}{\out{\hypertarget{method-CompartmentModel-getStateNames}{}}}
-\subsection{Method \code{getStateNames()}}{
+\if{html}{\out{<a id="method-CompartmentModel-toODE"></a>}}
+\if{latex}{\out{\hypertarget{method-CompartmentModel-toODE}{}}}
+\subsection{Method \code{toODE()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$getStateNames()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$toODE(paramValues = list())}\if{html}{\out{</div>}}
 }
 
 }

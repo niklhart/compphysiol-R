@@ -1,17 +1,20 @@
-test_that("substitute_expr handles states, params, operators, functions, and freeParams correctly", {
-    stateNames <- c("Central", "Peripheral")
-    name2idx <- setNames(seq_along(stateNames), stateNames)
+# ---- common prep work for tests ----
+stateNames <- c("Central", "Peripheral")
+name2idx <- setNames(seq_along(stateNames), stateNames)
 
-    # Helper to call substitute_expr with a fresh freeParams environment
-    call_sub <- function(expr, paramValues = list(), obsFunc = FALSE) {
-        freeParams <- new.env(parent = emptyenv())
-        freeParams$list <- character()
-        out <- substitute_expr(expr, stateNames, name2idx,
-                               paramValues = paramValues,
-                               freeParamsEnv = freeParams,
-                               obsFunc = obsFunc)
-        list(expr = out, freeParams = freeParams$list)
-    }
+# Helper to call substitute_expr with a fresh freeParams environment
+call_sub <- function(expr, paramValues = list(), obsFunc = FALSE) {
+    freeParams <- new.env(parent = emptyenv())
+    freeParams$list <- character()
+    out <- substitute_expr(expr, stateNames, name2idx,
+                           paramValues = paramValues,
+                           freeParamsEnv = freeParams,
+                           obsFunc = obsFunc)
+    list(expr = out, freeParams = freeParams$list)
+}
+
+# ---- the actual test body ----
+test_that("substitute_expr handles states, params, operators, functions, and freeParams correctly", {
 
     # 1. Pure state reference
     res <- call_sub("Central")
@@ -48,3 +51,23 @@ test_that("substitute_expr handles states, params, operators, functions, and fre
     expect_equal(deparse(res$expr), "t + pi")
     expect_equal(res$freeParams, character())
 })
+
+
+test_that("substitute_expr handles observable-style indexing and params", {
+
+    # 1) observable indexing: Central -> y[,1]
+    res <- call_sub("Central", obsFunc = TRUE)
+    expect_equal(deparse(res$expr), "y[, 1L]")
+    expect_equal(res$freeParams, character())
+
+    # 2) division by supplied V (inlined numeric)
+    res2 <- call_sub("Central / V", paramValues = list(V = 10), obsFunc = TRUE)
+    expect_equal(deparse(res2$expr), "y[, 1L]/10")
+    expect_equal(res2$freeParams, character())
+
+    # 3) division by free parameter V (keeps params[[...]])
+    res3 <- call_sub("Central / V", paramValues = list(), obsFunc = TRUE)
+    expect_equal(deparse(res3$expr), "y[, 1L]/params[[\"V\"]]")
+    expect_equal(res3$freeParams, "V")
+})
+

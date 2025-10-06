@@ -21,7 +21,7 @@ lump_model <- function(M, partitioning = list()) {
 
     # Name lumped compartments
     lumped_names <- vapply(partitioning,
-                           function(p) paste(p, collapse = "+"),
+                           function(p) paste(p, collapse = "_"),
                            character(1))
     nm_part <- names(partitioning)
     if (!is.null(nm_part)) {
@@ -39,17 +39,17 @@ lump_model <- function(M, partitioning = list()) {
     # --- Lump initial conditions & VK ---
     X0orig <- M$getInitialState(named = TRUE)
 
-    VKorig <- rep(1,length(X0orig)) # TODO! M$VK
+    # TODO this part here is not finished yet. I have to sort out two things:
+    # 1) determining the normalizing factor from the model, or annotating it in
+    #    some way;
+    # 2) seeing how this can be done with variables instead of values, in order
+    #    to not break the logic of passing parameters during ODE generation.
+    VKorig <- rep(1,length(X0orig))
     names(VKorig) <- names(X0orig)
 
+    # Lumping = summing amounts in different compartments
+    # (unlumping is more complicated and handled by `.rewrite_rate()`)
     lump <- function(x) tapply(x, grp[names(x)], sum)
-    unlump <- function(xl) {
-        vapply(names(X0orig), function(nm) {
-            lump_name <- grp[[nm]]
-            vk_group <- sum(VKorig[names(grp)[grp == lump_name]])
-            (VKorig[[nm]] / vk_group) * xl[[lump_name]]
-        }, numeric(1))
-    }
 
     X0lump <- lump(X0orig)
     VKlump <- lump(VKorig)
@@ -81,12 +81,14 @@ lump_model <- function(M, partitioning = list()) {
 #' @param VKorig Normalizing variables for lumping condition
 #' @returns The expression in which the original variables are replaced by
 #'   lumped ones.
+#' @noRd
 .rewrite_rate <- function(expr, grp, VKorig) {
     # recursive substitution
     substitute_symbols <- function(e) {
         if (is.symbol(e)) {
             nm <- as.character(e)
             if (nm %in% names(grp)) {
+                # unlumping scheme
                 lump_name <- grp[[nm]]
                 vk_group <- sum(VKorig[names(grp)[grp == lump_name]])
                 subst <- bquote((.(VKorig[[nm]]) / .(vk_group)) * .(as.symbol(lump_name)))

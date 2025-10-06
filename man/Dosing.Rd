@@ -2,9 +2,36 @@
 % Please edit documentation in R/Dosing.R
 \name{Dosing}
 \alias{Dosing}
-\title{Dosing Class}
+\title{Dosing specification}
 \description{
-Represents dosing into a CompartmentModel
+Represents a dosing event for a \code{CompartmentModel}. A dose can be
+specified either as a bolus (instantaneous input) or as an infusion
+(continuous input over time).
+}
+\details{
+\subsection{Bolus}{
+
+Provide only \code{amount}. The dose is given at \code{time}.
+}
+
+\subsection{Infusion}{
+
+Provide any two of \code{amount}, \code{rate}, and \code{duration}.
+The missing quantity is derived automatically:
+\deqn{amount = rate * duration}
+\deqn{rate = amount / duration}
+\deqn{duration = amount / rate}
+}
+}
+\examples{
+# Bolus of 100 at t=0
+Dosing$new("Central", time = 0, amount = 100)
+
+# Infusion examples (all equivalent)
+Dosing$new("Central", time = 0, rate = 10, duration = 5)
+Dosing$new("Central", time = 0, amount = 50, duration = 5)
+Dosing$new("Central", time = 0, amount = 50, rate = 10)
+
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -12,6 +39,7 @@ Represents dosing into a CompartmentModel
 \item \href{#method-Dosing-new}{\code{Dosing$new()}}
 \item \href{#method-Dosing-isBolus}{\code{Dosing$isBolus()}}
 \item \href{#method-Dosing-isInfusion}{\code{Dosing$isInfusion()}}
+\item \href{#method-Dosing-print}{\code{Dosing$print()}}
 \item \href{#method-Dosing-clone}{\code{Dosing$clone()}}
 }
 }
@@ -20,7 +48,7 @@ Represents dosing into a CompartmentModel
 \if{latex}{\out{\hypertarget{method-Dosing-new}{}}}
 \subsection{Method \code{new()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Dosing$new(target, amount = NULL, time, rate = NULL, duration = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Dosing$new(target, time, amount = NULL, rate = NULL, duration = NULL)}\if{html}{\out{</div>}}
 }
 
 }
@@ -39,6 +67,15 @@ Represents dosing into a CompartmentModel
 \subsection{Method \code{isInfusion()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Dosing$isInfusion()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Dosing-print"></a>}}
+\if{latex}{\out{\hypertarget{method-Dosing-print}{}}}
+\subsection{Method \code{print()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Dosing$print(...)}\if{html}{\out{</div>}}
 }
 
 }

@@ -22,9 +22,10 @@ substitute_expr(
 
 \item{paramValues}{named list of parameter values (scalars may be inlined)}
 
-\item{obsFunc}{logical, TRUE if in observable (matrix indexing)}
+\item{freeParamsEnv}{Environment containing names of free parameters, will be
+updated by reference.}
 
-\item{freeParams}{character vector (will be updated by reference)}
+\item{obsFunc}{logical, \code{TRUE} if in observable (matrix indexing)}
 }
 \value{
 An R expression with substitutions applied

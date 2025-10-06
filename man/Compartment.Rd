@@ -6,6 +6,21 @@
 \description{
 Represents a model compartment with a name and an initial amount.
 }
+\examples{
+cpt <- Compartment$new("Heart", 10)
+cpt$name
+cpt$initial
+
+}
+\section{Public fields}{
+\if{html}{\out{<div class="r6-fields">}}
+\describe{
+\item{\code{name}}{Character string giving the name of the compartment.}
+
+\item{\code{initial}}{Numeric value, the initial amount in the compartment.}
+}
+\if{html}{\out{</div>}}
+}
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
@@ -17,10 +32,23 @@ Represents a model compartment with a name and an initial amount.
 \if{html}{\out{<a id="method-Compartment-new"></a>}}
 \if{latex}{\out{\hypertarget{method-Compartment-new}{}}}
 \subsection{Method \code{new()}}{
+Create a new compartment object.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Compartment$new(name, initial = 0)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{name}}{Name of the compartment (character)}
+
+\item{\code{initial}}{Initial amount (numeric, default = 0)}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A new \code{Compartment} object
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Compartment-clone"></a>}}

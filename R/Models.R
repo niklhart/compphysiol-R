@@ -128,35 +128,35 @@ sMD_PBPK_12CMT_wellstirred <- function() {
     M$addCompartment("spl", 0)
 
     # organs with arterial inflow
-    M$addReaction("art", "adi", "Qadi * art / Vart", "art2adi")
-    M$addReaction("art", "bon", "Qbon * art / Vart", "art2bon")
-    M$addReaction("art", "gut", "Qgut * art / Vart", "art2gut")
-    M$addReaction("art", "hea", "Qhea * art / Vart", "art2hea")
-    M$addReaction("art", "mus", "Qmus * art / Vart", "art2mus")
-    M$addReaction("art", "kid", "Qkid * art / Vart", "art2kid")
-    M$addReaction("art", "ski", "Qski * art / Vart", "art2ski")
-    M$addReaction("art", "spl", "Qspl * art / Vart", "art2spl")
+    M$addReaction("art", "adi", "Qadi * art / Vart")
+    M$addReaction("art", "bon", "Qbon * art / Vart")
+    M$addReaction("art", "gut", "Qgut * art / Vart")
+    M$addReaction("art", "hea", "Qhea * art / Vart")
+    M$addReaction("art", "mus", "Qmus * art / Vart")
+    M$addReaction("art", "kid", "Qkid * art / Vart")
+    M$addReaction("art", "ski", "Qski * art / Vart")
+    M$addReaction("art", "spl", "Qspl * art / Vart")
 
     # handle organ topology w.r.t. liver
-    M$addReaction("art", "liv", "(Qliv-Qgut-Qspl) * art / Vart", "art2liv")
-    M$addReaction("gut", "liv", "Qgut * gut / (Vgut * Kgut)",    "gut2liv")
-    M$addReaction("spl", "liv", "Qspl * spl / (Vspl * Kspl)",    "spl2liv")
+    M$addReaction("art", "liv", "(Qliv-Qgut-Qspl) * art / Vart")
+    M$addReaction("gut", "liv", "Qgut * gut / (Vgut * Kgut)")
+    M$addReaction("spl", "liv", "Qspl * spl / (Vspl * Kspl)")
 
     # organs with venous outflow
-    M$addReaction("adi", "ven", "Qadi * adi / (Vadi * Kadi)", "adi2ven")
-    M$addReaction("bon", "ven", "Qbon * bon / (Vbon * Kbon)", "bon2ven")
-    M$addReaction("hea", "ven", "Qhea * hea / (Vhea * Khea)", "hea2ven")
-    M$addReaction("liv", "ven", "Qliv * liv / (Vliv * Kliv)", "liv2ven")
-    M$addReaction("mus", "ven", "Qmus * mus / (Vmus * Kmus)", "mus2ven")
-    M$addReaction("kid", "ven", "Qkid * kid / (Vkid * Kkid)", "kid2ven")
-    M$addReaction("ski", "ven", "Qski * ski / (Vski * Kski)", "ski2ven")
+    M$addReaction("adi", "ven", "Qadi * adi / (Vadi * Kadi)")
+    M$addReaction("bon", "ven", "Qbon * bon / (Vbon * Kbon)")
+    M$addReaction("hea", "ven", "Qhea * hea / (Vhea * Khea)")
+    M$addReaction("liv", "ven", "Qliv * liv / (Vliv * Kliv)")
+    M$addReaction("mus", "ven", "Qmus * mus / (Vmus * Kmus)")
+    M$addReaction("kid", "ven", "Qkid * kid / (Vkid * Kkid)")
+    M$addReaction("ski", "ven", "Qski * ski / (Vski * Kski)")
 
     # lung
-    M$addReaction("ven", "lun", "co * ven / Vven", "ven2lun")
-    M$addReaction("lun", "art", "co * lun / (Vlun * Klun)", "lun2art")
+    M$addReaction("ven", "lun", "co * ven / Vven")
+    M$addReaction("lun", "art", "co * lun / (Vlun * Klun)")
 
     # liver metabolism
-    M$addReaction("liv", "", "CL * liv / (Vliv * Kliv)", "liv2_")
+    M$addReaction("liv", "", "CL * liv / (Vliv * Kliv)")
 
     # output
     M
@@ -166,4 +166,63 @@ sMD_PBPK_12CMT_wellstirred <- function() {
 #' @export
 test_model_sysdata <- function() {
     .models$test_model_sysdata$clone(deep = TRUE)
+}
+
+
+
+#' Create a generic multi-compartment PK model
+#'
+#' @param ncomp Number of compartments (>=1)
+#' @param type Style of parameterization: "micro" (rate constants) or "macro" (volumes + clearances)
+#' @return A CompartmentModel object
+#' @export
+multiCompModel <- function(ncomp = 1, type = c("micro", "macro")) {
+    type <- match.arg(type)
+    stopifnot(ncomp >= 1)
+
+    model <- CompartmentModel$new()
+
+    # Compartment names: central is C1
+    compNames <- paste0("C", seq_len(ncomp))
+    central_idx <- 1
+
+    # Add compartments
+    for (c in compNames) {
+        model$addCompartment(c, initial = 0)
+    }
+
+    # Add plasma concentration observable
+    model$addObservable("C1Conc", "C1")
+
+    if (type == "micro") {
+        # Micro: first-order rate constants
+        # Elimination from central
+        model$addReaction("C1", "", "k10 * C1")
+        # Inter-compartmental rates
+        for (i in seq_len(ncomp)) {
+            if (i == central_idx) next
+            ki <- paste0("k1", i)
+            k_back <- paste0("k", i, "1")
+            model$addReaction("C1", compNames[i], paste0(ki, " * C1"))
+            model$addReaction(compNames[i], "C1", paste0(k_back, " * ", compNames[i]))
+        }
+    } else if (type == "macro") {
+        # Macro: flows and volumes
+        # Elimination from central scaled by volume
+        model$addReaction("C1", "", "CL / V1 * C1")
+        # Inter-compartmental flows
+        for (i in seq_len(ncomp)) {
+            if (i == central_idx) next
+            model$addReaction(
+                "C1", compNames[i],
+                paste0("Q1", i, " / V1 * C1")
+            )
+            model$addReaction(
+                compNames[i], "C1",
+                paste0("Q1", i, " / V", i, " * ", compNames[i])
+            )
+        }
+    }
+
+    model
 }
