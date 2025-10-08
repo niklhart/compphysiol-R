@@ -106,3 +106,51 @@ test_that("mergeModels auto-renames two distinct drugs correctly", {
 
 })
 
+
+
+test_that("mergeModels respects shared parameters (skip suffixing)", {
+    # Drug A (PBPK compound 1)
+    drugA <- CompartmentModel$new()
+    drugA$addCompartment("Liver", 0)
+    drugA$addCompartment("Central", 0)
+    drugA$addReaction("Central", "Liver", "Q_hepatic/V_liver * (Central - Liver / K_liver)")
+    drugA$addReaction("Liver", "Central", "Q_hepatic/V_liver * (Liver / K_liver - Central)")
+    drugA$addObservable("CentralObs", "Central")
+
+    # Drug B (PBPK compound 2)
+    drugB <- CompartmentModel$new()
+    drugB$addCompartment("Liver", 0)
+    drugB$addCompartment("Central", 0)
+    drugB$addReaction("Central", "Liver", "Q_hepatic/V_liver * (Central - Liver / K_liver)")
+    drugB$addReaction("Liver", "Central", "Q_hepatic/V_liver * (Liver / K_liver - Central)")
+    drugB$addObservable("CentralObs", "Central")
+
+    # Shared physiological parameters (should not be suffixed)
+    shared <- c("Q_hepatic", "V_liver")
+
+    # Merge models with suffixes for drug-specific parameters only
+    merged <- mergeModels(drugA, drugB,
+                          suffix1 = "A", suffix2 = "B",
+                          shared = shared,
+                          collision = "error")
+
+    # Check that state names are suffixed (no collision)
+    expect_equal(
+        merged$getStateNames(),
+        c("Liver_A", "Central_A", "Liver_B", "Central_B")
+    )
+
+    # Check that shared parameters remain unsuffixed
+    reaction_strings <- sapply(merged$reactions, function(r) deparse(r$rate))
+    expect_true(all(grepl("Q_hepatic", reaction_strings)))
+    expect_true(all(grepl("V_liver", reaction_strings)))
+
+    # Check that partition coefficients (drug-specific) were suffixed
+    expect_true(any(grepl("K_liver_A", reaction_strings)))
+    expect_true(any(grepl("K_liver_B", reaction_strings)))
+
+    # Observables have suffixes
+    observable_names <- sapply(merged$observables, function(o) o$name)
+    expect_true(all(c("CentralObs_A", "CentralObs_B") %in% observable_names))
+})
+

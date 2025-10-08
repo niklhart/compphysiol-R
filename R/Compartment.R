@@ -26,6 +26,13 @@ Compartment <- R6::R6Class("Compartment",
                                initialize = function(name, initial = 0) {
                                    self$name <- name
                                    self$initial <- initial
+                               },
+
+                               #' @description
+                               #' Print a compartment object to the console.
+                               print = function(...) {
+                                   cat(sprintf("Compartment: %s (initial = %s)\n",
+                                               self$name, self$initial))
                                }
                            )
 )

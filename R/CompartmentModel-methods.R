@@ -1,5 +1,16 @@
 
-
+#' Print method for CompartmentModel class
+#'
+#' Pretty-prints a `CompartmentModel` object.
+#'
+#' @param ... ignored
+#' @return Invisibly returns `x`.
+#' @examples
+#' M <- multiCompModel()
+#' print(M)
+#' @seealso [CompartmentModel]
+#' @name CompartmentModel$print
+#' @export
 CompartmentModel$set("public", "print", function(...) {
     cat("<CompartmentModel>\n")
 
@@ -102,6 +113,15 @@ CompartmentModel$set("public", "addObservable", function(name, expr) {
 #' Add a dosing event (bolus or infusion).
 #' @param dose A Dosing object
 CompartmentModel$set("public", "addDosing", function(dose) {
+
+    # --- handle lists of Dosing objects ---
+    if (is.list(dose)) {
+        for (d in dose) self$addDosing(d)  # recursion on single elements
+        return(invisible(self))
+    }
+
+    # --- Existing logic for single Dosing object ---
+    stopifnot(inherits(dose, "Dosing"))
     if (dose$isBolus()) {
         # simple bolus, store in doses list
         if (is.null(self$doses)) self$doses <- list()

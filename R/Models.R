@@ -192,7 +192,7 @@ multiCompModel <- function(ncomp = 1, type = c("micro", "macro")) {
     }
 
     # Add plasma concentration observable
-    model$addObservable("C1Conc", "C1")
+    model$addObservable("C1Conc", "C1/V1")
 
     if (type == "micro") {
         # Micro: first-order rate constants

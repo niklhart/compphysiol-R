@@ -25,6 +25,7 @@ cpt$initial
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-Compartment-new}{\code{Compartment$new()}}
+\item \href{#method-Compartment-print}{\code{Compartment$print()}}
 \item \href{#method-Compartment-clone}{\code{Compartment$clone()}}
 }
 }
@@ -49,6 +50,16 @@ Create a new compartment object.
 \subsection{Returns}{
 A new \code{Compartment} object
 }
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Compartment-print"></a>}}
+\if{latex}{\out{\hypertarget{method-Compartment-print}{}}}
+\subsection{Method \code{print()}}{
+Print a compartment object to the console.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Compartment$print(...)}\if{html}{\out{</div>}}
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Compartment-clone"></a>}}

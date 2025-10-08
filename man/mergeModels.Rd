@@ -9,7 +9,8 @@ mergeModels(
   M2,
   suffix1 = NULL,
   suffix2 = NULL,
-  collision = c("error", "auto", "merge")
+  collision = c("error", "auto", "merge"),
+  shared = character()
 )
 }
 \arguments{
@@ -20,8 +21,12 @@ Use NULL to leave names unchanged.}
 
 \item{collision}{What to do in case of name collisions:
 "error" (default), "auto" (rename with suffixes 1/2), or "merge"
-(merge compartments). Suffixing is done before checking for collisions
-and potentially merging.}
+(merge compartments, adding initial amounts).
+Since suffixing is done before checking for collisions, the
+\code{collisions} argument has no effect if distinct non-\code{NULL} suffixes are used.}
+
+\item{shared}{An optional character vector or parameter or compartment names
+that should be shared, i.e. they are not suffixed.}
 }
 \value{
 A new CompartmentModel containing both.
@@ -38,14 +43,16 @@ pk <- CompartmentModel$new()
 pk$addCompartment("Central", 0)
 pk$addReaction("Central", "", "k10 * Central")
 M <- mergeModels(abs, pk, collision = "merge")
+M
 
-# Example 2: Two-drug PK model with DDI
-drugA <- twoCompModel()
-drugB <- twoCompModel()
+# Example 2: Two-drug PK model with drug-drug interaction
+drugA <- multiCompModel(ncomp = 1)
+drugB <- multiCompModel(ncomp = 2)
 merged <- mergeModels(drugA, drugB, suffix1 = "A", suffix2 = "B")
 merged$addReaction(
-  from = "Central_B",
-  to = "Central_A",
-  rate = "-(Central_B / (IC50 + Central_B)) * k10 * Central_A"
+  from = "C1_B",
+  to = "C1_A",
+  rate = "-(C1_B / (IC50 + C1_B)) * k10_A * C1_A"
 )
+merged
 }

@@ -15,8 +15,7 @@ substitute_expr <- function(expr, stateNames, name2idx,
                             paramValues = list(),
                             freeParamsEnv = NULL,
                             obsFunc = FALSE) {
-    if (is.character(expr)) expr <- parse(text = expr)[[1L]]
-    if (is.expression(expr)) expr <- expr[[1L]]
+    expr <- .as_call(expr)
 
     reserved <- c("t", "y", "params", "pi", "Inf", "NaN",
                   "TRUE", "FALSE", "NULL")
@@ -68,4 +67,107 @@ substitute_expr <- function(expr, stateNames, name2idx,
     }
 
     substitute_symbols(expr)
+}
+
+
+#' Recursively replace symbols in an expression
+#'
+#' This function traverses the abstract syntax tree (AST) of a quoted R
+#' expression and replaces all occurrences of symbols listed in \code{old}
+#' with the corresponding ones in \code{new}.
+#'
+#' @param expr A quoted R expression (e.g. from \code{quote()} or \code{substitute()}).
+#' @param old A character vector of symbol names to replace.
+#' @param new A character vector of replacement symbol names, of the same length as \code{old}.
+#'
+#' @return A new expression with symbols replaced.
+#' @examples
+#' expr <- quote(a * b / c + a)
+#' replace_symbols(expr, c("a", "b"), c("A", "B"))
+#' # Returns: quote(A * B / c + A)
+#'
+#' @noRd
+.replace_symbols <- function(expr, old, new) {
+    # Convert old/new to a named lookup
+    map <- setNames(new, old)
+
+    # Recursive helper function
+    recurse <- function(e) {
+        if (is.symbol(e)) {
+            # If the symbol matches one in 'old', replace it
+            name <- as.character(e)
+            if (name %in% old) {
+                as.symbol(map[[name]])
+            } else {
+                e
+            }
+        } else if (is.call(e)) {
+            # If it's a call, recursively apply to each argument
+            as.call(lapply(e, recurse))
+        } else if (is.pairlist(e)) {
+            # Handle function arguments or pairlists
+            as.pairlist(lapply(e, recurse))
+        } else {
+            # constants (numbers, strings, etc.) — leave untouched
+            e
+        }
+    }
+
+    recurse(expr)
+}
+
+
+
+
+#' Recursively append a suffix to variable symbols in an expression
+#'
+#' This function traverses the abstract syntax tree (AST) of a quoted R
+#' expression and appends a suffix to all variable symbols, *except*:
+#' \itemize{
+#'   \item function names in calls (e.g. `f(x)` keeps `f` unchanged),
+#'   \item symbols listed in \code{skip}.
+#' }
+#'
+#' @param expr A quoted R expression (e.g., from \code{quote()}).
+#' @param suffix A character string to append to variable names.
+#' @param skip A character vector of symbol names that should not be suffixed.
+#'
+#' @return A new expression with the suffix appended to variable symbols.
+#' @examples
+#' expr <- quote(a * b + f(c, g(d)))
+#' .suffix_symbols(expr, "_s")
+#' # Returns: quote(a_s * b_s + f(c_s, g(d_s)))
+#'
+#' # Skip specific variables
+#' .suffix_symbols(expr, "_s", skip = c("c", "d"))
+#' # Returns: quote(a_s * b_s + f(c, g(d)))
+#'
+#' @export
+.suffix_symbols <- function(expr, suffix, skip = character()) {
+
+    recurse <- function(e) {
+        if (is.symbol(e)) {
+            name <- as.character(e)
+            if (name %in% skip) {
+                e  # leave skipped symbols unchanged
+            } else {
+                as.symbol(paste0(name, suffix))
+            }
+
+        } else if (is.call(e)) {
+            # Preserve function name (the first element)
+            fn <- e[[1]]
+            args <- as.list(e)[-1]
+            new_args <- lapply(args, recurse)
+            as.call(c(list(fn), new_args))
+
+        } else if (is.pairlist(e)) {
+            as.pairlist(lapply(e, recurse))
+
+        } else {
+            e  # constants etc.
+        }
+    }
+
+    recurse(expr)
 }

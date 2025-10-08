@@ -10,6 +10,7 @@ Represents a model observable
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-Observable-new}{\code{Observable$new()}}
+\item \href{#method-Observable-print}{\code{Observable$print()}}
 \item \href{#method-Observable-clone}{\code{Observable$clone()}}
 }
 }
@@ -19,6 +20,15 @@ Represents a model observable
 \subsection{Method \code{new()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Observable$new(name, expr)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Observable-print"></a>}}
+\if{latex}{\out{\hypertarget{method-Observable-print}{}}}
+\subsection{Method \code{print()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Observable$print(...)}\if{html}{\out{</div>}}
 }
 
 }

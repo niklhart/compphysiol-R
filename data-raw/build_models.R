@@ -5,7 +5,7 @@ build_models <- function() {
 
     # compartments (can be vectorized later)
     M$addCompartment("test", 0)
-    M$addReaction("test", "", "ke * test", "deg")
+    M$addReaction("test", "", "ke * test")
     M$addObservable("Ctest", "2*test")
 
     list(test_model_sysdata = M)

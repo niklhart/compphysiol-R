@@ -101,3 +101,61 @@ Dosing$set("public", "print", function(...) {
     }
     invisible(self)
 })
+
+
+#' Construct one or more Dosing objects
+#'
+#' If `time` (and optionally `amount`, etc.) are vectors, returns
+#' a list of `Dosing` objects. Otherwise, returns a single Dosing.
+#'
+#' @examples
+#' DosingList("Central", time = c(0, 24, 48), amount = 100)
+#' DosingList("Central", time = 0, amount = 50)
+#'
+#' @export
+DosingList <- function(target, time, amount = NULL, rate = NULL, duration = NULL) {
+    stopifnot(!is.null(time), is.numeric(time), all(time >= 0))
+
+    arg_lengths <- c(
+        time     = length(time),
+        amount   = if (!is.null(amount)) length(amount) else NA_integer_,
+        rate     = if (!is.null(rate)) length(rate) else NA_integer_,
+        duration = if (!is.null(duration)) length(duration) else NA_integer_
+    )
+    valid_lengths <- arg_lengths[!is.na(arg_lengths)]
+
+    # --- Enforce scalar-or-same-length rule ---
+    non_scalar <- valid_lengths[valid_lengths > 1]
+    if (length(non_scalar) > 1 && length(unique(non_scalar)) > 1) {
+        stop(
+            "Incompatible argument lengths: all non-scalar dosing arguments must have the same length, ",
+            "or be scalar for recycling."
+        )
+    }
+
+    # Determine number of dosing events
+    n <- max(valid_lengths, na.rm = TRUE)
+
+    # Helper for safe recycling
+    recycle <- function(x) {
+        if (is.null(x)) return(NULL)
+        if (length(x) == 1) rep(x, n) else x
+    }
+
+    time     <- recycle(time)
+    amount   <- recycle(amount)
+    rate     <- recycle(rate)
+    duration <- recycle(duration)
+
+    # Create list of Dosing objects
+    lapply(seq_len(n), function(i) {
+        Dosing$new(
+            target   = target,
+            time     = time[i],
+            amount   = if (!is.null(amount)) amount[i],
+            rate     = if (!is.null(rate)) rate[i],
+            duration = if (!is.null(duration)) duration[i]
+        )
+    })
+
+}

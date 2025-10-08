@@ -4,8 +4,8 @@ Title: R version of computational physiology toolbox
 Version: 0.1.0
 Authors@R: c(
     person(
-      "Jane", "Doe",
-      email = "jane@example.com",
+      "Niklas", "Hartung",
+      email = "niklas.hartung@uni-potsdam.de",
       role = c("aut", "cre")
     )
   )
@@ -13,7 +13,10 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Imports:
     R6,
-    deSolve
+    deSolve,
+    dplyr,
+    tidyr,
+    tibble
 Description: More about what it does (maybe more than one line).
     Continuation lines should be indented.
 License: MIT

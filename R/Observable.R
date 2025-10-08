@@ -9,7 +9,11 @@ Observable <- R6::R6Class("Observable",
                           expr = NULL,   # string or function(t, y, params)
                           initialize = function(name, expr) {
                               self$name <- name
-                              self$expr <- expr
+                              self$expr <- .as_call(expr)
+                          },
+                          print = function(...) {
+                              cat(sprintf("Observable: %s = %s\n",
+                                          self$name, deparse(self$expr)))
                           }
                       )
 )

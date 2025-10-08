@@ -26,6 +26,8 @@ Stores physiological parameters in a transparent tabular structure.
 \item \href{#method-Physiology-add_tissue_param}{\code{Physiology$add_tissue_param()}}
 \item \href{#method-Physiology-get}{\code{Physiology$get()}}
 \item \href{#method-Physiology-to_param_list}{\code{Physiology$to_param_list()}}
+\item \href{#method-Physiology-summary}{\code{Physiology$summary()}}
+\item \href{#method-Physiology-print}{\code{Physiology$print()}}
 \item \href{#method-Physiology-clone}{\code{Physiology$clone()}}
 }
 }
@@ -124,6 +126,26 @@ Scalars: name → value
 Tissues: \code{paste0(parameter, "[", context, "]")} → value
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Physiology$to_param_list()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Physiology-summary"></a>}}
+\if{latex}{\out{\hypertarget{method-Physiology-summary}{}}}
+\subsection{Method \code{summary()}}{
+Summarize Physiology as a string.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Physiology$summary()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Physiology-print"></a>}}
+\if{latex}{\out{\hypertarget{method-Physiology-print}{}}}
+\subsection{Method \code{print()}}{
+Display a Physiology object.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Physiology$print(...)}\if{html}{\out{</div>}}
 }
 
 }

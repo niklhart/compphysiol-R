@@ -81,6 +81,47 @@ Physiology <- R6::R6Class("Physiology",
                                       }
                                   }
                                   out
+                              },
+
+                              #' @description Summarize Physiology as a string.
+                              summary = function() {
+                                  paste0("Physiology: ", nrow(self$param_table), " parameters")
+                              },
+
+                              #' @description Display a Physiology object.
+                              print = function(...) {
+                                  n <- nrow(self$param_table)
+
+                                  if (n == 0) {
+                                      cat("<Physiology: empty>\n")
+                                      return(invisible(self))
+                                  }
+
+                                  # Separate scalars and tissue parameters
+                                  scalars <- subset(self$param_table, type == "scalar")
+                                  tissues <- subset(self$param_table, type == "tissue")
+
+                                  # Build scalar name-value pairs
+                                  scalar_str <- ""
+                                  if (nrow(scalars) > 0) {
+                                      max_show <- 5L
+                                      shown <- head(scalars, max_show)
+                                      scalar_pairs <- paste0(shown$parameter, "=", trimws(formatC(shown$value, digits=3, format="fg")))
+                                      scalar_str <- paste(scalar_pairs, collapse=", ")
+                                      if (nrow(scalars) > max_show)
+                                          scalar_str <- paste0(scalar_str, ", ... (", nrow(scalars), " total)")
+                                  } else {
+                                      scalar_str <- "no scalar parameters"
+                                  }
+
+                                  # Tissue summary
+                                  tissue_count <- nrow(tissues)
+                                  tissue_str <- if (tissue_count > 0) paste0(tissue_count, " tissue parameters") else "no tissue parameters"
+
+                                  cat("Physiology:", scalar_str, "|", tissue_str, "\n")
+                                  invisible(self)
                               }
+
+
                           )
 )
