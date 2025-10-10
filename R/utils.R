@@ -1,7 +1,7 @@
 
-#' Helper function to format a character string, expression or call into an call
+#' Helper function to uniformize input into an call
 #'
-#' @param input A character string, expression or call
+#' @param input A character string, expression, numeric scalar, or call
 #' @returns A call representation of the input
 #' @noRd
 .as_call <- function(input) {
@@ -15,7 +15,9 @@
         input[[1]]
     } else if (is.language(input)) { # quote() returns a call
         input
+    } else if (is.numeric(input) && length(input) == 1L) {
+        as.call(list(as.name("("), input))
     } else {
-        stop("Input must be a character, expression, or quoted call.")
+        stop("Input must be a character, expression, numeric scalar, or quoted call.")
     }
 }

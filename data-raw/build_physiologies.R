@@ -7,22 +7,24 @@ build_physiologies <- function() {
     # ---- Build rat physiologies ----
 
     # Step 0: reshape rat meta data to long format (TODO: remove but document?)
-    rat_meta <- subset(meta_df, Species == "rat") |>
-        tidyr::pivot_longer(cols = !ID, names_to = "Parameter", values_to = "Value") |>
-        cbind(Unit = NA, Reference = NA, Assumption = NA)
+    rat_meta <- subset(meta_df, Species == "rat") # |>
+        # tidyr::pivot_longer(cols = !ID, names_to = "Parameter", values_to = "Value") |>
+        # cbind(Unit = NA, Reference = NA, Assumption = NA)
 
     # Step 1: Expand "rat" rows to all individual IDs
     rat_long <- rat_df |>
         dplyr::mutate(
-            ID = ifelse(ID == "rat", list(unique(rat_meta$ID)), ID)
+            ID = ifelse(ID == "rat", list(rat_meta$ID), ID)
         ) |>
         tidyr::unnest(ID)
 
     # Step 2: split scalar and per-tissue parameters
     rat_scalar_long <- rat_long |>
         dplyr::filter(is.na(Tissue) | Tissue == "") |>
-        dplyr::select(-Tissue) #|>
-    #    rbind(rat_meta)
+        dplyr::select(-Tissue)
+
+    rat_tissue_long <- rat_long |>
+        dplyr::filter(!is.na(Tissue) | Tissue != "")
 
     # Step 3: Pivot to wide format for calculations
     rat_tissue_wide <- rat_tissue_long |>
@@ -52,35 +54,29 @@ build_physiologies <- function() {
 
     # Step 6: Merge scalar and tissue data frames
     rat_long <- dplyr::bind_rows(
-        rat_scalar_long,
-        rat_tissue_long
-    )
+            rat_scalar_long,
+            rat_tissue_long
+        ) |>
+        dplyr::rename(
+            parameter = Parameter,
+            context = Tissue,
+            value = Value,
+            unit = Unit,
+            reference = Reference,
+            assumption = Assumption
+        ) |>
+        dplyr::mutate(
+            type = ifelse(is.na(context), "scalar", "tissue")
+        )
 
-    # Step 7: Create Physiology objects (STILL NOT WORKING. ALSO UPDATE PHYSIOLOGY CLASS DEF)
-    rat_list <- base::split(rat_long,rat_long$ID) |>
-        lapply(function(df) {
-            phys <- Physiology$new()
-
-            # Add metadata scalars
-            phys$add_scalar("species", unique(df$species))
-            phys$add_scalar("strain", unique(df$strain))
-            phys$add_scalar("sex", unique(df$sex))
-
-            # Add all other parameters
-            for (i in seq_len(nrow(df))) {
-                param <- df$Parameter[i]
-                tissue <- df$Tissue[i]
-                val <- df$Value[i]
-                unit <- ifelse("Unit" %in% names(df), df$Unit[i], "")
-
-                if (is.na(tissue) || tissue == "") {
-                    phys$add_scalar(param, val, unit)
-                } else {
-                    phys$add_tissue_param(tissue, param, val, unit)
-                }
-            }
-            phys
-        })
+    # Step 7: Create Physiology objects
+        rat_long_split <- rat_long |> dplyr::select(-ID) |> split(rat_long$ID)
+        rat_meta_split <- rat_meta |> dplyr::select(-ID) |> split(rat_meta$ID)
+        rat_list <- Map(
+            function(param, meta) list(param = param, meta = meta),
+            rat_long_split,
+            rat_meta_split
+        )
 
 
 }

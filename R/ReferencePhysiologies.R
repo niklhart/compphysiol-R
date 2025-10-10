@@ -27,3 +27,18 @@ human35m <- function() {
     phys
 }
 
+
+#' Reference physiology of a young rat
+#'
+#' @export
+rat250 <- function() {
+    .physiologies$rat250$clone(deep = TRUE)
+}
+
+
+#' Reference physiology of an old rat
+#'
+#' @export
+rat475 <- function() {
+    .physiologies$rat475$clone(deep = TRUE)
+}

@@ -1,41 +1,120 @@
-test_that("lumping is exact in a simple toy model", {
+test_that("lumping is exact in a 3-CMT model with identical peripherals", {
+
+    M <- multiCompModel(ncomp = 3, type = "micro")
+    M$addDosing(Dosing$new(target = "C1", time = 0, amount = 10))
+    L <- lump_model(M,
+                    partitioning = list(c("C2","C3")),
+                    normalize = list(
+                        C2 = "k21",
+                        C3 = "k31"
+                    )
+    )
+
+    # same intercompartmental clearances --> identical kinetic timescales
+    param <- list(CL = 5, V1 = 1, V2 = 5, V3 = 10, Q12 = 3, Q13 = 3)
+    param <- list(k10 = 5, V1 = 1, k12 = 5, k13 = 10, k21 = 3, k31 = 3)
+
+    odeinfoM <- M$toODE(paramValues = param)
+    odeinfoL <- L$toODE(paramValues = param)
+
+    times <- 0:6
+
+    outM <- deSolve::ode(y = odeinfoM$y0, times = times, func = odeinfoM$odefun, events = odeinfoM$events)
+    outL <- deSolve::ode(y = odeinfoL$y0, times = times, func = odeinfoL$odefun, events = odeinfoL$events)
+
+    expect_equal(outM[,2],outL[,2], tolerance = 1e-5)
+    expect_equal(outM[,3]+outM[,4], outL[,3] , tolerance = 1e-5)
+})
+
+
+test_that("lumping works for 2-CMT blood/tissue model with CL", {
 
     M <- CompartmentModel$new()
 
-    M$addCompartment("art", 0)
-   # M$addCompartment("gut", 0)
-   # M$addCompartment("mus", 0)
-    M$addCompartment("liv", 0)
-    M$addCompartment("lun", 0)
-    M$addCompartment("ven", 0)
+    M$addCompartment("blo", 10)
+    M$addCompartment("tis", 0)
 
-    # organs with arterial inflow
-   # M$addReaction("art", "gut", "Qgut * art / Vart")
-   # M$addReaction("art", "mus", "Qmus * art / Vart")
+    M$addReaction("blo","tis","Q*blo/Vblo")
+    M$addReaction("tis","blo","Q*tis/(Vtis*Ktis)")
+    M$addReaction("tis","","CL*tis/(Vtis*Ktis)")
 
-    # handle organ topology w.r.t. liver
-    M$addReaction("art", "liv", "(Qliv-Qgut) * art / Vart")
-    # M$addReaction("art", "liv", "(Qliv-Qgut) * art / Vart")
-    #    M$addReaction("gut", "liv", "Qgut * gut / (Vgut * Kgut)")
+    L <- lump_model(M,
+                    partitioning = list(c("blo","tis")),
+                    normalize = list(
+                        blo = "Vblo",
+                        tis = "Vtis*Ktis*Q/(Q+CL)"
+                    ))
 
-    # organs with venous outflow
-    M$addReaction("liv", "ven", "Qliv * liv / (Vliv * Kliv)")
-   # M$addReaction("mus", "ven", "Qmus * mus / (Vmus * Kmus)")
+    Lref <- CompartmentModel$new()
+    Lref$addCompartment("blo_tis", 10)
+    Lref$addReaction("blo_tis","","CL*Q/(Vblo*(Q+CL)+Vtis*Ktis*Q) * blo_tis")
 
-    # lung
-    M$addReaction("ven", "lun", "co * ven / Vven")
-    M$addReaction("lun", "art", "co * lun / (Vlun * Klun)")
+    param <- list(
+        Q = 1,
+        Vblo = 1,
+        Vtis = 3,
+        Ktis = 10,
+        CL = 2
+    )
+    times <- 0:6
 
-    # liver metabolism
-   # M$addReaction("liv", "", "CL * liv / (Vliv * Kliv)")
+    odeinfoL    <- L$toODE(paramValues = param)
+    odeinfoLref <- Lref$toODE(paramValues = param)
 
-    L <- lump_model(M, partitioning = list(c("art", "lun", "ven")))
+    outL    <- deSolve::ode(y = odeinfoL$y0, times = times, func = odeinfoL$odefun)
+    outLref <- deSolve::ode(y = odeinfoLref$y0, times = times, func = odeinfoLref$odefun)
 
-#    print(vapply(L$compartments, `[[`, "", "name"))
-
-    L$reactions[[1]]$from  # "art+lun+ven"
-    L$reactions[[1]]$to    # "liv"
-
-    skip("Lumping scheme not fully finished yet, skipping.")
+    expect_equal(outL,outLref)
 
 })
+
+test_that("lumping handles first-pass effect correctly", {
+
+    skip("Illustration of first-pass effect issue")
+
+    M <- CompartmentModel$new()
+
+    M$addCompartment("gut", 10)
+    M$addCompartment("liv", 0)
+    M$addCompartment("blo", 0)
+
+    M$addReaction("blo","liv","Q*blo/Vblo")
+    M$addReaction("liv","blo","Q*liv/(Vliv*Kliv)")
+    M$addReaction("liv","",   "CL*liv/(Vliv*Kliv)")
+    M$addReaction("gut","liv","ka*gut")
+
+    L <- lump_model(M,
+                    partitioning = list(sys=c("blo","liv")),
+                    normalize = list(
+                        blo = "Vblo",
+                        liv = "Vliv*Kliv*Q/(Q+CL)"
+                    ))
+
+    param <- list(
+        Q = 1,
+        Vblo = 10,
+        Vliv = 1,
+        Kliv = 10,
+        CL = 10,
+        ka = 1
+    )
+    times <- 0:6
+
+    odeinfoM    <- M$toODE(paramValues = param)
+    odeinfoL    <- L$toODE(paramValues = param)
+
+    outM    <- deSolve::ode(y = odeinfoM$y0, times = times, func = odeinfoM$odefun)
+    outL    <- deSolve::ode(y = odeinfoL$y0, times = times, func = odeinfoL$odefun)
+
+    # blo+liv and sys should be in the same ballpark, but they are very
+    # different due to the first-pass effect.
+    expect_equal(
+        outL[,'sys'],
+        rowSums(outM[,c('blo','liv')]),
+        tol = 1
+    )
+
+})
+
+
+

@@ -23,7 +23,8 @@ CompartmentModel$set("public", "toAnalytical", function(paramValues = list()) {
     colnames(A) <- stateNames
 
     # Track free parameters
-    freeParams <- character()
+    freeParams <- new.env(parent = emptyenv())
+    freeParams$list <- character()
 
     # ---- Process each reaction ----
     for (r in self$reactions) {
@@ -44,7 +45,7 @@ CompartmentModel$set("public", "toAnalytical", function(paramValues = list()) {
         coef_symbols <- all.vars(parse(text = coef_str))
         coef_symbols <- setdiff(coef_symbols, names(paramValues))
         coef_symbols <- setdiff(coef_symbols, stateNames)
-        freeParams <- c(freeParams, coef_symbols)
+        freeParams$list <- c(freeParams$list, coef_symbols)
         for (s in coef_symbols) {
             coef_str <- gsub(paste0("\\b", s, "\\b"), paste0('params[["', s, '"]]'), coef_str)
         }
@@ -89,11 +90,23 @@ CompartmentModel$set("public", "toAnalytical", function(paramValues = list()) {
         cbind(time = t, res)
     }
 
+    # Observables (same substitution logic)
+    obsFuncs <- lapply(self$observables, function(o) {
+        expr_lang <- substitute_expr(o$expr, stateNames, name2idx,
+                        paramValues = paramValues,
+                        freeParamsEnv = freeParams,
+                        obsFunc = TRUE)
+        expr_str  <- paste(deparse(expr_lang, width.cutoff = 500), collapse = " ")
+        eval(parse(text = paste0("function(t,y,params) ", expr_str)))
+    })
+    names(obsFuncs) <- vapply(self$observables, function(o) o$name, "")
+
     # ---- Output ----
     list(
         statefun   = statefun,
         stateNames = stateNames,
-        freeParams = sort(unique(freeParams)),
+        freeParams = sort(unique(freeParams$list)),
+        obsFuncs   = obsFuncs,
         A          = A
     )
 })

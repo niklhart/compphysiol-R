@@ -6,12 +6,17 @@
 #' @export
 Physiology <- R6::R6Class("Physiology",
                           public = list(
+
                               #' @field param_table Data frame with physiology parameters
                               param_table = NULL,
 
+                              #' @field meta Categorical metadata (sex, strain, etc.)
+                              meta = list(),
+
                               #' @description Initialize physiology
                               #' @param params Optional initial parameter table
-                              initialize = function(params = NULL) {
+                              #' @param meta Categorical metadata (species, sex, etc.)
+                              initialize = function(params = NULL, meta = NULL) {
                                   self$param_table <- data.frame(
                                       parameter  = character(),
                                       context    = character(),   # "scalar" or tissue name
@@ -58,8 +63,25 @@ Physiology <- R6::R6Class("Physiology",
                                   invisible(self)
                               },
 
-                              #' @description Get a parameter by name and context
+                              #' @description
+                              #' Add metadata (categorical attributes) as name-value pairs.
+                              #' @param ... Name-value pairs.
+                              add_meta = function(...) {
+                                  dots <- list(...)
+                                  if (length(dots) == 0) return(invisible(self))
+                                  self$meta <- modifyList(self$meta, dots)
+                                  invisible(self)
+                              },
+
+                              #' @description Get numeric parameter or metadata by name (and optionally context)
+                              #' @param name Name of the parameter or metadata entry to be queried
+                              #' @param context A string, defaulting to `"scalar"`
                               get = function(name, context = "scalar") {
+                                  # First check metadata
+                                  if (name %in% names(self$meta)) {
+                                      return(self$meta[[name]])
+                                  }
+                                  # Otherwise, numeric parameters
                                   row <- subset(self$param_table,
                                                 parameter == name & context == context)
                                   if (nrow(row) == 0) return(NA)
@@ -80,7 +102,8 @@ Physiology <- R6::R6Class("Physiology",
                                           out[[nm]] <- row$value
                                       }
                                   }
-                                  out
+                                  # merge metadata at the end
+                                  c(out, self$meta)
                               },
 
                               #' @description Summarize Physiology as a string.
@@ -89,36 +112,48 @@ Physiology <- R6::R6Class("Physiology",
                               },
 
                               #' @description Display a Physiology object.
+                              #' @examples
+                              #' p <- Physiology$new()
+                              #' p$add_meta(species = "rat", strain = "Wistar", sex = "male")
+                              #' P$add_scalar(age = 20, BW = 250)
                               print = function(...) {
-                                  n <- nrow(self$param_table)
-
-                                  if (n == 0) {
-                                      cat("<Physiology: empty>\n")
-                                      return(invisible(self))
+                                  # ---- 1. Header with metadata ----
+                                  meta_str <- ""
+                                  if (length(self$meta) > 0) {
+                                      shown_meta <- head(paste0(names(self$meta), "=", self$meta), 3)
+                                      meta_str <- paste(shown_meta, collapse = ", ")
+                                      if (length(self$meta) > 3) meta_str <- paste0(meta_str, ", ...")
                                   }
 
-                                  # Separate scalars and tissue parameters
+                                  header <- "<Physiology>"
+                                  if (meta_str != "") {
+                                      header <- paste0(header, " (", meta_str, ")")
+                                  }
+
+                                  cat(header, "\n", sep = "")
+
+                                  # ---- 2. Scalars ----
                                   scalars <- subset(self$param_table, type == "scalar")
-                                  tissues <- subset(self$param_table, type == "tissue")
-
-                                  # Build scalar name-value pairs
-                                  scalar_str <- ""
                                   if (nrow(scalars) > 0) {
-                                      max_show <- 5L
-                                      shown <- head(scalars, max_show)
-                                      scalar_pairs <- paste0(shown$parameter, "=", trimws(formatC(shown$value, digits=3, format="fg")))
-                                      scalar_str <- paste(scalar_pairs, collapse=", ")
-                                      if (nrow(scalars) > max_show)
-                                          scalar_str <- paste0(scalar_str, ", ... (", nrow(scalars), " total)")
+                                      shown_scalars <- head(paste0(scalars$parameter, "=", scalars$value), 3)
+                                      scalar_str <- paste(shown_scalars, collapse = ", ")
+                                      if (nrow(scalars) > 3) scalar_str <- paste0(scalar_str, ", ...")
                                   } else {
-                                      scalar_str <- "no scalar parameters"
+                                      scalar_str <- "none"
+                                  }
+                                  cat("  Scalars: ", scalar_str, "\n", sep = "")
+
+                                  # ---- 3. Tissue stats ----
+                                  tissues <- subset(self$param_table, type != "scalar")
+                                  if (nrow(tissues) > 0) {
+                                      ntis <- length(unique(tissues$context))
+                                      npar <- length(unique(tissues$parameter))
+                                      cat("  Tissue parameters: ", nrow(tissues),
+                                          " entries (", ntis, " tissues, ", npar, " parameters)\n", sep = "")
+                                  } else {
+                                      cat("  Tissue parameters: none\n")
                                   }
 
-                                  # Tissue summary
-                                  tissue_count <- nrow(tissues)
-                                  tissue_str <- if (tissue_count > 0) paste0(tissue_count, " tissue parameters") else "no tissue parameters"
-
-                                  cat("Physiology:", scalar_str, "|", tissue_str, "\n")
                                   invisible(self)
                               }
 

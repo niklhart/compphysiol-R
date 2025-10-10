@@ -11,10 +11,22 @@ Physiology Class
 \details{
 Stores physiological parameters in a transparent tabular structure.
 }
+\examples{
+
+## ------------------------------------------------
+## Method `Physiology$print`
+## ------------------------------------------------
+
+p <- Physiology$new()
+p$add_meta(species = "rat", strain = "Wistar", sex = "male")
+P$add_scalar(age = 20, BW = 250)
+}
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
 \item{\code{param_table}}{Data frame with physiology parameters}
+
+\item{\code{meta}}{Categorical metadata (sex, strain, etc.)}
 }
 \if{html}{\out{</div>}}
 }
@@ -24,6 +36,7 @@ Stores physiological parameters in a transparent tabular structure.
 \item \href{#method-Physiology-new}{\code{Physiology$new()}}
 \item \href{#method-Physiology-add_scalar}{\code{Physiology$add_scalar()}}
 \item \href{#method-Physiology-add_tissue_param}{\code{Physiology$add_tissue_param()}}
+\item \href{#method-Physiology-add_meta}{\code{Physiology$add_meta()}}
 \item \href{#method-Physiology-get}{\code{Physiology$get()}}
 \item \href{#method-Physiology-to_param_list}{\code{Physiology$to_param_list()}}
 \item \href{#method-Physiology-summary}{\code{Physiology$summary()}}
@@ -37,13 +50,15 @@ Stores physiological parameters in a transparent tabular structure.
 \subsection{Method \code{new()}}{
 Initialize physiology
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Physiology$new(params = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Physiology$new(params = NULL, meta = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{params}}{Optional initial parameter table}
+
+\item{\code{meta}}{Categorical metadata (species, sex, etc.)}
 }
 \if{html}{\out{</div>}}
 }
@@ -108,14 +123,40 @@ Add a tissue parameter (e.g. volume, flow)
 }
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Physiology-add_meta"></a>}}
+\if{latex}{\out{\hypertarget{method-Physiology-add_meta}{}}}
+\subsection{Method \code{add_meta()}}{
+Add metadata (categorical attributes) as name-value pairs.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Physiology$add_meta(...)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{...}}{Name-value pairs.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Physiology-get"></a>}}
 \if{latex}{\out{\hypertarget{method-Physiology-get}{}}}
 \subsection{Method \code{get()}}{
-Get a parameter by name and context
+Get numeric parameter or metadata by name (and optionally context)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Physiology$get(name, context = "scalar")}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{name}}{Name of the parameter or metadata entry to be queried}
+
+\item{\code{context}}{A string, defaulting to \code{"scalar"}}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Physiology-to_param_list"></a>}}
@@ -146,6 +187,16 @@ Summarize Physiology as a string.
 Display a Physiology object.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Physiology$print(...)}\if{html}{\out{</div>}}
+}
+
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{p <- Physiology$new()
+p$add_meta(species = "rat", strain = "Wistar", sex = "male")
+P$add_scalar(age = 20, BW = 250)
+}
+\if{html}{\out{</div>}}
+
 }
 
 }

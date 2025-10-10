@@ -34,3 +34,20 @@ test_that("2-CMT model can be solved analytically", {
     expect_equal(y_aly,y_num, tolerance = 1e-4)
 
 })
+
+test_that("1-CMT model observables are correctly handled", {
+
+    M <- multiCompModel(ncomp = 1, type = "micro")
+    M$compartments[[1]]$initial <- 10
+
+    params <- list(k10 = 1, V1 = 2)
+
+    sol_aly <- M$toAnalytical(paramValues = params)
+    sol_num <- M$toODE(paramValues = params)
+
+    expect_identical(
+        functionBody(sol_num$obsFuncs$C1Conc),
+        functionBody(sol_aly$obsFuncs$C1Conc)
+    )
+
+})
