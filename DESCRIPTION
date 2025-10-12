@@ -1,6 +1,6 @@
 Package: compphysiol
 Type: Package
-Title: R version of computational physiology toolbox
+Title: Computational Physiology toolbox
 Version: 0.1.0
 Authors@R: c(
     person(
