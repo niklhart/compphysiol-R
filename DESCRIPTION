@@ -16,7 +16,8 @@ Imports:
     deSolve,
     dplyr,
     tidyr,
-    tibble
+    tibble,
+    expm
 Description: More about what it does (maybe more than one line).
     Continuation lines should be indented.
 License: MIT
