@@ -16,9 +16,6 @@
 #'
 #' @param phys An object of class `Physiology` which defines the following
 #'      options for each tissue in argument `organs`:
-#'      \describe{
-#'          \item{TO DO}
-#'      }
 #' @param drug An object of class `DrugData`.
 #' @param organs A character array of valid organ (compartment) names
 #'      (e.g. `"adi"`,`"bon"`,...).

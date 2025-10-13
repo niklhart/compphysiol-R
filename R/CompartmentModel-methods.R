@@ -28,9 +28,9 @@ CompartmentModel$set("public", "print", function(...) {
     if (length(self$reactions) > 0) {
         cat(" Reactions:\n")
         for (r in self$reactions) {
-            from <- if (!is.null(r$from) && r$from != "") r$from else "∅"
-            to   <- if (!is.null(r$to)   && r$to   != "") r$to   else "∅"
-            cat("   -", from, "→", to, ":", deparse(r$rate), "\n")
+            from <- if (!is.null(r$from) && r$from != "") r$from else "\u2205"
+            to   <- if (!is.null(r$to)   && r$to   != "") r$to   else "\u2205"
+            cat("   -", from, "\u2192", to, ":", deparse(r$rate), "\n")
         }
     } else {
         cat(" Reactions: (none)\n")
@@ -53,7 +53,7 @@ CompartmentModel$set("public", "print", function(...) {
         for (i in seq_len(nrow(events))) {
             ev <- events[i, ]
             cat("   - at t =", ev$time,
-                ":", ev$method, ev$value, "→", ev$var, "\n")
+                ":", ev$method, ev$value, "\u2192", ev$var, "\n")
         }
     } else {
         cat(" Dosing: (none)\n")
@@ -133,7 +133,7 @@ CompartmentModel$set("public", "addDosing", function(dose) {
         if (!(bagName %in% names(self$compartments))) self$addCompartment(bagName, 0)
         if (!(rateName %in% names(self$compartments))) self$addCompartment(rateName, 0)
 
-        # add zero-order reaction from bag → target, rate = InfusionRate compartment
+        # add zero-order reaction from bag to  target, rate = InfusionRate compartment
         self$addReaction(bagName, dose$target, paste0(rateName))
 
         # create bolus into the bag

@@ -69,7 +69,7 @@ Physiology <- R6::R6Class("Physiology",
                               add_meta = function(...) {
                                   dots <- list(...)
                                   if (length(dots) == 0) return(invisible(self))
-                                  self$meta <- modifyList(self$meta, dots)
+                                  self$meta <- utils::modifyList(self$meta, dots)
                                   invisible(self)
                               },
 
@@ -113,9 +113,9 @@ Physiology <- R6::R6Class("Physiology",
 
                               #' @description Display a Physiology object.
                               #' @examples
-                              #' p <- Physiology$new()
-                              #' p$add_meta(species = "rat", strain = "Wistar", sex = "male")
-                              #' P$add_scalar(age = 20, BW = 250)
+                              #' P <- Physiology$new()
+                              #' P$add_meta(species = "rat", strain = "Wistar", sex = "male")
+                              #' P$add_scalar(name = "BW", value = 250)
                               print = function(...) {
                                   # ---- 1. Header with metadata ----
                                   meta_str <- ""

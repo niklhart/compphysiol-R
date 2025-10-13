@@ -17,9 +17,9 @@ Stores physiological parameters in a transparent tabular structure.
 ## Method `Physiology$print`
 ## ------------------------------------------------
 
-p <- Physiology$new()
-p$add_meta(species = "rat", strain = "Wistar", sex = "male")
-P$add_scalar(age = 20, BW = 250)
+P <- Physiology$new()
+P$add_meta(species = "rat", strain = "Wistar", sex = "male")
+P$add_scalar(name = "BW", value = 250)
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
@@ -191,9 +191,9 @@ Display a Physiology object.
 
 \subsection{Examples}{
 \if{html}{\out{<div class="r example copy">}}
-\preformatted{p <- Physiology$new()
-p$add_meta(species = "rat", strain = "Wistar", sex = "male")
-P$add_scalar(age = 20, BW = 250)
+\preformatted{P <- Physiology$new()
+P$add_meta(species = "rat", strain = "Wistar", sex = "male")
+P$add_scalar(name = "BW", value = 250)
 }
 \if{html}{\out{</div>}}
 

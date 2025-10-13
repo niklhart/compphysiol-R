@@ -18,9 +18,8 @@ Imports:
     tidyr,
     tibble,
     expm
-Description: More about what it does (maybe more than one line).
-    Continuation lines should be indented.
-License: MIT
+Description: Toolbox for computational physiology, in particular physiologically-based pharmacokinetic (PBPK) modeling.
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Suggests: 

@@ -83,7 +83,7 @@ substitute_expr <- function(expr, stateNames, name2idx,
 #' @return A new expression with symbols replaced.
 #' @examples
 #' expr <- quote(a * b / c + a)
-#' replace_symbols(expr, c("a", "b"), c("A", "B"))
+#' .replace_symbols(expr, c("a", "b"), c("A", "B"))
 #' # Returns: quote(A * B / c + A)
 #'
 #' @noRd
@@ -142,7 +142,7 @@ substitute_expr <- function(expr, stateNames, name2idx,
 #' .suffix_symbols(expr, "_s", skip = c("c", "d"))
 #' # Returns: quote(a_s * b_s + f(c, g(d)))
 #'
-#' @export
+#' @noRd
 .suffix_symbols <- function(expr, suffix, skip = character()) {
 
     recurse <- function(e) {

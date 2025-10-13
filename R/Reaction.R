@@ -14,10 +14,10 @@ Reaction <- R6::R6Class("Reaction",
             self$rate <- .as_call(rate)
         },
         print = function(...) {
-            from <- if (!is.null(self$from) && self$from != "") self$from else "∅"
-            to   <- if (!is.null(self$to)   && self$to   != "") self$to   else "∅"
+            from <- if (!is.null(self$from) && self$from != "") self$from else "\u2205"
+            to   <- if (!is.null(self$to)   && self$to   != "") self$to   else "\u2205"
 
-            cat(sprintf("Reaction: %s -> %s, rate = %s\n",
+            cat(sprintf("Reaction: %s \u2192 %s, rate = %s\n",
                         from, to, deparse(self$rate)))
         }
     )
@@ -79,7 +79,7 @@ Reaction$set("public", "rateConstant", function(stateNames) {
 
     # Recursive function to find the coefficient
     extractCoef <- function(e) {
-        # If the node is the source state symbol → replace with 1
+        # If the node is the source state symbol --> replace with 1
         if (is.symbol(e) && as.character(e) == src_state) return(1)
 
         # If it is a call, recurse into it, taking special care of "*"

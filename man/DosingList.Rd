@@ -6,6 +6,20 @@
 \usage{
 DosingList(target, time, amount = NULL, rate = NULL, duration = NULL)
 }
+\arguments{
+\item{target}{Target compartment name (character scalar)}
+
+\item{time}{Time(s) of dose(s) (numeric vector, non-negative)}
+
+\item{amount}{Amount(s) of dose(s) (numeric vector, non-negative, optional)}
+
+\item{rate}{Infusion rate(s) (numeric vector, non-negative, optional)}
+
+\item{duration}{Infusion duration(s) (numeric vector, positive, optional)}
+}
+\value{
+A list of \code{Dosing} objects.
+}
 \description{
 If \code{time} (and optionally \code{amount}, etc.) are vectors, returns
 a list of \code{Dosing} objects. Otherwise, returns a single Dosing.

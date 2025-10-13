@@ -88,11 +88,11 @@ Dosing <- R6::R6Class("Dosing",
 Dosing$set("public", "print", function(...) {
     if (self$isBolus()) {
         cat("<Dosing> Bolus:",
-            self$amount, "→", self$target,
+            self$amount, "\u2192", self$target,
             "at t =", self$time, "\n")
     } else if (self$isInfusion()) {
         cat("<Dosing> Infusion:",
-            self$amount, "→", self$target,
+            self$amount, "\u2192", self$target,
             "from t =", self$time,
             "to t =", self$time + self$duration,
             "(rate =", self$rate, ")\n")
@@ -108,6 +108,12 @@ Dosing$set("public", "print", function(...) {
 #' If `time` (and optionally `amount`, etc.) are vectors, returns
 #' a list of `Dosing` objects. Otherwise, returns a single Dosing.
 #'
+#' @param target Target compartment name (character scalar)
+#' @param time Time(s) of dose(s) (numeric vector, non-negative)
+#' @param amount Amount(s) of dose(s) (numeric vector, non-negative, optional)
+#' @param rate Infusion rate(s) (numeric vector, non-negative, optional)
+#' @param duration Infusion duration(s) (numeric vector, positive, optional)
+#' @return A list of `Dosing` objects.
 #' @examples
 #' DosingList("Central", time = c(0, 24, 48), amount = 100)
 #' DosingList("Central", time = 0, amount = 50)

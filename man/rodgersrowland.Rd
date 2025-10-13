@@ -16,10 +16,7 @@ rodgersrowland(
 }
 \arguments{
 \item{phys}{An object of class \code{Physiology} which defines the following
-options for each tissue in argument \code{organs}:
-\describe{
-\item{TO DO}
-}}
+options for each tissue in argument \code{organs}:}
 
 \item{drug}{An object of class \code{DrugData}.}
 
