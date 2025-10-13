@@ -1,6 +1,13 @@
 # compphysiol: Computational Physiology toolbox
 
 
+<!-- badges: start -->
+
+[![R-CMD-check](https://github.com/niklhart/compphysiol-R/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/niklhart/compphysiol-R/actions/workflows/R-CMD-check.yaml)
+[![Codecov test
+coverage](https://codecov.io/gh/niklhart/compphysiol-R/graph/badge.svg)](https://app.codecov.io/gh/niklhart/compphysiol-R)
+<!-- badges: end -->
+
 The Computational Physiology Toolbox is an R package for computations
 with physiology-based models, in particular physiologically-based
 pharmacokinetic (PBPK) models. It features a modular object-oriented
