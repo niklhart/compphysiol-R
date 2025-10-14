@@ -6,6 +6,9 @@
 \usage{
 rat250()
 }
+\value{
+A \code{Physiology} object
+}
 \description{
 Reference physiology of a young rat
 }

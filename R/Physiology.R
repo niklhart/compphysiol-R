@@ -116,6 +116,8 @@ Physiology <- R6::R6Class("Physiology",
                               #' P <- Physiology$new()
                               #' P$add_meta(species = "rat", strain = "Wistar", sex = "male")
                               #' P$add_scalar(name = "BW", value = 250)
+                              #' @param ... Additional arguments (not used)
+                              #' @return The `Physiology` object (invisible)
                               print = function(...) {
                                   # ---- 1. Header with metadata ----
                                   meta_str <- ""

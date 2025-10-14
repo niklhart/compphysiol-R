@@ -4,7 +4,23 @@
 \alias{Reaction}
 \title{Reaction Class}
 \description{
+Reaction Class
+
+Reaction Class
+}
+\details{
 Represents a model reaction.
+}
+\section{Public fields}{
+\if{html}{\out{<div class="r6-fields">}}
+\describe{
+\item{\code{from}}{Source compartment name (character scalar, or NULL for source)}
+
+\item{\code{to}}{Target compartment name (character scalar, or NULL for sink)}
+
+\item{\code{rate}}{Rate expression (as an R call)}
+}
+\if{html}{\out{</div>}}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -20,37 +36,90 @@ Represents a model reaction.
 \if{html}{\out{<a id="method-Reaction-new"></a>}}
 \if{latex}{\out{\hypertarget{method-Reaction-new}{}}}
 \subsection{Method \code{new()}}{
+Initialize a new \code{Reaction} object.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Reaction$new(from, to, rate)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{from}}{Source compartment name (character scalar, or NULL for source)}
+
+\item{\code{to}}{Target compartment name (character scalar, or NULL for sink)}
+
+\item{\code{rate}}{Rate expression (character or function)}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A new \code{Reaction} object
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Reaction-print"></a>}}
 \if{latex}{\out{\hypertarget{method-Reaction-print}{}}}
 \subsection{Method \code{print()}}{
+Print the reaction
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Reaction$print(...)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{...}}{Additional arguments (not used)}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+The \code{Reaction} object (invisible)
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Reaction-isLinear"></a>}}
 \if{latex}{\out{\hypertarget{method-Reaction-isLinear}{}}}
 \subsection{Method \code{isLinear()}}{
+Check if the reaction is linear with respect to its source compartment.
+A reaction is linear if its rate expression is of the form \code{k * X},
+where \code{k} is a constant (not depending on any compartment) and \code{X}
+is the source compartment.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Reaction$isLinear(stateNames)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{stateNames}}{Character vector of valid compartment names}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+\code{TRUE} if the reaction is linear, \code{FALSE} otherwise
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Reaction-rateConstant"></a>}}
 \if{latex}{\out{\hypertarget{method-Reaction-rateConstant}{}}}
 \subsection{Method \code{rateConstant()}}{
+Extract the rate constant from a linear reaction.
+If the reaction is not linear, returns \code{NA}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Reaction$rateConstant(stateNames)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{stateNames}}{Character vector of valid compartment names}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Character string representing the rate constant expression, or \code{NA}
+if the reaction is not linear.
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Reaction-clone"></a>}}

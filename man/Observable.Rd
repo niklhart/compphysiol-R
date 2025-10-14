@@ -4,7 +4,21 @@
 \alias{Observable}
 \title{Observable Class}
 \description{
+Observable Class
+
+Observable Class
+}
+\details{
 Represents a model observable
+}
+\section{Public fields}{
+\if{html}{\out{<div class="r6-fields">}}
+\describe{
+\item{\code{name}}{Name of the observable}
+
+\item{\code{expr}}{Expression (as an R call)}
+}
+\if{html}{\out{</div>}}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -18,19 +32,43 @@ Represents a model observable
 \if{html}{\out{<a id="method-Observable-new"></a>}}
 \if{latex}{\out{\hypertarget{method-Observable-new}{}}}
 \subsection{Method \code{new()}}{
+Initialize a new \code{Observable} object.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Observable$new(name, expr)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{name}}{Name of the observable}
+
+\item{\code{expr}}{Expression (character or function)}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A new \code{Observable} object
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Observable-print"></a>}}
 \if{latex}{\out{\hypertarget{method-Observable-print}{}}}
 \subsection{Method \code{print()}}{
+Print the observable
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Observable$print(...)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{...}}{Additional arguments (not used)}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+The \code{Observable} object (invisible)
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Observable-clone"></a>}}

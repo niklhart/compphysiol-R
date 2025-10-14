@@ -25,83 +25,106 @@
 #'
 #' @export
 Dosing <- R6::R6Class("Dosing",
-                      public = list(
-                          target = NULL,
-                          amount = NULL,    # total amount for bolus or preloaded bag
-                          time = NULL,      # start time
-                          rate = NULL,      # infusion rate
-                          duration = NULL,  # infusion duration
+    public = list(
+        #' @field target Target compartment name (character scalar)
+        target = NULL,
+        #' @field amount Total amount for bolus or preloaded bag (numeric scalar, non-negative)
+        amount = NULL,
+        #' @field time Time of dose (numeric scalar, non-negative)
+        time = NULL,
+        #' @field rate Infusion rate (numeric scalar, non-negative, NULL for bolus)
+        rate = NULL,
+        #' @field duration Infusion duration (numeric scalar, positive, NULL for bolus)
+        duration = NULL,
 
-                          initialize = function(target, time, amount = NULL, rate = NULL, duration = NULL) {
-                              stopifnot(!is.null(target), is.character(target), nzchar(target))
-                              stopifnot(!is.null(time), is.numeric(time), length(time) == 1, time >= 0)
+        #' @description
+        #' Initialize a new `Dosing` object.
+        #' @param target Target compartment name (character scalar)
+        #' @param time Time of dose (numeric scalar, non-negative)
+        #' @param amount Amount of dose (numeric scalar, non-negative, optional)
+        #' @param rate Infusion rate (numeric scalar, non-negative, optional)
+        #' @param duration Infusion duration (numeric scalar, positive, optional)
+        #' @return A new `Dosing` object
+        initialize = function(target, time, amount = NULL, rate = NULL, duration = NULL) {
+            stopifnot(!is.null(target), is.character(target), nzchar(target))
+            stopifnot(!is.null(time), is.numeric(time), length(time) == 1, time >= 0)
 
-                              self$target <- target
-                              self$time <- time
+            self$target <- target
+            self$time <- time
 
-                              # bolus: only amount is given
-                              if (!is.null(amount) && is.null(rate) && is.null(duration)) {
-                                  stopifnot(is.numeric(amount), length(amount) == 1, amount >= 0)
+            # bolus: only amount is given
+            if (!is.null(amount) && is.null(rate) && is.null(duration)) {
+                stopifnot(is.numeric(amount), length(amount) == 1, amount >= 0)
 
-                                  self$amount <- amount
-                                  self$rate <- NULL
-                                  self$duration <- NULL
-                                  return(invisible(self))
-                              }
+                self$amount <- amount
+                self$rate <- NULL
+                self$duration <- NULL
+                return(invisible(self))
+            }
 
-                              # infusion: need exactly two of the three (amount, rate, duration)
-                              nset <- sum(!sapply(list(amount, rate, duration), is.null))
-                              if (nset != 2) {
-                                  stop("Infusion dosing requires exactly two of: amount, rate, duration.")
-                              }
+            # infusion: need exactly two of the three (amount, rate, duration)
+            nset <- sum(!sapply(list(amount, rate, duration), is.null))
+            if (nset != 2) {
+                stop("Infusion dosing requires exactly two of: amount, rate, duration.")
+            }
 
-                              if (is.null(amount)) {
-                                  amount <- rate * duration
-                              } else if (is.null(rate)) {
-                                  rate <- amount / duration
-                              } else if (is.null(duration)) {
-                                  duration <- amount / rate
-                              }
+            if (is.null(amount)) {
+                amount <- rate * duration
+            } else if (is.null(rate)) {
+                rate <- amount / duration
+            } else if (is.null(duration)) {
+                duration <- amount / rate
+            }
 
-                              stopifnot(length(amount) == 1,   amount >= 0,
-                                        length(rate) == 1,     rate >= 0,
-                                        length(duration) == 1, duration > 0)
+            stopifnot(
+                length(amount) == 1,   amount >= 0,
+                length(rate) == 1,     rate >= 0,
+                length(duration) == 1, duration > 0
+            )
 
-                              self$amount <- amount
-                              self$rate <- rate
-                              self$duration <- duration
-                              invisible(self)
+            self$amount <- amount
+            self$rate <- rate
+            self$duration <- duration
+            invisible(self)
 
-                          },
+        },
 
-                          isBolus = function() {
-                              is.null(self$rate) && is.null(self$duration)
-                          },
+        #' @description
+        #' Check if the dosing event is a bolus.
+        #' @return `TRUE` if the dosing is a bolus, `FALSE` otherwise
+        isBolus = function() {
+            is.null(self$rate) && is.null(self$duration)
+        },
+        
+        #' @description
+        #' Check if the dosing event is an infusion.
+        #' @return `TRUE` if the dosing is an infusion, `FALSE` otherwise.
+        isInfusion = function() {
+            !self$isBolus()
+        },
 
-                          isInfusion = function() {
-                              !self$isBolus()
-                          }
-                      )
+        #' @description
+        #' Print a summary of the dosing event.
+        #' @param ... Additional arguments (ignored)
+        #' @return The `Dosing` object (invisible)
+        print = function(...) {
+            if (self$isBolus()) {
+                cat("<Dosing> Bolus:",
+                    self$amount, "\u2192", self$target,
+                    "at t =", self$time, "\n")
+            } else if (self$isInfusion()) {
+                cat("<Dosing> Infusion:",
+                    self$amount, "\u2192", self$target,
+                    "from t =", self$time,
+                    "to t =", self$time + self$duration,
+                    "(rate =", self$rate, ")\n")
+            } else {
+                cat("<Dosing> (invalid)\n")
+            }
+            invisible(self)
+        }
+    )
 )
-
-
-Dosing$set("public", "print", function(...) {
-    if (self$isBolus()) {
-        cat("<Dosing> Bolus:",
-            self$amount, "\u2192", self$target,
-            "at t =", self$time, "\n")
-    } else if (self$isInfusion()) {
-        cat("<Dosing> Infusion:",
-            self$amount, "\u2192", self$target,
-            "from t =", self$time,
-            "to t =", self$time + self$duration,
-            "(rate =", self$rate, ")\n")
-    } else {
-        cat("<Dosing> (invalid)\n")
-    }
-    invisible(self)
-})
-
 
 #' Construct one or more Dosing objects
 #'

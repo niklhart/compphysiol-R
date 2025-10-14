@@ -6,6 +6,9 @@
 \usage{
 rat475()
 }
+\value{
+A \code{Physiology} object
+}
 \description{
 Reference physiology of an old rat
 }

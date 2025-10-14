@@ -162,13 +162,6 @@ sMD_PBPK_12CMT_wellstirred <- function() {
     M
 }
 
-#' Test model for sysdata workflow
-#' @export
-test_model_sysdata <- function() {
-    .models$test_model_sysdata$clone(deep = TRUE)
-}
-
-
 
 #' Create a generic multi-compartment PK model
 #'

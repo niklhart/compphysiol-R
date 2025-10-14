@@ -4,11 +4,14 @@
 \alias{Dosing}
 \title{Dosing specification}
 \description{
+Dosing specification
+
+Dosing specification
+}
+\details{
 Represents a dosing event for a \code{CompartmentModel}. A dose can be
 specified either as a bolus (instantaneous input) or as an infusion
 (continuous input over time).
-}
-\details{
 \subsection{Bolus}{
 
 Provide only \code{amount}. The dose is given at \code{time}.
@@ -33,6 +36,21 @@ Dosing$new("Central", time = 0, amount = 50, duration = 5)
 Dosing$new("Central", time = 0, amount = 50, rate = 10)
 
 }
+\section{Public fields}{
+\if{html}{\out{<div class="r6-fields">}}
+\describe{
+\item{\code{target}}{Target compartment name (character scalar)}
+
+\item{\code{amount}}{Total amount for bolus or preloaded bag (numeric scalar, non-negative)}
+
+\item{\code{time}}{Time of dose (numeric scalar, non-negative)}
+
+\item{\code{rate}}{Infusion rate (numeric scalar, non-negative, NULL for bolus)}
+
+\item{\code{duration}}{Infusion duration (numeric scalar, positive, NULL for bolus)}
+}
+\if{html}{\out{</div>}}
+}
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
@@ -47,37 +65,75 @@ Dosing$new("Central", time = 0, amount = 50, rate = 10)
 \if{html}{\out{<a id="method-Dosing-new"></a>}}
 \if{latex}{\out{\hypertarget{method-Dosing-new}{}}}
 \subsection{Method \code{new()}}{
+Initialize a new \code{Dosing} object.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Dosing$new(target, time, amount = NULL, rate = NULL, duration = NULL)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{target}}{Target compartment name (character scalar)}
+
+\item{\code{time}}{Time of dose (numeric scalar, non-negative)}
+
+\item{\code{amount}}{Amount of dose (numeric scalar, non-negative, optional)}
+
+\item{\code{rate}}{Infusion rate (numeric scalar, non-negative, optional)}
+
+\item{\code{duration}}{Infusion duration (numeric scalar, positive, optional)}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A new \code{Dosing} object
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Dosing-isBolus"></a>}}
 \if{latex}{\out{\hypertarget{method-Dosing-isBolus}{}}}
 \subsection{Method \code{isBolus()}}{
+Check if the dosing event is a bolus.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Dosing$isBolus()}\if{html}{\out{</div>}}
 }
 
+\subsection{Returns}{
+\code{TRUE} if the dosing is a bolus, \code{FALSE} otherwise
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Dosing-isInfusion"></a>}}
 \if{latex}{\out{\hypertarget{method-Dosing-isInfusion}{}}}
 \subsection{Method \code{isInfusion()}}{
+Check if the dosing event is an infusion.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Dosing$isInfusion()}\if{html}{\out{</div>}}
 }
 
+\subsection{Returns}{
+\code{TRUE} if the dosing is an infusion, \code{FALSE} otherwise.
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Dosing-print"></a>}}
 \if{latex}{\out{\hypertarget{method-Dosing-print}{}}}
 \subsection{Method \code{print()}}{
+Print a summary of the dosing event.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Dosing$print(...)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{...}}{Additional arguments (ignored)}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+The \code{Dosing} object (invisible)
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Dosing-clone"></a>}}

@@ -60,6 +60,16 @@ Print a compartment object to the console.
 \if{html}{\out{<div class="r">}}\preformatted{Compartment$print(...)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{...}}{Additional arguments (not used)}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+The \code{Compartment} object (invisible)
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Compartment-clone"></a>}}

@@ -29,7 +29,7 @@ human35m <- function() {
 
 
 #' Reference physiology of a young rat
-#'
+#' @returns A `Physiology` object
 #' @export
 rat250 <- function() {
     .physiologies$rat250$clone(deep = TRUE)
@@ -37,7 +37,7 @@ rat250 <- function() {
 
 
 #' Reference physiology of an old rat
-#'
+#' @returns A `Physiology` object
 #' @export
 rat475 <- function() {
     .physiologies$rat475$clone(deep = TRUE)

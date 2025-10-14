@@ -30,9 +30,12 @@ Compartment <- R6::R6Class("Compartment",
 
                                #' @description
                                #' Print a compartment object to the console.
+                               #' @param ... Additional arguments (not used)
+                               #' @return The `Compartment` object (invisible)
                                print = function(...) {
                                    cat(sprintf("Compartment: %s (initial = %s)\n",
                                                self$name, self$initial))
+                                   invisible(self)
                                }
                            )
 )
