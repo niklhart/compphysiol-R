@@ -14,7 +14,7 @@ rat;dens;lun;1;kg/L;Brown1997;Assumed identical to human density data
 rat;dens;mus;1;kg/L;Brown1997;Assumed identical to human density data
 rat;dens;ski;1;kg/L;Brown1997;Assumed identical to human density data
 rat;dens;spl;1;kg/L;Brown1997;Assumed identical to human density data
-rat;dens;tbl;1;kg/L;Brown1997;Assumed identical to human density data
+rat;denstbl;;1;kg/L;Brown1997;Assumed identical to human density data
 rat250;fowtisBW;adi;10,6;percent;Brown1997;
 rat475;fowtisBW;adi;16;percent;Brown1997;
 rat;fowtisBW;bon;7,3;percent;Brown1997;

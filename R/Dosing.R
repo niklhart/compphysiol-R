@@ -110,14 +110,14 @@ Dosing <- R6::R6Class("Dosing",
         print = function(...) {
             if (self$isBolus()) {
                 cat("<Dosing> Bolus:",
-                    self$amount, "\u2192", self$target,
-                    "at t =", self$time, "\n")
+                    format(self$amount), "\u2192", self$target,
+                    "at t =", format(self$time), "\n")
             } else if (self$isInfusion()) {
                 cat("<Dosing> Infusion:",
-                    self$amount, "\u2192", self$target,
-                    "from t =", self$time,
-                    "to t =", self$time + self$duration,
-                    "(rate =", self$rate, ")\n")
+                    format(self$amount), "\u2192", self$target,
+                    "from t =", format(self$time),
+                    "to t =", format(self$time + self$duration),
+                    "(rate =", format(self$rate), ")\n")
             } else {
                 cat("<Dosing> (invalid)\n")
             }

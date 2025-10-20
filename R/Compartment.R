@@ -33,8 +33,10 @@ Compartment <- R6::R6Class("Compartment",
                                #' @param ... Additional arguments (not used)
                                #' @return The `Compartment` object (invisible)
                                print = function(...) {
+#                                   initial <- as.character(self$initial)
+#                                   if(inherits(self$initial, "units")) initial <- paste(initial,as.character(units::deparse_unit(self$initial)))
                                    cat(sprintf("Compartment: %s (initial = %s)\n",
-                                               self$name, self$initial))
+                                               self$name, format(self$initial)))
                                    invisible(self)
                                }
                            )
