@@ -49,8 +49,8 @@ mergeModels <- function(M1, M2, suffix1 = NULL, suffix2 = NULL,
             model_copy$addCompartment(paste0(c$name, suffix), c$initial)
         }
         for (r in model$reactions) {
-            from <- if (nzchar(r$from)) paste0(r$from, suffix) else ""
-            to   <- if (nzchar(r$to))   paste0(r$to, suffix)   else ""
+            from <- if (!is.null(r$from)) paste0(r$from, suffix)
+            to   <- if (!is.null(r$to))   paste0(r$to, suffix)
 
             rate <- .suffix_symbols(r$rate, suffix = suffix, skip = skip)
             model_copy$addReaction(from, to, rate)

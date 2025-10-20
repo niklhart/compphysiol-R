@@ -21,3 +21,11 @@
         stop("Input must be a character, expression, numeric scalar, or quoted call.")
     }
 }
+
+#' Helper function to check for empty character input
+#' @param x Input to check
+#' @returns `TRUE` if `x` is `NULL`, of length zero, or a single empty string
+#' @noRd
+.is_emptychar <- function(x) {
+    is.null(x) || length(x) == 0L || (length(x) == 1 && x == "")
+}

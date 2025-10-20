@@ -53,7 +53,8 @@ build_physiologies <- function() {
         dplyr::full_join(rat_scalar_wide, by = "ID") |>
         dplyr::mutate(
             OWtis = fowtisBW * BW,
-            OWtot = OWtit / (fintOWtot + fcelOWtot),
+            fcelOWtot = 1 - fintOWtot - fvasOWtot,
+            OWtot = OWtis / (fintOWtot + fcelOWtot),
             fintVtot = fintOWtot,
             fvasVtot = fvasOWtot,
             fcelVtot = 1 - fintVtot - fvasVtot,
@@ -94,12 +95,12 @@ build_physiologies <- function() {
         dplyr::rename(
             parameter = Parameter,
             context = Tissue,
-            value = Value,
-            unit = Unit,
-            reference = Reference,
-            assumption = Assumption
+            value = Value
         ) |>
         dplyr::mutate(
+            unit = NA_character_,             # units in source data currently not used 
+            reference = NA_character_,        # references in source data currently not used
+            assumption = NA_character_,       # assumptions in source data currently not used 
             type = ifelse(is.na(context), "scalar", "tissue")
         )
 

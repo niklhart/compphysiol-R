@@ -71,8 +71,8 @@ CompartmentModel <- R6::R6Class(
             if (length(self$reactions) > 0) {
                 cat(" Reactions:\n")
                 for (r in self$reactions) {
-                    from <- if (!is.null(r$from) && r$from != "") r$from else "\u2205"
-                    to   <- if (!is.null(r$to)   && r$to   != "") r$to   else "\u2205"
+                    from <- if (is.null(r$from)) "\u2205" else paste(r$from, collapse = "+")
+                    to   <- if (is.null(r$to))   "\u2205" else paste(r$to, collapse = "+")
                     cat("   -", from, "\u2192", to, ":", deparse(r$rate), "\n")
                 }
             } else {
@@ -135,9 +135,9 @@ CompartmentModel <- R6::R6Class(
         #' @param from Source compartment
         #' @param to Target compartment
         #' @param rate Rate expression as character
-        #' @param name Optional name
-        addReaction = function(from, to, rate) {
-            self$reactions[[length(self$reactions) + 1]] <- Reaction$new(from, to, rate)
+        #' @param reaction A Reaction object. Constructed from `from`, `to`, and `rate` if not provided.
+        addReaction = function(from, to, rate, reaction = Reaction$new(from, to, rate)) {
+            self$reactions[[length(self$reactions) + 1]] <- reaction
             invisible(self)
         },
 
@@ -350,9 +350,10 @@ CompartmentModel <- R6::R6Class(
 
             # ---- Validation: check that all reactions point to known compartments ----
             check_comp <- function(nm) {
-                if (!is.null(nm) && nzchar(nm) && !(nm %in% stateNames)) {
+                if (!is.null(nm) && any(!(nm %in% stateNames))) {
+                    missing <- nm[!(nm %in% stateNames)]
                     stop(
-                        "Reaction references unknown compartment '", nm, "'. ",
+                        "Reaction references unknown compartment: ", paste(missing, collapse = ", "), ". ",
                         "Compartment names in this model: ",
                         paste(stateNames, collapse = ", "), ". ",
                         "Did you mean to merge this model with another?"
@@ -381,13 +382,17 @@ CompartmentModel <- R6::R6Class(
                 r <- self$reactions[[j]]
                 expr <- makeFun(r$rate)
                 expr_str <- deparse(expr, width.cutoff = 500) |> paste(collapse = " ")
-                if (!is.null(r$from) && r$from != "" && r$from %in% stateNames) {
-                    idx <- name2idx[[r$from]]
-                    rhs[[idx]] <- c(rhs[[idx]], paste0("-(", expr_str, ")"))
+                if (!is.null(r$from)) {
+                    for (from in r$from) {
+                        idx <- name2idx[[from]]
+                        rhs[[idx]] <- c(rhs[[idx]], paste0("-(", expr_str, ")"))
+                    }
                 }
-                if (!is.null(r$to) && r$to != "" && r$to %in% stateNames) {
-                    idx <- name2idx[[r$to]]
-                    rhs[[idx]] <- c(rhs[[idx]], paste0("+(", expr_str, ")"))
+                if (!is.null(r$to)) {
+                    for (to in r$to) {
+                        idx <- name2idx[[to]]
+                        rhs[[idx]] <- c(rhs[[idx]], paste0("+(", expr_str, ")"))
+                    }
                 }
             }
 

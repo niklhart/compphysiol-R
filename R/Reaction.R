@@ -22,8 +22,12 @@ Reaction <- R6::R6Class("Reaction",
         #' @param rate Rate expression (character or function)
         #' @return A new `Reaction` object
         initialize = function(from, to, rate) {
-            self$from <- from
-            self$to <- to
+            self$from <- if (.is_emptychar(from)) NULL else 
+                            if (all(nzchar(from))) from else 
+                            stop("'from' must be a non-empty character vector or NULL")
+            self$to   <- if (.is_emptychar(to))   NULL else 
+                            if (all(nzchar(to))) to else 
+                            stop("'to' must be a non-empty character vector or NULL")
             self$rate <- .as_call(rate)
         },
 
@@ -32,8 +36,8 @@ Reaction <- R6::R6Class("Reaction",
         #' @param ... Additional arguments (not used)
         #' @return The `Reaction` object (invisible)
         print = function(...) {
-            from <- if (!is.null(self$from) && self$from != "") self$from else "\u2205"
-            to   <- if (!is.null(self$to)   && self$to   != "") self$to   else "\u2205"
+            from <- if (is.null(self$from)) "\u2205" else paste(self$from, collapse = "+")
+            to   <- if (is.null(self$to))   "\u2205" else paste(self$to, collapse = "+")
 
             cat(sprintf("Reaction: %s \u2192 %s, rate = %s\n",
                         from, to, deparse(self$rate)))
@@ -48,9 +52,12 @@ Reaction <- R6::R6Class("Reaction",
         #' @param stateNames Character vector of valid compartment names
         #' @return `TRUE` if the reaction is linear, `FALSE` otherwise
         isLinear = function(stateNames) {
-            expr <- self$rate
             src_state <- self$from
+          
+            # Early return if source state is not scalar
+            if (length(src_state) != 1) return (FALSE)
 
+            # Recursive function to check linearity
             isLinearRec <- function(e, mult_context = TRUE) {
                 # Base case: symbol
                 if (is.symbol(e)) {
@@ -90,7 +97,7 @@ Reaction <- R6::R6Class("Reaction",
                 list(states = states, ok = ok)
             }
 
-            res <- isLinearRec(expr)
+            res <- isLinearRec(e = self$rate)
             length(res$states) == 1 && res$states == src_state && res$ok
         },
 

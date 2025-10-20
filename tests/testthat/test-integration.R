@@ -148,7 +148,7 @@ test_that("toODE flags reactions pointing to unknown compartments", {
 
     expect_error(
         M$toODE(paramValues = list(ka = 0.1)),
-        regexp = "Reaction references unknown compartment 'Central'"
+        regexp = "Reaction references unknown compartment: Central."
     )
 
 })

@@ -2,6 +2,7 @@
 test_that("Reaction linearity detection works", {
     stateNames <- c("C1","C2")
 
+    # Reaction order is one
     r1 <- Reaction$new(from = "C1", to = "C2", rate = quote(k12 * C1))
     expect_true(r1$isLinear(stateNames))
     expect_equal(r1$rateConstant(stateNames), "k12")
@@ -27,4 +28,12 @@ test_that("Reaction linearity detection works", {
     r7 <- Reaction$new(from = "C1", to = "C2", rate = quote(k12+C1))
     expect_false(r7$isLinear(stateNames)) # not multiplicative → not linear
 
+    # Reaction not first-order → not linear
+    r8 <- Reaction$new(from = NULL, to = "C2", rate = quote(k12))
+    expect_false(r8$isLinear(stateNames)) 
+
+    r9 <- Reaction$new(from = c("C1","C2"), to = "", rate = quote(k*C1*C2))
+    expect_false(r9$isLinear(stateNames)) 
+  
 })
+
