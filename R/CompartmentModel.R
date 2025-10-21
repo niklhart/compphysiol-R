@@ -229,6 +229,14 @@ CompartmentModel <- R6::R6Class(
         },
 
         #' @description
+        #' Linearity check for CompartmentModel object.
+        #' @return `TRUE` if all reactions are linear, `FALSE` otherwise.
+        isLinear = function() {
+            stateNames <- self$getStateNames()
+            all(vapply(self$reactions, function(r) r$isLinear(stateNames), logical(1)))
+        },
+
+        #' @description
         #' Generate analytical solution function from a CompartmentModel object with
         #' linear reactions, up to 3 compartments and a single bolus dose at time 0.
         #' @param paramValues Named list of parameter values to inline in ODEs.
