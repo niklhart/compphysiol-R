@@ -219,3 +219,135 @@ multiCompModel <- function(ncomp = 1, type = c("micro", "macro")) {
 
     model
 }
+
+
+
+
+#' Cell-level PK/PD model
+celllevel_pkpd <- function() {
+    M <- CompartmentModel$new()
+
+    # Compartments
+    M$addCompartment("pla", 0)
+    M$addCompartment("int", 0)
+    M$addCompartment("R", 0)
+    M$addCompartment("Ri", 0)
+    M$addCompartment("RL", 0)
+    M$addCompartment("RC", 0)
+
+    # Reactions
+    M$addReaction("pla", "int", "qpi * pla/Vpla")
+    M$addReaction("int", "pla", "qip * int/Vint")
+    M$addReaction("pla", NULL,  "CLlin * pla/Vpla")
+
+
+    M$addReaction("R", "RL", "kon * R * L")
+    M$addReaction("RL", "R", "koff * RL")
+    M$addReaction("RL", "RC", "kint * RL")
+    M$addReaction("RC", "Ri", "kdeg * RC")
+    M$addReaction("Ri", "R", "krecycle * Ri")
+
+
+    # Observable: effect site concentration
+    M$addObservable("Cpla", "pla / Vpla")
+    M$addObservable("Cint", "int / Vint")
+
+    M
+}
+
+#' Receptor binding and internalization module
+#' 
+#' TODO: parametrize initial condition (initialize at steady-state -- ligand-free??)
+#' 
+#' @param ligands Character vector of ligand names (default: "L")
+#' @param dynamic Whether to include ligand dynamics (default: TRUE). If FALSE, ligands 
+#'     are treated as a (constant) parameter instead of a compartment.
+#' @return A CompartmentModel object
+#' @export
+receptor_system <- function(ligands = "L", dynamic = TRUE) {
+    M <- CompartmentModel$new()
+
+    # Receptor compartments  
+    M$addCompartment("R", 0)      # free receptor
+    M$addCompartment("Ri", 0)     # internalized receptor
+    
+    # Receptor turnover (synthesis-recycling-degradation)
+    M$addReaction(NULL, "R", "ksynR")
+    M$addReaction("R", "Ri", "kdegR*R")
+    M$addReaction("Ri", "R", "krecyRi * Ri")
+    M$addReaction("Ri", NULL, "kdegRi * Ri")
+  
+    # Ligand-related compartments
+    dynamic <- rep_len(dynamic, length.out = length(ligands))
+    for (i in seq_along(ligands)) {
+        lig <- ligands[i]
+        includeLigandDynamics <- dynamic[i]
+        RLcpx <- paste0("R",lig)  
+        M$addCompartment(RLcpx, 0)  # natural ligand  
+        if (includeLigandDynamics){
+            M$addCompartment(lig, 0)  # dynamic ligand compartment
+            RLind <- c("R",lig) 
+
+        } else {
+            RLind <- c("R",lig) 
+        }
+      
+        M$addReaction(RLind, RLcpx, paste0("kon",lig," * R * ",lig))
+        M$addReaction(RLcpx, RLind, paste0("koff",RLcpx," * ",RLcpx))
+        M$addReaction(RLcpx, NULL,  paste0("kdeg",RLcpx," * ",RLcpx))
+    }
+
+    M
+}
+
+#' Empirical PK model relative to number of receptors
+#' 
+#' 
+#' 
+#' @return A CompartmentModel object
+#' @export
+empirical_pk_receptor <- function() {
+    M <- CompartmentModel$new()
+
+    # Compartments
+    M$addCompartment("pla", 0)
+    M$addCompartment("int", 0)
+
+    # Reactions
+    M$addReaction("pla", "int", "qpi * pla/Vpla")
+    M$addReaction("int", "pla", "qip * int/Vint")
+    M$addReaction("pla", NULL,  "CLlin * pla/Vpla")
+    M$addReaction("int", NULL,  "CLrec * R * int/Vint")
+
+    # Observable: effect site concentration
+    M$addObservable("Cpla", "pla / Vpla")
+    M$addObservable("Cint", "int / Vint")
+
+    M
+}
+
+
+
+#' Lammerts van Bueren model
+#' 
+lammertsvanbueren <- function() {
+    M <- CompartmentModel$new()
+
+    # Compartments
+    M$addCompartment("pla", 0)
+    M$addCompartment("int", 0)
+    M$addCompartment("rec", 0)
+
+    # Reactions
+    M$addReaction("pla", "int", "qpi * pla/Vpla")
+    M$addReaction("int", "pla", "qip * int/Vint")
+    M$addReaction("pla", NULL,  "CLlin * pla/Vpla")
+    M$addReaction("int", "rec", "kb*BmaxPK*(int/Vint)/(KMPK+int/Vint)")
+    M$addReaction("rec", "int", "kb*rec")
+
+    # Observable: effect site concentration
+    M$addObservable("Cpla", "pla / Vpla")
+    M$addObservable("Cint", "int / Vint")
+
+    M
+}

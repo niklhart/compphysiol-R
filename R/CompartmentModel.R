@@ -52,7 +52,6 @@ CompartmentModel <- R6::R6Class(
         #' @examples
         #' M <- multiCompModel()
         #' print(M)
-        #' @rdname CompartmentModel
         #' @export
         print =  function(...) {
             cat("<CompartmentModel>\n")
@@ -90,7 +89,7 @@ CompartmentModel <- R6::R6Class(
             }
 
             # dosing (boluses + infusions unified)
-            events <- self$dosing_to_events()$data
+            events <- private$dosing_to_events()$data
             if (nrow(events) > 0) {
                 cat(" Dosing events:\n")
                 for (i in seq_len(nrow(events))) {
@@ -202,30 +201,6 @@ CompartmentModel <- R6::R6Class(
             } else {
                 stop("Invalid dosing: either bolus or infusion with rate+duration")
             }
-        },
-
-        #' @description
-        #' Generate events data.frame for `deSolve` from stored dosing.
-        dosing_to_events = function() {
-            events <- data.frame(var=character(), time=numeric(), value=numeric(), method=character(),
-                                stringsAsFactors = FALSE)
-
-            # boluses
-            if (!is.null(self$doses)) {
-                for (d in self$doses) {
-                    events <- rbind(events,
-                                    data.frame(var=d$target, time=d$time, value=d$amount, method="add", stringsAsFactors = FALSE))
-                }
-            }
-
-            # infusion rate events
-            if (!is.null(self$infusionEvents)) {
-                events <- rbind(events, self$infusionEvents)
-            }
-
-            # sort by time
-            events <- events[order(events$time), ]
-            list(data = events)
         },
 
         #' @description
@@ -432,10 +407,37 @@ CompartmentModel <- R6::R6Class(
                 obsFuncs = obsFuncs,
                 freeParams = sort(unique(freeParams$list)),
                 y0 = self$getInitialState(),
-                events =  self$dosing_to_events()
+                events =  private$dosing_to_events()
             )
         }
 
 
+    ),
+    # ---- start of private methods ----
+    private = list(
+
+        #' @description
+        #' Generate events data.frame for `deSolve` from stored dosing.
+        dosing_to_events = function() {
+            events <- data.frame(var=character(), time=numeric(), value=numeric(), method=character(),
+                                stringsAsFactors = FALSE)
+
+            # boluses
+            if (!is.null(self$doses)) {
+                for (d in self$doses) {
+                    events <- rbind(events,
+                                    data.frame(var=d$target, time=d$time, value=d$amount, method="add", stringsAsFactors = FALSE))
+                }
+            }
+
+            # infusion rate events
+            if (!is.null(self$infusionEvents)) {
+                events <- rbind(events, self$infusionEvents)
+            }
+
+            # sort by time
+            events <- events[order(events$time), ]
+            list(data = events)
+        }
     )
 )

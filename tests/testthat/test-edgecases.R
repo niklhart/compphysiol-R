@@ -48,7 +48,7 @@ test_that("Overlapping infusion events handled correctly", {
     M$addDosing(inf1)
     M$addDosing(inf2)
 
-    events <- M$dosing_to_events()$data
+    events <- M$toODE()$events$data
 
     # Check that infusion rate events are present for both start and end
     rateEvents <- events[grepl("InfusionRate_Central", events$var), ]

@@ -10,11 +10,13 @@ test_that("Full simulation with bolus dosing works", {
     M$addDosing(Dosing$new("Central", amount = 100, time = 0))
 
     odeinfo <- M$toODE(paramValues = list(k12 = 0.1))
-    y0 <- M$getInitialState()
-    events <- M$dosing_to_events()
-
+    y0 <- odeinfo$y0
     times <- seq(0, 10, 1)
-    out <- ode(y = y0, times = times, func = odeinfo$odefun, parms = list(), events = events)
+    out <- ode(y = y0, 
+        times = times, 
+        func = odeinfo$odefun, 
+        parms = list(), 
+        events = odeinfo$events)
 
     # Check dimensions
     expect_equal(dim(out)[2], length(y0) + 1) # +1 for time column
@@ -33,11 +35,14 @@ test_that("Full simulation with infusion dosing works", {
     M$addDosing(Dosing$new("Central", rate = 10, duration = 5, time = 0))
 
     odeinfo <- M$toODE(paramValues = list(k12 = 0.1))
-    y0 <- M$getInitialState()
-    events <- M$dosing_to_events()
-
+ 
     times <- seq(0, 10, 0.5)
-    out <- ode(y = y0, times = times, func = odeinfo$odefun, parms = list(), events = events)
+    out <- ode(
+        y = odeinfo$y0, 
+        times = times, 
+        func = odeinfo$odefun, 
+        parms = list(), 
+        events = odeinfo$events)
 
     # Central compartment should increase during infusion and then plateau/decrease
     central <- out[, "Central"]

@@ -1,12 +1,12 @@
 
-test_that("ODE generation handles first-order reactions", {
+test_that("ODE generation handles first-order reaction with bolus dosing", {
 
     # PK example with first-order reactions only
     M <- CompartmentModel$new()
     M$addCompartment("Central", 10)
     M$addCompartment("Peripheral", 0)
     M$addReaction("Central", "Peripheral", "k12 * Central")
-
+  
     odeinfo <- M$toODE(paramValues = list(k12 = 0.1))
 
     # Function generation and correct state names
@@ -24,6 +24,7 @@ test_that("ODE generation handles first-order reactions", {
     expect_true(dydt[[1]][2] > 0)
 
 })
+
 
 test_that("ODE generation handles various reaction orders", {
 

@@ -24,17 +24,20 @@ test_that("Adding reactions works", {
     expect_equal(r$rate, quote(k12 * Central))
 })
 
-
-test_that("Bolus dosing creates events correctly", {
+test_that("Bolus dosing is handled correctly", {
     M <- CompartmentModel$new()
     M$addCompartment("Central", 0)
-    dose <- Dosing$new("Central", amount = 100, time = 0)
-    M$addDosing(dose)
+    bolus <- Dosing$new("Central", amount = 100, time = 2)
+    M$addDosing(bolus)
 
-    events_data <- M$dosing_to_events()$data
+    compartments <- M$getStateNames()
+    expect_false("InfusionBag_Central" %in% compartments)
+    expect_false("InfusionRate_Central" %in% compartments)
+
+    events_data <- M$toODE()$events$data
     expect_equal(nrow(events_data), 1)
     expect_equal(events_data$var, "Central")
-    expect_equal(events_data$time, 0)
+    expect_equal(events_data$time, 2)
     expect_equal(events_data$value, 100)
 })
 
@@ -48,8 +51,8 @@ test_that("Infusion dosing creates bag and rate compartments", {
     expect_true("InfusionBag_Central" %in% compartments)
     expect_true("InfusionRate_Central" %in% compartments)
 
-    events_data <- M$dosing_to_events()$data
     # One bolus to bag + start and end events for infusion rate
+    events_data <- M$toODE()$events$data
     expect_equal(sum(events_data$var == "InfusionBag_Central"), 1)
     expect_equal(sum(events_data$var == "InfusionRate_Central"), 2)
 })
