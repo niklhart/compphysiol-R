@@ -58,7 +58,7 @@ infusions are defined.}
 \item \href{#method-CompartmentModel-addReaction}{\code{CompartmentModel$addReaction()}}
 \item \href{#method-CompartmentModel-addObservable}{\code{CompartmentModel$addObservable()}}
 \item \href{#method-CompartmentModel-addDosing}{\code{CompartmentModel$addDosing()}}
-\item \href{#method-CompartmentModel-dosing_to_events}{\code{CompartmentModel$dosing_to_events()}}
+\item \href{#method-CompartmentModel-isLinear}{\code{CompartmentModel$isLinear()}}
 \item \href{#method-CompartmentModel-toAnalytical}{\code{CompartmentModel$toAnalytical()}}
 \item \href{#method-CompartmentModel-toODE}{\code{CompartmentModel$toODE()}}
 \item \href{#method-CompartmentModel-clone}{\code{CompartmentModel$clone()}}
@@ -157,7 +157,12 @@ Add a compartment to the model.
 \subsection{Method \code{addReaction()}}{
 Add a reaction to the model.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$addReaction(from, to, rate)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$addReaction(
+  from,
+  to,
+  rate,
+  reaction = Reaction$new(from, to, rate)
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -169,7 +174,7 @@ Add a reaction to the model.
 
 \item{\code{rate}}{Rate expression as character}
 
-\item{\code{name}}{Optional name}
+\item{\code{reaction}}{A Reaction object. Constructed from \code{from}, \code{to}, and \code{rate} if not provided.}
 }
 \if{html}{\out{</div>}}
 }
@@ -211,14 +216,17 @@ Add a dosing event (bolus or infusion).
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-CompartmentModel-dosing_to_events"></a>}}
-\if{latex}{\out{\hypertarget{method-CompartmentModel-dosing_to_events}{}}}
-\subsection{Method \code{dosing_to_events()}}{
-Generate events data.frame for \code{deSolve} from stored dosing.
+\if{html}{\out{<a id="method-CompartmentModel-isLinear"></a>}}
+\if{latex}{\out{\hypertarget{method-CompartmentModel-isLinear}{}}}
+\subsection{Method \code{isLinear()}}{
+Linearity check for CompartmentModel object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$dosing_to_events()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$isLinear()}\if{html}{\out{</div>}}
 }
 
+\subsection{Returns}{
+\code{TRUE} if all reactions are linear, \code{FALSE} otherwise.
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-CompartmentModel-toAnalytical"></a>}}

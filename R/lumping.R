@@ -154,3 +154,64 @@ lump_model <- function(M, partitioning = list(), normalize = list()) {
 
     substitute_symbols(expr)
 }
+
+.get_refstate <- function(M) {
+    src_cmt <- M$reactions |> 
+        lapply(FUN = function(r) r$from) |> 
+        unlist() |> 
+        table() |> 
+        which.max() |> 
+        names()
+    warning('Using default reference compartment: ', src_cmt)
+    src_cmt
+}
+
+#' General symbolic lumping (experimental version)
+#' 
+#' @param M A CompartmentModel object
+#' @param partitioning A list of character vectors (each a group of compartments)
+#' @param ref A string specifying a reference compartment (defaults to the one with most outflows)
+#' @returns A CompartmentModel object representing the lumped model
+#' @export
+symbolic_lumping <- function(M, partitioning = list(), ref = .get_refstate(M)) {
+
+    # Check requirements
+    if (!M$isLinear(M)) stop("Symbolic lumping only supports linear models.")
+    # Currently, sink terms are not supported
+    if (any(vapply(M$reactions, function(r) r$to == "", logical(1)))) {
+        stop("Symbolic lumping currently does not support sink reactions.")
+    }
+
+    # --- validate partitioning ------------------------------------------------
+    cmt <- M$getStateNames()
+    flatpart <- unlist(partitioning)
+    if (any(duplicated(flatpart))) {
+        stop("Partitioning must not contain any duplicate values.")
+    }
+    if (length(setdiff(flatpart, cmt)) > 0) {
+        stop("Some compartment name(s) in 'partitioning' were not found in the model.")
+    }
+    remaining <- setdiff(cmt, flatpart)
+
+    # --- naming of lumped compartments ----------------------------------------
+    lumped_names <- vapply(partitioning,
+                           function(p) paste(p, collapse = "_"),
+                           character(1))
+    nm_part <- names(partitioning)
+    if (!is.null(nm_part)) {
+        lumped_names[nm_part != ""] <- nm_part[nm_part != ""]
+    }
+    new_names <- c(lumped_names, remaining)
+
+    # Mapping: original compartment → lumped group
+    grp <- setNames(
+        rep(new_names,
+            times = c(lengths(partitioning), rep(1, length(remaining)))),
+        c(flatpart, remaining)
+    )
+
+    # --- create graph structure of model topology -------------------------------
+    nreact <- length(M$reactions)
+    react_dist <- numeric(nreact)
+
+}
