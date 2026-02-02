@@ -116,5 +116,3 @@ test_that("lumping handles first-pass effect correctly", {
 
 })
 
-
-

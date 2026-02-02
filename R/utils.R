@@ -13,7 +13,7 @@
         parsed[[1]]
     } else if (is.expression(input)) {
         input[[1]]
-    } else if (is.language(input)) { # quote() returns a call
+    } else if (is.language(input) || is.null(input)) { # quote() returns a call
         input
     } else if (is.numeric(input) && length(input) == 1L) {
         as.call(list(as.name("("), input))

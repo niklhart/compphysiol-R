@@ -15,20 +15,39 @@ Reaction <- R6::R6Class("Reaction",
         #' @field rate Rate expression (as an R call)
         rate = NULL,
 
+        #' @field const Rate constant (character string, or NULL if not linear)
+        const = NULL,
+
         #' @description
         #' Initialize a new `Reaction` object.
-        #' @param from Source compartment name (character scalar, or NULL for source)
-        #' @param to Target compartment name (character scalar, or NULL for sink)
+        #' 
+        #' A `Reaction` object represents a single reaction in a compartmental model.
+        #' It can be linear or nonlinear depending on the rate expression provided.
+        #' A linear reaction is best specified by providing a rate constant via the 
+        #' `const` argument; note that `from` must then be a single compartment name.
+        #' For nonlinear reactions, `const` should be left at its default value `NULL`;
+        #' instead, the `rate` argument should provide a full expression involving
+        #' the source compartment. Formally, a reaction is linear if its rate expression
+        #' is of the form `rate = const * from`, where `const` is the rate constant
+        #' and `from` is the source compartment.
+        #' 
+        #' @param from Source compartment name (character string, or NULL for source)
+        #' @param to Target compartment name (character string, or NULL for sink)
         #' @param rate Rate expression (character or function)
+        #' @param const Rate constant (character string) , or NULL if not linear)
         #' @return A new `Reaction` object
-        initialize = function(from, to, rate) {
+        initialize = function(from, to, rate = NULL, const = NULL) {
             self$from <- if (.is_emptychar(from)) NULL else 
                             if (all(nzchar(from))) from else 
                             stop("'from' must be a non-empty character vector or NULL")
-            self$to   <- if (.is_emptychar(to))   NULL else 
+            self$to   <- if (.is_emptychar(to)) NULL else 
                             if (all(nzchar(to))) to else 
                             stop("'to' must be a non-empty character vector or NULL")
-            self$rate <- .as_call(rate)
+            self$rate <- if (is.null(const)) .as_call(rate) else .mul(.as_call(const), .as_call(from))
+            self$const <- .as_call(const)
+            if (!is.null(const) && length(from) != 1) {
+                stop("For reactions with a rate constant, 'from' must be a single compartment name.")
+            }
         },
 
         #' @description
@@ -108,8 +127,12 @@ Reaction <- R6::R6Class("Reaction",
         #' @return Character string representing the rate constant expression, or `NA`
         #' if the reaction is not linear.
         rateConstant = function(stateNames) {
-            if (!self$isLinear(stateNames)) return(NA_character_)
 
+            # Easy cases first: nonlinear reaction or linear with explicit constant
+            if (!self$isLinear(stateNames)) return(NA_character_)
+            if (!is.null(self$const)) return(self$const)
+
+            # Otherwise, parse the rate expression to extract the coefficient
             expr <- self$rate
             src_state <- self$from
 
