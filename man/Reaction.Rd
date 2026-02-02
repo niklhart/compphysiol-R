@@ -19,6 +19,8 @@ Represents a model reaction.
 \item{\code{to}}{Target compartment name (character scalar, or NULL for sink)}
 
 \item{\code{rate}}{Rate expression (as an R call)}
+
+\item{\code{const}}{Rate constant (character string, or NULL if not linear)}
 }
 \if{html}{\out{</div>}}
 }
@@ -37,18 +39,30 @@ Represents a model reaction.
 \if{latex}{\out{\hypertarget{method-Reaction-new}{}}}
 \subsection{Method \code{new()}}{
 Initialize a new \code{Reaction} object.
+
+A \code{Reaction} object represents a single reaction in a compartmental model.
+It can be linear or nonlinear depending on the rate expression provided.
+A linear reaction is best specified by providing a rate constant via the
+\code{const} argument; note that \code{from} must then be a single compartment name.
+For nonlinear reactions, \code{const} should be left at its default value \code{NULL};
+instead, the \code{rate} argument should provide a full expression involving
+the source compartment. Formally, a reaction is linear if its rate expression
+is of the form \code{rate = const * from}, where \code{const} is the rate constant
+and \code{from} is the source compartment.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Reaction$new(from, to, rate)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Reaction$new(from, to, rate = NULL, const = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{from}}{Source compartment name (character scalar, or NULL for source)}
+\item{\code{from}}{Source compartment name (character string, or NULL for source)}
 
-\item{\code{to}}{Target compartment name (character scalar, or NULL for sink)}
+\item{\code{to}}{Target compartment name (character string, or NULL for sink)}
 
 \item{\code{rate}}{Rate expression (character or function)}
+
+\item{\code{const}}{Rate constant (character string) , or NULL if not linear)}
 }
 \if{html}{\out{</div>}}
 }

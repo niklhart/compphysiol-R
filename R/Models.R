@@ -128,35 +128,35 @@ sMD_PBPK_12CMT_wellstirred <- function() {
     M$addCompartment("spl", 0)
 
     # organs with arterial inflow
-    M$addReaction("art", "adi", "Qadi * art / Vart")
-    M$addReaction("art", "bon", "Qbon * art / Vart")
-    M$addReaction("art", "gut", "Qgut * art / Vart")
-    M$addReaction("art", "hea", "Qhea * art / Vart")
-    M$addReaction("art", "mus", "Qmus * art / Vart")
-    M$addReaction("art", "kid", "Qkid * art / Vart")
-    M$addReaction("art", "ski", "Qski * art / Vart")
-    M$addReaction("art", "spl", "Qspl * art / Vart")
+    M$addReaction("art", "adi", const = "Qadi / Vart")
+    M$addReaction("art", "bon", const = "Qbon / Vart")
+    M$addReaction("art", "gut", const = "Qgut / Vart")
+    M$addReaction("art", "hea", const = "Qhea / Vart")
+    M$addReaction("art", "mus", const = "Qmus / Vart")
+    M$addReaction("art", "kid", const = "Qkid / Vart")
+    M$addReaction("art", "ski", const = "Qski / Vart")
+    M$addReaction("art", "spl", const = "Qspl / Vart")
 
     # handle organ topology w.r.t. liver
-    M$addReaction("art", "liv", "(Qliv-Qgut-Qspl) * art / Vart")
-    M$addReaction("gut", "liv", "Qgut * gut / (Vgut * Kgut)")
-    M$addReaction("spl", "liv", "Qspl * spl / (Vspl * Kspl)")
+    M$addReaction("art", "liv", const = "(Qliv-Qgut-Qspl) / Vart")
+    M$addReaction("gut", "liv", const = "Qgut / (Vgut * Kgut)")
+    M$addReaction("spl", "liv", const = "Qspl / (Vspl * Kspl)")
 
     # organs with venous outflow
-    M$addReaction("adi", "ven", "Qadi * adi / (Vadi * Kadi)")
-    M$addReaction("bon", "ven", "Qbon * bon / (Vbon * Kbon)")
-    M$addReaction("hea", "ven", "Qhea * hea / (Vhea * Khea)")
-    M$addReaction("liv", "ven", "Qliv * liv / (Vliv * Kliv)")
-    M$addReaction("mus", "ven", "Qmus * mus / (Vmus * Kmus)")
-    M$addReaction("kid", "ven", "Qkid * kid / (Vkid * Kkid)")
-    M$addReaction("ski", "ven", "Qski * ski / (Vski * Kski)")
+    M$addReaction("adi", "ven", const = "Qadi / (Vadi * Kadi)")
+    M$addReaction("bon", "ven", const = "Qbon / (Vbon * Kbon)")
+    M$addReaction("hea", "ven", const = "Qhea / (Vhea * Khea)")
+    M$addReaction("liv", "ven", const = "Qliv / (Vliv * Kliv)")
+    M$addReaction("mus", "ven", const = "Qmus / (Vmus * Kmus)")
+    M$addReaction("kid", "ven", const = "Qkid / (Vkid * Kkid)")
+    M$addReaction("ski", "ven", const = "Qski / (Vski * Kski)")
 
     # lung
-    M$addReaction("ven", "lun", "co * ven / Vven")
-    M$addReaction("lun", "art", "co * lun / (Vlun * Klun)")
+    M$addReaction("ven", "lun", const = "co / Vven")
+    M$addReaction("lun", "art", const = "co / (Vlun * Klun)")
 
     # liver metabolism
-    M$addReaction("liv", "", "CL * liv / (Vliv * Kliv)")
+    M$addReaction("liv", "", const = "CL / (Vliv * Kliv)")
 
     # output
     M

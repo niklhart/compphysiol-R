@@ -29,8 +29,8 @@
 #' @param A A square list matrix of expressions
 #' @param b A list of right-hand side expressions
 #' @returns A named list of solution expressions
+#' @export
 .solve_linear_expr <- function(A, b) {
-   
     switch(
         nrow(A),
         .solve_linear_expr_1x1(A, b),
@@ -87,22 +87,13 @@
     setNames(list(x, y), rownames(A))
 }
 
-#' Solve the lumping equations for a strongly connected component (SCC)
-#' @param scc A character vector, the strongly connected component (SCC) to be lumped
-#' @param reactions A list of `Reaction` objects
-#' @returns A named list of solution expressions
-#' @noRd
-.solve_scc <- function(scc, reactions) {
-    sys <- .assemble_linear_expr(scc, reactions)
-    .solve_linear_expr(sys$A, sys$b)
-}
 
 #' Assemble the lumping equations for a strongly connected component (SCC)
 #' @param scc A character vector, the strongly connected component (SCC) to be lumped
 #' @param reactions A list of `Reaction` objects
 #' @returns A list with entries `A`, `b`
+#' @export
 .assemble_linear_expr <- function(scc, reactions) {
-
     cls <- .classify_reactions(reactions, scc)
 
     n <- length(scc)
@@ -122,7 +113,6 @@
 
     ## internal + elimination + outgoing → A
     for (r in c(cls$internal, cls$elimination, cls$outgoing)) {
-
         i <- idx[r$from]
 
         ## A[i,i] <- A[i,i] - k
@@ -145,33 +135,3 @@
     list(A = A, b = b)
 }
 
-#' Simplify a symbolic expression by cancelling double negatives
-#' @param expr A quoted call
-#' @returns A simplified expression
-.simplify_expr <- function(expr) {
-
-    is_unary_minus <- function(e) {
-        is.call(e) && e[[1]] == as.name("-") && length(e) == 2
-    }
-    is_div <- function(e) {
-        is.call(e) && e[[1]] == as.name("/") && length(e) == 3
-    }
-
-    if (is.call(expr)) {
-        if (is_unary_minus(expr) && is_unary_minus(expr[[2]])) {
-            return(.simplify_expr(expr[[2]][[2]]))
-        } else if (is_div(expr) && is_unary_minus(expr[[3]])) {
-            if (is_unary_minus(expr[[2]])) {
-                return(.simplify_expr(.div(expr[[2]][[2]], expr[[3]][[2]])))
-            } else {
-                return(.simplify_expr(call("/", expr[[2]], expr[[3]][[2]])))
-            }
-        } else {
-            for (i in seq_along(expr)) {
-                expr[[i]] <- .simplify_expr(expr[[i]])
-            }
-        }
-    }
-    expr
-
-}

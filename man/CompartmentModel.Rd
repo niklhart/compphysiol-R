@@ -160,8 +160,9 @@ Add a reaction to the model.
 \if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$addReaction(
   from,
   to,
-  rate,
-  reaction = Reaction$new(from, to, rate)
+  rate = NULL,
+  const = NULL,
+  reaction = Reaction$new(from, to, rate, const)
 )}\if{html}{\out{</div>}}
 }
 
@@ -173,6 +174,8 @@ Add a reaction to the model.
 \item{\code{to}}{Target compartment}
 
 \item{\code{rate}}{Rate expression as character}
+
+\item{\code{const}}{Optional rate constant name (for linear reactions)}
 
 \item{\code{reaction}}{A Reaction object. Constructed from \code{from}, \code{to}, and \code{rate} if not provided.}
 }

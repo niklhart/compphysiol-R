@@ -1,7 +1,3 @@
-
-
-
-
 #' General symbolic lumping (experimental version)
 #' 
 #' @param M A CompartmentModel object
@@ -68,97 +64,33 @@ symbolic_lumping <- function(M, partitioning = list(), refstate = .get_default_r
     refstate
 }
 
-#' Derive lumping conditions based on a reference state
+#' Get symbolic lumping conditions based on a reference state
 #'
 #' @param M A `CompartmentModel` object
-#' @param refstate A named vector mapping original compartments -> lumped compartments
-#' @param maxdegree An integer specifying the maximum degree for which to carry out symbolic substitution
-#' @returns A modified expression in which original variables are replaced by lumped ones
+#' @param refstate A string specifying the reference state
+#' @param maxdegree An integer specifying the maximum degree for which to carry out symbolic substitution.
+#'   Values > 2 are currently unsupported and will throw an error.
+#' @param simplify Method for simplifying the resulting expressions.
+#'   Install Ryacas package to use this feature.
+#' @returns A named list of expressions representing the lumping conditions. Names are compartment names and
+#'   expressions are in terms of the reference state and rate constants.
 #' @noRd
-.derive_lumping_conditions <- function(M, refstate, maxdegree = 1) {
+get_lumping_conditions <- function(M, refstate, maxdegree = 2, simplify = c("none", "Ryacas")) {
 
-    # create graph structure
-    nodes <- M$getStateNames()
-    edges <- M$reactions |>
-        lapply(function(r) data.frame(
-            from = r$from, 
-            to = if (!is.null(r$to)) r$to else NA, 
-            rate = r$rateConstant(nodes))) |>
-        do.call(what=rbind)
+    # graph-theoretical part
+    graph <- .make_graph(M, refstate = refstate)
+    adj <- .adjacency_list(graph$nodes, graph$edges)
+    sccs <- .tarjan_scc(graph$nodes, adj$outgoing)
+    cond <- .condense_graph(graph$nodes, graph$edges, sccs)
 
-    # remove edges towards refstate (break cycle)
-    edges <- edges |>
-        subset(is.na(to) | to != refstate)
-
-    # cut elimination reactions (relevant for algebra only, not graph structure)
-    graph_edges <- edges[!is.na(edges$to), ]
-
-    # determine strongly connected components (SCCs) and their size
-    incoming <- split(graph_edges$from, graph_edges$to)
-    outgoing <- split(graph_edges$to, graph_edges$from)
-
-    incoming[nodes[!nodes %in% names(incoming)]] <- list(character())
-    outgoing[nodes[!nodes %in% names(outgoing)]] <- list(character())
-
-    # walk through SCCs and derive lumping condition
-    sccs <- .tarjan_scc(nodes, outgoing)
-
-    # check maximum degree condition
-    maxdegree_M <- max(vapply(sccs,length,1))
-    if (maxdegree_M > maxdegree) {
-        stop(paste0("Degree of a SCC is larger (",maxdegree_M,") than maximum degree allowed (",maxdegree,")."))
+    # check maxdegree
+    if (any(vapply(sccs,length,1L) > maxdegree)) {
+        stop("Degree of at least one strongly connected component exceeds maxdegree.")
     }
 
-    # Build condensation graph
-    scc_id <- setNames(seq_along(sccs),
-                   unlist(sccs))
-
-    cond_edges <- unique(
-        data.frame(
-            from = scc_id[edges$from],
-            to   = scc_id[edges$to]
-        )
-    )
-
-    # Remove self-loops
-    cond_edges <- cond_edges[cond_edges$from != cond_edges$to, ]
-
-    # 
+    # algebraic part
+    res <- .solve_model_symbolic(cond, M$reactions) |>
+        .simplify(method = match.arg(simplify))
 
 }
 
-
-
-
-#' Build (coupled) lumping equations for a strongly connected component of a directed graph
-#' 
-#' @param scc A strongly connected component in a directed graph
-#' @param edges A data frame encoding the connectivity of the directed graph
-#' @returns A named list containing
-#' * `states`, the SCC
-#' * `size`, the number of nodes in the SCC
-#' * `equations` .... TODO
-.process_scc <- function(scc, edges) {
-    # scc = vector of node names
-    # extract internal edges
-    internal <- edges[edges$from %in% scc & edges$to %in% scc, ]
-
-    # build linear system
-    # dX/dt = A X + b
-    # under QSS: A X + b = 0
-
-    list(
-        states = scc,
-        size = length(scc),
-        equations = internal
-    )
-}
-
-
-
-#' Derive lumped first pass effect formulas
-#' 
-#' 
-.derive_first_pass <- function(M, partitioning) {
-
-}

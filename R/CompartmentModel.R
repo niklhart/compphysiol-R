@@ -134,8 +134,9 @@ CompartmentModel <- R6::R6Class(
         #' @param from Source compartment
         #' @param to Target compartment
         #' @param rate Rate expression as character
+        #' @param const Optional rate constant name (for linear reactions)
         #' @param reaction A Reaction object. Constructed from `from`, `to`, and `rate` if not provided.
-        addReaction = function(from, to, rate, reaction = Reaction$new(from, to, rate)) {
+        addReaction = function(from, to, rate = NULL, const = NULL, reaction = Reaction$new(from, to, rate, const)) {
             self$reactions[[length(self$reactions) + 1]] <- reaction
             invisible(self)
         },
