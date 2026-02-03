@@ -173,6 +173,238 @@ sMD_PBPK_12CMT_wellstirred <- function() {
 }
 
 
+#' 12-CMT PBPK model with permeation-based tissue distribution
+#'
+#' This example demonstrates a full workflow from loading the model,
+#' setting parameters, running a simulation, and plotting compartment amounts
+#' and plasma concentration.
+#'
+#' @return An R6 object of class `CompartmentModel`
+#' @export
+#' @examples
+#' \donttest{
+#' library(compphysiol)
+#' library(deSolve)
+#'
+#' # Load the PBPK model
+#' M <- sMD_PBPK_12CMT_permbased()
+#'
+#' # Define parameters
+#' paramValues <- list(
+#'     BP = 1,
+#'     CL = 5,
+#'     P = 1,
+#'     fuP = 1,
+#'     fuCadi = 1,
+#'     fuCbon = 1,
+#'     fuCgut = 1,
+#'     fuChea = 1,
+#'     fuCkid = 1,
+#'     fuCliv = 1,
+#'     fuClun = 1,
+#'     fuCmus = 1,
+#'     fuCski = 1,
+#'     fuCspl = 1,
+#'     fuEadi = 1,
+#'     fuEbon = 1,
+#'     fuEgut = 1,
+#'     fuEhea = 1,
+#'     fuEkid = 1,
+#'     fuEliv = 1,
+#'     fuElun = 1,
+#'     fuEmus = 1,
+#'     fuEski = 1,
+#'     fuEspl = 1,
+#'     Qadi = 0.5,
+#'     Qbon = 0.5,
+#'     Qgut = 0.5,
+#'     Qhea = 0.5,
+#'     Qkid = 0.5,
+#'     Qliv = 1,
+#'     Qmus = 0.5,
+#'     Qski = 0.5,
+#'     Qspl = 0.5,
+#'     SAadi = 1,
+#'     SAbon = 1,
+#'     SAgut = 1,
+#'     SAhea = 1,
+#'     SAmus = 1,
+#'     SAkid = 1,
+#'     SAliv = 1,
+#'     SAlun = 1,
+#'     SAski = 1,
+#'     SAspl = 1,
+#'     Vadi_exc = 1,
+#'     Vadi_cel = 1,
+#'     Vbon_exc = 1,
+#'     Vbon_cel = 1,
+#'     Vgut_exc = 1,
+#'     Vgut_cel = 1,
+#'     Vhea_exc = 1,
+#'     Vhea_cel = 1,
+#'     Vmus_exc = 1,
+#'     Vmus_cel = 1,
+#'     Vkid_exc = 1,
+#'     Vkid_cel = 1,
+#'     Vliv_exc = 1,
+#'     Vliv_cel = 1,
+#'     Vlun_exc = 1,
+#'     Vlun_cel = 1,
+#'     Vmus_exc = 1,
+#'     Vmus_cel = 1,
+#'     Vski_exc = 1,
+#'     Vski_cel = 1,
+#'     Vspl_exc = 1,
+#'     Vspl_cel = 1,
+#'     Vart = 1,
+#'     Vven = 1
+#' )
+#'
+#' # Dosing
+#' M$addDosing(Dosing$new(target = "ven", time = 0, amount = 1))
+#'
+#' # Add plasma concentration as an observable
+#' M$addObservable("Cpla", "BP * ven / Vven")
+#'
+#' # Generate ODE function and auxiliary structures
+#' odeinfo <- M$toODE(paramValues)
+#'
+#' # Run simulation
+#' times <- seq(0, 24, by = 0.1)
+#' out <- ode(
+#'     y = odeinfo$y0,
+#'     times = times,
+#'     func = odeinfo$odefun,
+#'     parms = paramValues,
+#'     events = odeinfo$events
+#' )
+#'
+#' out_df <- as.data.frame(out)
+#'
+#' # Plot compartment amounts
+#' matplot(
+#'     out_df$time,
+#'     out_df[, -1],
+#'     type = "l",
+#'     lty = 1,
+#'     col = 1:12,
+#'     xlab = "Time (h)",
+#'     ylab = "Amount",
+#'     main = "PBPK Model Compartments"
+#' )
+#' legend(
+#'     "topright",
+#'     legend = colnames(out_df)[-1],
+#'     col = 1:12,
+#'     lty = 1
+#' )
+#'
+#' # Evaluate observables at each time point
+#' obs_df <- as.data.frame(sapply(
+#'     odeinfo$obsFuncs,
+#'     function(f) f(out_df$time, as.matrix(out_df[, -1]), paramValues)
+#' ))
+#' names(obs_df) <- names(odeinfo$obsFuncs)
+#' obs_df$time <- out_df$time
+#'
+#' # Plot plasma concentration
+#' plot(
+#'     obs_df$time,
+#'     obs_df$Cpla,
+#'     type = "l",
+#'     col = "black",
+#'     lwd = 2,
+#'     xlab = "Time (h)",
+#'     ylab = "Plasma concentration",
+#'     main = "Plasma Concentration"
+#' )
+#' }
+sMD_PBPK_12CMT_permbased <- function() {
+    M <- CompartmentModel$new()
+
+    # compartments (can be vectorized later)
+    M$addCompartment("ven", 0)
+    M$addCompartment("art", 0)
+
+    M$addCompartment("adi_exc", 0)
+    M$addCompartment("adi_cel", 0)
+    M$addCompartment("bon_exc", 0)
+    M$addCompartment("bon_cel", 0)
+    M$addCompartment("gut_exc", 0)
+    M$addCompartment("gut_cel", 0)
+    M$addCompartment("hea_exc", 0)
+    M$addCompartment("hea_cel", 0)
+    M$addCompartment("mus_exc", 0)
+    M$addCompartment("mus_cel", 0)
+    M$addCompartment("kid_exc", 0)
+    M$addCompartment("kid_cel", 0)
+    M$addCompartment("liv_exc", 0)
+    M$addCompartment("liv_cel", 0)
+    M$addCompartment("lun_exc", 0)
+    M$addCompartment("lun_cel", 0)
+    M$addCompartment("ski_exc", 0)
+    M$addCompartment("ski_cel", 0)
+    M$addCompartment("spl_exc", 0)
+    M$addCompartment("spl_cel", 0)
+
+    # organs with arterial inflow
+    M$addReaction("art", "adi_exc", const = "Qadi / Vart")
+    M$addReaction("art", "bon_exc", const = "Qbon / Vart")
+    M$addReaction("art", "gut_exc", const = "Qgut / Vart")
+    M$addReaction("art", "hea_exc", const = "Qhea / Vart")
+    M$addReaction("art", "mus_exc", const = "Qmus / Vart")
+    M$addReaction("art", "kid_exc", const = "Qkid / Vart")
+    M$addReaction("art", "ski_exc", const = "Qski / Vart")
+    M$addReaction("art", "spl_exc", const = "Qspl / Vart")
+
+    # handle organ topology w.r.t. liver
+    M$addReaction("art", "liv_exc", const = "(Qliv-Qgut-Qspl) / Vart")
+    M$addReaction("gut_exc", "liv_exc", const = "Qgut * BP * fuEgut / (Vgut_exc * fuP)")
+    M$addReaction("spl_exc", "liv_exc", const = "Qspl * BP * fuEspl / (Vspl_exc * fuP)")
+
+    # organs with venous outflow
+    M$addReaction("adi_exc", "ven", const = "Qadi * BP * fuEadi / (Vadi_exc * fuP)")
+    M$addReaction("bon_exc", "ven", const = "Qbon * BP * fuEbon / (Vbon_exc * fuP)")
+    M$addReaction("hea_exc", "ven", const = "Qhea * BP * fuEhea / (Vhea_exc * fuP)")
+    M$addReaction("liv_exc", "ven", const = "Qliv * BP * fuEliv / (Vliv_exc * fuP)")
+    M$addReaction("mus_exc", "ven", const = "Qmus * BP * fuEmus / (Vmus_exc * fuP)")
+    M$addReaction("kid_exc", "ven", const = "Qkid * BP * fuEkid / (Vkid_exc * fuP)")
+    M$addReaction("ski_exc", "ven", const = "Qski * BP * fuEski / (Vski_exc * fuP)")
+
+    # Redistribution within tissues
+    M$addReaction("adi_exc", "adi_cel", const = "P * SAadi * fuEadi / Vadi_exc")
+    M$addReaction("adi_cel", "adi_exc", const = "P * SAadi * fuCadi / Vadi_cel")
+    M$addReaction("bon_exc", "bon_cel", const = "P * SAbon * fuEbon / Vbon_exc")
+    M$addReaction("bon_cel", "bon_exc", const = "P * SAbon * fuCbon / Vbon_cel")
+    M$addReaction("gut_exc", "gut_cel", const = "P * SAgut * fuEgut / Vgut_exc")
+    M$addReaction("gut_cel", "gut_exc", const = "P * SAgut * fuCgut / Vgut_cel")
+    M$addReaction("hea_exc", "hea_cel", const = "P * SAhea * fuEhea / Vhea_exc")
+    M$addReaction("hea_cel", "hea_exc", const = "P * SAhea * fuChea / Vhea_cel")
+    M$addReaction("kid_exc", "kid_cel", const = "P * SAkid * fuEkid / Vkid_exc")
+    M$addReaction("kid_cel", "kid_exc", const = "P * SAkid * fuCkid / Vkid_cel")
+    M$addReaction("liv_exc", "liv_cel", const = "P * SAliv * fuEliv / Vliv_exc")
+    M$addReaction("liv_cel", "liv_exc", const = "P * SAliv * fuCliv / Vliv_cel")
+    M$addReaction("lun_exc", "lun_cel", const = "P * SAlun * fuElun / Vlun_exc")
+    M$addReaction("lun_cel", "lun_exc", const = "P * SAlun * fuClun / Vlun_cel")
+    M$addReaction("mus_exc", "mus_cel", const = "P * SAmus * fuEmus / Vmus_exc")
+    M$addReaction("mus_cel", "mus_exc", const = "P * SAmus * fuCmus / Vmus_cel")
+    M$addReaction("ski_exc", "ski_cel", const = "P * SAadi * fuEski / Vski_exc")
+    M$addReaction("ski_cel", "ski_exc", const = "P * SAadi * fuCski / Vski_cel")
+    M$addReaction("spl_exc", "spl_cel", const = "P * SAspl * fuEspl / Vspl_exc")
+    M$addReaction("spl_cel", "spl_exc", const = "P * SAspl * fuCspl / Vspl_cel")
+
+    # lung (co hardcoded currently)
+    M$addReaction("ven", "lun_exc", const = "(Qadi+Qbon+Qhea+Qliv+Qmus+Qkid+Qski) / Vven")
+    M$addReaction("lun_exc", "art", const = "(Qadi+Qbon+Qhea+Qliv+Qmus+Qkid+Qski) * BP * fuElun / (Vlun_exc * fuP)")
+
+    # liver metabolism
+    M$addReaction("liv_cel", "", const = "CL * fuCliv / Vliv_cel")
+
+    # output
+    M
+}
+
+
 #' Create a generic multi-compartment PK model
 #'
 #' @param ncomp Number of compartments (>=1)
@@ -362,11 +594,14 @@ lammertsvanbueren <- function() {
     M
 }
 
-
+#' Lumped PBPK model based on sMD_PBPK_12CMT_wellstirred
+#' @param partitioning A named list defining the lumping scheme
+#' @param autonormalize Whether to automatically normalize the lumped volumes
+#' @return A CompartmentModel object
+#' @export
 sMD_PBPK_xCMT_lumped <- function(partitioning, autonormalize = TRUE) {
 
     M <- sMD_PBPK_12CMT_wellstirred()
-    # General lumping logic
 
     if (autonormalize) {
         normalize_arg <- get_lumping_conditions(M, refstate = "ven", simplify = "Ryacas")
@@ -392,4 +627,7 @@ sMD_PBPK_xCMT_lumped <- function(partitioning, autonormalize = TRUE) {
         normalize = normalize_arg
     )
     # Specific for first-pass effect
+    warning(
+        "Lumping with first-pass metabolism: please verify that the lumped model is correct."
+    )
 }

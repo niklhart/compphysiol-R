@@ -11,7 +11,7 @@ symbolic_lumping(M, partitioning = list(), refstate = .get_default_refstate(M))
 
 \item{partitioning}{A list of character vectors (each a group of compartments)}
 
-\item{refstate}{A string specifying a reference state (defaults to the one with most outflows)}
+\item{refstate}{A string specifying a reference state (defaults to the one with most inflows)}
 }
 \value{
 A CompartmentModel object representing the lumped model

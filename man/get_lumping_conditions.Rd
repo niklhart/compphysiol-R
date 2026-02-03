@@ -30,8 +30,7 @@ expressions are in terms of the reference state and rate constants.
 Get symbolic lumping conditions based on a reference state
 }
 \examples{
-{
+# Example: Huisinga/Pilari (2010) lumping conditions for PBPK 12-compartment model
 M <- sMD_PBPK_12CMT_wellstirred()
 res <- get_lumping_conditions(M, refstate = "ven", simplify = "Ryacas")
-}
 }

@@ -28,17 +28,12 @@
     }
 
     simplify_one <- function(e) {
-        # 1. R language -> character
-        txt <- paste(deparse(e), collapse = "")
-
-        # 2. character -> Ryacas
-        y  <- Ryacas::ysym(txt)
-
-        # 3. simplify
+        txt <- paste(deparse(e), collapse = "") |> 
+            .encode_symbol()
+        y <- Ryacas::ysym(txt)
         ys <- Ryacas::simplify(y)
-
-        # 4. back to R expression
-        parse(text = as.character(ys))[[1]]
+        parse(text = as.character(ys))[[1]] |> 
+            .decode_expr()
     }
 
     if (is.list(expr)) {
@@ -49,37 +44,30 @@
 }
 
 
+.encode_symbol <- function(x) {
+    gsub("_", "zzz", x, fixed = TRUE)
+}
 
+.decode_symbol <- function(x) {
+    gsub("zzz", "_", x, fixed = TRUE)
+}
 
-#' Simplify a symbolic expression by cancelling double negatives (currently unused)
-#' 
-#' @param expr A quoted call
-#' @returns A simplified expression
-#' @noRd
-.simplify_expr <- function(expr) {
-
-    is_unary_minus <- function(e) {
-        is.call(e) && e[[1]] == as.name("-") && length(e) == 2
+.encode_expr <- function(expr) {
+    if (is.symbol(expr)) {
+        as.symbol(.encode_symbol(as.character(expr)))
+    } else if (is.call(expr)) {
+        as.call(lapply(expr, .encode_expr))
+    } else {
+        expr
     }
-    is_div <- function(e) {
-        is.call(e) && e[[1]] == as.name("/") && length(e) == 3
-    }
+}
 
-    if (is.call(expr)) {
-        if (is_unary_minus(expr) && is_unary_minus(expr[[2]])) {
-            return(.simplify_expr(expr[[2]][[2]]))
-        } else if (is_div(expr) && is_unary_minus(expr[[3]])) {
-            if (is_unary_minus(expr[[2]])) {
-                return(.simplify_expr(.div(expr[[2]][[2]], expr[[3]][[2]])))
-            } else {
-                return(.simplify_expr(call("/", expr[[2]], expr[[3]][[2]])))
-            }
-        } else {
-            for (i in seq_along(expr)) {
-                expr[[i]] <- .simplify_expr(expr[[i]])
-            }
-        }
+.decode_expr <- function(expr) {
+    if (is.symbol(expr)) {
+        as.symbol(.decode_symbol(as.character(expr)))
+    } else if (is.call(expr)) {
+        as.call(lapply(expr, .decode_expr))
+    } else {
+        expr
     }
-    expr
-
 }
