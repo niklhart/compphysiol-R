@@ -7,33 +7,47 @@
 
     switch(method,
         none = expr,
-        Ryacas = .simplify_ryacas(expr),
-        stop("Unknown simplification method: ", method)
+        Ryacas = .simplify_ryacas(expr)
     )
 
 }
 
 
 #' Simplify a symbolic expression using Ryacas
-#' @param expr A named list of quoted expressions
-#' @returns A named list of simplified expressions
+#' @param expr A quoted expression or a named list of quoted expressions
+#' @returns A simplified expression or named list of simplified expressions
 #' @noRd
 .simplify_ryacas <- function(expr) {
 
     if (!requireNamespace("Ryacas", quietly = TRUE)) {
-        stop("Package 'Ryacas' is required for expression simplification. Please install it first.")
+        stop(
+        "Package 'Ryacas' is required for expression simplification.\n",
+        "Please install it via install.packages('Ryacas').",
+        call. = FALSE
+        )
     }
 
-    simplify_expr_ryacas <- function(expr) {
-        # Convert quoted R expression to Ryacas object
-        y <- Ryacas::ysym(expr)
-        # Simplify using Ryacas
-        ys <- Ryacas::Simplify(y)
-        # Convert back to R expression
-        as.expression(ys)[[1]]  # returns a single quoted expression
+    simplify_one <- function(e) {
+        # 1. R language -> character
+        txt <- paste(deparse(e), collapse = "")
+
+        # 2. character -> Ryacas
+        y  <- Ryacas::ysym(txt)
+
+        # 3. simplify
+        ys <- Ryacas::simplify(y)
+
+        # 4. back to R expression
+        parse(text = as.character(ys))[[1]]
     }
-    lapply(expr, simplify_expr_ryacas)
+
+    if (is.list(expr)) {
+        lapply(expr, simplify_one)
+    } else {
+        simplify_one(expr)
+    }
 }
+
 
 
 

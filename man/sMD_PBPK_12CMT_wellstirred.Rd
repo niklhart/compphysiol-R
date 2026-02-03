@@ -26,7 +26,6 @@ M <- sMD_PBPK_12CMT_wellstirred()
 paramValues <- list(
     BP = 1,
     CL = 5,
-    co = 5,
     Kadi = 1,
     Kbon = 1,
     Kgut = 1,
@@ -100,7 +99,10 @@ legend(
 )
 
 # Evaluate observables at each time point
-obs_df <- as.data.frame(sapply(odeinfo$obsFuncs, function(f) f(out_df$time, as.matrix(out_df[, -1]), paramValues)))
+obs_df <- as.data.frame(sapply(
+    odeinfo$obsFuncs,
+    function(f) f(out_df$time, as.matrix(out_df[, -1]), paramValues)
+))
 names(obs_df) <- names(odeinfo$obsFuncs)
 obs_df$time <- out_df$time
 

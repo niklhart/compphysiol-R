@@ -15,34 +15,32 @@
 
 
 #' Construct a directed graph encoding the topology of a linear `CompartmentModel`.
-#' 
+#'
 #' @param model A `CompartmentModel` object
 #' @param refstate A string, corresponding to the state used as reference.
-#' @returns A length two named list with entries `edges` (a data frame with 
+#' @returns A length two named list with entries `edges` (a data frame with
 #'     columns `from` and `to`) and `nodes` (a character vector)
 #' @export
 .make_graph <- function(model, refstate) {
-
     nodes <- model$getStateNames()
     edges <- model$reactions |>
-        lapply(function(r) data.frame(
-            from = r$from, 
-            to = if (!is.null(r$to)) r$to else NA
-        )) |>
+        lapply(function(r) {
+            data.frame(
+                from = r$from,
+                to = if (!is.null(r$to)) r$to else NA
+            )
+        }) |>
         do.call(what = rbind)
 
-    # remove elimination edges
-    edges <- edges[!is.na(edges$to), ]
-
-    # remove edges towards refstate (break cycle)
+    # remove elimination edges and edges towards refstate (break cycle)
     edges <- edges |>
-        subset(is.na(to) | to != refstate)
+        subset(to != refstate)   # NAs are dropped here as well
 
     # check for missing nodes
     stopifnot(edges$from %in% nodes, edges$to %in% nodes)
 
     list(
-        edges = edges, 
+        edges = edges,
         nodes = nodes
     )
 }

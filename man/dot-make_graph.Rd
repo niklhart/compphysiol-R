@@ -9,7 +9,7 @@
 \arguments{
 \item{model}{A \code{CompartmentModel} object}
 
-\item{`refstate`}{A string, corresponding to the state used as reference.}
+\item{refstate}{A string, corresponding to the state used as reference.}
 }
 \value{
 A length two named list with entries \code{edges} (a data frame with

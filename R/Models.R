@@ -19,7 +19,6 @@
 #' paramValues <- list(
 #'     BP = 1,
 #'     CL = 5,
-#'     co = 5,
 #'     Kadi = 1,
 #'     Kbon = 1,
 #'     Kgut = 1,
@@ -93,7 +92,10 @@
 #' )
 #'
 #' # Evaluate observables at each time point
-#' obs_df <- as.data.frame(sapply(odeinfo$obsFuncs, function(f) f(out_df$time, as.matrix(out_df[, -1]), paramValues)))
+#' obs_df <- as.data.frame(sapply(
+#'     odeinfo$obsFuncs,
+#'     function(f) f(out_df$time, as.matrix(out_df[, -1]), paramValues)
+#' ))
 #' names(obs_df) <- names(odeinfo$obsFuncs)
 #' obs_df$time <- out_df$time
 #'
@@ -151,9 +153,17 @@ sMD_PBPK_12CMT_wellstirred <- function() {
     M$addReaction("kid", "ven", const = "Qkid / (Vkid * Kkid)")
     M$addReaction("ski", "ven", const = "Qski / (Vski * Kski)")
 
-    # lung
-    M$addReaction("ven", "lun", const = "co / Vven")
-    M$addReaction("lun", "art", const = "co / (Vlun * Klun)")
+    # lung (co hardcoded currently)
+    M$addReaction(
+        "ven",
+        "lun",
+        const = "(Qadi+Qbon+Qhea+Qliv+Qmus+Qkid+Qski) / Vven"
+    )
+    M$addReaction(
+        "lun",
+        "art",
+        const = "(Qadi+Qbon+Qhea+Qliv+Qmus+Qkid+Qski) / (Vlun * Klun)"
+    )
 
     # liver metabolism
     M$addReaction("liv", "", const = "CL / (Vliv * Kliv)")
@@ -350,4 +360,36 @@ lammertsvanbueren <- function() {
     M$addObservable("Cint", "int / Vint")
 
     M
+}
+
+
+sMD_PBPK_xCMT_lumped <- function(partitioning, autonormalize = TRUE) {
+
+    M <- sMD_PBPK_12CMT_wellstirred()
+    # General lumping logic
+
+    if (autonormalize) {
+        normalize_arg <- get_lumping_conditions(M, refstate = "ven", simplify = "Ryacas")
+    } else {
+        normalize_arg <- list(
+            ven = "Vven",
+            art = "Vart",
+            adi = "Vadi*Kadi",
+            bon = "Vbon*Kbon",
+            gut = "Vgut*Kgut",
+            hea = "Vhea*Khea",
+            mus = "Vmus*Kmus",
+            kid = "Vkid*Kkid",
+            liv = "Vliv*Kliv*Q/(Q+CL)",
+            lun = "Vlun*Klun",
+            ski = "Vski*Kski",
+            spl = "Vspl*Kspl"
+        )
+    }
+    L <- lump_model(
+        M,
+        partitioning = partitioning,
+        normalize = normalize_arg
+    )
+    # Specific for first-pass effect
 }

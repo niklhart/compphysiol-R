@@ -4,10 +4,11 @@
 #' Solve the symbolic linear system for the given condensation
 #' @param cond A condensation graph
 #' @param reactions A list of `Reaction` objects
+#' @param simplify Method for simplifying the resulting expressions.
 #' @returns A named list of solution expressions
 #' @noRd
 #' @export
-.solve_model_symbolic <- function(cond, reactions) {
+.solve_model_symbolic <- function(cond, reactions, simplify) {
 
     adj <- .adjacency_list(cond$nodes, cond$edges)
     order <- .topo_order(cond$nodes, adj$incoming)
@@ -50,6 +51,9 @@
 
         ## solve SCC system
         sol <- .solve_linear_expr(A_sub, b_sub)
+
+        ## simplify solutions
+        sol <- .simplify(sol, method = simplify)
 
         ## add new solutions to known
         known <- c(known, sol)

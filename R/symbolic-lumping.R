@@ -2,7 +2,7 @@
 #' 
 #' @param M A CompartmentModel object
 #' @param partitioning A list of character vectors (each a group of compartments)
-#' @param refstate A string specifying a reference state (defaults to the one with most outflows)
+#' @param refstate A string specifying a reference state (defaults to the one with most inflows)
 #' @returns A CompartmentModel object representing the lumped model
 #' @export
 symbolic_lumping <- function(M, partitioning = list(), refstate = .get_default_refstate(M)) {
@@ -51,11 +51,11 @@ symbolic_lumping <- function(M, partitioning = list(), refstate = .get_default_r
 #' Determine a default reference state if unspecified
 #'
 #' @param model A `CompartmentModel` object
-#' @returns A string containing the compartment name with the most outgoing flows
+#' @returns A string containing the compartment name with the most incoming flows
 #' @noRd
 .get_default_refstate <- function(model) {
     refstate <- model$reactions |> 
-        lapply(FUN = function(r) r$from) |> 
+        lapply(FUN = function(r) r$to) |> 
         unlist() |> 
         table() |> 
         which.max() |> 
@@ -74,23 +74,23 @@ symbolic_lumping <- function(M, partitioning = list(), refstate = .get_default_r
 #'   Install Ryacas package to use this feature.
 #' @returns A named list of expressions representing the lumping conditions. Names are compartment names and
 #'   expressions are in terms of the reference state and rate constants.
-#' @noRd
+#' @examples 
+#' # Example: Huisinga/Pilari (2010) lumping conditions for PBPK 12-compartment model
+#' M <- sMD_PBPK_12CMT_wellstirred()
+#' res <- get_lumping_conditions(M, refstate = "ven", simplify = "Ryacas")
+#' @export
 get_lumping_conditions <- function(M, refstate, maxdegree = 2, simplify = c("none", "Ryacas")) {
 
     # graph-theoretical part
-    graph <- .make_graph(M, refstate = refstate)
-    adj <- .adjacency_list(graph$nodes, graph$edges)
-    sccs <- .tarjan_scc(graph$nodes, adj$outgoing)
-    cond <- .condense_graph(graph$nodes, graph$edges, sccs)
+    cond <- .make_condensation_graph(M, refstate = refstate)
 
-    # check maxdegree
-    if (any(vapply(sccs,length,1L) > maxdegree)) {
+    # check maxdegree condition
+    if (any(vapply(cond$sccs,length,1L) > maxdegree)) {
         stop("Degree of at least one strongly connected component exceeds maxdegree.")
     }
 
     # algebraic part
-    res <- .solve_model_symbolic(cond, M$reactions) |>
-        .simplify(method = match.arg(simplify))
+    .solve_model_symbolic(cond, M$reactions, simplify = match.arg(simplify))
 
 }
 
