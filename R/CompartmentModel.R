@@ -15,6 +15,9 @@ CompartmentModel <- R6::R6Class(
         #' @field reactions A list of `Reaction` objects
         reactions = list(),
 
+        #' @field equations A list of expressions representing aggregate parameters as functions of model parameters
+        equations = list(),
+
         #' @field observables A list of `Observable` objects
         observables = list(),
 
@@ -125,7 +128,24 @@ CompartmentModel <- R6::R6Class(
         #' @param name Name of the compartment
         #' @param initial Initial amount (default 0)
         addCompartment = function(name, initial = 0) {
-            self$compartments[[length(self$compartments) + 1]] <- Compartment$new(name, initial)
+            # Ensure name is a character vector
+            name <- as.character(name)
+            
+            # Recycle initial if scalar
+            if (length(initial) == 1) {
+                initial <- rep(initial, length(name))
+            }
+            
+            if (length(initial) != length(name)) {
+                stop("Length of 'initial' must be 1 or match the length of 'name'")
+            }
+            
+            # Create new Compartment objects in a vectorized way
+            new_comps <- Map(Compartment$new, name, initial) |> unname()
+
+            # Append to existing compartments list
+            self$compartments <- c(self$compartments, new_comps)
+            
             invisible(self)
         },
 

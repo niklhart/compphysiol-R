@@ -36,6 +36,8 @@ sol$statefun(5, params = list(k12 = 0.2, k21 = 0.1))
 
 \item{\code{reactions}}{A list of \code{Reaction} objects}
 
+\item{\code{equations}}{A list of expressions representing aggregate parameters as functions of model parameters}
+
 \item{\code{observables}}{A list of \code{Observable} objects}
 
 \item{\code{doses}}{List of dosing objects. Includes bolus doses into model
