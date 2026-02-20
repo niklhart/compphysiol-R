@@ -107,8 +107,24 @@
 #' )
 #' }
 sMD_PBPK_12CMT_wellstirred <- function() {
-    M <- CompartmentModel$new()
 
+    CompartmentModel$
+        new()$
+        addCompartment(c("ven", "art", "adi", "bon", "gut", "hea", "mus", "kid", "liv", "lun", "ski", "spl"))$
+        addReaction2(from = "art", to = c("adi", "bon", "gut", "hea", "mus", "kid", "ski", "spl"), const = "Q_to / Vart")$
+        addReaction(from = "art", to = "liv", const = "(Qliv-Qgut-Qspl) / Vart")$
+        addReaction2(from = c("gut","spl"), to = "liv", const = "Q_from / (V_from * K_from)")$
+        addReaction2(from = c("adi","bon","hea","liv","mus","kid","ski"), to = "ven", const = "Q_from / (V_from * K_from)")$
+        addReaction(from = "ven", to = "lun", const = "(Qadi+Qbon+Qhea+Qliv+Qmus+Qkid+Qski) / Vven")$
+        addReaction(from = "lun", to = "art", const = "(Qadi+Qbon+Qhea+Qliv+Qmus+Qkid+Qski) / (Vlun * Klun)")$
+        addReaction(from = "liv", to = "", const = "CL / (Vliv * Kliv)")
+    
+}
+
+.sMD_PBPK_12CMT_wellstirred_OLD <- function() {
+    
+    M <- CompartmentModel$new()
+    
     # compartments (can be vectorized later)
     M$addCompartment("ven", 0)
     M$addCompartment("art", 0)
@@ -166,7 +182,6 @@ sMD_PBPK_12CMT_wellstirred <- function() {
     # output
     M
 }
-
 
 #' 12-CMT PBPK model with permeation-based tissue distribution
 #'

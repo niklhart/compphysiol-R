@@ -145,7 +145,11 @@ CompartmentModel <- R6::R6Class(
         #' @param name Name of the compartment(s)
         #' @param initial Initial amount(s) (default 0)
         #' @param comp A Compartment object or list of Compartment objects. Constructed from the other inputs if not provided.
-        addCompartment = function(name, initial = 0, comp = CompartmentList(name, initial)) {
+        addCompartment = function(
+            name,
+            initial = 0,
+            comp = CompartmentList(name, initial)
+        ) {
             comp <- .wrap_into_list(comp)
             self$compartments <- c(self$compartments, comp)
             invisible(self)
@@ -153,7 +157,7 @@ CompartmentModel <- R6::R6Class(
 
         #' @description
         #' Add one or several reactions to the model.
-        #' Currently, only the `reaction` argument can be vectorized. 
+        #' Currently, only the `reaction` argument can be vectorized.
         #' The other inputs can only be used to construct a scalar reaction.
         #' @param from Source compartment
         #' @param to Target compartment
@@ -173,6 +177,60 @@ CompartmentModel <- R6::R6Class(
         },
 
         #' @description
+        #' Add one or several reactions to the model, test version (vectorized + substitution). The `rate` argument of `addReaction`
+        #' is not supported currently.
+        #' @param from Source compartment
+        #' @param to Target compartment
+        #' @param const Optional rate constant name (for linear reactions)
+        #' @param reaction A Reaction object or list of Reaction objects. Constructed from the other inputs if not provided.
+        addReaction2 = function(from, to, const) {
+            # either all inputs are vectorized or one of from/to is vectorized and const is scalar
+            nFrom <- length(from)
+            nTo <- length(to)
+            nConst <- length(const)
+
+            # Check that all inputs are either scalar or vector of the same length
+            nMax <- max(nFrom, nTo, nConst)
+            if (!all(c(nFrom, nTo, nConst) %in% c(1, nMax))) {
+                stop(
+                    "All inputs must be either scalar or vector of the same length. ",
+                    "Lengths: from = ",
+                    nFrom,
+                    ", to = ",
+                    nTo,
+                    ", const = ",
+                    nConst
+                )
+            }
+
+            from <- rep(from, nMax / nFrom)
+            to <- rep(to, nMax / nTo)
+
+            # If const is scalar and one of from/to is vector, apply special substitution rule in const
+            if (nConst == 1 && nMax > 1) {
+                const <- Map(
+                    function(f_, t_) const |> 
+                        gsub(pattern = "_from", replacement = f_) |> 
+                        gsub(pattern = "_to", replacement = t_),
+                    f_ = from,
+                    t_ = to,
+                    USE.NAMES = FALSE
+                )
+            }
+
+            r <- Map(
+                Reaction$new,
+                from = from,
+                to = to,
+                const = const,
+                USE.NAMES = FALSE
+            )
+
+            self$reactions <- c(self$reactions, r)
+            return(invisible(self))
+        },
+
+        #' @description
         #' Add an observable.
         #' @param name Name of the observable
         #' @param expr Expression (character or function)
@@ -180,6 +238,35 @@ CompartmentModel <- R6::R6Class(
         addObservable = function(name, expr, obs = ObservableList(name, expr)) {
             obs <- .wrap_into_list(obs)
             self$observables <- c(self$observables, obs)
+            invisible(self)
+        },
+
+        #' @description
+        #' Add one or several observables.
+        #' @param ... Name and expression pairs for observables, e.g. `addObservable(C1Conc = C1 / V1)`
+        #' @param obs An Observable object or list of Observable objects. Constructed from the other inputs if not provided.
+        addObservable2 = function(..., obs = NULL) {
+            if (!is.null(obs)) {
+                # programmatic path
+                obs <- .wrap_into_list(obs)
+            } else {
+                # interactive DSL path
+                dots <- as.list(substitute(list(...)))[-1]
+                obs <- ObservableList(
+                    name = names(dots),
+                    expr = unname(dots)
+                )
+            }
+            self$observables <- c(self$observables, obs)
+            invisible(self)
+        },
+
+        #' @description
+        #' Add one or several equations.
+        #' @param eq An Equation object or list of Equation objects. Constructed from the other inputs if not provided.
+        addEquation = function(eq) {
+            eq <- .wrap_into_list(eq)
+            self$equations <- c(self$equations, eq)
             invisible(self)
         },
 
@@ -565,7 +652,6 @@ CompartmentModel <- R6::R6Class(
     ),
     # ---- start of private methods ----
     private = list(
-
         # Generate events data.frame for `deSolve` from stored dosing.
         dosing_to_events = function() {
             events <- data.frame(

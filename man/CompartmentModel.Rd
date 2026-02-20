@@ -58,7 +58,9 @@ infusions are defined.}
 \item \href{#method-CompartmentModel-getStateNames}{\code{CompartmentModel$getStateNames()}}
 \item \href{#method-CompartmentModel-addCompartment}{\code{CompartmentModel$addCompartment()}}
 \item \href{#method-CompartmentModel-addReaction}{\code{CompartmentModel$addReaction()}}
+\item \href{#method-CompartmentModel-addObservableOld}{\code{CompartmentModel$addObservableOld()}}
 \item \href{#method-CompartmentModel-addObservable}{\code{CompartmentModel$addObservable()}}
+\item \href{#method-CompartmentModel-addEquation}{\code{CompartmentModel$addEquation()}}
 \item \href{#method-CompartmentModel-addDosing}{\code{CompartmentModel$addDosing()}}
 \item \href{#method-CompartmentModel-isLinear}{\code{CompartmentModel$isLinear()}}
 \item \href{#method-CompartmentModel-toAnalytical}{\code{CompartmentModel$toAnalytical()}}
@@ -193,12 +195,12 @@ The other inputs can only be used to construct a scalar reaction.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-CompartmentModel-addObservable"></a>}}
-\if{latex}{\out{\hypertarget{method-CompartmentModel-addObservable}{}}}
-\subsection{Method \code{addObservable()}}{
+\if{html}{\out{<a id="method-CompartmentModel-addObservableOld"></a>}}
+\if{latex}{\out{\hypertarget{method-CompartmentModel-addObservableOld}{}}}
+\subsection{Method \code{addObservableOld()}}{
 Add an observable.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$addObservable(name, expr, obs = ObservableList(name, expr))}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$addObservableOld(name, expr, obs = ObservableList(name, expr))}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -209,6 +211,42 @@ Add an observable.
 \item{\code{expr}}{Expression (character or function)}
 
 \item{\code{obs}}{An Observable object or list of Observable objects. Constructed from the other inputs if not provided.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CompartmentModel-addObservable"></a>}}
+\if{latex}{\out{\hypertarget{method-CompartmentModel-addObservable}{}}}
+\subsection{Method \code{addObservable()}}{
+Add one or several observables.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$addObservable(..., obs = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{...}}{Name and expression pairs for observables, e.g. \code{addObservable(C1Conc = C1 / V1)}}
+
+\item{\code{obs}}{An Observable object or list of Observable objects. Constructed from the other inputs if not provided.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CompartmentModel-addEquation"></a>}}
+\if{latex}{\out{\hypertarget{method-CompartmentModel-addEquation}{}}}
+\subsection{Method \code{addEquation()}}{
+Add one or several equations.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$addEquation(eq)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{eq}}{An Equation object or list of Equation objects. Constructed from the other inputs if not provided.}
 }
 \if{html}{\out{</div>}}
 }
