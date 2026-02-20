@@ -1,21 +1,22 @@
 
 test_that("mergeModels merges two CompartmentModels without suffixes (collision='merge')", {
     # Absorption module
-    abs <- CompartmentModel$new()
-    abs$addCompartment("Gut", 100)
-    abs$addCompartment("Central")
-    abs$addReaction("Gut", "Central", "ka * Gut")
-    abs$addObservable("GutObs", "Gut")
-    abs$addDosing(Dosing$new("Gut", amount = 100, time = 0))
+    abs <- CompartmentModel$
+        new()$
+        addCompartment("Gut", 100)$
+        addCompartment("Central")$
+        addReaction("Gut", "Central", "ka * Gut")$
+        addObservable("GutObs", "Gut")$
+        addDosing(target = "Gut", amount = 100, time = 0)
 
     # Systemic PK model
-    pk <- CompartmentModel$new()
-    pk$addCompartment("Central", 0)
-    pk$addCompartment("Peripheral", 0)
-    pk$addReaction("Central", "Peripheral", "k12 * Central")
-    pk$addReaction("Peripheral", "Central", "k21 * Peripheral")
-    pk$addReaction("Central", "", "k10 * Central")
-    pk$addObservable("CentralObs", "Central")
+    pk <- CompartmentModel$
+        new()$
+        addCompartment(c("Central","Peripheral"), 0)$
+        addReaction("Central", "Peripheral", const = "k12")$
+        addReaction("Peripheral", "Central", const = "k21")$
+        addReaction("Central", "", const ="k10")$
+        addObservable("CentralObs", "Central")
 
     # Merge without suffixes, using collision = 'merge'
     merged <- mergeModels(abs, pk, suffix1 = NULL, suffix2 = NULL, collision = "merge")
@@ -43,22 +44,22 @@ test_that("mergeModels merges two CompartmentModels without suffixes (collision=
 
 test_that("mergeModels can merge two distinct drugs with suffixes", {
     # Drug A
-    drugA <- CompartmentModel$new()
-    drugA$addCompartment("Central", 0)
-    drugA$addCompartment("Peripheral", 0)
-    drugA$addReaction("Central", "Peripheral", "k12 * Central")
-    drugA$addReaction("Peripheral", "Central", "k21 * Peripheral")
-    drugA$addReaction("Central", "", "k10 * Central")
-    drugA$addObservable("CentralObs", "Central")
+    drugA <- CompartmentModel$
+        new()$
+        addCompartment(c("Central", "Peripheral"), 0)$
+        addReaction("Central", "Peripheral", const = "k12")$
+        addReaction("Peripheral", "Central", const = "k21")$
+        addReaction("Central", "", const = "k10")$
+        addObservable("CentralObs", "Central")
 
     # Drug B
-    drugB <- CompartmentModel$new()
-    drugB$addCompartment("Central", 0)
-    drugB$addCompartment("Peripheral", 0)
-    drugB$addReaction("Central", "Peripheral", "k12 * Central")
-    drugB$addReaction("Peripheral", "Central", "k21 * Peripheral")
-    drugB$addReaction("Central", "", "k10 * Central")
-    drugB$addObservable("CentralObs", "Central")
+    drugB <- CompartmentModel$
+        new()$
+        addCompartment(c("Central", "Peripheral"), 0)$
+        addReaction("Central", "Peripheral", const = "k12")$
+        addReaction("Peripheral", "Central", const = "k21")$
+        addReaction("Central", "", const = "k10")$
+        addObservable("CentralObs", "Central")
 
     # Merge with suffixes to keep compartments separate
     merged <- mergeModels(drugA, drugB, suffix1 = "A", suffix2 = "B", collision = "error")
@@ -79,23 +80,24 @@ test_that("mergeModels can merge two distinct drugs with suffixes", {
 })
 
 test_that("mergeModels auto-renames two distinct drugs correctly", {
+
     # Drug A
-    drugA <- CompartmentModel$new()
-    drugA$addCompartment("Central", 0)
-    drugA$addCompartment("Peripheral", 0)
-    drugA$addReaction("Central", "Peripheral", "k12 * Central")
-    drugA$addReaction("Peripheral", "Central", "k21 * Peripheral")
-    drugA$addReaction("Central", "", "k10 * Central")
-    drugA$addObservable("CentralObs", "Central")
+    drugA <- CompartmentModel$
+        new()$
+        addCompartment(c("Central", "Peripheral"), 0)$
+        addReaction("Central", "Peripheral", const = "k12")$
+        addReaction("Peripheral", "Central", const = "k21")$
+        addReaction("Central", "", const = "k10")$
+        addObservable("CentralObs", "Central")
 
     # Drug B
-    drugB <- CompartmentModel$new()
-    drugB$addCompartment("Central", 0)
-    drugB$addCompartment("Peripheral", 0)
-    drugB$addReaction("Central", "Peripheral", "k12 * Central")
-    drugB$addReaction("Peripheral", "Central", "k21 * Peripheral")
-    drugB$addReaction("Central", "", "k10 * Central")
-    drugB$addObservable("CentralObs", "Central")
+    drugB <- CompartmentModel$
+        new()$
+        addCompartment(c("Central", "Peripheral"), 0)$
+        addReaction("Central", "Peripheral", const = "k12")$
+        addReaction("Peripheral", "Central", const = "k21")$
+        addReaction("Central", "", const = "k10")$
+        addObservable("CentralObs", "Central")
 
     # Merge with suffixes to keep compartments separate
     merged_auto   <- mergeModels(drugA, drugB, collision = "auto")
@@ -110,20 +112,20 @@ test_that("mergeModels auto-renames two distinct drugs correctly", {
 
 test_that("mergeModels respects shared parameters (skip suffixing)", {
     # Drug A (PBPK compound 1)
-    drugA <- CompartmentModel$new()
-    drugA$addCompartment("Liver", 0)
-    drugA$addCompartment("Central", 0)
-    drugA$addReaction("Central", "Liver", "Q_hepatic/V_liver * (Central - Liver / K_liver)")
-    drugA$addReaction("Liver", "Central", "Q_hepatic/V_liver * (Liver / K_liver - Central)")
-    drugA$addObservable("CentralObs", "Central")
+    drugA <- CompartmentModel$new()$
+        addCompartment("Liver", 0)$
+        addCompartment("Central", 0)$
+        addReaction("Central", "Liver", "Q_hepatic/V_liver * (Central - Liver / K_liver)")$
+        addReaction("Liver", "Central", "Q_hepatic/V_liver * (Liver / K_liver - Central)")$
+        addObservable("CentralObs", "Central")
 
     # Drug B (PBPK compound 2)
-    drugB <- CompartmentModel$new()
-    drugB$addCompartment("Liver", 0)
-    drugB$addCompartment("Central", 0)
-    drugB$addReaction("Central", "Liver", "Q_hepatic/V_liver * (Central - Liver / K_liver)")
-    drugB$addReaction("Liver", "Central", "Q_hepatic/V_liver * (Liver / K_liver - Central)")
-    drugB$addObservable("CentralObs", "Central")
+    drugB <- CompartmentModel$new()$
+        addCompartment("Liver", 0)$
+        addCompartment("Central", 0)$
+        addReaction("Central", "Liver", "Q_hepatic/V_liver * (Central - Liver / K_liver)")$
+        addReaction("Liver", "Central", "Q_hepatic/V_liver * (Liver / K_liver - Central)")$
+        addObservable("CentralObs", "Central")
 
     # Shared physiological parameters (should not be suffixed)
     shared <- c("Q_hepatic", "V_liver")

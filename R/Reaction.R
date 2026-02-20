@@ -36,6 +36,11 @@ Reaction <- R6::R6Class("Reaction",
         #' @param rate Rate expression (character or function)
         #' @param const Rate constant (character string) , or NULL if not linear)
         #' @return A new `Reaction` object
+        #' @examples
+        #' # Linear reaction
+        #' r1 <- Reaction$new(from = "A", to = "B", const = "k1")   # rate will be k1 * A
+        #' #' # Nonlinear reaction
+        #' r2 <- Reaction$new(from = "A", to = "B", rate = "k1 * A*B/(B+K)")
         initialize = function(from, to, rate = NULL, const = NULL) {
             self$from <- if (.is_emptychar(from)) NULL else 
                             if (all(nzchar(from))) from else 

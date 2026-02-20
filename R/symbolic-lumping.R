@@ -93,4 +93,3 @@ get_lumping_conditions <- function(M, refstate, maxdegree = 2, simplify = c("non
     .solve_model_symbolic(cond, M$reactions, simplify = match.arg(simplify))
 
 }
-

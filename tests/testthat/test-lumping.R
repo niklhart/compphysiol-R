@@ -1,7 +1,8 @@
 test_that("lumping is exact in a 3-CMT model with identical peripherals", {
 
-    M <- multiCompModel(ncomp = 3, type = "micro")
-    M$addDosing(Dosing$new(target = "C1", time = 0, amount = 10))
+    M <- multiCompModel(ncomp = 3, type = "micro")$
+        addDosing(target = "C1", time = 0, amount = 10)
+
     L <- lump_model(M,
                     partitioning = list(c("C2","C3")),
                     normalize = list(
@@ -29,14 +30,13 @@ test_that("lumping is exact in a 3-CMT model with identical peripherals", {
 
 test_that("lumping works for 2-CMT blood/tissue model with CL", {
 
-    M <- CompartmentModel$new()
-
-    M$addCompartment("blo", 10)
-    M$addCompartment("tis", 0)
-
-    M$addReaction("blo","tis","Q*blo/Vblo")
-    M$addReaction("tis","blo","Q*tis/(Vtis*Ktis)")
-    M$addReaction("tis","","CL*tis/(Vtis*Ktis)")
+    M <- CompartmentModel$
+        new()$
+        addCompartment("blo", 10)$
+        addCompartment("tis", 0)$
+        addReaction("blo","tis","Q*blo/Vblo")$
+        addReaction("tis","blo","Q*tis/(Vtis*Ktis)")$
+        addReaction("tis","","CL*tis/(Vtis*Ktis)")
 
     L <- lump_model(M,
                     partitioning = list(c("blo","tis")),
@@ -45,9 +45,10 @@ test_that("lumping works for 2-CMT blood/tissue model with CL", {
                         tis = "Vtis*Ktis*Q/(Q+CL)"
                     ))
 
-    Lref <- CompartmentModel$new()
-    Lref$addCompartment("blo_tis", 10)
-    Lref$addReaction("blo_tis","","CL*Q/(Vblo*(Q+CL)+Vtis*Ktis*Q) * blo_tis")
+    Lref <- CompartmentModel$
+        new()$
+        addCompartment("blo_tis", 10)$
+        addReaction("blo_tis","","CL*Q/(Vblo*(Q+CL)+Vtis*Ktis*Q) * blo_tis")
 
     param <- list(
         Q = 1,
@@ -72,16 +73,15 @@ test_that("lumping handles first-pass effect correctly", {
 
     skip("Illustration of first-pass effect issue")
 
-    M <- CompartmentModel$new()
-
-    M$addCompartment("gut", 10)
-    M$addCompartment("liv", 0)
-    M$addCompartment("blo", 0)
-
-    M$addReaction("blo","liv","Q*blo/Vblo")
-    M$addReaction("liv","blo","Q*liv/(Vliv*Kliv)")
-    M$addReaction("liv","",   "CL*liv/(Vliv*Kliv)")
-    M$addReaction("gut","liv","ka*gut")
+    M <- CompartmentModel$
+        new()$
+        addCompartment("gut", 10)$
+        addCompartment("liv", 0)$
+        addCompartment("blo", 0)$
+        addReaction("blo","liv","Q*blo/Vblo")$
+        addReaction("liv","blo","Q*liv/(Vliv*Kliv)")$
+        addReaction("liv","",   "CL*liv/(Vliv*Kliv)")$
+        addReaction("gut","liv","ka*gut")
 
     L <- lump_model(M,
                     partitioning = list(sys=c("blo","liv")),

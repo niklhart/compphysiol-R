@@ -21,8 +21,8 @@ DosingList(target, time, amount = NULL, rate = NULL, duration = NULL)
 A list of \code{Dosing} objects.
 }
 \description{
-If \code{time} (and optionally \code{amount}, etc.) are vectors, returns
-a list of \code{Dosing} objects. Otherwise, returns a single Dosing.
+\code{DosingList()} is a wrapper function to construct multiple \code{Dosing} objects at once.
+It accepts vectorized arguments of compatible length (\code{NULL}, scalar, or same-length vectors).
 }
 \examples{
 DosingList("Central", time = c(0, 24, 48), amount = 100)

@@ -39,6 +39,6 @@ test_that("DosingList() output works with CompartmentModel$addDosing()", {
 
     model <- CompartmentModel$new()
     doses <- DosingList("Central", time = c(0, 24, 48), amount = 100)
-    expect_silent(model$addDosing(doses))
+    expect_silent(model$addDosing(dose = doses))
     expect_true(length(model$doses) >= 3)
 })

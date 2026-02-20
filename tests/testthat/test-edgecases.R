@@ -14,8 +14,7 @@ test_that("Simulation fails if target compartment missing", {
     M$addCompartment("Central", 10)
 
     # Dose references a compartment that will not exist
-    dose <- Dosing$new("Peripheral", amount = 10, time = 0)
-    M$addDosing(dose)
+    M$addDosing(target = "Peripheral", amount = 10, time = 0)
 
     # Expected deSolve error
     expect_error({
@@ -42,11 +41,8 @@ test_that("Overlapping infusion events handled correctly", {
     M$addCompartment("Central", 0)
 
     # Two overlapping infusions
-    inf1 <- Dosing$new("Central", rate = 5, duration = 4, time = 0)
-    inf2 <- Dosing$new("Central", rate = 3, duration = 4, time = 2)
-
-    M$addDosing(inf1)
-    M$addDosing(inf2)
+    M$addDosing("Central", rate = 5, duration = 4, time = 0)
+    M$addDosing("Central", rate = 3, duration = 4, time = 2)
 
     events <- M$toODE()$events$data
 

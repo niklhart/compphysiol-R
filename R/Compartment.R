@@ -41,3 +41,20 @@ Compartment <- R6::R6Class("Compartment",
                                }
                            )
 )
+
+
+#' Construct one or more Compartment objects
+#' 
+#' `CompartmentList()` is a wrapper function to construct multiple `Compartment` objects at once.
+#' 
+#' @param name Compartment name(s), character scalar or vector
+#' @param initial Initial amounts for the compartments (numeric scalar or vector, default = 0)
+#' @return A list of `Compartment` objects
+#' @export
+CompartmentList <- function(name, initial = 0) {
+
+    if (length(initial) == 1) initial <- rep(initial, length(name))
+    if (length(name) != length(initial)) stop("Arguments 'name' and 'initial' must have the same length.")
+    
+    Map(Compartment$new, name, initial, USE.NAMES = FALSE)
+}

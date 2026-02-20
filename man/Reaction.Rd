@@ -11,6 +11,17 @@ Reaction Class
 \details{
 Represents a model reaction.
 }
+\examples{
+
+## ------------------------------------------------
+## Method `Reaction$new`
+## ------------------------------------------------
+
+# Linear reaction
+r1 <- Reaction$new(from = "A", to = "B", const = "k1")   # rate will be k1 * A
+#' # Nonlinear reaction
+r2 <- Reaction$new(from = "A", to = "B", rate = "k1 * A*B/(B+K)")
+}
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
@@ -69,6 +80,17 @@ and \code{from} is the source compartment.
 \subsection{Returns}{
 A new \code{Reaction} object
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{# Linear reaction
+r1 <- Reaction$new(from = "A", to = "B", const = "k1")   # rate will be k1 * A
+#' # Nonlinear reaction
+r2 <- Reaction$new(from = "A", to = "B", rate = "k1 * A*B/(B+K)")
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Reaction-print"></a>}}

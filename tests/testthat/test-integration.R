@@ -1,13 +1,11 @@
 library(deSolve)
 
 test_that("Full simulation with bolus dosing works", {
-    M <- CompartmentModel$new()
-    M$addCompartment("Central", 0)
-    M$addCompartment("Peripheral", 0)
-    M$addReaction("Central", "Peripheral", "k12 * Central")
-
-    # Add bolus dose
-    M$addDosing(Dosing$new("Central", amount = 100, time = 0))
+    M <- CompartmentModel$
+        new()$
+        addCompartment(c("Central","Peripheral"), 0)$
+        addReaction("Central", "Peripheral", const = "k12")$
+        addDosing("Central", amount = 100, time = 0)
 
     odeinfo <- M$toODE(paramValues = list(k12 = 0.1))
     y0 <- odeinfo$y0
@@ -26,13 +24,11 @@ test_that("Full simulation with bolus dosing works", {
 })
 
 test_that("Full simulation with infusion dosing works", {
-    M <- CompartmentModel$new()
-    M$addCompartment("Central", 0)
-    M$addCompartment("Peripheral", 0)
-    M$addReaction("Central", "Peripheral", "k12 * Central")
-
-    # Add infusion: rate=10 units/h, duration=5h, start at t=0
-    M$addDosing(Dosing$new("Central", rate = 10, duration = 5, time = 0))
+    M <- CompartmentModel$
+        new()$
+        addCompartment(c("Central", "Peripheral"), 0)$
+        addReaction("Central", "Peripheral", const = "k12")$
+        addDosing(target = "Central", rate = 10, duration = 5, time = 0)     # infusion: rate=10 units/h, duration=5h, start at t=0
 
     odeinfo <- M$toODE(paramValues = list(k12 = 0.1))
  

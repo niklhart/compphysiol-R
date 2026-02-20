@@ -1,9 +1,10 @@
 
 test_that("Adding compartments works", {
-    M <- CompartmentModel$new()
-    M$addCompartment("Central", initial = 10)
-    M$addCompartment("Peripheral", initial = 0)
-
+    M <- CompartmentModel$
+        new()$
+        addCompartment("Central", initial = 10)$
+        addCompartment("Peripheral", initial = 0)
+    
     compartments <- M$getStateNames()
     expect_equal(compartments, c("Central", "Peripheral"))
 
@@ -25,10 +26,10 @@ test_that("Adding reactions works", {
 })
 
 test_that("Bolus dosing is handled correctly", {
-    M <- CompartmentModel$new()
-    M$addCompartment("Central", 0)
-    bolus <- Dosing$new("Central", amount = 100, time = 2)
-    M$addDosing(bolus)
+    M <- CompartmentModel$
+        new()$
+        addCompartment("Central", 0)$
+        addDosing(target = "Central", amount = 100, time = 2)
 
     compartments <- M$getStateNames()
     expect_false("InfusionBag_Central" %in% compartments)
@@ -42,10 +43,10 @@ test_that("Bolus dosing is handled correctly", {
 })
 
 test_that("Infusion dosing creates bag and rate compartments", {
-    M <- CompartmentModel$new()
-    M$addCompartment("Central", 0)
-    infusion <- Dosing$new("Central", rate = 5, duration = 4, time = 8)
-    M$addDosing(infusion)
+    M <- CompartmentModel$
+        new()$
+        addCompartment("Central", 0)$
+        addDosing("Central", rate = 5, duration = 4, time = 8)
 
     compartments <- M$getStateNames()
     expect_true("InfusionBag_Central" %in% compartments)

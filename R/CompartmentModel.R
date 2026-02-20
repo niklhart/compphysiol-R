@@ -8,7 +8,6 @@
 CompartmentModel <- R6::R6Class(
     "CompartmentModel",
     public = list(
-
         #' @field compartments A list of `Compartment` objects
         compartments = list(),
 
@@ -56,7 +55,7 @@ CompartmentModel <- R6::R6Class(
         #' M <- multiCompModel()
         #' print(M)
         #' @export
-        print =  function(...) {
+        print = function(...) {
             cat("<CompartmentModel>\n")
 
             # compartments
@@ -73,8 +72,16 @@ CompartmentModel <- R6::R6Class(
             if (length(self$reactions) > 0) {
                 cat(" Reactions:\n")
                 for (r in self$reactions) {
-                    from <- if (is.null(r$from)) "\u2205" else paste(r$from, collapse = "+")
-                    to   <- if (is.null(r$to))   "\u2205" else paste(r$to, collapse = "+")
+                    from <- if (is.null(r$from)) {
+                        "\u2205"
+                    } else {
+                        paste(r$from, collapse = "+")
+                    }
+                    to <- if (is.null(r$to)) {
+                        "\u2205"
+                    } else {
+                        paste(r$to, collapse = "+")
+                    }
                     cat("   -", from, "\u2192", to, ":", deparse(r$rate), "\n")
                 }
             } else {
@@ -97,8 +104,16 @@ CompartmentModel <- R6::R6Class(
                 cat(" Dosing events:\n")
                 for (i in seq_len(nrow(events))) {
                     ev <- events[i, ]
-                    cat("   - at t =", ev$time,
-                        ":", ev$method, ev$value, "\u2192", ev$var, "\n")
+                    cat(
+                        "   - at t =",
+                        ev$time,
+                        ":",
+                        ev$method,
+                        ev$value,
+                        "\u2192",
+                        ev$var,
+                        "\n"
+                    )
                 }
             } else {
                 cat(" Dosing: (none)\n")
@@ -114,7 +129,9 @@ CompartmentModel <- R6::R6Class(
             y0 <- sapply(self$compartments, function(c) c$initial)
             if (named) {
                 setNames(y0, nm = self$getStateNames())
-            } else y0
+            } else {
+                y0
+            }
         },
 
         #' @description
@@ -124,40 +141,34 @@ CompartmentModel <- R6::R6Class(
         },
 
         #' @description
-        #' Add a compartment to the model.
-        #' @param name Name of the compartment
-        #' @param initial Initial amount (default 0)
-        addCompartment = function(name, initial = 0) {
-            # Ensure name is a character vector
-            name <- as.character(name)
-            
-            # Recycle initial if scalar
-            if (length(initial) == 1) {
-                initial <- rep(initial, length(name))
-            }
-            
-            if (length(initial) != length(name)) {
-                stop("Length of 'initial' must be 1 or match the length of 'name'")
-            }
-            
-            # Create new Compartment objects in a vectorized way
-            new_comps <- Map(Compartment$new, name, initial) |> unname()
-
-            # Append to existing compartments list
-            self$compartments <- c(self$compartments, new_comps)
-            
+        #' Add one or several compartments to the model.
+        #' @param name Name of the compartment(s)
+        #' @param initial Initial amount(s) (default 0)
+        #' @param comp A Compartment object or list of Compartment objects. Constructed from the other inputs if not provided.
+        addCompartment = function(name, initial = 0, comp = CompartmentList(name, initial)) {
+            comp <- .wrap_into_list(comp)
+            self$compartments <- c(self$compartments, comp)
             invisible(self)
         },
 
         #' @description
-        #' Add a reaction to the model.
+        #' Add one or several reactions to the model.
+        #' Currently, only the `reaction` argument can be vectorized. 
+        #' The other inputs can only be used to construct a scalar reaction.
         #' @param from Source compartment
         #' @param to Target compartment
         #' @param rate Rate expression as character
         #' @param const Optional rate constant name (for linear reactions)
-        #' @param reaction A Reaction object. Constructed from `from`, `to`, and `rate` if not provided.
-        addReaction = function(from, to, rate = NULL, const = NULL, reaction = Reaction$new(from, to, rate, const)) {
-            self$reactions[[length(self$reactions) + 1]] <- reaction
+        #' @param reaction A Reaction object or list of Reaction objects. Constructed from the other inputs if not provided.
+        addReaction = function(
+            from,
+            to,
+            rate = NULL,
+            const = NULL,
+            reaction = Reaction$new(from, to, rate, const)
+        ) {
+            reaction <- .wrap_into_list(reaction)
+            self$reactions <- c(self$reactions, reaction)
             invisible(self)
         },
 
@@ -165,63 +176,118 @@ CompartmentModel <- R6::R6Class(
         #' Add an observable.
         #' @param name Name of the observable
         #' @param expr Expression (character or function)
-        addObservable = function(name, expr) {
-            self$observables[[length(self$observables) + 1]] <- Observable$new(name, expr)
+        #' @param obs An Observable object or list of Observable objects. Constructed from the other inputs if not provided.
+        addObservable = function(name, expr, obs = ObservableList(name, expr)) {
+            obs <- .wrap_into_list(obs)
+            self$observables <- c(self$observables, obs)
             invisible(self)
         },
 
         #' @description
-        #' Add a dosing event (bolus or infusion).
-        #' @param dose A Dosing object
-        addDosing = function(dose) {
-
+        #' Add one or several dosing events (bolus or infusion).
+        #' @param target Name of the target compartment(s) for the dose(s)
+        #' @param time Time of the dosing event(s)
+        #' @param amount Amount(s) to be dosed (for bolus) or infusion rate (for infusion)
+        #' @param rate Infusion rate (for infusion)
+        #' @param duration Infusion duration (for infusion)
+        #' @param dose A Dosing object or a list of Dosing objects. Constructed from the other inputs if not provided.
+        addDosing = function(
+            target,
+            time,
+            amount = NULL,
+            rate = NULL,
+            duration = NULL,
+            dose = DosingList(
+                target = target,
+                time = time,
+                amount = amount,
+                rate = rate,
+                duration = duration
+            )
+        ) {
             # --- handle lists of Dosing objects ---
             if (is.list(dose)) {
-                for (d in dose) self$addDosing(d)  # recursion on single elements
+                for (d in dose) {
+                    self$addDosing(dose = d) # recursion on single elements
+                }
                 return(invisible(self))
             }
 
-            # --- Existing logic for single Dosing object ---
+            # --- Logic for single Dosing object ---
             stopifnot(inherits(dose, "Dosing"))
             if (dose$isBolus()) {
                 # simple bolus, store in doses list
-                if (is.null(self$doses)) self$doses <- list()
+                if (is.null(self$doses)) {
+                    self$doses <- list()
+                }
                 self$doses[[length(self$doses) + 1]] <- dose
             } else if (dose$isInfusion()) {
                 # ensure bag and rate compartments exist for target
                 bagName <- paste0("InfusionBag_", dose$target)
                 rateName <- paste0("InfusionRate_", dose$target)
-                if (!(bagName %in% names(self$compartments))) self$addCompartment(bagName, 0)
-                if (!(rateName %in% names(self$compartments))) self$addCompartment(rateName, 0)
+                if (!(bagName %in% names(self$compartments))) {
+                    self$addCompartment(bagName, 0)
+                }
+                if (!(rateName %in% names(self$compartments))) {
+                    self$addCompartment(rateName, 0)
+                }
 
                 # add zero-order reaction from bag to  target, rate = InfusionRate compartment
                 self$addReaction(bagName, dose$target, paste0(rateName))
 
                 # create bolus into the bag
                 totalAmount <- dose$rate * dose$duration
-                bolusToBag <- Dosing$new(bagName, amount = totalAmount, time = dose$time)
+                bolusToBag <- Dosing$new(
+                    bagName,
+                    amount = totalAmount,
+                    time = dose$time
+                )
 
                 # store both bolus-to-bag and infusion start/end events
-                if (is.null(self$doses)) self$doses <- list()
+                if (is.null(self$doses)) {
+                    self$doses <- list()
+                }
                 self$doses[[length(self$doses) + 1]] <- bolusToBag
 
                 # infusion rate modification events
-                if (is.null(self$infusionEvents)) self$infusionEvents <- data.frame(var=character(),
-                                                                                    time=numeric(),
-                                                                                    value=numeric(),
-                                                                                    method=character(),
-                                                                                    stringsAsFactors = FALSE)
+                if (is.null(self$infusionEvents)) {
+                    self$infusionEvents <- data.frame(
+                        var = character(),
+                        time = numeric(),
+                        value = numeric(),
+                        method = character(),
+                        stringsAsFactors = FALSE
+                    )
+                }
                 # start
-                self$infusionEvents <- rbind(self$infusionEvents,
-                                            data.frame(var=rateName, time=dose$time, value=dose$rate, method="add", stringsAsFactors = FALSE)
+                self$infusionEvents <- rbind(
+                    self$infusionEvents,
+                    data.frame(
+                        var = rateName,
+                        time = dose$time,
+                        value = dose$rate,
+                        method = "add",
+                        stringsAsFactors = FALSE
+                    )
                 )
                 # end
-                self$infusionEvents <- rbind(self$infusionEvents,
-                                            data.frame(var=rateName, time=dose$time + dose$duration, value=-dose$rate, method="add", stringsAsFactors = FALSE)
+                self$infusionEvents <- rbind(
+                    self$infusionEvents,
+                    data.frame(
+                        var = rateName,
+                        time = dose$time + dose$duration,
+                        value = -dose$rate,
+                        method = "add",
+                        stringsAsFactors = FALSE
+                    )
                 )
             } else {
-                stop("Invalid dosing: either bolus or infusion with rate+duration")
+                stop(
+                    "Invalid dosing: either bolus or infusion with rate+duration"
+                )
             }
+
+            invisible(self)
         },
 
         #' @description
@@ -229,7 +295,11 @@ CompartmentModel <- R6::R6Class(
         #' @return `TRUE` if all reactions are linear, `FALSE` otherwise.
         isLinear = function() {
             stateNames <- self$getStateNames()
-            all(vapply(self$reactions, function(r) r$isLinear(stateNames), logical(1)))
+            all(vapply(
+                self$reactions,
+                function(r) r$isLinear(stateNames),
+                logical(1)
+            ))
         },
 
         #' @description
@@ -263,7 +333,9 @@ CompartmentModel <- R6::R6Class(
             # ---- Process each reaction ----
             for (r in self$reactions) {
                 if (!r$isLinear(stateNames)) {
-                    stop("Reaction is nonlinear: cannot compute analytical solution.")
+                    stop(
+                        "Reaction is nonlinear: cannot compute analytical solution."
+                    )
                 }
 
                 coef_str <- r$rateConstant(stateNames)
@@ -271,7 +343,11 @@ CompartmentModel <- R6::R6Class(
                 # Inline paramValues numerically
                 if (length(paramValues) > 0) {
                     for (nm in names(paramValues)) {
-                        coef_str <- gsub(paste0("\\b", nm, "\\b"), as.character(paramValues[[nm]]), coef_str)
+                        coef_str <- gsub(
+                            paste0("\\b", nm, "\\b"),
+                            as.character(paramValues[[nm]]),
+                            coef_str
+                        )
                     }
                 }
 
@@ -281,17 +357,30 @@ CompartmentModel <- R6::R6Class(
                 coef_symbols <- setdiff(coef_symbols, stateNames)
                 freeParams$list <- c(freeParams$list, coef_symbols)
                 for (s in coef_symbols) {
-                    coef_str <- gsub(paste0("\\b", s, "\\b"), paste0('params[["', s, '"]]'), coef_str)
+                    coef_str <- gsub(
+                        paste0("\\b", s, "\\b"),
+                        paste0('params[["', s, '"]]'),
+                        coef_str
+                    )
                 }
 
                 from_idx <- name2idx[[r$from]]
-                to_idx   <- if (!is.null(r$to) && r$to != "") name2idx[[r$to]] else NA
+                to_idx <- if (!is.null(r$to) && r$to != "") {
+                    name2idx[[r$to]]
+                } else {
+                    NA
+                }
 
                 # Diagonal contribution
                 if (A[from_idx, from_idx] == "0") {
                     A[from_idx, from_idx] <- paste0("-", "(", coef_str, ")")
                 } else {
-                    A[from_idx, from_idx] <- paste0(A[from_idx, from_idx], "-(", coef_str, ")")
+                    A[from_idx, from_idx] <- paste0(
+                        A[from_idx, from_idx],
+                        "-(",
+                        coef_str,
+                        ")"
+                    )
                 }
 
                 # Off-diagonal contribution
@@ -299,7 +388,12 @@ CompartmentModel <- R6::R6Class(
                     if (A[to_idx, from_idx] == "0") {
                         A[to_idx, from_idx] <- paste0("+(", coef_str, ")")
                     } else {
-                        A[to_idx, from_idx] <- paste0(A[to_idx, from_idx], "+(", coef_str, ")")
+                        A[to_idx, from_idx] <- paste0(
+                            A[to_idx, from_idx],
+                            "+(",
+                            coef_str,
+                            ")"
+                        )
                     }
                 }
             }
@@ -313,12 +407,21 @@ CompartmentModel <- R6::R6Class(
                 A_eval <- matrix(0, nStates, nStates)
                 for (i in seq_len(nStates)) {
                     for (j in seq_len(nStates)) {
-                        A_eval[i,j] <- eval(parse(text = A[i,j]), envir = eval_env)
+                        A_eval[i, j] <- eval(
+                            parse(text = A[i, j]),
+                            envir = eval_env
+                        )
                     }
                 }
                 x0 <- self$getInitialState()
-                res <- as.matrix(vapply(t, function(tt) expm::expm(A_eval * tt) %*% x0, x0))
-                if (length(x0)>1) res <- t(res)
+                res <- as.matrix(vapply(
+                    t,
+                    function(tt) expm::expm(A_eval * tt) %*% x0,
+                    x0
+                ))
+                if (length(x0) > 1) {
+                    res <- t(res)
+                }
                 colnames(res) <- stateNames
                 # Prepend t as the first column, as deSolve does
                 cbind(time = t, res)
@@ -326,22 +429,29 @@ CompartmentModel <- R6::R6Class(
 
             # Observables (same substitution logic)
             obsFuncs <- lapply(self$observables, function(o) {
-                expr_lang <- substitute_expr(o$expr, stateNames, name2idx,
-                                paramValues = paramValues,
-                                freeParamsEnv = freeParams,
-                                obsFunc = TRUE)
-                expr_str  <- paste(deparse(expr_lang, width.cutoff = 500), collapse = " ")
+                expr_lang <- substitute_expr(
+                    o$expr,
+                    stateNames,
+                    name2idx,
+                    paramValues = paramValues,
+                    freeParamsEnv = freeParams,
+                    obsFunc = TRUE
+                )
+                expr_str <- paste(
+                    deparse(expr_lang, width.cutoff = 500),
+                    collapse = " "
+                )
                 eval(parse(text = paste0("function(t,y,params) ", expr_str)))
             })
             names(obsFuncs) <- vapply(self$observables, function(o) o$name, "")
 
             # ---- Output ----
             list(
-                statefun   = statefun,
+                statefun = statefun,
                 stateNames = stateNames,
                 freeParams = sort(unique(freeParams$list)),
-                obsFuncs   = obsFuncs,
-                A          = A
+                obsFuncs = obsFuncs,
+                A = A
             )
         },
 
@@ -357,9 +467,12 @@ CompartmentModel <- R6::R6Class(
                 if (!is.null(nm) && any(!(nm %in% stateNames))) {
                     missing <- nm[!(nm %in% stateNames)]
                     stop(
-                        "Reaction references unknown compartment: ", paste(missing, collapse = ", "), ". ",
+                        "Reaction references unknown compartment: ",
+                        paste(missing, collapse = ", "),
+                        ". ",
                         "Compartment names in this model: ",
-                        paste(stateNames, collapse = ", "), ". ",
+                        paste(stateNames, collapse = ", "),
+                        ". ",
                         "Did you mean to merge this model with another?"
                     )
                 }
@@ -374,10 +487,14 @@ CompartmentModel <- R6::R6Class(
             freeParams$list <- character()
 
             makeFun <- function(expr, obsFunc = FALSE) {
-                substitute_expr(expr, stateNames, name2idx,
-                                paramValues = paramValues,
-                                freeParamsEnv = freeParams,
-                                obsFunc = obsFunc)
+                substitute_expr(
+                    expr,
+                    stateNames,
+                    name2idx,
+                    paramValues = paramValues,
+                    freeParamsEnv = freeParams,
+                    obsFunc = obsFunc
+                )
             }
 
             # Collect RHS terms for ODEs
@@ -385,7 +502,8 @@ CompartmentModel <- R6::R6Class(
             for (j in seq_along(self$reactions)) {
                 r <- self$reactions[[j]]
                 expr <- makeFun(r$rate)
-                expr_str <- deparse(expr, width.cutoff = 500) |> paste(collapse = " ")
+                expr_str <- deparse(expr, width.cutoff = 500) |>
+                    paste(collapse = " ")
                 if (!is.null(r$from)) {
                     for (from in r$from) {
                         idx <- name2idx[[from]]
@@ -401,13 +519,23 @@ CompartmentModel <- R6::R6Class(
             }
 
             # Build ODE function body (explicit, human-readable)
-            lines <- c("function(t,y,params) {",
-                        paste0("    dydt <- numeric(", length(stateNames), ")"))
+            lines <- c(
+                "function(t,y,params) {",
+                paste0("    dydt <- numeric(", length(stateNames), ")")
+            )
             for (i in seq_along(stateNames)) {
                 if (length(rhs[[i]]) == 0) {
                     lines <- c(lines, paste0("    dydt[", i, "] <- 0"))
                 } else {
-                    lines <- c(lines, paste0("    dydt[", i, "] <- ", paste(rhs[[i]], collapse = " ")))
+                    lines <- c(
+                        lines,
+                        paste0(
+                            "    dydt[",
+                            i,
+                            "] <- ",
+                            paste(rhs[[i]], collapse = " ")
+                        )
+                    )
                 }
             }
             lines <- c(lines, "    list(dydt)", "}")
@@ -416,7 +544,10 @@ CompartmentModel <- R6::R6Class(
             # Observables (same substitution logic)
             obsFuncs <- lapply(self$observables, function(o) {
                 expr_lang <- makeFun(o$expr, obsFunc = TRUE)
-                expr_str  <- paste(deparse(expr_lang, width.cutoff = 500), collapse = " ")
+                expr_str <- paste(
+                    deparse(expr_lang, width.cutoff = 500),
+                    collapse = " "
+                )
                 eval(parse(text = paste0("function(t,y,params) ", expr_str)))
             })
             names(obsFuncs) <- vapply(self$observables, function(o) o$name, "")
@@ -428,26 +559,36 @@ CompartmentModel <- R6::R6Class(
                 obsFuncs = obsFuncs,
                 freeParams = sort(unique(freeParams$list)),
                 y0 = self$getInitialState(),
-                events =  private$dosing_to_events()
+                events = private$dosing_to_events()
             )
         }
-
-
     ),
     # ---- start of private methods ----
     private = list(
-
         #' @description
         #' Generate events data.frame for `deSolve` from stored dosing.
         dosing_to_events = function() {
-            events <- data.frame(var=character(), time=numeric(), value=numeric(), method=character(),
-                                stringsAsFactors = FALSE)
+            events <- data.frame(
+                var = character(),
+                time = numeric(),
+                value = numeric(),
+                method = character(),
+                stringsAsFactors = FALSE
+            )
 
             # boluses
             if (!is.null(self$doses)) {
                 for (d in self$doses) {
-                    events <- rbind(events,
-                                    data.frame(var=d$target, time=d$time, value=d$amount, method="add", stringsAsFactors = FALSE))
+                    events <- rbind(
+                        events,
+                        data.frame(
+                            var = d$target,
+                            time = d$time,
+                            value = d$amount,
+                            method = "add",
+                            stringsAsFactors = FALSE
+                        )
+                    )
                 }
             }
 

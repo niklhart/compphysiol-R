@@ -34,23 +34,29 @@
 #' )
 #' merged
 #' @export
-mergeModels <- function(M1, M2, suffix1 = NULL, suffix2 = NULL,
-                        collision = c("error","auto","merge"),
-                        shared = character()) {
+mergeModels <- function(
+    M1,
+    M2,
+    suffix1 = NULL,
+    suffix2 = NULL,
+    collision = c("error", "auto", "merge"),
+    shared = character()
+) {
     collision <- match.arg(collision)
-    merged <- CompartmentModel$new()
 
     renameCompartments <- function(model, suffix, skip = character()) {
-        if (is.null(suffix)) return(model)
+        if (is.null(suffix)) {
+            return(model)
+        }
         oldStateNames <- model$getStateNames()
-        newStateNames <- paste0(oldStateNames,suffix)
+        newStateNames <- paste0(oldStateNames, suffix)
         model_copy <- CompartmentModel$new()
         for (c in model$compartments) {
             model_copy$addCompartment(paste0(c$name, suffix), c$initial)
         }
         for (r in model$reactions) {
             from <- if (!is.null(r$from)) paste0(r$from, suffix)
-            to   <- if (!is.null(r$to))   paste0(r$to, suffix)
+            to <- if (!is.null(r$to)) paste0(r$to, suffix)
 
             rate <- .suffix_symbols(r$rate, suffix = suffix, skip = skip)
             model_copy$addReaction(from, to, rate)
@@ -63,51 +69,66 @@ mergeModels <- function(M1, M2, suffix1 = NULL, suffix2 = NULL,
             dose_copy <- Dosing$new(
                 target = paste0(d$target, suffix),
                 amount = d$amount,
-                time   = d$time,
-                rate   = d$rate,
+                time = d$time,
+                rate = d$rate,
                 duration = d$duration
             )
-            model_copy$addDosing(dose_copy)
+            model_copy$addDosing(dose = dose_copy)
         }
         model_copy
     }
 
     # renaming logic (with or without leading "_")
     with_underscore <- function(sfx) {
-        if (!is.null(sfx) && !startsWith(sfx,"_")) paste0("_",sfx) else sfx
+        if (!is.null(sfx) && !startsWith(sfx, "_")) paste0("_", sfx) else sfx
     }
-    M1r <- renameCompartments(M1, with_underscore(suffix1), skip = shared)
-    M2r <- renameCompartments(M2, with_underscore(suffix2), skip = shared)
+    M1r <- renameCompartments(
+        M1,
+        suffix = with_underscore(suffix1),
+        skip = shared
+    )
+    M2r <- renameCompartments(
+        M2,
+        suffix = with_underscore(suffix2),
+        skip = shared
+    )
 
     # collision handling (currently simplified)
     n1 <- M1r$getStateNames()
     n2 <- M2r$getStateNames()
     if (length(intersect(n1, n2)) > 0) {
-        switch(collision,
-               error = stop("Name collision in merged models: ",
-                            paste(intersect(n1, n2), collapse=", ")),
-               auto = {
-                   M1r <- renameCompartments(M1r, suffix = "_1", skip = shared)
-                   M2r <- renameCompartments(M2r, suffix = "_2", skip = shared)
-               }
+        switch(
+            collision,
+            error = stop(
+                "Name collision in merged models: ",
+                paste(intersect(n1, n2), collapse = ", ")
+            ),
+            auto = {
+                M1r <- renameCompartments(M1r, suffix = "_1", skip = shared)
+                M2r <- renameCompartments(M2r, suffix = "_2", skip = shared)
+            }
         )
     }
 
-    # copy everything into merged
-    for (c in M1r$compartments) merged$addCompartment(c$name, c$initial)
+    # Handle "merge" collision by adding initial amounts of colliding compartments
+    merged_comps <- M1r$compartments
     for (c in M2r$compartments) {
         if (collision == "merge" && !is.na(idx <- match(c$name, n1))) {
-            merged$compartments[[idx]]$initial <- merged$compartments[[idx]]$initial + c$initial
+            merged_comps[[idx]]$initial <- merged_comps[[idx]]$initial + c$initial
         } else {
-            merged$addCompartment(c$name, c$initial)
+            merged_comps <- c(merged_comps, c)
         }
     }
-    for (r in M1r$reactions) merged$addReaction(r$from, r$to, deparse(r$rate))
-    for (r in M2r$reactions) merged$addReaction(r$from, r$to, deparse(r$rate))
-    for (o in M1r$observables) merged$addObservable(o$name, deparse(o$expr))
-    for (o in M2r$observables) merged$addObservable(o$name, deparse(o$expr))
-    for (d in M1r$doses) merged$addDosing(d)
-    for (d in M2r$doses) merged$addDosing(d)
+    
+    # construct merged model
+    CompartmentModel$
+        new()$
+        addCompartment(comp = merged_comps)$
+        addReaction(reaction = M1r$reactions)$
+        addReaction(reaction = M2r$reactions)$
+        addObservable(obs = M1r$observables)$
+        addObservable(obs = M2r$observables)$
+        addDosing(dose = M1r$doses)$
+        addDosing(dose = M2r$doses)
 
-    merged
 }

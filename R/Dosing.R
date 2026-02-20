@@ -1,14 +1,14 @@
 #' Dosing specification
 #'
-#' Represents a dosing event for a \code{CompartmentModel}. A dose can be
+#' Represents a dosing event for a `CompartmentModel`}`. A dose can be
 #' specified either as a bolus (instantaneous input) or as an infusion
 #' (continuous input over time).
 #'
 #' ## Bolus
-#' Provide only \code{amount}. The dose is given at \code{time}.
+#' Provide only `amount`. The dose is given at `time`.
 #'
 #' ## Infusion
-#' Provide any two of \code{amount}, \code{rate}, and \code{duration}.
+#' Provide any two of `amount`, `rate`, and `duration`.
 #' The missing quantity is derived automatically:
 #' \deqn{amount = rate * duration}
 #' \deqn{rate = amount / duration}
@@ -128,8 +128,8 @@ Dosing <- R6::R6Class("Dosing",
 
 #' Construct one or more Dosing objects
 #'
-#' If `time` (and optionally `amount`, etc.) are vectors, returns
-#' a list of `Dosing` objects. Otherwise, returns a single Dosing.
+#' `DosingList()` is a wrapper function to construct multiple `Dosing` objects at once.
+#' It accepts vectorized arguments of compatible length (`NULL`, scalar, or same-length vectors).
 #'
 #' @param target Target compartment name (character scalar)
 #' @param time Time(s) of dose(s) (numeric vector, non-negative)

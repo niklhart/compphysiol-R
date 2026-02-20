@@ -29,3 +29,22 @@ Observable <- R6::R6Class("Observable",
         }
     )
 )
+
+#' Construct one or more Observable objects
+#'
+#' `ObservableList()` is a wrapper function to construct multiple `Observable` objects at once.
+#' It accepts vectorized arguments of identical length.
+#'
+#' @param name Observable name(s), character scalar or vector
+#' @param expr Observable expression(s), (lists of) expressions or functions, or character scalar or vector
+#' @return A list of `Observable` objects.
+#' @examples
+#' ObservableList(c("Cpla","Cblo"), expr = c("Central/Vcentral/BP", "Central/Vcentral"))
+#'
+#' @export
+ObservableList <- function(name, expr) {
+    if (!is.vector(expr)) expr <- list(expr)
+    if (length(name) != length(expr)) stop("Arguments 'name' and 'expr' must have the same length.")
+    
+    Map(Observable$new, name, expr, USE.NAMES = FALSE)
+}

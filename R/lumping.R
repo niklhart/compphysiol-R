@@ -92,7 +92,7 @@ lump_model <- function(M, partitioning = list(), normalize = list()) {
 
     for (d in M$doses) {
         d$target <- grp[[d$target]]
-        L$addDosing(d)
+        L$addDosing(dose = d)
     }
 
     L

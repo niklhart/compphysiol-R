@@ -138,17 +138,23 @@ Get compartment names.
 \if{html}{\out{<a id="method-CompartmentModel-addCompartment"></a>}}
 \if{latex}{\out{\hypertarget{method-CompartmentModel-addCompartment}{}}}
 \subsection{Method \code{addCompartment()}}{
-Add a compartment to the model.
+Add one or several compartments to the model.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$addCompartment(name, initial = 0)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$addCompartment(
+  name,
+  initial = 0,
+  comp = CompartmentList(name, initial)
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{name}}{Name of the compartment}
+\item{\code{name}}{Name of the compartment(s)}
 
-\item{\code{initial}}{Initial amount (default 0)}
+\item{\code{initial}}{Initial amount(s) (default 0)}
+
+\item{\code{comp}}{A Compartment object or list of Compartment objects. Constructed from the other inputs if not provided.}
 }
 \if{html}{\out{</div>}}
 }
@@ -157,7 +163,9 @@ Add a compartment to the model.
 \if{html}{\out{<a id="method-CompartmentModel-addReaction"></a>}}
 \if{latex}{\out{\hypertarget{method-CompartmentModel-addReaction}{}}}
 \subsection{Method \code{addReaction()}}{
-Add a reaction to the model.
+Add one or several reactions to the model.
+Currently, only the \code{reaction} argument can be vectorized.
+The other inputs can only be used to construct a scalar reaction.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$addReaction(
   from,
@@ -179,7 +187,7 @@ Add a reaction to the model.
 
 \item{\code{const}}{Optional rate constant name (for linear reactions)}
 
-\item{\code{reaction}}{A Reaction object. Constructed from \code{from}, \code{to}, and \code{rate} if not provided.}
+\item{\code{reaction}}{A Reaction object or list of Reaction objects. Constructed from the other inputs if not provided.}
 }
 \if{html}{\out{</div>}}
 }
@@ -190,7 +198,7 @@ Add a reaction to the model.
 \subsection{Method \code{addObservable()}}{
 Add an observable.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$addObservable(name, expr)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$addObservable(name, expr, obs = ObservableList(name, expr))}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -199,6 +207,8 @@ Add an observable.
 \item{\code{name}}{Name of the observable}
 
 \item{\code{expr}}{Expression (character or function)}
+
+\item{\code{obs}}{An Observable object or list of Observable objects. Constructed from the other inputs if not provided.}
 }
 \if{html}{\out{</div>}}
 }
@@ -207,15 +217,33 @@ Add an observable.
 \if{html}{\out{<a id="method-CompartmentModel-addDosing"></a>}}
 \if{latex}{\out{\hypertarget{method-CompartmentModel-addDosing}{}}}
 \subsection{Method \code{addDosing()}}{
-Add a dosing event (bolus or infusion).
+Add one or several dosing events (bolus or infusion).
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$addDosing(dose)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$addDosing(
+  target,
+  time,
+  amount = NULL,
+  rate = NULL,
+  duration = NULL,
+  dose = DosingList(target = target, time = time, amount = amount, rate = rate, duration
+    = duration)
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{dose}}{A Dosing object}
+\item{\code{target}}{Name of the target compartment(s) for the dose(s)}
+
+\item{\code{time}}{Time of the dosing event(s)}
+
+\item{\code{amount}}{Amount(s) to be dosed (for bolus) or infusion rate (for infusion)}
+
+\item{\code{rate}}{Infusion rate (for infusion)}
+
+\item{\code{duration}}{Infusion duration (for infusion)}
+
+\item{\code{dose}}{A Dosing object or a list of Dosing objects. Constructed from the other inputs if not provided.}
 }
 \if{html}{\out{</div>}}
 }

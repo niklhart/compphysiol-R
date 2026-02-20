@@ -29,3 +29,11 @@
 .is_emptychar <- function(x) {
     is.null(x) || length(x) == 0L || (length(x) == 1 && x == "")
 }
+
+#' Helper function to wrap objects into a list if they are not already lists
+#' @param x Input object
+#' @returns A list containing `x` if `x` is not already a list
+#' @noRd
+.wrap_into_list <- function(x) {
+    if (is.list(x)) x else list(x)
+}
