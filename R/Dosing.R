@@ -1,6 +1,6 @@
 #' Dosing specification
 #'
-#' Represents a dosing event for a `CompartmentModel`}`. A dose can be
+#' Represents a dosing event for a `CompartmentModel`. A dose can be
 #' specified either as a bolus (instantaneous input) or as an infusion
 #' (continuous input over time).
 #'

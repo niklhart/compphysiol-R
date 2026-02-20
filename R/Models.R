@@ -13,9 +13,10 @@
 #' library(deSolve)
 #'
 #' # Load the PBPK model
-#' M <- sMD_PBPK_12CMT_wellstirred()
+#' M <- sMD_PBPK_12CMT_wellstirred()$
+#'     addDosing(target = "ven", time = 0, amount = 1)$   # IV bolus dosing
+#'     addObservable("Cpla", "BP * ven / Vven")           # plasma concentration observable
 #'
-#' # Define parameters
 #' paramValues <- list(
 #'     BP = 1,
 #'     CL = 5,
@@ -51,12 +52,6 @@
 #'     Vspl = 1,
 #'     Vven = 1
 #' )
-#'
-#' # Dosing
-#' M$addDosing(Dosing$new(target = "ven", time = 0, amount = 1))
-#'
-#' # Add plasma concentration as an observable
-#' M$addObservable("Cpla", "BP * ven / Vven")
 #'
 #' # Generate ODE function and auxiliary structures
 #' odeinfo <- M$toODE(paramValues)
@@ -187,9 +182,10 @@ sMD_PBPK_12CMT_wellstirred <- function() {
 #' library(deSolve)
 #'
 #' # Load the PBPK model
-#' M <- sMD_PBPK_12CMT_permbased()
-#'
-#' # Define parameters
+#' M <- sMD_PBPK_12CMT_permbased()$
+#'     addDosing(target = "ven", time = 0, amount = 1)$  # IV bolus dosing 
+#'     addObservable("Cpla", "BP * ven / Vven")          # plasma concentration observable
+#' 
 #' paramValues <- list(
 #'     BP = 1,
 #'     CL = 5,
@@ -259,12 +255,6 @@ sMD_PBPK_12CMT_wellstirred <- function() {
 #'     Vart = 1,
 #'     Vven = 1
 #' )
-#'
-#' # Dosing
-#' M$addDosing(Dosing$new(target = "ven", time = 0, amount = 1))
-#'
-#' # Add plasma concentration as an observable
-#' M$addObservable("Cpla", "BP * ven / Vven")
 #'
 #' # Generate ODE function and auxiliary structures
 #' odeinfo <- M$toODE(paramValues)
@@ -415,31 +405,34 @@ multiCompModel <- function(ncomp = 1, type = c("micro", "macro")) {
     type <- match.arg(type)
     stopifnot(ncomp >= 1)
 
-    model <- CompartmentModel$new()
-
     # Compartment names: central is C1
     compNames <- paste0("C", seq_len(ncomp))
     central_idx <- 1
 
-    # Add compartments
-    for (c in compNames) {
-        model$addCompartment(c, initial = 0)
-    }
+    # First assemble compartments and observables
+    model <- CompartmentModel$
+        new()$
+        addCompartment(compNames, initial = 0)$
+        addObservable("C1Conc", "C1/V1")
 
-    # Add plasma concentration observable
-    model$addObservable("C1Conc", "C1/V1")
-
+    # Next assemble reactions, depending on parameterization style
     if (type == "micro") {
         # Micro: first-order rate constants
         # Elimination from central
         model$addReaction("C1", "", "k10 * C1")
         # Inter-compartmental rates
         for (i in seq_len(ncomp)) {
-            if (i == central_idx) next
+            if (i == central_idx) {
+                next
+            }
             ki <- paste0("k1", i)
             k_back <- paste0("k", i, "1")
             model$addReaction("C1", compNames[i], paste0(ki, " * C1"))
-            model$addReaction(compNames[i], "C1", paste0(k_back, " * ", compNames[i]))
+            model$addReaction(
+                compNames[i],
+                "C1",
+                paste0(k_back, " * ", compNames[i])
+            )
         }
     } else if (type == "macro") {
         # Macro: flows and volumes
@@ -447,13 +440,17 @@ multiCompModel <- function(ncomp = 1, type = c("micro", "macro")) {
         model$addReaction("C1", "", "CL / V1 * C1")
         # Inter-compartmental flows
         for (i in seq_len(ncomp)) {
-            if (i == central_idx) next
+            if (i == central_idx) {
+                next
+            }
             model$addReaction(
-                "C1", compNames[i],
+                "C1",
+                compNames[i],
                 paste0("Q1", i, " / V1 * C1")
             )
             model$addReaction(
-                compNames[i], "C1",
+                compNames[i],
+                "C1",
                 paste0("Q1", i, " / V", i, " * ", compNames[i])
             )
         }
@@ -467,34 +464,26 @@ multiCompModel <- function(ncomp = 1, type = c("micro", "macro")) {
 
 #' Cell-level PK/PD model
 celllevel_pkpd <- function() {
-    M <- CompartmentModel$new()
 
-    # Compartments
-    M$addCompartment("pla", 0)
-    M$addCompartment("int", 0)
-    M$addCompartment("R", 0)
-    M$addCompartment("Ri", 0)
-    M$addCompartment("RL", 0)
-    M$addCompartment("RC", 0)
+    CompartmentModel$
+        new()$
+        addCompartment("pla", 0)$
+        addCompartment("int", 0)$
+        addCompartment("R", 0)$
+        addCompartment("Ri", 0)$
+        addCompartment("RL", 0)$
+        addCompartment("RC", 0)$
+        addReaction("pla", "int", "qpi * pla/Vpla")$
+        addReaction("int", "pla", "qip * int/Vint")$
+        addReaction("pla", NULL,  "CLlin * pla/Vpla")$
+        addReaction("R", "RL", "kon * R * L")$
+        addReaction("RL", "R", "koff * RL")$
+        addReaction("RL", "RC", "kint * RL")$
+        addReaction("RC", "Ri", "kdeg * RC")$
+        addReaction("Ri", "R", "krecycle * Ri")$
+        addObservable("Cpla", "pla / Vpla")$
+        addObservable("Cint", "int / Vint")
 
-    # Reactions
-    M$addReaction("pla", "int", "qpi * pla/Vpla")
-    M$addReaction("int", "pla", "qip * int/Vint")
-    M$addReaction("pla", NULL,  "CLlin * pla/Vpla")
-
-
-    M$addReaction("R", "RL", "kon * R * L")
-    M$addReaction("RL", "R", "koff * RL")
-    M$addReaction("RL", "RC", "kint * RL")
-    M$addReaction("RC", "Ri", "kdeg * RC")
-    M$addReaction("Ri", "R", "krecycle * Ri")
-
-
-    # Observable: effect site concentration
-    M$addObservable("Cpla", "pla / Vpla")
-    M$addObservable("Cint", "int / Vint")
-
-    M
 }
 
 #' Receptor binding and internalization module
@@ -507,6 +496,7 @@ celllevel_pkpd <- function() {
 #' @return A CompartmentModel object
 #' @export
 receptor_system <- function(ligands = "L", dynamic = TRUE) {
+    
     M <- CompartmentModel$new()
 
     # Receptor compartments  
@@ -549,23 +539,15 @@ receptor_system <- function(ligands = "L", dynamic = TRUE) {
 #' @return A CompartmentModel object
 #' @export
 empirical_pk_receptor <- function() {
-    M <- CompartmentModel$new()
-
-    # Compartments
-    M$addCompartment("pla", 0)
-    M$addCompartment("int", 0)
-
-    # Reactions
-    M$addReaction("pla", "int", "qpi * pla/Vpla")
-    M$addReaction("int", "pla", "qip * int/Vint")
-    M$addReaction("pla", NULL,  "CLlin * pla/Vpla")
-    M$addReaction("int", NULL,  "CLrec * R * int/Vint")
-
-    # Observable: effect site concentration
-    M$addObservable("Cpla", "pla / Vpla")
-    M$addObservable("Cint", "int / Vint")
-
-    M
+    CompartmentModel$new()$
+        addCompartment("pla", 0)$
+        addCompartment("int", 0)$
+        addReaction("pla", "int", "qpi * pla/Vpla")$
+        addReaction("int", "pla", "qip * int/Vint")$
+        addReaction("pla", NULL,  "CLlin * pla/Vpla")$
+        addReaction("int", NULL,  "CLrec * R * int/Vint")$
+        addObservable("Cpla", "pla / Vpla")$
+        addObservable("Cint", "int / Vint")
 }
 
 
@@ -573,25 +555,19 @@ empirical_pk_receptor <- function() {
 #' Lammerts van Bueren model
 #' 
 lammertsvanbueren <- function() {
-    M <- CompartmentModel$new()
-
-    # Compartments
-    M$addCompartment("pla", 0)
-    M$addCompartment("int", 0)
-    M$addCompartment("rec", 0)
-
-    # Reactions
-    M$addReaction("pla", "int", "qpi * pla/Vpla")
-    M$addReaction("int", "pla", "qip * int/Vint")
-    M$addReaction("pla", NULL,  "CLlin * pla/Vpla")
-    M$addReaction("int", "rec", "kb*BmaxPK*(int/Vint)/(KMPK+int/Vint)")
-    M$addReaction("rec", "int", "kb*rec")
-
-    # Observable: effect site concentration
-    M$addObservable("Cpla", "pla / Vpla")
-    M$addObservable("Cint", "int / Vint")
-
-    M
+   
+    CompartmentModel$
+        new()$
+        addCompartment("pla", 0)$
+        addCompartment("int", 0)$
+        addCompartment("rec", 0)$
+        addReaction("pla", "int", "qpi * pla/Vpla")$
+        addReaction("int", "pla", "qip * int/Vint")$
+        addReaction("pla", NULL,  "CLlin * pla/Vpla")$
+        addReaction("int", "rec", "kb*BmaxPK*(int/Vint)/(KMPK+int/Vint)")$
+        addReaction("rec", "int", "kb*rec")$
+        addObservable("Cpla", "pla / Vpla")$
+        addObservable("Cint", "int / Vint")
 }
 
 #' Lumped PBPK model based on sMD_PBPK_12CMT_wellstirred

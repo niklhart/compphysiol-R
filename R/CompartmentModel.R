@@ -565,8 +565,8 @@ CompartmentModel <- R6::R6Class(
     ),
     # ---- start of private methods ----
     private = list(
-        #' @description
-        #' Generate events data.frame for `deSolve` from stored dosing.
+
+        # Generate events data.frame for `deSolve` from stored dosing.
         dosing_to_events = function() {
             events <- data.frame(
                 var = character(),

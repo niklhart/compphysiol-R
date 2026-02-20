@@ -9,7 +9,22 @@ Dosing specification
 Dosing specification
 }
 \details{
+Represents a dosing event for a \code{CompartmentModel}. A dose can be
+specified either as a bolus (instantaneous input) or as an infusion
+(continuous input over time).
+\subsection{Bolus}{
 
+Provide only \code{amount}. The dose is given at \code{time}.
+}
+
+\subsection{Infusion}{
+
+Provide any two of \code{amount}, \code{rate}, and \code{duration}.
+The missing quantity is derived automatically:
+\deqn{amount = rate * duration}
+\deqn{rate = amount / duration}
+\deqn{duration = amount / rate}
+}
 }
 \examples{
 # Bolus of 100 at t=0

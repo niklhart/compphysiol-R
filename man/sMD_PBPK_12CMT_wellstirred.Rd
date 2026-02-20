@@ -20,9 +20,10 @@ library(compphysiol)
 library(deSolve)
 
 # Load the PBPK model
-M <- sMD_PBPK_12CMT_wellstirred()
+M <- sMD_PBPK_12CMT_wellstirred()$
+    addDosing(target = "ven", time = 0, amount = 1)$   # IV bolus dosing
+    addObservable("Cpla", "BP * ven / Vven")           # plasma concentration observable
 
-# Define parameters
 paramValues <- list(
     BP = 1,
     CL = 5,
@@ -58,12 +59,6 @@ paramValues <- list(
     Vspl = 1,
     Vven = 1
 )
-
-# Dosing
-M$addDosing(Dosing$new(target = "ven", time = 0, amount = 1))
-
-# Add plasma concentration as an observable
-M$addObservable("Cpla", "BP * ven / Vven")
 
 # Generate ODE function and auxiliary structures
 odeinfo <- M$toODE(paramValues)
