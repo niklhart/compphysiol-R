@@ -10,3 +10,9 @@
     })
 
 }
+
+
+
+#' @importFrom stats rlnorm rnorm setNames
+#' @importFrom utils head tail
+NULL

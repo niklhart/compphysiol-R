@@ -58,8 +58,9 @@ infusions are defined.}
 \item \href{#method-CompartmentModel-getStateNames}{\code{CompartmentModel$getStateNames()}}
 \item \href{#method-CompartmentModel-addCompartment}{\code{CompartmentModel$addCompartment()}}
 \item \href{#method-CompartmentModel-addReaction}{\code{CompartmentModel$addReaction()}}
-\item \href{#method-CompartmentModel-addObservableOld}{\code{CompartmentModel$addObservableOld()}}
+\item \href{#method-CompartmentModel-addReaction2}{\code{CompartmentModel$addReaction2()}}
 \item \href{#method-CompartmentModel-addObservable}{\code{CompartmentModel$addObservable()}}
+\item \href{#method-CompartmentModel-addObservable2}{\code{CompartmentModel$addObservable2()}}
 \item \href{#method-CompartmentModel-addEquation}{\code{CompartmentModel$addEquation()}}
 \item \href{#method-CompartmentModel-addDosing}{\code{CompartmentModel$addDosing()}}
 \item \href{#method-CompartmentModel-isLinear}{\code{CompartmentModel$isLinear()}}
@@ -195,12 +196,36 @@ The other inputs can only be used to construct a scalar reaction.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-CompartmentModel-addObservableOld"></a>}}
-\if{latex}{\out{\hypertarget{method-CompartmentModel-addObservableOld}{}}}
-\subsection{Method \code{addObservableOld()}}{
+\if{html}{\out{<a id="method-CompartmentModel-addReaction2"></a>}}
+\if{latex}{\out{\hypertarget{method-CompartmentModel-addReaction2}{}}}
+\subsection{Method \code{addReaction2()}}{
+Add one or several reactions to the model, test version (vectorized + substitution). The \code{rate} argument of \code{addReaction}
+is not supported currently.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$addReaction2(from, to, const)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{from}}{Source compartment}
+
+\item{\code{to}}{Target compartment}
+
+\item{\code{const}}{Optional rate constant name (for linear reactions)}
+
+\item{\code{reaction}}{A Reaction object or list of Reaction objects. Constructed from the other inputs if not provided.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CompartmentModel-addObservable"></a>}}
+\if{latex}{\out{\hypertarget{method-CompartmentModel-addObservable}{}}}
+\subsection{Method \code{addObservable()}}{
 Add an observable.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$addObservableOld(name, expr, obs = ObservableList(name, expr))}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$addObservable(name, expr, obs = ObservableList(name, expr))}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -216,12 +241,12 @@ Add an observable.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-CompartmentModel-addObservable"></a>}}
-\if{latex}{\out{\hypertarget{method-CompartmentModel-addObservable}{}}}
-\subsection{Method \code{addObservable()}}{
+\if{html}{\out{<a id="method-CompartmentModel-addObservable2"></a>}}
+\if{latex}{\out{\hypertarget{method-CompartmentModel-addObservable2}{}}}
+\subsection{Method \code{addObservable2()}}{
 Add one or several observables.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$addObservable(..., obs = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{CompartmentModel$addObservable2(..., obs = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{

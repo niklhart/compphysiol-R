@@ -1,41 +1,39 @@
 
 test_that("Adding compartments works", {
-    M <- CompartmentModel$
-        new()$
-        addCompartment("Central", initial = 10)$
-        addCompartment("Peripheral", initial = 0)
-    
-    compartments <- M$getStateNames()
+    M <- compartment_model() |>
+        add_compartment("Central", initial = 10) |>
+        add_compartment("Peripheral", initial = 0)
+
+    compartments <- compartment_names(M)
     expect_equal(compartments, c("Central", "Peripheral"))
 
-    initials <- M$getInitialState(name = FALSE)
+    initials <- initials(M, name = FALSE)
     expect_equal(initials, c(10, 0))
 })
 
-test_that("Adding reactions works", {
-    M <- CompartmentModel$new()
-    M$addCompartment("Central", 10)
-    M$addCompartment("Peripheral", 0)
+test_that("Adding flows works", {
+    M <- compartment_model() |>
+        add_compartment("Central", 10) |>
+        add_compartment("Peripheral", 0) |>
+        add_flow("Central", "Peripheral", "k12 * Central")
 
-    M$addReaction("Central", "Peripheral", "k12 * Central")
-    expect_equal(length(M$reactions), 1)
-    r <- M$reactions[[1]]
-    expect_equal(r$from, "Central")
-    expect_equal(r$to, "Peripheral")
-    expect_equal(r$rate, quote(k12 * Central))
+    expect_equal(length(M$flows), 1)
+    f <- M$flows[[1]]
+    expect_equal(f$from, "Central")
+    expect_equal(f$to, "Peripheral")
+    expect_equal(f$rate, quote(k12 * Central))
 })
 
 test_that("Bolus dosing is handled correctly", {
-    M <- CompartmentModel$
-        new()$
-        addCompartment("Central", 0)$
-        addDosing(target = "Central", amount = 100, time = 2)
+    M <- compartment_model() |>
+        add_compartment("Central", 0) |>
+        add_dosing(target = "Central", amount = 100, time = 2)
 
-    compartments <- M$getStateNames()
+    compartments <- compartment_names(M)
     expect_false("InfusionBag_Central" %in% compartments)
     expect_false("InfusionRate_Central" %in% compartments)
 
-    events_data <- M$toODE()$events$data
+    events_data <- to_ode(M)$events$data
     expect_equal(nrow(events_data), 1)
     expect_equal(events_data$var, "Central")
     expect_equal(events_data$time, 2)
@@ -43,17 +41,16 @@ test_that("Bolus dosing is handled correctly", {
 })
 
 test_that("Infusion dosing creates bag and rate compartments", {
-    M <- CompartmentModel$
-        new()$
-        addCompartment("Central", 0)$
-        addDosing("Central", rate = 5, duration = 4, time = 8)
+    M <- compartment_model() |>
+        add_compartment("Central", 0) |>
+        add_dosing("Central", rate = 5, duration = 4, time = 8)
 
-    compartments <- M$getStateNames()
+    compartments <- compartment_names(M)
     expect_true("InfusionBag_Central" %in% compartments)
     expect_true("InfusionRate_Central" %in% compartments)
 
     # One bolus to bag + start and end events for infusion rate
-    events_data <- M$toODE()$events$data
+    events_data <- to_ode(M)$events$data
     expect_equal(sum(events_data$var == "InfusionBag_Central"), 1)
     expect_equal(sum(events_data$var == "InfusionRate_Central"), 2)
 })
