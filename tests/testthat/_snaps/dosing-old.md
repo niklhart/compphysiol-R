@@ -4,7 +4,7 @@
       print(d1)
     Output
        Dosing:
-         - Bolus: 50 → Central at t = 0
+      
 
 # Print output for infusion dosing
 

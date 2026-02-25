@@ -1,32 +1,33 @@
+# Scalar dosing tests
+
 test_that("Bolus dosing is created correctly", {
-    d <- Dosing$new(target = "Central", amount = 100, time = 0)
-    expect_true(d$isBolus())
-    expect_false(d$isInfusion())
+    d <- dosing(target = "Central", amount = 100, time = 0)
+    expect_true(is_bolus(d))
     expect_equal(d$target, "Central")
     expect_equal(d$amount, 100)
     expect_equal(d$time, 0)
-    expect_null(d$rate)
-    expect_null(d$duration)
+    expect_true(is.na(d$rate))
+    expect_true(is.na(d$duration))
 })
 
 test_that("Infusion dosing with amount+duration works", {
-    d <- Dosing$new(target = "Central", amount = 100, time = 0, duration = 10)
-    expect_true(d$isInfusion())
+    d <- dosing(target = "Central", amount = 100, time = 0, duration = 10)
+    expect_true(is_infusion(d))
     expect_equal(d$rate, 10)
     expect_equal(d$amount, 100)
     expect_equal(d$duration, 10)
 })
 
 test_that("Infusion dosing with amount+rate works", {
-    d <- Dosing$new(target = "Central", amount = 100, time = 0, rate = 20)
-    expect_true(d$isInfusion())
+    d <- dosing(target = "Central", amount = 100, time = 0, rate = 20)
+    expect_true(is_infusion(d))
     expect_equal(d$duration, 5)   # derived
     expect_equal(d$rate, 20)
 })
 
 test_that("Infusion dosing with rate+duration works", {
-    d <- Dosing$new(target = "Central", time = 0, rate = 10, duration = 5)
-    expect_true(d$isInfusion())
+    d <- dosing(target = "Central", time = 0, rate = 10, duration = 5)
+    expect_true(is_infusion(d))
     expect_equal(d$amount, 50)    # derived
     expect_equal(d$rate, 10)
     expect_equal(d$duration, 5)
@@ -34,19 +35,82 @@ test_that("Infusion dosing with rate+duration works", {
 
 test_that("Invalid dosing definitions throw errors", {
     # missing all three
-    expect_error(Dosing$new("Central", time = 0))
+    expect_error(dosing("Central", time = 0))
 
     # all three specified inconsistently
-    expect_error(Dosing$new("Central", time = 0, amount = 100, rate = 20, duration = 20))
+    expect_error(dosing("Central", time = 0, amount = 100, rate = 20, duration = 20))
 })
 
 test_that("Print output for bolus dosing", {
-    d1 <- Dosing$new("Central", amount = 50, time = 0)
+    d1 <- dosing("Central", amount = 50, time = 0)
     expect_snapshot(print(d1))
 })
 
 test_that("Print output for infusion dosing", {
-    d2 <- Dosing$new("Central", amount = 100, time = 5, duration = 10)
+    d2 <- dosing("Central", amount = 100, time = 5, duration = 10)
     expect_snapshot(print(d2))
 })
 
+# Vectorized dosing tests
+
+test_that("Vectorized dosing times with recycled amounts work", {
+    doses <- dosing("Central", time = c(0, 24, 48), amount = 100)
+
+    expect_s3_class(doses, "Dosing")
+    expect_equal(length(doses), 3)
+    expect_equal(doses$amount, rep(100, 3))
+})
+
+test_that("Vectorized amounts are handled correctly", {
+    doses <- dosing("Central", time = c(0, 24, 48), amount = c(100, 200, 300))
+    expect_equal(doses$amount, c(100, 200, 300))
+    expect_equal(doses$time, c(0, 24, 48))
+})
+
+test_that("Vectorized infusion dosing with derived duration is handled correctly", {
+    doses <- dosing("Central", time = c(0, 24), amount = c(50, 60), rate = 10)
+    expect_equal(length(doses), 2)
+    expect_all_true(is_infusion(doses))
+    expect_equal(doses$duration, c(5, 6))
+})
+
+test_that("Vectorized infusion dosing with derived rate is handled correctly", {
+    doses <- dosing("Central", time = c(0, 24), amount = 100, duration = c(5, 10))
+    expect_equal(doses$rate, c(20, 10))
+})
+
+test_that("Dosing constructor throws error for invalid argument lengths", {
+    # time and amount lengths mismatch that cannot be recycled
+    expect_error(dosing("Central", time = c(0, 12, 24), amount = c(100, 200)))
+})
+
+test_that("Dosing class can be used in add_dosing()", {
+
+    model <- compartment_model()
+    doses <- dosing("Central", time = c(0, 24, 48), amount = 100)
+    expect_silent(model <- add_dosing(model, dose = doses))
+    expect_true(length(model$doses) >= 3)
+})
+
+# Concatenation and subsetting tests
+
+test_that("Concatenating dosing objects works", {
+    d1 <- dosing("Central", time = 0, amount = 100)
+    d2 <- dosing("Central", time = 24, amount = 100)
+
+    doses_combined <- c(d1, d2)
+    expect_s3_class(doses_combined, "Dosing")
+    expect_equal(length(doses_combined), 2)
+    expect_equal(doses_combined$time, c(0, 24))
+    expect_equal(doses_combined$amount, c(100, 100))
+})
+
+test_that("Subsetting dosing objects works", {
+    doses <- dosing("Central", time = c(0, 24, 48), amount = c(100, 200, 300))
+    doses_subset <- doses[1:2]
+
+    expect_s3_class(doses_subset, "Dosing")
+    expect_equal(length(doses_subset), 2)
+    expect_equal(doses_subset$time, c(0, 24))
+    expect_equal(doses_subset$amount, c(100, 200))
+})

@@ -68,7 +68,7 @@ test_that("12-CMT well-stirred PBPK model behaves as expected under long-term in
     )
     odeinfo <- M$toODE(paramValues)
     times <- c(0, dur)
-    out <- ode(
+    out <- deSolve::ode(
         y = odeinfo$y0,
         times = times,
         func = odeinfo$odefun,
@@ -204,7 +204,7 @@ test_that("Permeation-based model reduces to well-stirred in the fast permeabili
 
     odeinfo_ws <- Mws$toODE(paramValues_ws)
     odeinfo_pb <- Mpb$toODE(paramValues_pb)
-    out_ws <- ode(
+    out_ws <- deSolve::ode(
         y = odeinfo_ws$y0,
         times = times,
         func = odeinfo_ws$odefun,
@@ -212,7 +212,7 @@ test_that("Permeation-based model reduces to well-stirred in the fast permeabili
         events = odeinfo_ws$events
     )
 
-    out_pb <- ode(
+    out_pb <- deSolve::ode(
         y = odeinfo_pb$y0,
         times = times,
         func = odeinfo_pb$odefun,

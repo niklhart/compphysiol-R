@@ -4,12 +4,7 @@
 \alias{add_compartment}
 \title{Add one or several compartments to a \code{CompartmentModel} object.}
 \usage{
-add_compartment(
-  model,
-  name,
-  initial = 0,
-  comp = CompartmentList(name, initial)
-)
+add_compartment(model, name, initial = 0, comp = compartments(name, initial))
 }
 \arguments{
 \item{model}{A \code{CompartmentModel} object.}
@@ -18,7 +13,7 @@ add_compartment(
 
 \item{initial}{Initial amount(s) (default 0)}
 
-\item{comp}{A Compartment object or list of Compartment objects. Constructed from the other inputs if not provided.}
+\item{comp}{A \code{Compartments} object. Constructed from the other inputs if not provided.}
 }
 \description{
 Add one or several compartments to a \code{CompartmentModel} object.

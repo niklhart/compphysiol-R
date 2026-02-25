@@ -11,8 +11,8 @@ add_dosing(
   amount = NULL,
   rate = NULL,
   duration = NULL,
-  dose = DosingList(target = target, time = time, amount = amount, rate = rate, duration
-    = duration)
+  dose = dosing(target = target, time = time, amount = amount, rate = rate, duration =
+    duration)
 )
 }
 \arguments{
@@ -22,21 +22,32 @@ add_dosing(
 
 \item{time}{Time of the dosing event(s)}
 
-\item{amount}{Amount(s) to be dosed (for bolus) or infusion rate (for infusion)}
+\item{amount}{Amount(s) to be dosed (for bolus or infusion)}
 
 \item{rate}{Infusion rate (for infusion)}
 
 \item{duration}{Infusion duration (for infusion)}
 
-\item{dose}{A Dosing object or a list of Dosing objects. Constructed from the other inputs if not provided.}
+\item{dose}{A \code{Dosing} object. Constructed from the other inputs if not provided.}
 }
 \value{
 The modified \code{CompartmentModel} object.
 }
 \description{
-Add one or several dosing events (bolus or infusion).
+This function allows the user to specify dosing events for a compartment model.
+Dosing events can be either bolus (instantaneous) or infusion (continuous over time).
+}
+\details{
+The function handles the necessary modifications to the model structure for infusion dosing,
+such as adding infusion bag and rate compartments, and creating the appropriate events for
+starting and stopping the infusion.
+
+TODO: Currently there is an infinite loop caused by the pipeline of \code{add_dosing} calling \code{add_dosing}
+when processing infusion dosing. This is a temporary issue that will be resolved in the next iteration
+of the code refactor, where the internal handling of infusion dosing will be separated from the user-facing
+\code{add_dosing} function.
 }
 \examples{
-model <- compartment_model() |> 
+model <- compartment_model() |>
     add_dosing(target = "ven", time = 0, amount = 100, duration = 5)
 }

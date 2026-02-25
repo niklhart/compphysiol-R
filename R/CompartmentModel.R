@@ -7,11 +7,11 @@ compartment_model <- function() {
 
     structure(
         list(
-            compartments = list(),
+            compartments = compartments(name = NULL, initial = NULL),
             flows = list(),
             equations = list(),
             observables = list(),
-            doses = NULL,
+            doses = empty_dosing(),
             infusionEvents = data.frame(
                 var = character(),
                 time = numeric(),
@@ -34,14 +34,7 @@ print.CompartmentModel <- function(x, ...) {
     cat("<CompartmentModel>\n")
 
     # compartments
-    if (length(x$compartments) > 0) {
-        cat(" Compartments:\n")
-        for (c in x$compartments) {
-            cat("   -", c$name, "(initial =", c$initial, ")\n")
-        }
-    } else {
-        cat(" Compartments: (none)\n")
-    }
+    print(x$compartments)
 
     # flows
     if (length(x$flows) > 0) {
@@ -103,11 +96,10 @@ print.CompartmentModel <- function(x, ...) {
 #' @param model A `CompartmentModel` object.
 #' @param name Name of the compartment(s)
 #' @param initial Initial amount(s) (default 0)
-#' @param comp A Compartment object or list of Compartment objects. Constructed from the other inputs if not provided.
+#' @param comp A `Compartments` object. Constructed from the other inputs if not provided.
 #' @export
-add_compartment <- function(model, name, initial = 0, comp = CompartmentList(name, initial)) {
+add_compartment <- function(model, name, initial = 0, comp = compartments(name, initial)) {
     .check_class(model, "CompartmentModel")
-    comp <- .wrap_into_list(comp)
     model$compartments <- c(model$compartments, comp)
     model
 }
@@ -119,7 +111,7 @@ add_compartment <- function(model, name, initial = 0, comp = CompartmentList(nam
 #' @export
 initials <- function(model, named = TRUE) {
     .check_class(model, "CompartmentModel")
-    y0 <- sapply(model$compartments, function(c) c$initial)
+    y0 <- model$compartments$initial
     if (named) {
         setNames(y0, nm = compartment_names(model))
     } else {
@@ -133,7 +125,7 @@ initials <- function(model, named = TRUE) {
 #' @export
 compartment_names <- function(model) {
     .check_class(model, "CompartmentModel")
-    sapply(model$compartments, function(c) c$name)
+    names(model$compartments)
 }
 
 
@@ -143,7 +135,7 @@ compartment_names <- function(model) {
 #' the `toODE` method to generate the final events list for `deSolve`.
 #' @param model A `CompartmentModel` object.
 #' @returns A list with a single element `data`, which is a data.frame with columns `var`, `time`, `value`, and `method` (add or replace).
-.dosing_to_events = function(model) {
+.dosing_to_events <- function(model) {
     .check_class(model, "CompartmentModel")
 
     events <- data.frame(
@@ -156,18 +148,17 @@ compartment_names <- function(model) {
 
     # boluses
     if (!is.null(model$doses)) {
-        for (d in model$doses) {
-            events <- rbind(
-                events,
-                data.frame(
-                    var = d$target,
-                    time = d$time,
-                    value = d$amount,
-                    method = "add",
-                    stringsAsFactors = FALSE
-                )
+        doses <- model$doses
+        events <- rbind(
+            events,
+            data.frame(
+                var = doses$target,
+                time = doses$time,
+                value = doses$amount,
+                method = "add",
+                stringsAsFactors = FALSE
             )
-        }
+        )
     }
 
     # infusion rate events
@@ -274,7 +265,7 @@ add_flow <- function(model, from, to, rate = NULL, const = NULL, flow = NULL) {
 #'     add_compartment("blo") |>
 #'     add_observable(name = "Cblo", expr = "blo/Vblo")
 #' @export
-add_observable = function(model, name, expr, obs = ObservableList(name, expr)) {
+add_observable <- function(model, name, expr, obs = ObservableList(name, expr)) {
     .check_class(model, "CompartmentModel")
     obs <- .wrap_into_list(obs)
     model$observables <- c(model$observables, obs)
@@ -296,26 +287,39 @@ add_equation <- function(model, eq) {
 }
 
 #' Add one or several dosing events (bolus or infusion).
+#'
+#' This function allows the user to specify dosing events for a compartment model.
+#' Dosing events can be either bolus (instantaneous) or infusion (continuous over time).
+#'
+#' The function handles the necessary modifications to the model structure for infusion dosing,
+#' such as adding infusion bag and rate compartments, and creating the appropriate events for
+#' starting and stopping the infusion.
+#'
+#' TODO: Currently there is an infinite loop caused by the pipeline of `add_dosing` calling `add_dosing`
+#' when processing infusion dosing. This is a temporary issue that will be resolved in the next iteration
+#' of the code refactor, where the internal handling of infusion dosing will be separated from the user-facing
+#' `add_dosing` function.
+#'
 #' @param model A `CompartmentModel` object.
 #' @param target Name of the target compartment(s) for the dose(s)
 #' @param time Time of the dosing event(s)
-#' @param amount Amount(s) to be dosed (for bolus) or infusion rate (for infusion)
+#' @param amount Amount(s) to be dosed (for bolus or infusion)
 #' @param rate Infusion rate (for infusion)
 #' @param duration Infusion duration (for infusion)
-#' @param dose A Dosing object or a list of Dosing objects. Constructed from the other inputs if not provided.
+#' @param dose A `Dosing` object. Constructed from the other inputs if not provided.
 #' @returns The modified `CompartmentModel` object.
 #' @examples
-#' model <- compartment_model() |> 
+#' model <- compartment_model() |>
 #'     add_dosing(target = "ven", time = 0, amount = 100, duration = 5)
 #' @export
-add_dosing = function(
+add_dosing <- function(
     model,
     target,
     time,
     amount = NULL,
     rate = NULL,
     duration = NULL,
-    dose = DosingList(
+    dose = dosing(
         target = target,
         time = time,
         amount = amount,
@@ -324,90 +328,72 @@ add_dosing = function(
     )
 ) {
     .check_class(model, "CompartmentModel")
+    .check_class(dose, "Dosing")
 
-    # --- handle lists of Dosing objects ---
-    if (is.list(dose)) {
-        for (d in dose) {
-            model <- add_dosing(model, dose = d) # recursion on single elements
-        }
+    # Separate bolus and infusion dosing for different handling
+    bolus <- dose[is_bolus(dose)]
+    infus <- dose[is_infusion(dose)]
+
+    # Bolus dosing is simply appended to the models dosing list
+    model$doses <- c(model$doses, bolus)
+
+    # Early return if no infusion dosing
+    if (length(infus) == 0) {
         return(model)
     }
 
-    # --- Logic for single Dosing object ---
-    stopifnot(inherits(dose, "Dosing"))
-    if (dose$isBolus()) {
-        # simple bolus, store in doses list
-        if (is.null(model$doses)) {
-            model$doses <- list()
-        }
-        model$doses[[length(model$doses) + 1]] <- dose
-    } else if (dose$isInfusion()) {
-        # ensure bag and rate compartments exist for target
-        bagName <- paste0("InfusionBag_", dose$target)
-        rateName <- paste0("InfusionRate_", dose$target)
-        if (!(bagName %in% names(model$compartments))) {
-            model <- add_compartment(model, bagName, 0)
-        }
-        if (!(rateName %in% names(model$compartments))) {
-            model <- add_compartment(model, rateName, 0)
-        }
+    # --------------------------------------------------------------------------------------------------
+    # Infusion dosing requires more complex handling: we need to add infusion bag and rate compartments,
+    # convert the infusion dosing into bolus-to-bag + infusion rate events, and add flows from the bag
+    # to the target compartment with rate equal to the infusion rate.
+    # --------------------------------------------------------------------------------------------------
 
-        # add zero-order reaction from bag to  target, rate = InfusionRate compartment
-        model <- add_flow(model, from = bagName, to = dose$target, rate = rateName)
+    # Convert infusion dosing into bolus-to-bag + infusion rate events, and add to model
+    bag_names <- paste0("InfusionBag_", infus$target)
+    rate_names <- paste0("InfusionRate_", infus$target)
+    comp_names <- compartment_names(model)
+    new_bag_names <- setdiff(bag_names, comp_names)
+    new_rate_names <- setdiff(rate_names, comp_names)
 
-        # create bolus into the bag
-        totalAmount <- dose$rate * dose$duration
-        bolusToBag <- Dosing$new(
-            bagName,
-            amount = totalAmount,
-            time = dose$time
+    # Helper function allowing to update the model in a single pipeline
+    add_infusion_events <- function(model, var, time, value, method) {
+        new_events <- data.frame(
+            var = var,
+            time = time,
+            value = value,
+            method = method,
+            stringsAsFactors = FALSE
         )
-
-        # store both bolus-to-bag and infusion start/end events
-        if (is.null(model$doses)) {
-            model$doses <- list()
-        }
-        model$doses[[length(model$doses) + 1]] <- bolusToBag
-
-        # infusion rate modification events
-        if (is.null(model$infusionEvents)) {
-            model$infusionEvents <- data.frame(
-                var = character(),
-                time = numeric(),
-                value = numeric(),
-                method = character(),
-                stringsAsFactors = FALSE
-            )
-        }
-        # start
-        model$infusionEvents <- rbind(
-            model$infusionEvents,
-            data.frame(
-                var = rateName,
-                time = dose$time,
-                value = dose$rate,
-                method = "add",
-                stringsAsFactors = FALSE
-            )
-        )
-        # end
-        model$infusionEvents <- rbind(
-            model$infusionEvents,
-            data.frame(
-                var = rateName,
-                time = dose$time + dose$duration,
-                value = -dose$rate,
-                method = "add",
-                stringsAsFactors = FALSE
-            )
-        )
-    } else {
-        stop(
-            "Invalid dosing: either bolus or infusion with rate+duration"
-        )
+        model$infusionEvents <- rbind(model$infusionEvents, new_events)
+        return(model)
     }
 
-    return(model)
+    # Return the updated model
+    model |>
+        add_compartment(new_bag_names, 0) |>
+        add_compartment(new_rate_names, 0) |>
+        add_dosing(
+            target = bag_names,
+            time = infus$time,
+            amount = infus$rate * infus$duration
+        ) |>
+        add_flow(
+            from = bag_names,
+            to = infus$target,
+            rate = rate_names
+        ) |>
+        add_infusion_events(
+            var = rate_names,
+            time = infus$time,
+            value = infus$rate,
+            method = "add"
+        ) |>
+        add_infusion_events(
+            var = rate_names,
+            time = infus$time + infus$duration,
+            value = -infus$rate,
+            method = "add"
+        )
 }
 
 #' Linearity check for CompartmentModel object.
@@ -417,7 +403,7 @@ add_dosing = function(
 #' @param model A `CompartmentModel` object.
 #' @return `TRUE` if all flows are linear, `FALSE` otherwise.
 #' @noRd
-.is_linear = function(model) {
+.is_linear <- function(model) {
     stateNames <- compartment_names(model)
     all(vapply(
         model$reactions,
@@ -441,7 +427,7 @@ add_dosing = function(
 #' # Evaluate ODE state at t = 5 with free params
 #' sol$statefun(5, params = list(k12 = 0.2, k21 = 0.1))
 #' @export
-to_analytical = function(model, paramValues = list()) {
+to_analytical <- function(model, paramValues = list()) {
 
     .check_class(model, "CompartmentModel")
 
@@ -592,7 +578,7 @@ to_analytical = function(model, paramValues = list()) {
 #' M <- multi_comp_model(ncomp = 2, type = "micro")
 #' odeinfo <- to_ode(M, paramValues = list(k10 = 0.05))
 #' 
-to_ode = function(model, paramValues = list()) {
+to_ode <- function(model, paramValues = list()) {
     stateNames <- compartment_names(model)
     name2idx <- setNames(seq_along(stateNames), stateNames)
 

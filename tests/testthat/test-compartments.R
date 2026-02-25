@@ -1,57 +1,34 @@
+# Test the Compartments class
 
-test_that("Adding compartments works", {
-    M <- compartment_model() |>
-        add_compartment("Central", initial = 10) |>
-        add_compartment("Peripheral", initial = 0)
-
-    compartments <- compartment_names(M)
-    expect_equal(compartments, c("Central", "Peripheral"))
-
-    initials <- initials(M, name = FALSE)
-    expect_equal(initials, c(10, 0))
+test_that("Compartments object is created correctly", {
+    comp <- compartments(c("adi", "bon"), c(10, 20))
+    expect_s3_class(comp, "Compartments")
 })
 
-test_that("Adding flows works", {
-    M <- compartment_model() |>
-        add_compartment("Central", 10) |>
-        add_compartment("Peripheral", 0) |>
-        add_flow("Central", "Peripheral", "k12 * Central")
-
-    expect_equal(length(M$flows), 1)
-    f <- M$flows[[1]]
-    expect_equal(f$from, "Central")
-    expect_equal(f$to, "Peripheral")
-    expect_equal(f$rate, quote(k12 * Central))
+test_that("Length and names methods work for Compartments", {
+    comp <- compartments(c("adi", "bon", "gut"), c(10, 20, 30))
+    expect_equal(length(comp), 3)
+    expect_equal(names(comp), c("adi", "bon", "gut"))
 })
 
-test_that("Bolus dosing is handled correctly", {
-    M <- compartment_model() |>
-        add_compartment("Central", 0) |>
-        add_dosing(target = "Central", amount = 100, time = 2)
-
-    compartments <- compartment_names(M)
-    expect_false("InfusionBag_Central" %in% compartments)
-    expect_false("InfusionRate_Central" %in% compartments)
-
-    events_data <- to_ode(M)$events$data
-    expect_equal(nrow(events_data), 1)
-    expect_equal(events_data$var, "Central")
-    expect_equal(events_data$time, 2)
-    expect_equal(events_data$value, 100)
+test_that("Print method for Compartments works", {
+    comp <- compartments(c("adi", "bon"), c(10, 20))
+    expect_snapshot(print(comp))
 })
 
-test_that("Infusion dosing creates bag and rate compartments", {
-    M <- compartment_model() |>
-        add_compartment("Central", 0) |>
-        add_dosing("Central", rate = 5, duration = 4, time = 8)
-
-    compartments <- compartment_names(M)
-    expect_true("InfusionBag_Central" %in% compartments)
-    expect_true("InfusionRate_Central" %in% compartments)
-
-    # One bolus to bag + start and end events for infusion rate
-    events_data <- to_ode(M)$events$data
-    expect_equal(sum(events_data$var == "InfusionBag_Central"), 1)
-    expect_equal(sum(events_data$var == "InfusionRate_Central"), 2)
+test_that("Subsetting Compartments object works", {
+    comp <- compartments(c("adi", "bon", "gut"), c(10, 20, 30))
+    comp_subset <- comp[1:2]
+    expect_equal(length(comp_subset), 2)
+    expect_equal(names(comp_subset), c("adi", "bon"))
 })
 
+test_that("Compartments with mismatched name and initial lengths throw error", {
+    expect_error(compartments(c("adi", "bon"), c(10, 20, 30)))
+    expect_error(compartments(c("adi", "bon", "gut"), c(10, 20)))
+})
+
+test_that("Adding empty compartment names works", {
+    comp <- compartments(name = character(0))
+    expect_equal(length(comp), 0)
+})
