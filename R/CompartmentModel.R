@@ -156,6 +156,7 @@ compartment_names <- function(model) {
 #'
 #' @param from Source compartment
 #' @param to Target compartment
+#' @param ... Unused, enforces `rate` / `const` / `flow` to be specified as named arguments only, not positional
 #' @param rate Optional flow rate expression as character
 #' @param const Optional rate constant name (for linear flows)
 #' @param flow A `Flows` object. Constructed from the other inputs if not provided.
@@ -164,7 +165,7 @@ compartment_names <- function(model) {
 #' model <- compartment_model() |>
 #'     add_flow(from = "A", to = "B", const = "k1")
 #' @export
-add_flow <- function(model, from, to, rate = NULL, const = NULL, flow = flows(from, to, rate, const)) {
+add_flow <- function(model, from, to, ..., rate = NULL, const = NULL, flow = flows(from, to, rate = rate, const = const)) {
     .check_class(model, "CompartmentModel")
     .check_class(flow, "Flows")
     model$flows <- c(model$flows, flow)
@@ -396,14 +397,13 @@ to_analytical <- function(model, paramValues = list()) {
     freeParams$list <- character()
 
     # ---- Process each flow ----
-    for (f in model$flows) {
-        if (!f$isLinear(stateNames)) {
-            stop(
-                "Flow is nonlinear: cannot compute analytical solution."
-            )
-        }
+    if (any(model$flows$type == "nonlinear")) {
+        stop("Model contains nonlinear flows: cannot compute analytical solution.")
+    }
 
-        coef_str <- f$rateConstant(stateNames)
+    for (i in seq_along(model$flows)) {
+        coef_ast <- model$flows$const[[i]]
+        coef_str <- paste(deparse(coef_ast, width.cutoff = 500), collapse = " ")
 
         # Inline paramValues numerically
         if (length(paramValues) > 0) {
@@ -429,12 +429,11 @@ to_analytical <- function(model, paramValues = list()) {
             )
         }
 
-        from_idx <- name2idx[[f$from]]
-        to_idx <- if (!is.null(f$to) && f$to != "") {
-            name2idx[[f$to]]
-        } else {
-            NA
-        }
+        from <- model$flows$from[[i]]
+        to <- model$flows$to[[i]]
+
+        from_idx <- name2idx[[from]]
+        to_idx <- if (!is.na(to)) name2idx[[to]] else NA
 
         # Diagonal contribution
         if (A[from_idx, from_idx] == "0") {
@@ -495,7 +494,7 @@ to_analytical <- function(model, paramValues = list()) {
     # Observables (same substitution logic)
     obsFuncs <- lapply(model$observables, function(o) {
         expr_lang <- substitute_expr(
-            o$expr,
+            o,
             stateNames,
             name2idx,
             paramValues = paramValues,
@@ -508,7 +507,7 @@ to_analytical <- function(model, paramValues = list()) {
         )
         eval(parse(text = paste0("function(t,y,params) ", expr_str)))
     })
-    names(obsFuncs) <- vapply(model$observables, function(o) o$name, "")
+    names(obsFuncs) <- names(model$observables)
 
     # ---- Output ----
     list(

@@ -8,15 +8,18 @@ add_flow(
   model,
   from,
   to,
+  ...,
   rate = NULL,
   const = NULL,
-  flow = flows(from, to, rate, const)
+  flow = flows(from, to, rate = rate, const = const)
 )
 }
 \arguments{
 \item{from}{Source compartment}
 
 \item{to}{Target compartment}
+
+\item{...}{Unused, enforces \code{rate} / \code{const} / \code{flow} to be specified as named arguments only, not positional}
 
 \item{rate}{Optional flow rate expression as character}
 

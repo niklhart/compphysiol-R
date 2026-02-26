@@ -13,11 +13,12 @@ dosing events, and physiological parameters.
 \details{
 Key classes include:
 \itemize{
-\item \code{Compartment}: Represents a model compartment with a name and initial amount.
-\item \code{Reaction}: Defines reactions between compartments with specified rates.
-\item \code{Observable}: Represents measurable outputs derived from compartment states.
 \item \code{CompartmentModel}: Encapsulates the structure of a compartmental model,
 including compartments, reactions, observables, and dosing events.
+\item \code{Compartments}: Represents model compartments with names and initial amounts.
+\item \code{Flows}: Defines flows between compartments with specified rates.
+\item \code{Observables}: Represents measurable outputs derived from compartment states.
+\item \code{Equations}: Represents mathematical relationships between model parameters and/or states.
 \item \code{Dosing}: Represents dosing events, including bolus and infusion doses.
 \item \code{Physiology}: Manages physiological parameters for the model.
 }

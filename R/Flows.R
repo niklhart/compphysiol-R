@@ -5,6 +5,7 @@
 #' Represents a flow between two compartments in a pharmacokinetic model.
 #' @param from The name of the source compartment(s) (character vector or NULL for source compartments)
 #' @param to The name of the destination compartment(s) (character vector or NULL for sink compartments)
+#' @param ... Unused, enforces `rate` and `const` to be specified as named arguments only, not positional
 #' @param rate The flow rate (numeric, optional, mutually exclusive with `const`)
 #' @param const Rate constant for first-order flows (numeric, optional, mutually exclusive with `rate`)
 #' @return A `Flows` object
@@ -14,7 +15,7 @@
 #' # Nonlinear flow
 #' f2 <- flows(from = "A", to = "B", rate = "k1 * A*B/(B+K)")
 #' @export
-flows <- function(from, to, rate = NULL, const = NULL) {
+flows <- function(from, to, ..., rate = NULL, const = NULL) {
 
     # Convert NULL/"" from/to to NA for easier handling of source/sink compartments
     from <- if (is.null(from)) NA_character_ else from
@@ -38,7 +39,10 @@ flows <- function(from, to, rate = NULL, const = NULL) {
 
     # Check that if rate is provided, const is not provided and vice versa
     if (!xor(is.null(rate), is.null(const))) {
-        stop("Exactly one of 'rate' or 'const' must be provided.")
+        stop(
+            "Exactly one of 'rate' or 'const' must be provided.\n",
+            "Note: these arguments must be named; positional arguments are not allowed."
+        )
     }
     type <- if (is.null(rate)) "linear" else "nonlinear"
 

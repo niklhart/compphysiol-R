@@ -1,35 +1,35 @@
 test_that("multiCompModel creates correct number of compartments", {
     M <- multiCompModel(3, "micro")
-    expect_equal(M$getStateNames(), c("C1", "C2", "C3"))
-    expect_true(any(sapply(M$observables, function(o) o$name) == "C1Conc"))
+    expect_equal(names(M$compartments), c("C1", "C2", "C3"))
+    expect_true(names(M$observables) == "C1Conc")
 })
 
-test_that("multiCompModel micro parametrization reactions are correct", {
+test_that("multiCompModel micro parametrization flows are correct", {
     M <- multiCompModel(2, "micro")
-    reaction_strings <- sapply(M$reactions, function(r) paste(r$from, r$to, deparse(r$rate)))
-    # Elimination reaction
-    expect_true(any(grepl("C1  k10 \\* C1", reaction_strings)))
-    # Inter-compartment reactions
-    expect_true(any(grepl("C1 C2 k12 \\* C1", reaction_strings)))
-    expect_true(any(grepl("C2 C1 k21 \\* C2", reaction_strings)))
+    flow_strings <- paste(M$flows$from, M$flows$to, vapply(M$flows$rate, deparse, character(1)))
+    # Elimination flow
+    expect_true(any(grepl("C1 NA k10 \\* C1", flow_strings)))
+    # Inter-compartment flows
+    expect_true(any(grepl("C1 C2 k12 \\* C1", flow_strings)))
+    expect_true(any(grepl("C2 C1 k21 \\* C2", flow_strings)))
 })
 
-test_that("multiCompModel macro parametrization reactions are correct", {
+test_that("multiCompModel macro parametrization flows are correct", {
     M <- multiCompModel(2, "macro")
-    reaction_strings <- sapply(M$reactions, function(r) paste(r$from, r$to, deparse(r$rate)))
+    flow_strings <- paste(M$flows$from, M$flows$to, vapply(M$flows$rate, deparse, character(1)))
     # Elimination scaled by volume
-    expect_true(any(grepl("C1  CL/V1 \\* C1", reaction_strings)))
+    expect_true(any(grepl("C1 NA CL/V1 \\* C1", flow_strings)))
     # Inter-compartment flows
-    expect_true(any(grepl("C1 C2 Q12/V1 \\* C1", reaction_strings)))
-    expect_true(any(grepl("C2 C1 Q12/V2 \\* C2", reaction_strings)))
+    expect_true(any(grepl("C1 C2 Q12/V1 \\* C1", flow_strings)))
+    expect_true(any(grepl("C2 C1 Q12/V2 \\* C2", flow_strings)))
 })
 
 test_that("12-CMT well-stirred PBPK model behaves as expected under long-term infusion", {
 
     dur <- 1000
-    M <- sMD_PBPK_12CMT_wellstirred()$
-        addDosing(target = "ven", time = 0, amount = 1, duration = dur)$   # long-term infusion to test steady-state behaviour
-        addObservable("Cpla", "BP * ven / Vven")
+    M <- sMD_PBPK_12CMT_wellstirred() |>
+        add_dosing(target = "ven", time = 0, amount = 1, duration = dur) |>   # long-term infusion to test steady-state behaviour
+        add_observable(Cpla = BP * ven / Vven)
 
     paramValues <- list(
         BP = 1,
@@ -66,7 +66,7 @@ test_that("12-CMT well-stirred PBPK model behaves as expected under long-term in
         Vspl = 1,
         Vven = 1
     )
-    odeinfo <- M$toODE(paramValues)
+    odeinfo <- to_ode(M, paramValues)
     times <- c(0, dur)
     out <- deSolve::ode(
         y = odeinfo$y0,
@@ -88,13 +88,13 @@ test_that("12-CMT well-stirred PBPK model behaves as expected under long-term in
 
 test_that("Permeation-based model reduces to well-stirred in the fast permeability limit", {
     
-    dosing <- Dosing$new(target = "ven", amount = 1, time = 0)
+    dose <- dosing(target = "ven", amount = 1, time = 0)
     times <- 0:24
 
-    Mws <- sMD_PBPK_12CMT_wellstirred()$
-        addDosing(dose = dosing)
-    Mpb <- sMD_PBPK_12CMT_permbased()$
-        addDosing(dose = dosing)
+    Mws <- sMD_PBPK_12CMT_wellstirred() |>
+        add_dosing(dose = dose)
+    Mpb <- sMD_PBPK_12CMT_permbased() |>
+        add_dosing(dose = dose)
 
     paramValues_ws <- list(
         BP = 1,
@@ -202,8 +202,8 @@ test_that("Permeation-based model reduces to well-stirred in the fast permeabili
         Vven = 1
     )
 
-    odeinfo_ws <- Mws$toODE(paramValues_ws)
-    odeinfo_pb <- Mpb$toODE(paramValues_pb)
+    odeinfo_ws <- to_ode(Mws, paramValues_ws)
+    odeinfo_pb <- to_ode(Mpb, paramValues_pb)
     out_ws <- deSolve::ode(
         y = odeinfo_ws$y0,
         times = times,

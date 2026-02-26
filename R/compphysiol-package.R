@@ -8,11 +8,12 @@
 #' dosing events, and physiological parameters.
 #' @details
 #' Key classes include:
-#' - `Compartment`: Represents a model compartment with a name and initial amount.
-#' - `Reaction`: Defines reactions between compartments with specified rates.
-#' - `Observable`: Represents measurable outputs derived from compartment states.
 #' - `CompartmentModel`: Encapsulates the structure of a compartmental model,
 #'   including compartments, reactions, observables, and dosing events.
+#' - `Compartments`: Represents model compartments with names and initial amounts.
+#' - `Flows`: Defines flows between compartments with specified rates.
+#' - `Observables`: Represents measurable outputs derived from compartment states.
+#' - `Equations`: Represents mathematical relationships between model parameters and/or states.
 #' - `Dosing`: Represents dosing events, including bolus and infusion doses.
 #' - `Physiology`: Manages physiological parameters for the model.
 #' @keywords internal

@@ -4,12 +4,14 @@
 \alias{flows}
 \title{Flows Class}
 \usage{
-flows(from, to, rate = NULL, const = NULL)
+flows(from, to, ..., rate = NULL, const = NULL)
 }
 \arguments{
 \item{from}{The name of the source compartment(s) (character vector or NULL for source compartments)}
 
 \item{to}{The name of the destination compartment(s) (character vector or NULL for sink compartments)}
+
+\item{...}{Unused, enforces \code{rate} and \code{const} to be specified as named arguments only, not positional}
 
 \item{rate}{The flow rate (numeric, optional, mutually exclusive with \code{const})}
 

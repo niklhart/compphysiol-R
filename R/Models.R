@@ -13,9 +13,9 @@
 #' library(deSolve)
 #'
 #' # Load the PBPK model
-#' M <- sMD_PBPK_12CMT_wellstirred()$
-#'     addDosing(target = "ven", time = 0, amount = 1)$   # IV bolus dosing
-#'     addObservable("Cpla", "BP * ven / Vven")           # plasma concentration observable
+#' M <- sMD_PBPK_12CMT_wellstirred() |>
+#'     add_dosing(target = "ven", time = 0, amount = 1) |>   # IV bolus dosing
+#'     add_observable(Cpla = BP * ven / Vven)                # plasma concentration observable
 #'
 #' paramValues <- list(
 #'     BP = 1,
@@ -54,7 +54,7 @@
 #' )
 #'
 #' # Generate ODE function and auxiliary structures
-#' odeinfo <- M$toODE(paramValues)
+#' odeinfo <- to_ode(M, paramValues)
 #'
 #' # Run simulation
 #' times <- seq(0, 24, by = 0.1)
@@ -108,80 +108,18 @@
 #' }
 sMD_PBPK_12CMT_wellstirred <- function() {
 
-    CompartmentModel$
-        new()$
-        addCompartment(c("ven", "art", "adi", "bon", "gut", "hea", "mus", "kid", "liv", "lun", "ski", "spl"))$
-        addReaction2(from = "art", to = c("adi", "bon", "gut", "hea", "mus", "kid", "ski", "spl"), const = "Q_to / Vart")$
-        addReaction(from = "art", to = "liv", const = "(Qliv-Qgut-Qspl) / Vart")$
-        addReaction2(from = c("gut","spl"), to = "liv", const = "Q_from / (V_from * K_from)")$
-        addReaction2(from = c("adi","bon","hea","liv","mus","kid","ski"), to = "ven", const = "Q_from / (V_from * K_from)")$
-        addReaction(from = "ven", to = "lun", const = "(Qadi+Qbon+Qhea+Qliv+Qmus+Qkid+Qski) / Vven")$
-        addReaction(from = "lun", to = "art", const = "(Qadi+Qbon+Qhea+Qliv+Qmus+Qkid+Qski) / (Vlun * Klun)")$
-        addReaction(from = "liv", to = "", const = "CL / (Vliv * Kliv)")
-    
+    compartment_model() |>
+        add_compartment(name = c("ven", "art", "adi", "bon", "gut", "hea", "mus", "kid", "liv", "lun", "ski", "spl")) |>
+        add_flow(from = "art", to = c("adi", "bon", "gut", "hea", "mus", "kid", "ski", "spl"), const = "Q_to / Vart") |>
+        add_flow(from = "art", to = "liv", const = "(Qliv-Qgut-Qspl) / Vart") |> 
+        add_flow(from = c("gut","spl"), to = "liv", const = "Q_from / (V_from * K_from)") |>
+        add_flow(from = c("adi","bon","hea","liv","mus","kid","ski"), to = "ven", const = "Q_from / (V_from * K_from)") |>
+        add_flow(from = "ven", to = "lun", const = "(Qadi+Qbon+Qhea+Qliv+Qmus+Qkid+Qski) / Vven") |>
+        add_flow(from = "lun", to = "art", const = "(Qadi+Qbon+Qhea+Qliv+Qmus+Qkid+Qski) / (Vlun * Klun)") |>
+        add_flow(from = "liv", to = "", const = "CL / (Vliv * Kliv)")
+
 }
 
-.sMD_PBPK_12CMT_wellstirred_OLD <- function() {
-    
-    M <- CompartmentModel$new()
-    
-    # compartments (can be vectorized later)
-    M$addCompartment("ven", 0)
-    M$addCompartment("art", 0)
-
-    M$addCompartment("adi", 0)
-    M$addCompartment("bon", 0)
-    M$addCompartment("gut", 0)
-    M$addCompartment("hea", 0)
-    M$addCompartment("mus", 0)
-    M$addCompartment("kid", 0)
-    M$addCompartment("liv", 0)
-    M$addCompartment("lun", 0)
-    M$addCompartment("ski", 0)
-    M$addCompartment("spl", 0)
-
-    # organs with arterial inflow
-    M$addReaction("art", "adi", const = "Qadi / Vart")
-    M$addReaction("art", "bon", const = "Qbon / Vart")
-    M$addReaction("art", "gut", const = "Qgut / Vart")
-    M$addReaction("art", "hea", const = "Qhea / Vart")
-    M$addReaction("art", "mus", const = "Qmus / Vart")
-    M$addReaction("art", "kid", const = "Qkid / Vart")
-    M$addReaction("art", "ski", const = "Qski / Vart")
-    M$addReaction("art", "spl", const = "Qspl / Vart")
-
-    # handle organ topology w.r.t. liver
-    M$addReaction("art", "liv", const = "(Qliv-Qgut-Qspl) / Vart")
-    M$addReaction("gut", "liv", const = "Qgut / (Vgut * Kgut)")
-    M$addReaction("spl", "liv", const = "Qspl / (Vspl * Kspl)")
-
-    # organs with venous outflow
-    M$addReaction("adi", "ven", const = "Qadi / (Vadi * Kadi)")
-    M$addReaction("bon", "ven", const = "Qbon / (Vbon * Kbon)")
-    M$addReaction("hea", "ven", const = "Qhea / (Vhea * Khea)")
-    M$addReaction("liv", "ven", const = "Qliv / (Vliv * Kliv)")
-    M$addReaction("mus", "ven", const = "Qmus / (Vmus * Kmus)")
-    M$addReaction("kid", "ven", const = "Qkid / (Vkid * Kkid)")
-    M$addReaction("ski", "ven", const = "Qski / (Vski * Kski)")
-
-    # lung (co hardcoded currently)
-    M$addReaction(
-        "ven",
-        "lun",
-        const = "(Qadi+Qbon+Qhea+Qliv+Qmus+Qkid+Qski) / Vven"
-    )
-    M$addReaction(
-        "lun",
-        "art",
-        const = "(Qadi+Qbon+Qhea+Qliv+Qmus+Qkid+Qski) / (Vlun * Klun)"
-    )
-
-    # liver metabolism
-    M$addReaction("liv", "", const = "CL / (Vliv * Kliv)")
-
-    # output
-    M
-}
 
 #' 12-CMT PBPK model with permeation-based tissue distribution
 #'
@@ -197,10 +135,10 @@ sMD_PBPK_12CMT_wellstirred <- function() {
 #' library(deSolve)
 #'
 #' # Load the PBPK model
-#' M <- sMD_PBPK_12CMT_permbased()$
-#'     addDosing(target = "ven", time = 0, amount = 1)$  # IV bolus dosing 
-#'     addObservable("Cpla", "BP * ven / Vven")          # plasma concentration observable
-#' 
+#' M <- sMD_PBPK_12CMT_permbased() |>
+#'     add_dosing(target = "ven", time = 0, amount = 1) |>  # IV bolus dosing
+#'     add_observable(Cpla = BP * ven / Vven)               # plasma concentration observable
+#'
 #' paramValues <- list(
 #'     BP = 1,
 #'     CL = 5,
@@ -272,7 +210,7 @@ sMD_PBPK_12CMT_wellstirred <- function() {
 #' )
 #'
 #' # Generate ODE function and auxiliary structures
-#' odeinfo <- M$toODE(paramValues)
+#' odeinfo <- to_ode(M, paramValues)
 #'
 #' # Run simulation
 #' times <- seq(0, 24, by = 0.1)
@@ -325,88 +263,81 @@ sMD_PBPK_12CMT_wellstirred <- function() {
 #' )
 #' }
 sMD_PBPK_12CMT_permbased <- function() {
-    M <- CompartmentModel$new()
 
-    # compartments (can be vectorized later)
-    M$addCompartment("ven", 0)
-    M$addCompartment("art", 0)
-
-    M$addCompartment("adi_exc", 0)
-    M$addCompartment("adi_cel", 0)
-    M$addCompartment("bon_exc", 0)
-    M$addCompartment("bon_cel", 0)
-    M$addCompartment("gut_exc", 0)
-    M$addCompartment("gut_cel", 0)
-    M$addCompartment("hea_exc", 0)
-    M$addCompartment("hea_cel", 0)
-    M$addCompartment("mus_exc", 0)
-    M$addCompartment("mus_cel", 0)
-    M$addCompartment("kid_exc", 0)
-    M$addCompartment("kid_cel", 0)
-    M$addCompartment("liv_exc", 0)
-    M$addCompartment("liv_cel", 0)
-    M$addCompartment("lun_exc", 0)
-    M$addCompartment("lun_cel", 0)
-    M$addCompartment("ski_exc", 0)
-    M$addCompartment("ski_cel", 0)
-    M$addCompartment("spl_exc", 0)
-    M$addCompartment("spl_cel", 0)
-
-    # organs with arterial inflow
-    M$addReaction("art", "adi_exc", const = "Qadi / Vart")
-    M$addReaction("art", "bon_exc", const = "Qbon / Vart")
-    M$addReaction("art", "gut_exc", const = "Qgut / Vart")
-    M$addReaction("art", "hea_exc", const = "Qhea / Vart")
-    M$addReaction("art", "mus_exc", const = "Qmus / Vart")
-    M$addReaction("art", "kid_exc", const = "Qkid / Vart")
-    M$addReaction("art", "ski_exc", const = "Qski / Vart")
-    M$addReaction("art", "spl_exc", const = "Qspl / Vart")
-
-    # handle organ topology w.r.t. liver
-    M$addReaction("art", "liv_exc", const = "(Qliv-Qgut-Qspl) / Vart")
-    M$addReaction("gut_exc", "liv_exc", const = "Qgut * BP * fuEgut / (Vgut_exc * fuP)")
-    M$addReaction("spl_exc", "liv_exc", const = "Qspl * BP * fuEspl / (Vspl_exc * fuP)")
-
-    # organs with venous outflow
-    M$addReaction("adi_exc", "ven", const = "Qadi * BP * fuEadi / (Vadi_exc * fuP)")
-    M$addReaction("bon_exc", "ven", const = "Qbon * BP * fuEbon / (Vbon_exc * fuP)")
-    M$addReaction("hea_exc", "ven", const = "Qhea * BP * fuEhea / (Vhea_exc * fuP)")
-    M$addReaction("liv_exc", "ven", const = "Qliv * BP * fuEliv / (Vliv_exc * fuP)")
-    M$addReaction("mus_exc", "ven", const = "Qmus * BP * fuEmus / (Vmus_exc * fuP)")
-    M$addReaction("kid_exc", "ven", const = "Qkid * BP * fuEkid / (Vkid_exc * fuP)")
-    M$addReaction("ski_exc", "ven", const = "Qski * BP * fuEski / (Vski_exc * fuP)")
-
-    # Redistribution within tissues
-    M$addReaction("adi_exc", "adi_cel", const = "P * SAadi * fuEadi / Vadi_exc")
-    M$addReaction("adi_cel", "adi_exc", const = "P * SAadi * fuCadi / Vadi_cel")
-    M$addReaction("bon_exc", "bon_cel", const = "P * SAbon * fuEbon / Vbon_exc")
-    M$addReaction("bon_cel", "bon_exc", const = "P * SAbon * fuCbon / Vbon_cel")
-    M$addReaction("gut_exc", "gut_cel", const = "P * SAgut * fuEgut / Vgut_exc")
-    M$addReaction("gut_cel", "gut_exc", const = "P * SAgut * fuCgut / Vgut_cel")
-    M$addReaction("hea_exc", "hea_cel", const = "P * SAhea * fuEhea / Vhea_exc")
-    M$addReaction("hea_cel", "hea_exc", const = "P * SAhea * fuChea / Vhea_cel")
-    M$addReaction("kid_exc", "kid_cel", const = "P * SAkid * fuEkid / Vkid_exc")
-    M$addReaction("kid_cel", "kid_exc", const = "P * SAkid * fuCkid / Vkid_cel")
-    M$addReaction("liv_exc", "liv_cel", const = "P * SAliv * fuEliv / Vliv_exc")
-    M$addReaction("liv_cel", "liv_exc", const = "P * SAliv * fuCliv / Vliv_cel")
-    M$addReaction("lun_exc", "lun_cel", const = "P * SAlun * fuElun / Vlun_exc")
-    M$addReaction("lun_cel", "lun_exc", const = "P * SAlun * fuClun / Vlun_cel")
-    M$addReaction("mus_exc", "mus_cel", const = "P * SAmus * fuEmus / Vmus_exc")
-    M$addReaction("mus_cel", "mus_exc", const = "P * SAmus * fuCmus / Vmus_cel")
-    M$addReaction("ski_exc", "ski_cel", const = "P * SAadi * fuEski / Vski_exc")
-    M$addReaction("ski_cel", "ski_exc", const = "P * SAadi * fuCski / Vski_cel")
-    M$addReaction("spl_exc", "spl_cel", const = "P * SAspl * fuEspl / Vspl_exc")
-    M$addReaction("spl_cel", "spl_exc", const = "P * SAspl * fuCspl / Vspl_cel")
-
-    # lung (co hardcoded currently)
-    M$addReaction("ven", "lun_exc", const = "(Qadi+Qbon+Qhea+Qliv+Qmus+Qkid+Qski) / Vven")
-    M$addReaction("lun_exc", "art", const = "(Qadi+Qbon+Qhea+Qliv+Qmus+Qkid+Qski) * BP * fuElun / (Vlun_exc * fuP)")
-
-    # liver metabolism
-    M$addReaction("liv_cel", "", const = "CL * fuCliv / Vliv_cel")
-
-    # output
-    M
+    compartment_model() |>
+        add_compartment(
+            c(
+                "ven",
+                "art",
+                "adi_exc",
+                "adi_cel",
+                "bon_exc",
+                "bon_cel",
+                "gut_exc",
+                "gut_cel",
+                "hea_exc",
+                "hea_cel",
+                "mus_exc",
+                "mus_cel",
+                "kid_exc",
+                "kid_cel",
+                "liv_exc",
+                "liv_cel",
+                "lun_exc",
+                "lun_cel",
+                "ski_exc",
+                "ski_cel",
+                "spl_exc",
+                "spl_cel"
+            )
+        ) |>
+        # organs with arterial inflow
+        add_flow("art", "adi_exc", const = "Qadi / Vart") |>
+        add_flow("art", "bon_exc", const = "Qbon / Vart") |>
+        add_flow("art", "gut_exc", const = "Qgut / Vart") |>
+        add_flow("art", "hea_exc", const = "Qhea / Vart") |>
+        add_flow("art", "mus_exc", const = "Qmus / Vart") |>
+        add_flow("art", "kid_exc", const = "Qkid / Vart") |>
+        add_flow("art", "ski_exc", const = "Qski / Vart") |>
+        add_flow("art", "spl_exc", const = "Qspl / Vart") |>
+        # handle organ topology w.r.t. liver
+        add_flow("art", "liv_exc", const = "(Qliv-Qgut-Qspl) / Vart") |>
+        add_flow("gut_exc", "liv_exc", const = "Qgut * BP * fuEgut / (Vgut_exc * fuP)") |>
+        add_flow("spl_exc", "liv_exc", const = "Qspl * BP * fuEspl / (Vspl_exc * fuP)") |>
+        # organs with venous outflow
+        add_flow("adi_exc", "ven", const = "Qadi * BP * fuEadi / (Vadi_exc * fuP)") |>
+        add_flow("bon_exc", "ven", const = "Qbon * BP * fuEbon / (Vbon_exc * fuP)") |>
+        add_flow("hea_exc", "ven", const = "Qhea * BP * fuEhea / (Vhea_exc * fuP)") |>
+        add_flow("liv_exc", "ven", const = "Qliv * BP * fuEliv / (Vliv_exc * fuP)") |>
+        add_flow("mus_exc", "ven", const = "Qmus * BP * fuEmus / (Vmus_exc * fuP)") |>
+        add_flow("kid_exc", "ven", const = "Qkid * BP * fuEkid / (Vkid_exc * fuP)") |>
+        add_flow("ski_exc", "ven", const = "Qski * BP * fuEski / (Vski_exc * fuP)") |>
+        # Redistribution within tissues
+        add_flow("adi_exc", "adi_cel", const = "P * SAadi * fuEadi / Vadi_exc") |>
+        add_flow("adi_cel", "adi_exc", const = "P * SAadi * fuCadi / Vadi_cel") |>
+        add_flow("bon_exc", "bon_cel", const = "P * SAbon * fuEbon / Vbon_exc") |>
+        add_flow("bon_cel", "bon_exc", const = "P * SAbon * fuCbon / Vbon_cel") |>
+        add_flow("gut_exc", "gut_cel", const = "P * SAgut * fuEgut / Vgut_exc") |>
+        add_flow("gut_cel", "gut_exc", const = "P * SAgut * fuCgut / Vgut_cel") |>
+        add_flow("hea_exc", "hea_cel", const = "P * SAhea * fuEhea / Vhea_exc") |>
+        add_flow("hea_cel", "hea_exc", const = "P * SAhea * fuChea / Vhea_cel") |>
+        add_flow("kid_exc", "kid_cel", const = "P * SAkid * fuEkid / Vkid_exc") |>
+        add_flow("kid_cel", "kid_exc", const = "P * SAkid * fuCkid / Vkid_cel") |>
+        add_flow("liv_exc", "liv_cel", const = "P * SAliv * fuEliv / Vliv_exc") |>
+        add_flow("liv_cel", "liv_exc", const = "P * SAliv * fuCliv / Vliv_cel") |>
+        add_flow("lun_exc", "lun_cel", const = "P * SAlun * fuElun / Vlun_exc") |>
+        add_flow("lun_cel", "lun_exc", const = "P * SAlun * fuClun / Vlun_cel") |>
+        add_flow("mus_exc", "mus_cel", const = "P * SAmus * fuEmus / Vmus_exc") |>
+        add_flow("mus_cel", "mus_exc", const = "P * SAmus * fuCmus / Vmus_cel") |>
+        add_flow("ski_exc", "ski_cel", const = "P * SAadi * fuEski / Vski_exc") |>
+        add_flow("ski_cel", "ski_exc", const = "P * SAadi * fuCski / Vski_cel") |>
+        add_flow("spl_exc", "spl_cel", const = "P * SAspl * fuEspl / Vspl_exc") |>
+        add_flow("spl_cel", "spl_exc", const = "P * SAspl * fuCspl / Vspl_cel") |>
+        # lung (co hardcoded currently)
+        add_flow("ven", "lun_exc", const = "(Qadi+Qbon+Qhea+Qliv+Qmus+Qkid+Qski) / Vven") |>
+        add_flow("lun_exc", "art", const = "(Qadi+Qbon+Qhea+Qliv+Qmus+Qkid+Qski) * BP * fuElun / (Vlun_exc * fuP)") |>
+        # liver metabolism
+        add_flow("liv_cel", "", const = "CL * fuCliv / Vliv_cel")
 }
 
 
@@ -425,16 +356,15 @@ multiCompModel <- function(ncomp = 1, type = c("micro", "macro")) {
     central_idx <- 1
 
     # First assemble compartments and observables
-    model <- CompartmentModel$
-        new()$
-        addCompartment(compNames, initial = 0)$
-        addObservable("C1Conc", "C1/V1")
+    model <- compartment_model() |>
+        add_compartment(compNames, initial = 0) |>
+        add_observable(C1Conc = C1/V1)
 
     # Next assemble reactions, depending on parameterization style
     if (type == "micro") {
         # Micro: first-order rate constants
         # Elimination from central
-        model$addReaction("C1", "", "k10 * C1")
+        model <- add_flow(model, "C1", "", const = "k10")
         # Inter-compartmental rates
         for (i in seq_len(ncomp)) {
             if (i == central_idx) {
@@ -442,32 +372,22 @@ multiCompModel <- function(ncomp = 1, type = c("micro", "macro")) {
             }
             ki <- paste0("k1", i)
             k_back <- paste0("k", i, "1")
-            model$addReaction("C1", compNames[i], paste0(ki, " * C1"))
-            model$addReaction(
-                compNames[i],
-                "C1",
-                paste0(k_back, " * ", compNames[i])
-            )
+            model <- model |>
+                add_flow("C1", compNames[i], const = ki) |>
+                add_flow(compNames[i], "C1", const = k_back)
         }
     } else if (type == "macro") {
         # Macro: flows and volumes
         # Elimination from central scaled by volume
-        model$addReaction("C1", "", "CL / V1 * C1")
+        model <- add_flow(model, "C1", "", const = "CL / V1")
         # Inter-compartmental flows
         for (i in seq_len(ncomp)) {
             if (i == central_idx) {
                 next
             }
-            model$addReaction(
-                "C1",
-                compNames[i],
-                paste0("Q1", i, " / V1 * C1")
-            )
-            model$addReaction(
-                compNames[i],
-                "C1",
-                paste0("Q1", i, " / V", i, " * ", compNames[i])
-            )
+            model <- model |>
+                add_flow("C1", compNames[i], const = paste0("Q1", i, " / V1")) |>
+                add_flow(compNames[i], "C1", const = paste0("Q1", i, " / V", i))
         }
     }
 
@@ -475,6 +395,9 @@ multiCompModel <- function(ncomp = 1, type = c("micro", "macro")) {
 }
 
 
+
+
+# Old (R6) models to be refactored or removed
 
 
 #' Cell-level PK/PD model
