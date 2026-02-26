@@ -4,10 +4,14 @@
 \alias{add_equation}
 \title{Add one or several equations to a \code{CompartmentModel} object.}
 \usage{
-add_equation(model, eq)
+add_equation(model, ..., eq = NULL)
 }
 \arguments{
-\item{eq}{An Equation object or list of Equation objects. Constructed from the other inputs if not provided.}
+\item{model}{A \code{CompartmentModel} object.}
+
+\item{...}{Name-expression pairs for equations, e.g. \code{co = Qadi+Qbon+Qhea+Qkid+Qliv+Qmus+Qski}}
+
+\item{eq}{An \code{Equations} object.}
 }
 \value{
 The modified \code{CompartmentModel} object.
@@ -16,6 +20,11 @@ The modified \code{CompartmentModel} object.
 Add one or several equations to a \code{CompartmentModel} object.
 }
 \examples{
-model <- compartment_model() |>
-    add_equation("co = Qadi+Qbon+Qgut+Qhea+Qkid+Qliv+Qmus+Qski+Qspl")
+## Interactive path with name-expression pairs
+compartment_model() |>
+    add_equation(co = Qadi+Qbon+Qhea+Qkid+Qliv+Qmus+Qski)
+## Programmatic path with Equations object
+eq <- equations(name = "co", expr = "Qadi+Qbon+Qhea+Qkid+Qliv+Qmus+Qski")
+compartment_model() |>
+    add_equation(eq = eq)
 }

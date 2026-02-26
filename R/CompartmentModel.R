@@ -7,10 +7,10 @@ compartment_model <- function() {
 
     structure(
         list(
-            compartments = compartments(name = NULL, initial = NULL),
+            compartments = empty_compartment(),
             flows = list(),
-            equations = list(),
-            observables = list(),
+            equations = empty_equation(),
+            observables = empty_observable(),
             doses = empty_dosing(),
             infusionEvents = data.frame(
                 var = character(),
@@ -56,15 +56,11 @@ print.CompartmentModel <- function(x, ...) {
         cat(" Flows: (none)\n")
     }
 
+    # equations
+    print(x$equations)
+
     # observables
-    if (length(x$observables) > 0) {
-        cat(" Observables:\n")
-        for (o in x$observables) {
-            cat("   -", o$name, "=", deparse(o$expr), "\n")
-        }
-    } else {
-        cat(" Observables: (none)\n")
-    }
+    print(x$observables)
 
     # dosing (boluses + infusions unified)
     events <- .dosing_to_events(x)$data
@@ -255,33 +251,66 @@ add_flow <- function(model, from, to, rate = NULL, const = NULL, flow = NULL) {
 
 #' Add an observable to a `CompartmentModel` object.
 #'
+#' 
 #' @param model A `CompartmentModel` object.
-#' @param name Name of the observable
-#' @param expr Expression (character or function)
-#' @param obs An Observable object or list of Observable objects. Constructed from the other inputs if not provided.
+#' @param ... Name-expression pairs for observables, e.g. `Cblo = blo / Vblo`
+#' @param obs An `Observables` object.
 #' @returns The modified `CompartmentModel` object.
 #' @examples
-#' model <- compartment_model() |>
+#' ## Interactive path with name-expression pairs
+#' compartment_model() |>
 #'     add_compartment("blo") |>
-#'     add_observable(name = "Cblo", expr = "blo/Vblo")
+#'     add_observable(Cblo = blo/Vblo)
+#' ## Programmatic path with Observables object
+#' obs <- observables(name = "Cblo", expr = "blo/Vblo")
+#' compartment_model() |>
+#'     add_compartment("blo") |>
+#'     add_observable(obs = obs)
 #' @export
-add_observable <- function(model, name, expr, obs = ObservableList(name, expr)) {
+add_observable <- function(model, ..., obs = NULL) {
     .check_class(model, "CompartmentModel")
-    obs <- .wrap_into_list(obs)
+    if (!is.null(obs)) {
+        # programmatic path
+        .check_class(obs, "Observables")
+    } else {
+        # interactive path
+        dots <- as.list(substitute(list(...)))[-1]
+        obs <- observables(
+            name = names(dots),
+            expr = unname(dots)
+        )
+    }
     model$observables <- c(model$observables, obs)
     return(model)
 }
 
 #' Add one or several equations to a `CompartmentModel` object.
-#' @param eq An Equation object or list of Equation objects. Constructed from the other inputs if not provided.
+#' @param model A `CompartmentModel` object.
+#' @param ... Name-expression pairs for equations, e.g. `co = Qadi+Qbon+Qhea+Qkid+Qliv+Qmus+Qski`
+#' @param eq An `Equations` object.
 #' @returns The modified `CompartmentModel` object.
 #' @examples
-#' model <- compartment_model() |>
-#'     add_equation("co = Qadi+Qbon+Qgut+Qhea+Qkid+Qliv+Qmus+Qski+Qspl")
+#' ## Interactive path with name-expression pairs
+#' compartment_model() |>
+#'     add_equation(co = Qadi+Qbon+Qhea+Qkid+Qliv+Qmus+Qski)
+#' ## Programmatic path with Equations object
+#' eq <- equations(name = "co", expr = "Qadi+Qbon+Qhea+Qkid+Qliv+Qmus+Qski")
+#' compartment_model() |>
+#'     add_equation(eq = eq)
 #' @export
-add_equation <- function(model, eq) {
+add_equation <- function(model, ..., eq = NULL) {
     .check_class(model, "CompartmentModel")
-    eq <- .wrap_into_list(eq)
+    if (!is.null(eq)) {
+        # programmatic path
+        .check_class(eq, "Equations")
+    } else {
+        # interactive path
+        dots <- as.list(substitute(list(...)))[-1]
+        eq <- equations(
+            name = names(dots),
+            expr = unname(dots)
+        )
+    }
     model$equations <- c(model$equations, eq)
     return(model)
 }

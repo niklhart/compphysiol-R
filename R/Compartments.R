@@ -52,7 +52,10 @@ print.Compartments <- function(x, ...) {
 
     if (length(x) > 0) {
         cat(" Compartments:\n")
-        paste0("   -", x$name, " (initial = ", format(x$initial), ")\n") |> cat(sep = "")
+        cat(
+            sprintf("  (%s) %s (initial = %s)\n", seq_along(x), x$name, format(x$initial)),
+            sep = ""
+        )
     } else {
         cat(" Compartments: (none)\n")
     }
@@ -106,6 +109,12 @@ c.Compartments <- function(..., recursive = FALSE) {
         initial = x$initial[i]
     )
 }
+
+#' Create an empty `Compartments` object
+#' @return An empty `Compartments` object
+#' @export
+empty_compartment <- function() compartments(name = character(0), initial = numeric(0))
+
 
 # Old R6 class definition for reference (to be removed)
 

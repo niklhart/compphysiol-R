@@ -4,16 +4,14 @@
 \alias{add_observable}
 \title{Add an observable to a \code{CompartmentModel} object.}
 \usage{
-add_observable(model, name, expr, obs = ObservableList(name, expr))
+add_observable(model, ..., obs = NULL)
 }
 \arguments{
 \item{model}{A \code{CompartmentModel} object.}
 
-\item{name}{Name of the observable}
+\item{...}{Name-expression pairs for observables, e.g. \code{Cblo = blo / Vblo}}
 
-\item{expr}{Expression (character or function)}
-
-\item{obs}{An Observable object or list of Observable objects. Constructed from the other inputs if not provided.}
+\item{obs}{An \code{Observables} object.}
 }
 \value{
 The modified \code{CompartmentModel} object.
@@ -22,7 +20,13 @@ The modified \code{CompartmentModel} object.
 Add an observable to a \code{CompartmentModel} object.
 }
 \examples{
-model <- compartment_model() |>
+## Interactive path with name-expression pairs
+compartment_model() |>
     add_compartment("blo") |>
-    add_observable(name = "Cblo", expr = "blo/Vblo")
+    add_observable(Cblo = blo/Vblo)
+## Programmatic path with Observables object
+obs <- observables(name = "Cblo", expr = "blo/Vblo")
+compartment_model() |>
+    add_compartment("blo") |>
+    add_observable(obs = obs)
 }

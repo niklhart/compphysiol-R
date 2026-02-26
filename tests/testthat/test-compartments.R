@@ -28,7 +28,7 @@ test_that("Compartments with mismatched name and initial lengths throw error", {
     expect_error(compartments(c("adi", "bon", "gut"), c(10, 20)))
 })
 
-test_that("Adding empty compartment names works", {
-    comp <- compartments(name = character(0))
+test_that("Adding empty compartment works", {
+    comp <- empty_compartment()
     expect_equal(length(comp), 0)
 })
