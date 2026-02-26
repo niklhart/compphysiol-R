@@ -26,7 +26,7 @@ test_that("Missing parameters are listed as free", {
     M <- compartment_model() |>
          add_compartment("Central", 10) |>
          add_compartment("Peripheral", 0) |>
-         add_flow("Central", "Peripheral", "k12 * Central")
+         add_flow("Central", "Peripheral", const = "k12")
 
     # Do not provide k12
     odeinfo <- to_ode(M)

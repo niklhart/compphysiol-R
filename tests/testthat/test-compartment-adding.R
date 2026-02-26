@@ -17,7 +17,7 @@ test_that("Adding flows works", {
     M <- compartment_model() |>
         add_compartment("Central", 10) |>
         add_compartment("Peripheral", 0) |>
-        add_flow("Central", "Peripheral", "k12 * Central")
+        add_flow("Central", "Peripheral", const = "k12")
 
     expect_equal(length(M$flows), 1)
     expect_equal(M$flows$from[[1]], "Central")

@@ -3,7 +3,7 @@ library(deSolve)
 test_that("Full simulation with bolus dosing works", {
     M <- compartment_model() |>
          add_compartment(c("Central","Peripheral"), 0) |>
-         add_flow("Central", "Peripheral", "k12 * Central") |>
+         add_flow("Central", "Peripheral", const = "k12") |>
          add_dosing("Central", amount = 100, time = 0)
 
     odeinfo <- to_ode(M, paramValues = list(k12 = 0.1))
@@ -86,8 +86,8 @@ test_that("Two-compartment oral absorption model matches Bateman function", {
     M <- compartment_model() |>
         add_compartment("Gut", D) |>
         add_compartment("Central", 0) |>
-        add_flow("Gut", "Central", "ka * Gut") |>
-        add_flow("Central", "", "ke * Central")
+        add_flow("Gut", "Central", const = "ka") |>
+        add_flow("Central", "", const = "ke")
 
     odeinfo <- to_ode(M, paramValues = list(ka = ka, ke = ke))
 
@@ -116,7 +116,7 @@ test_that("One-compartment model with observed concentration matches analytic so
     # Build model
     M <- compartment_model() |>
         add_compartment("Central", A0) |>
-        add_flow("Central", "", "k * Central") |>
+        add_flow("Central", "", const = "k") |>
         add_observable(C = Central / V)
 
     odeinfo <- to_ode(M, paramValues = list(k = k, V = V))
