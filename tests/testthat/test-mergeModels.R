@@ -1,65 +1,61 @@
 
 test_that("mergeModels merges two CompartmentModels without suffixes (collision='merge')", {
     # Absorption module
-    abs <- CompartmentModel$
-        new()$
-        addCompartment("Gut", 100)$
-        addCompartment("Central")$
-        addReaction("Gut", "Central", "ka * Gut")$
-        addObservable("GutObs", "Gut")$
-        addDosing(target = "Gut", amount = 100, time = 0)
+    abs <- compartment_model() |>
+        add_compartment("Gut", 100) |>
+        add_compartment("Central") |>
+        add_flow("Gut", "Central", const = "ka") |>
+        add_observable(GutObs = Gut) |>
+        add_dosing(target = "Gut", amount = 100, time = 0)
 
     # Systemic PK model
-    pk <- CompartmentModel$
-        new()$
-        addCompartment(c("Central","Peripheral"), 0)$
-        addReaction("Central", "Peripheral", const = "k12")$
-        addReaction("Peripheral", "Central", const = "k21")$
-        addReaction("Central", "", const ="k10")$
-        addObservable("CentralObs", "Central")
+    pk <- compartment_model() |>
+        add_compartment(c("Central","Peripheral")) |>
+        add_flow("Central", "Peripheral", const = "k12") |>
+        add_flow("Peripheral", "Central", const = "k21") |>
+        add_flow("Central", "", const = "k10") |>
+        add_observable(CentralObs = Central)
 
     # Merge without suffixes, using collision = 'merge'
     merged <- mergeModels(abs, pk, suffix1 = NULL, suffix2 = NULL, collision = "merge")
 
     # Compartments: Gut + Central + Peripheral
-    expect_equal(merged$getStateNames(), c("Gut", "Central", "Peripheral"))
+    expect_equal(names(merged$compartments), c("Gut", "Central", "Peripheral"))
 
-    # Reactions: absorption connects to Central in systemic model
-    reaction_strings <- sapply(merged$reactions, function(r) paste(r$from, r$to, deparse(r$rate)))
-    expect_true(any(grepl("Gut Central ka \\* Gut", reaction_strings)))
-    expect_true(any(grepl("Central Peripheral k12 \\* Central", reaction_strings)))
-    expect_true(any(grepl("Peripheral Central k21 \\* Peripheral", reaction_strings)))
-    expect_true(any(grepl("Central  k10 \\* Central", reaction_strings)))
+    # Flows: absorption connects to Central in systemic model
+    flow_strings <- sapply(merged$flows, function(f) paste(f$from, f$to, deparse(f$rate)))
+    expect_true(any(grepl("Gut Central ka \\* Gut", flow_strings)))
+    expect_true(any(grepl("Central Peripheral k12 \\* Central", flow_strings)))
+    expect_true(any(grepl("Peripheral Central k21 \\* Peripheral", flow_strings)))
+    expect_true(any(grepl("Central  k10 \\* Central", flow_strings)))
 
     # Observables
-    observable_names <- sapply(merged$observables, function(o) o$name)
+    observable_names <- names(merged$observables)
     expect_true(all(c("GutObs", "CentralObs") %in% observable_names))
 
     # Dosing
     expect_equal(length(merged$doses), 1)
-    expect_equal(merged$doses[[1]]$target, "Gut")
+    expect_equal(merged$doses$target, "Gut")
 })
 
 
 
 test_that("mergeModels can merge two distinct drugs with suffixes", {
     # Drug A
-    drugA <- CompartmentModel$
-        new()$
-        addCompartment(c("Central", "Peripheral"), 0)$
-        addReaction("Central", "Peripheral", const = "k12")$
-        addReaction("Peripheral", "Central", const = "k21")$
-        addReaction("Central", "", const = "k10")$
-        addObservable("CentralObs", "Central")
+    drugA <- compartment_model() |>
+         add_compartment(c("Central", "Peripheral"), 0) |>
+         add_flow("Central", "Peripheral", const = "k12") |>
+         add_flow("Peripheral", "Central", const = "k21") |>
+         add_flow("Central", "", const = "k10") |>
+         add_observable(CentralObs = Central)
 
     # Drug B
-    drugB <- CompartmentModel$
-        new()$
-        addCompartment(c("Central", "Peripheral"), 0)$
-        addReaction("Central", "Peripheral", const = "k12")$
-        addReaction("Peripheral", "Central", const = "k21")$
-        addReaction("Central", "", const = "k10")$
-        addObservable("CentralObs", "Central")
+    drugB <- compartment_model() |>
+         add_compartment(c("Central", "Peripheral"), 0) |>
+         add_flow("Central", "Peripheral", const = "k12") |>
+         add_flow("Peripheral", "Central", const = "k21") |>
+         add_flow("Central", "", const = "k10") |>
+         add_observable(CentralObs = Central)
 
     # Merge with suffixes to keep compartments separate
     merged <- mergeModels(drugA, drugB, suffix1 = "A", suffix2 = "B", collision = "error")
@@ -82,22 +78,20 @@ test_that("mergeModels can merge two distinct drugs with suffixes", {
 test_that("mergeModels auto-renames two distinct drugs correctly", {
 
     # Drug A
-    drugA <- CompartmentModel$
-        new()$
-        addCompartment(c("Central", "Peripheral"), 0)$
-        addReaction("Central", "Peripheral", const = "k12")$
-        addReaction("Peripheral", "Central", const = "k21")$
-        addReaction("Central", "", const = "k10")$
-        addObservable("CentralObs", "Central")
+    drugA <- compartment_model() |>
+         add_compartment(c("Central", "Peripheral"), 0) |>
+         add_flow("Central", "Peripheral", const = "k12") |>
+         add_flow("Peripheral", "Central", const = "k21") |>
+         add_flow("Central", "", const = "k10") |>
+         add_observable(CentralObs = Central)
 
     # Drug B
-    drugB <- CompartmentModel$
-        new()$
-        addCompartment(c("Central", "Peripheral"), 0)$
-        addReaction("Central", "Peripheral", const = "k12")$
-        addReaction("Peripheral", "Central", const = "k21")$
-        addReaction("Central", "", const = "k10")$
-        addObservable("CentralObs", "Central")
+    drugB <- compartment_model() |>
+         add_compartment(c("Central", "Peripheral"), 0) |>
+         add_flow("Central", "Peripheral", const = "k12") |>
+         add_flow("Peripheral", "Central", const = "k21") |>
+         add_flow("Central", "", const = "k10") |>
+         add_observable(CentralObs = Central)
 
     # Merge with suffixes to keep compartments separate
     merged_auto   <- mergeModels(drugA, drugB, collision = "auto")
@@ -112,20 +106,20 @@ test_that("mergeModels auto-renames two distinct drugs correctly", {
 
 test_that("mergeModels respects shared parameters (skip suffixing)", {
     # Drug A (PBPK compound 1)
-    drugA <- CompartmentModel$new()$
-        addCompartment("Liver", 0)$
-        addCompartment("Central", 0)$
-        addReaction("Central", "Liver", "Q_hepatic/V_liver * (Central - Liver / K_liver)")$
-        addReaction("Liver", "Central", "Q_hepatic/V_liver * (Liver / K_liver - Central)")$
-        addObservable("CentralObs", "Central")
+    drugA <- compartment_model() |>
+         add_compartment("Central", 0) |>
+         add_compartment("Liver", 0) |>
+         add_flow("Central", "Liver", const = "Q_hepatic/V_liver * (Central - Liver / K_liver)") |>
+         add_flow("Liver", "Central", const = "Q_hepatic/V_liver * (Liver / K_liver - Central)") |>
+         add_observable(CentralObs = Central)
 
     # Drug B (PBPK compound 2)
-    drugB <- CompartmentModel$new()$
-        addCompartment("Liver", 0)$
-        addCompartment("Central", 0)$
-        addReaction("Central", "Liver", "Q_hepatic/V_liver * (Central - Liver / K_liver)")$
-        addReaction("Liver", "Central", "Q_hepatic/V_liver * (Liver / K_liver - Central)")$
-        addObservable("CentralObs", "Central")
+    drugB <- compartment_model() |>
+         add_compartment("Central", 0) |>
+         add_compartment("Liver", 0) |>
+         add_flow("Central", "Liver", const = "Q_hepatic/V_liver * (Central - Liver / K_liver)") |>
+         add_flow("Liver", "Central", const = "Q_hepatic/V_liver * (Liver / K_liver - Central)") |>
+         add_observable(CentralObs = Central)
 
     # Shared physiological parameters (should not be suffixed)
     shared <- c("Q_hepatic", "V_liver")
@@ -138,21 +132,21 @@ test_that("mergeModels respects shared parameters (skip suffixing)", {
 
     # Check that state names are suffixed (no collision)
     expect_equal(
-        merged$getStateNames(),
+        names(merged$compartments),
         c("Liver_A", "Central_A", "Liver_B", "Central_B")
     )
 
     # Check that shared parameters remain unsuffixed
-    reaction_strings <- sapply(merged$reactions, function(r) deparse(r$rate))
-    expect_true(all(grepl("Q_hepatic", reaction_strings)))
-    expect_true(all(grepl("V_liver", reaction_strings)))
+    flow_strings <- vapply(merged$flows$rate, deparse, character(1))
+    expect_true(all(grepl("Q_hepatic", flow_strings)))
+    expect_true(all(grepl("V_liver", flow_strings)))
 
     # Check that partition coefficients (drug-specific) were suffixed
-    expect_true(any(grepl("K_liver_A", reaction_strings)))
-    expect_true(any(grepl("K_liver_B", reaction_strings)))
+    expect_true(any(grepl("K_liver_A", flow_strings)))
+    expect_true(any(grepl("K_liver_B", flow_strings)))
 
     # Observables have suffixes
-    observable_names <- sapply(merged$observables, function(o) o$name)
+    observable_names <- names(merged$observables)
     expect_true(all(c("CentralObs_A", "CentralObs_B") %in% observable_names))
 })
 

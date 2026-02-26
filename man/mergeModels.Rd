@@ -2,7 +2,7 @@
 % Please edit documentation in R/mergeModels.R
 \name{mergeModels}
 \alias{mergeModels}
-\title{Merge two CompartmentModel objects into one.}
+\title{Merge two \code{CompartmentModel} objects into one.}
 \usage{
 mergeModels(
   M1,
@@ -14,7 +14,7 @@ mergeModels(
 )
 }
 \arguments{
-\item{M1, M2}{CompartmentModel objects}
+\item{M1, M2}{\code{CompartmentModel} objects}
 
 \item{suffix1, suffix2}{Optional character suffixes for compartment names in M1/M2.
 Use NULL to leave names unchanged.}
@@ -29,30 +29,24 @@ Since suffixing is done before checking for collisions, the
 that should be shared, i.e. they are not suffixed.}
 }
 \value{
-A new CompartmentModel containing both.
+A new \code{CompartmentModel} containing both.
 }
 \description{
-Merge two CompartmentModel objects into one.
+Merge two \code{CompartmentModel} objects into one.
 }
 \examples{
 # Example 1: Merging oral absorption and one-compartment PK
-abs <- CompartmentModel$new()
-abs$addCompartment("Gut", 100)
-abs$addReaction("Gut", "Central", "ka * Gut")
-pk <- CompartmentModel$new()
-pk$addCompartment("Central", 0)
-pk$addReaction("Central", "", "k10 * Central")
-M <- mergeModels(abs, pk, collision = "merge")
-M
+abs <- compartment_model() |>
+    add_compartment("Gut", 100) |>
+    add_flow("Gut", "Central", const = "ka")
+pk <- compartment_model() |>
+    add_compartment("Central", 0) |>
+    add_flow("Central", "", const = "k10")
+mergeModels(abs, pk, collision = "merge")
 
 # Example 2: Two-drug PK model with drug-drug interaction
 drugA <- multiCompModel(ncomp = 1)
 drugB <- multiCompModel(ncomp = 2)
-merged <- mergeModels(drugA, drugB, suffix1 = "A", suffix2 = "B")
-merged$addReaction(
-  from = "C1_B",
-  to = "C1_A",
-  rate = "-(C1_B / (IC50 + C1_B)) * k10_A * C1_A"
-)
-merged
+mergeModels(drugA, drugB, suffix1 = "A", suffix2 = "B") |>
+    add_flow(from = "C1_B", to = "C1_A", rate = "-(C1_B / (IC50 + C1_B)) * k10_A * C1_A")
 }
