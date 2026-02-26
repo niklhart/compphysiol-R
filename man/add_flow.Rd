@@ -4,7 +4,14 @@
 \alias{add_flow}
 \title{Add one or several flows to a \code{CompartmentModel} object.}
 \usage{
-add_flow(model, from, to, rate = NULL, const = NULL, flow = NULL)
+add_flow(
+  model,
+  from,
+  to,
+  rate = NULL,
+  const = NULL,
+  flow = flows(from, to, rate, const)
+)
 }
 \arguments{
 \item{from}{Source compartment}
@@ -15,7 +22,7 @@ add_flow(model, from, to, rate = NULL, const = NULL, flow = NULL)
 
 \item{const}{Optional rate constant name (for linear flows)}
 
-\item{flow}{A Reaction object or list of Reaction objects. Constructed from the other inputs if not provided.}
+\item{flow}{A \code{Flows} object. Constructed from the other inputs if not provided.}
 }
 \value{
 The modified \code{CompartmentModel} object.

@@ -4,6 +4,6 @@
       print(comp)
     Output
        Compartments:
-         -adi (initial = 10)
-         -bon (initial = 20)
+        (1) adi (initial = 10)
+        (2) bon (initial = 20)
 

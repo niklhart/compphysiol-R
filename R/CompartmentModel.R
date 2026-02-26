@@ -1,14 +1,14 @@
 # New CompartmentModel class, implemented using S3. To be fully migrated from the old R6 version.
 
 #' Create a new CompartmentModel object.
-#' @return A new `CompartmentModel` object.
+#' @returns A new `CompartmentModel` object.
 #' @export
 compartment_model <- function() {
 
     structure(
         list(
             compartments = empty_compartment(),
-            flows = list(),
+            flows = empty_flow(),
             equations = empty_equation(),
             observables = empty_observable(),
             doses = empty_dosing(),
@@ -28,41 +28,25 @@ compartment_model <- function() {
 #' Pretty-prints a `CompartmentModel` object.
 #' @param x A `CompartmentModel` object.
 #' @param ... ignored
-#' @return The `CompartmentModel` object (invisibly).
+#' @returns The `CompartmentModel` object (invisibly).
 #' @export
 print.CompartmentModel <- function(x, ...) {
     cat("<CompartmentModel>\n")
 
-    # compartments
     print(x$compartments)
-
-    # flows
-    if (length(x$flows) > 0) {
-        cat(" Flows:\n")
-        for (f in x$flows) {
-            from <- if (is.null(f$from)) {
-                "\u2205"
-            } else {
-                paste(f$from, collapse = "+")
-            }
-            to <- if (is.null(f$to)) {
-                "\u2205"
-            } else {
-                paste(f$to, collapse = "+")
-            }
-            cat("   -", from, "\u2192", to, ":", deparse(f$rate), "\n")
-        }
-    } else {
-        cat(" Flows: (none)\n")
-    }
-
-    # equations
+    print(x$flows)
     print(x$equations)
-
-    # observables
     print(x$observables)
 
-    # dosing (boluses + infusions unified)
+    # dosing (boluses + infusions unified) 
+    # 
+    # TODO: Leverage the print method of the dosing object instead of re-implementing this here. 
+    #       This requires to rethink the interface: model$doses currently contains only partial dosing information 
+    #       (bolus dosing and bolus into infusion bag), while changes of infusion rate are stored in model$infusionEvents
+    #       and handled separately in the toODE method.
+    # 
+    # print(.dosing_to_events(x)$data) # -> ugly
+
     events <- .dosing_to_events(x)$data
     if (nrow(events) > 0) {
         cat(" Dosing events:\n")
@@ -96,6 +80,7 @@ print.CompartmentModel <- function(x, ...) {
 #' @export
 add_compartment <- function(model, name, initial = 0, comp = compartments(name, initial)) {
     .check_class(model, "CompartmentModel")
+    .check_class(comp, "Compartments")
     model$compartments <- c(model$compartments, comp)
     model
 }
@@ -143,7 +128,7 @@ compartment_names <- function(model) {
     )
 
     # boluses
-    if (!is.null(model$doses)) {
+    if (length(model$doses) > 0) {
         doses <- model$doses
         events <- rbind(
             events,
@@ -158,7 +143,7 @@ compartment_names <- function(model) {
     }
 
     # infusion rate events
-    if (!is.null(model$infusionEvents)) {
+    if (length(model$infusionEvents) > 0) {
         events <- rbind(events, model$infusionEvents)
     }
 
@@ -173,85 +158,22 @@ compartment_names <- function(model) {
 #' @param to Target compartment
 #' @param rate Optional flow rate expression as character
 #' @param const Optional rate constant name (for linear flows)
-#' @param flow A Reaction object or list of Reaction objects. Constructed from the other inputs if not provided.
+#' @param flow A `Flows` object. Constructed from the other inputs if not provided.
 #' @returns The modified `CompartmentModel` object.
 #' @examples
 #' model <- compartment_model() |>
 #'     add_flow(from = "A", to = "B", const = "k1")
 #' @export
-add_flow <- function(model, from, to, rate = NULL, const = NULL, flow = NULL) {
+add_flow <- function(model, from, to, rate = NULL, const = NULL, flow = flows(from, to, rate, const)) {
     .check_class(model, "CompartmentModel")
-
-    # Early return if flow(s) are provided directly (programmatic path)
-    if (!is.null(flow)) {
-        flow <- .wrap_into_list(flow)
-        model$flows <- c(model$flows, flow)
-        return(model)
-    }
-
-    # Input lengths
-    nFrom <- length(from)
-    nTo <- length(to)
-    nRate <- length(rate)
-    nConst <- length(const)
-
-    # Check that all inputs are either NULL, scalar or vector of the same length
-    nMax <- max(nFrom, nTo)
-    if (!all(c(nFrom, nTo, nRate, nConst) %in% c(0, 1, nMax))) {
-        stop(
-            "All inputs must be either NULL, scalar, or vector of the same length."
-        )
-    }
-
-    # Check that if rate is provided, const is not provided and vice versa
-    if (!xor(is.null(rate), is.null(const))) {
-        stop("Exactly one of 'rate' or 'const' must be provided.")
-    }
-    type <- if (!is.null(rate)) "rate" else "const"
-
-    from <- rep(from, nMax / nFrom)
-    to <- rep(to, nMax / nTo)
-
-    # If rate/const is scalar and one of from/to is vector, apply special substitution rule in rate/const
-    replace_pattern <- function(x) {
-        Map(
-            function(f_, t_) {
-                x |>
-                    gsub(pattern = "_from", replacement = f_) |>
-                    gsub(pattern = "_to", replacement = t_)
-            },
-            f_ = from,
-            t_ = to,
-            USE.NAMES = FALSE
-        )
-    }
-
-    # Vectorized construction of flows
-    flow <- switch(
-        type,
-        rate = Map(
-            Reaction$new,
-            from = from,
-            to = to,
-            rate = if (nRate == 1 && nMax > 1) replace_pattern(rate) else rate,
-            USE.NAMES = FALSE
-        ),
-        const = Map(
-            Reaction$new,
-            from = from,
-            to = to,
-            const = if (nConst == 1 && nMax > 1) replace_pattern(const) else const,
-            USE.NAMES = FALSE
-        )
-    )
-
+    .check_class(flow, "Flows")
     model$flows <- c(model$flows, flow)
     return(model)
 }
 
+
 #' Add an observable to a `CompartmentModel` object.
 #'
-#' 
 #' @param model A `CompartmentModel` object.
 #' @param ... Name-expression pairs for observables, e.g. `Cblo = blo / Vblo`
 #' @param obs An `Observables` object.
@@ -626,10 +548,8 @@ to_ode <- function(model, paramValues = list()) {
             )
         }
     }
-    for (f in model$flows) {
-        check_comp(f$from)
-        check_comp(f$to)
-    }
+
+    lapply(union(model$flows$from, model$flows$to), check_comp)
 
     # Environment container for free parameters
     freeParams <- new.env(parent = emptyenv())
@@ -649,18 +569,17 @@ to_ode <- function(model, paramValues = list()) {
     # Collect RHS terms for ODEs
     rhs <- vector("list", length(stateNames))
     for (j in seq_along(model$flows)) {
-        f <- model$flows[[j]]
-        expr <- makeFun(f$rate)
+        expr <- makeFun(model$flows$rate[[j]])
         expr_str <- deparse(expr, width.cutoff = 500) |>
             paste(collapse = " ")
-        if (!is.null(f$from)) {
-            for (from in f$from) {
+        if (!is.na(model$flows$from[[j]])) {
+            for (from in model$flows$from[[j]]) {
                 idx <- name2idx[[from]]
                 rhs[[idx]] <- c(rhs[[idx]], paste0("-(", expr_str, ")"))
             }
         }
-        if (!is.null(f$to)) {
-            for (to in f$to) {
+        if (!is.na(model$flows$to[[j]])) {
+            for (to in model$flows$to[[j]]) {
                 idx <- name2idx[[to]]
                 rhs[[idx]] <- c(rhs[[idx]], paste0("+(", expr_str, ")"))
             }

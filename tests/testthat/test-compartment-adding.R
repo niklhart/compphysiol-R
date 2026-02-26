@@ -20,10 +20,9 @@ test_that("Adding flows works", {
         add_flow("Central", "Peripheral", "k12 * Central")
 
     expect_equal(length(M$flows), 1)
-    f <- M$flows[[1]]
-    expect_equal(f$from, "Central")
-    expect_equal(f$to, "Peripheral")
-    expect_equal(f$rate, quote(k12 * Central))
+    expect_equal(M$flows$from[[1]], "Central")
+    expect_equal(M$flows$to[[1]], "Peripheral")
+    expect_equal(M$flows$rate[[1]], quote(k12 * Central))
 })
 
 test_that("Bolus dosing is handled correctly", {

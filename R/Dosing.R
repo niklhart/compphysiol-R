@@ -187,12 +187,11 @@ print.Dosing <- function(x, ...) {
 }
 
 #' Combine multiple `Dosing` objects into one
-#' Combines multiple `Dosing` objects by row-binding their data frames.
+#' Combines multiple `Dosing` objects by row-binding their data.
 #' @param ... One or more `Dosing` objects to combine.
-#' @param recursive ignored
 #' @return A single `Dosing` object containing all dosing events from the inputs.
 #' @export
-c.Dosing <- function(..., recursive = FALSE) {
+c.Dosing <- function(...) {
     objs <- list(...)
     if (!all(sapply(objs, function(o) inherits(o, "Dosing")))) {
         stop("All inputs must be Dosing objects.")

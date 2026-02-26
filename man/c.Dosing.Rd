@@ -3,19 +3,17 @@
 \name{c.Dosing}
 \alias{c.Dosing}
 \title{Combine multiple \code{Dosing} objects into one
-Combines multiple \code{Dosing} objects by row-binding their data frames.}
+Combines multiple \code{Dosing} objects by row-binding their data.}
 \usage{
-\method{c}{Dosing}(..., recursive = FALSE)
+\method{c}{Dosing}(...)
 }
 \arguments{
 \item{...}{One or more \code{Dosing} objects to combine.}
-
-\item{recursive}{ignored}
 }
 \value{
 A single \code{Dosing} object containing all dosing events from the inputs.
 }
 \description{
 Combine multiple \code{Dosing} objects into one
-Combines multiple \code{Dosing} objects by row-binding their data frames.
+Combines multiple \code{Dosing} objects by row-binding their data.
 }

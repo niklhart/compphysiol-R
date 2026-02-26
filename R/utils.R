@@ -6,11 +6,7 @@
 #' @noRd
 .as_call <- function(input) {
     if (is.character(input)) {
-        # parse string into an expression
-        parsed <- parse(text = input)
-        if (length(parsed) != 1L)
-            stop("Input must be a single expression.")
-        parsed[[1]]
+        str2lang(input)
     } else if (is.expression(input)) {
         input[[1]]
     } else if (is.language(input) || is.null(input)) { # quote() returns a call
