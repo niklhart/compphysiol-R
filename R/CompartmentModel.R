@@ -549,7 +549,8 @@ to_ode <- function(model, paramValues = list()) {
         }
     }
 
-    lapply(union(model$flows$from, model$flows$to), check_comp)
+    flow_comps <- setdiff(unique(c(model$flows$from, model$flows$to)), NA_character_)
+    lapply(flow_comps, check_comp)
 
     # Environment container for free parameters
     freeParams <- new.env(parent = emptyenv())
@@ -611,14 +612,14 @@ to_ode <- function(model, paramValues = list()) {
 
     # Observables (same substitution logic)
     obsFuncs <- lapply(model$observables, function(o) {
-        expr_lang <- makeFun(o$expr, obsFunc = TRUE)
+        expr_lang <- makeFun(o, obsFunc = TRUE)
         expr_str <- paste(
             deparse(expr_lang, width.cutoff = 500),
             collapse = " "
         )
         eval(parse(text = paste0("function(t,y,params) ", expr_str)))
     })
-    names(obsFuncs) <- vapply(model$observables, function(o) o$name, "")
+    names(obsFuncs) <- names(model$observables)
 
     # Output list
     list(

@@ -1,53 +1,47 @@
 
 test_that("Empty model returns zero-length ODE", {
-    M <- CompartmentModel$new()
-    odeinfo <- M$toODE()
-    y0 <- M$getInitialState()
+    M <- compartment_model()
+    odeinfo <- to_ode(M)
 
-    expect_equal(length(y0), 0)
-    dydt <- odeinfo$odefun(0, y0, list())
+    expect_equal(length(odeinfo$y0), 0)
+    dydt <- odeinfo$odefun(0, odeinfo$y0, list())
     expect_equal(length(dydt[[1]]), 0)
 })
 
 test_that("Simulation fails if target compartment missing", {
-    M <- CompartmentModel$new()
-    M$addCompartment("Central", 10)
+    M <- compartment_model() |>
+        add_compartment("Central", 10)
 
     # Dose references a compartment that will not exist
-    M$addDosing(target = "Peripheral", amount = 10, time = 0)
+    M <- add_dosing(M, target = "Peripheral", amount = 10, time = 0)
 
     # Expected deSolve error
     expect_error({
-        odeinfo <- M$toODE(paramValues = list())
-        y0 <- M$getInitialState()
-        events <- M$dosing_to_events()$data
-        deSolve::ode(y = y0, times = 0:10, func = odeinfo$odefun, parms = list(), events = list(data = events))
+        odeinfo <- to_ode(M, paramValues = list())
+        deSolve::ode(y = odeinfo$y0, times = 0:10, func = odeinfo$odefun, parms = list(), events = odeinfo$events)
     })
 })
 
 test_that("Missing parameters are listed as free", {
-    M <- CompartmentModel$new()
-    M$addCompartment("Central", 10)
-    M$addCompartment("Peripheral", 0)
-    M$addReaction("Central", "Peripheral", "k12 * Central")
+    M <- compartment_model() |>
+         add_compartment("Central", 10) |>
+         add_compartment("Peripheral", 0) |>
+         add_flow("Central", "Peripheral", "k12 * Central")
 
     # Do not provide k12
-    odeinfo <- M$toODE()
+    odeinfo <- to_ode(M)
     expect_true("k12" %in% odeinfo$freeParams)
 })
 
 test_that("Overlapping infusion events handled correctly", {
-    M <- CompartmentModel$new()
-    M$addCompartment("Central", 0)
+    M <- compartment_model() |>
+        add_compartment("Central", 0) |> 
+        add_dosing(target = "Central", time = c(0,2), amount = 1, duration = 4)
 
-    # Two overlapping infusions
-    M$addDosing("Central", rate = 5, duration = 4, time = 0)
-    M$addDosing("Central", rate = 3, duration = 4, time = 2)
-
-    events <- M$toODE()$events$data
+    eventsdata <- to_ode(M)$events$data
 
     # Check that infusion rate events are present for both start and end
-    rateEvents <- events[grepl("InfusionRate_Central", events$var), ]
+    rateEvents <- eventsdata[grepl("InfusionRate_Central", eventsdata$var), ]
     expect_equal(nrow(rateEvents), 4) # 2 starts + 2 ends
 
     # Events sorted by time

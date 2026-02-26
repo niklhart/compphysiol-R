@@ -1,12 +1,13 @@
 library(deSolve)
 
 test_that("Full simulation with bolus dosing works", {
-    M <- compartment_model() |>
-         add_compartment(c("Central","Peripheral"), 0) |>
-         add_flow("Central", "Peripheral", "k12 * Central") |>
-         add_dosing("Central", amount = 100, time = 0)
+    M <- CompartmentModel$
+        new()$
+        addCompartment(c("Central","Peripheral"), 0)$
+        addReaction("Central", "Peripheral", const = "k12")$
+        addDosing("Central", amount = 100, time = 0)
 
-    odeinfo <- to_ode(M, paramValues = list(k12 = 0.1))
+    odeinfo <- M$toODE(paramValues = list(k12 = 0.1))
     y0 <- odeinfo$y0
     times <- seq(0, 10, 1)
     out <- ode(y = y0, 
@@ -23,12 +24,13 @@ test_that("Full simulation with bolus dosing works", {
 })
 
 test_that("Full simulation with infusion dosing works", {
-    M <- compartment_model() |>
-        add_compartment(c("Central", "Peripheral"), 0) |>
-        add_flow("Central", "Peripheral", const = "k12") |>
-        add_dosing(target = "Central", rate = 10, duration = 5, time = 0)     # infusion: rate=10 units/h, duration=5h, start at t=0
+    M <- CompartmentModel$
+        new()$
+        addCompartment(c("Central", "Peripheral"), 0)$
+        addReaction("Central", "Peripheral", const = "k12")$
+        addDosing(target = "Central", rate = 10, duration = 5, time = 0)     # infusion: rate=10 units/h, duration=5h, start at t=0
 
-    odeinfo <- to_ode(M, paramValues = list(k12 = 0.1))
+    odeinfo <- M$toODE(paramValues = list(k12 = 0.1))
  
     times <- seq(0, 10, 0.5)
     out <- ode(
@@ -53,11 +55,11 @@ test_that("One-compartment model with first-order elimination matches analytical
     times <- seq(0, 10, by = 0.5)
 
     # Build model
-    M <- compartment_model() |>
-        add_compartment("Central", A0) |>
-        add_flow("Central", "", const = "k")  # elimination
+    M <- CompartmentModel$new()
+    M$addCompartment("Central", A0)
+    M$addReaction("Central", "", "k * Central")  # elimination reaction
 
-    odeinfo <- to_ode(M, paramValues = list(k = k))
+    odeinfo <- M$toODE(paramValues = list(k = k))
 
     out <- ode(
         y = odeinfo$y0,
@@ -83,13 +85,13 @@ test_that("Two-compartment oral absorption model matches Bateman function", {
     times <- seq(0, 24, by = 0.5)
 
     # Build model
-    M <- compartment_model() |>
-        add_compartment("Gut", D) |>
-        add_compartment("Central", 0) |>
-        add_flow("Gut", "Central", "ka * Gut") |>
-        add_flow("Central", "", "ke * Central")
+    M <- CompartmentModel$new()
+    M$addCompartment("Gut", D)
+    M$addCompartment("Central", 0)
+    M$addReaction("Gut", "Central", "ka * Gut")     # absorption
+    M$addReaction("Central", "", "ke * Central")    # elimination
 
-    odeinfo <- to_ode(M, paramValues = list(ka = ka, ke = ke))
+    odeinfo <- M$toODE(paramValues = list(ka = ka, ke = ke))
 
     out <- ode(
         y = odeinfo$y0,
@@ -114,12 +116,12 @@ test_that("One-compartment model with observed concentration matches analytic so
     times <- seq(0, 10, by = 0.5)
 
     # Build model
-    M <- compartment_model() |>
-        add_compartment("Central", A0) |>
-        add_flow("Central", "", "k * Central") |>
-        add_observable(C = Central / V)
+    M <- CompartmentModel$new()
+    M$addCompartment("Central", A0)
+    M$addReaction("Central", "", "k * Central")   # elimination
+    M$addObservable("C", "Central / V")           # observed concentration
 
-    odeinfo <- to_ode(M, paramValues = list(k = k, V = V))
+    odeinfo <- M$toODE(paramValues = list(k = k, V = V))
 
     out <- ode(
         y = odeinfo$y0,
@@ -139,15 +141,15 @@ test_that("One-compartment model with observed concentration matches analytic so
 })
 
 
-test_that("to_ode flags flows pointing to unknown compartments", {
-    # Simple one-compartment model with a flow to a non-existent compartment
-    M <- compartment_model() |>
-        add_compartment("gut", 100) |>
-        add_flow("gut", "central", const = "ka")
-    
+test_that("toODE flags reactions pointing to unknown compartments", {
+    # Simple one-compartment model with a reaction to a non-existent compartment
+    M <- CompartmentModel$new()
+    M$addCompartment("Gut", 100)
+    M$addReaction("Gut", "Central", "ka * Gut")
+
     expect_error(
-        to_ode(M, paramValues = list(ka = 0.1)),
-        regexp = "Flow references unknown compartment: central."
+        M$toODE(paramValues = list(ka = 0.1)),
+        regexp = "Reaction references unknown compartment: Central."
     )
 
 })

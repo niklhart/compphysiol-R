@@ -31,7 +31,7 @@
 dosing <- function(target, time, amount = NULL, rate = NULL, duration = NULL) {
     
     # Validate inputs
-    stopifnot(is.character(target), length(target) == 1)
+    stopifnot(is.character(target))
     stopifnot(is.numeric(time))
     if (!is.null(amount)) stopifnot(is.numeric(amount), amount >= 0)
     if (!is.null(rate)) stopifnot(is.numeric(rate), rate >= 0)
@@ -39,6 +39,7 @@ dosing <- function(target, time, amount = NULL, rate = NULL, duration = NULL) {
 
     # More strict checks on argument lengths than data.frame recycling rules, to avoid silent bugs from unintended recycling.
     arg_lengths <- c(
+        target = length(target),
         time = length(time),
         amount = if (!is.null(amount)) length(amount) else NA_integer_,
         rate = if (!is.null(rate)) length(rate) else NA_integer_,

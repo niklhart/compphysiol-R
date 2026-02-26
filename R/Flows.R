@@ -16,9 +16,11 @@
 #' @export
 flows <- function(from, to, rate = NULL, const = NULL) {
 
-    # Convert missing from/to to NA for easier handling of source/sink compartments
+    # Convert NULL/"" from/to to NA for easier handling of source/sink compartments
     from <- if (is.null(from)) NA_character_ else from
     to <- if (is.null(to)) NA_character_ else to
+    from[from == ""] <- NA_character_ 
+    to[to == ""] <- NA_character_ 
 
     # Input lengths
     nFrom <- length(from)
