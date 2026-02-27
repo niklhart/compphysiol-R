@@ -9,8 +9,12 @@
 #' @export
 lump_model <- function(M, partitioning = list(), normalize = list()) {
 
+    # --- validate model ------------------------------------------------------
+    .check_class(M, "CompartmentModel")
+    if (!.is_linear(M)) stop("Lumping is only supported for linear models.")
+
     # --- validate partitioning ------------------------------------------------
-    cmt <- M$getStateNames()
+    cmt <- names(M$compartments)
     flatpart <- unlist(partitioning)
     if (any(duplicated(flatpart))) {
         stop("Partitioning must not contain any duplicate values.")
@@ -57,7 +61,7 @@ lump_model <- function(M, partitioning = list(), normalize = list()) {
     )
 
     # --- lump initial conditions & VK ----------------------------------------
-    X0orig <- M$getInitialState(named = TRUE)
+    X0orig <- initials(M, named = TRUE)
 
     # simple summation by lump
     lump <- function(x) tapply(x, grp[names(x)], sum)
@@ -75,33 +79,91 @@ lump_model <- function(M, partitioning = list(), normalize = list()) {
     }, simplify = FALSE)
 
     # --- build new model ------------------------------------------------------
-    L <- CompartmentModel$new()
+    L <- compartment_model()
 
-    L$compartments <- lapply(names(X0lump), function(nm) {
-        Compartment$new(name = nm, initial = X0lump[[nm]])
-    })
+    L$compartments <- compartments(
+        name = names(X0lump),
+        initial = unname(X0lump)
+    )
 
-    for (r in M$reactions) {
-        from <- if (!is.null(r$from) && r$from != "") grp[[r$from]] else ""
-        to   <- if (!is.null(r$to) && r$to != "") grp[[r$to]] else ""
-        if (from == to) next  # reaction collapsed away
+    new_from    <- grp[M$flows$from] |> unname()                 # guaranteed to be non-NA due to linearity requirement
+    new_to      <- ifelse(is.na(M$flows$to), NA_character_, grp[M$flows$to]) |> unname()
+    within_lump <- new_from == new_to & !is.na(new_to)
 
-        new_rate <- .rewrite_rate(r$rate, grp, VKorig)
-        L$addReaction(from = from, to = to, rate = new_rate)
-    }
+    # remove flows that are now within lumped compartments
+    new_from <- new_from[!within_lump]
+    new_to   <- new_to[!within_lump]
 
-    for (d in M$doses) {
-        d$target <- grp[[d$target]]
-        L$addDosing(dose = d)
-    }
+    # rewrite flow rate constants by AST substitution
+    # new_rate   <- lapply(M$flows$rate, function(x) .rewrite_const(expr = x, grp = grp, VKorig = VKorig))
+    new_const <- Map(
+        f = function(fr, cst) {
+            .rewrite_const(expr = cst, cmt = fr, grp = grp, VKorig = VKorig)
+        },
+        fr = M$flows$from[!within_lump],
+        cst = M$flows$const[!within_lump]
+    )
+
+    L <- add_flow(L, from = new_from, to = new_to, const = new_const)
+
+    d <- M$doses
+    d$target <- grp[d$target]
+    L <- add_dosing(L, dose = d)
 
     L
 }
 
-
-
-#' Helper function to replace reaction rates during (un-)lumping by AST traversal
+#' Helper function to replace flow rate constants during (un-)lumping
 #'
+#' @param expr A quoted expression
+#' @param cmt The original compartment associated with the flow (used for looking up the correct normalizing factor)
+#' @param grp A named vector mapping original compartments -> lumped compartments
+#' @param VKorig A named list of quoted calls (normalizing terms, e.g. quote(Vtis * Ktis))
+#' @returns A modified rate constant epressed with respect to the lumped compartment
+#' @noRd
+.rewrite_const <- function(expr, cmt, grp, VKorig) {
+    
+    # helper: symbolic sum of expressions
+    .sum_exprs <- function(expr_list) {
+        if (length(expr_list) == 0) {
+            return(quote(0))
+        }
+        if (length(expr_list) == 1) {
+            return(expr_list[[1]])
+        }
+        Reduce(function(a, b) bquote(.(a) + .(b)), expr_list)
+    }
+
+    # ---- precompute denominators and lump sizes ----
+    lump_names <- unique(grp)
+    denom_exprs <- setNames(vector("list", length(lump_names)), lump_names)
+    lump_sizes <- setNames(integer(length(lump_names)), lump_names)
+
+    for (lump in lump_names) {
+        group_members <- names(grp)[grp == lump]
+        lump_sizes[[lump]] <- length(group_members)
+        denom_exprs[[lump]] <- .sum_exprs(VKorig[group_members])
+    }
+
+    switch(as.character(lump_sizes[[grp[[cmt]]]]),
+           "0" = stop("Compartment not found in partitioning."),
+           "1" = expr,  # no scaling needed
+           {
+               vk_sum_expr <- denom_exprs[[grp[[cmt]]]]
+               bquote((.(VKorig[[cmt]]) / .(vk_sum_expr)) * .(expr))
+           }
+    )
+
+}
+
+
+#' Helper function to replace flow rates during (un-)lumping by AST traversal
+#'
+#' This function works for linear and nonlinear flows, but it is currently unused:
+#' - linear flows only need rewritten rate constants, which is handled by `.rewrite_const()`
+#' - nonlinear flows are currently not handled by `lump_model()`, but if we wanted to support them in the future, 
+#'   we would need to rewrite the entire flow rate expression, which is what this function does.
+#' 
 #' @param expr A quoted expression (AST)
 #' @param grp A named vector mapping original compartments -> lumped compartments
 #' @param VKorig A named list of quoted calls (normalizing terms, e.g. quote(Vtis * Ktis))

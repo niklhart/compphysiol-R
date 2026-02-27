@@ -1,7 +1,7 @@
 test_that("lumping is exact in a 3-CMT model with identical peripherals", {
 
-    M <- multiCompModel(ncomp = 3, type = "micro")$
-        addDosing(target = "C1", time = 0, amount = 10)
+    M <- multiCompModel(ncomp = 3, type = "micro") |>
+        add_dosing(target = "C1", time = 0, amount = 10)
 
     L <- lump_model(M,
                     partitioning = list(c("C2","C3")),
@@ -15,8 +15,8 @@ test_that("lumping is exact in a 3-CMT model with identical peripherals", {
     param <- list(CL = 5, V1 = 1, V2 = 5, V3 = 10, Q12 = 3, Q13 = 3)
     param <- list(k10 = 5, V1 = 1, k12 = 5, k13 = 10, k21 = 3, k31 = 3)
 
-    odeinfoM <- M$toODE(paramValues = param)
-    odeinfoL <- L$toODE(paramValues = param)
+    odeinfoM <- to_ode(M, paramValues = param)
+    odeinfoL <- to_ode(L, paramValues = param)
 
     times <- 0:6
 
@@ -30,13 +30,11 @@ test_that("lumping is exact in a 3-CMT model with identical peripherals", {
 
 test_that("lumping works for 2-CMT blood/tissue model with CL", {
 
-    M <- CompartmentModel$
-        new()$
-        addCompartment("blo", 10)$
-        addCompartment("tis", 0)$
-        addReaction("blo","tis","Q*blo/Vblo")$
-        addReaction("tis","blo","Q*tis/(Vtis*Ktis)")$
-        addReaction("tis","","CL*tis/(Vtis*Ktis)")
+    M <- compartment_model() |>
+        add_compartment(c("blo","tis"), c(10,0)) |>
+        add_flow("blo", "tis", const = "Q/Vblo") |>
+        add_flow("tis", "blo", const = "Q/(Vtis*Ktis)") |>
+        add_flow("tis", "", const = "CL/(Vtis*Ktis)")
 
     L <- lump_model(M,
                     partitioning = list(c("blo","tis")),
@@ -45,10 +43,9 @@ test_that("lumping works for 2-CMT blood/tissue model with CL", {
                         tis = "Vtis*Ktis*Q/(Q+CL)"
                     ))
 
-    Lref <- CompartmentModel$
-        new()$
-        addCompartment("blo_tis", 10)$
-        addReaction("blo_tis","","CL*Q/(Vblo*(Q+CL)+Vtis*Ktis*Q) * blo_tis")
+    Lref <- compartment_model() |>
+        add_compartment("blo_tis", 10) |>
+        add_flow("blo_tis", "", const = "CL*Q/(Vblo*(Q+CL)+Vtis*Ktis*Q)")
 
     param <- list(
         Q = 1,
@@ -59,8 +56,8 @@ test_that("lumping works for 2-CMT blood/tissue model with CL", {
     )
     times <- 0:6
 
-    odeinfoL    <- L$toODE(paramValues = param)
-    odeinfoLref <- Lref$toODE(paramValues = param)
+    odeinfoL    <- to_ode(L, paramValues = param)
+    odeinfoLref <- to_ode(Lref, paramValues = param)
 
     outL    <- deSolve::ode(y = odeinfoL$y0, times = times, func = odeinfoL$odefun)
     outLref <- deSolve::ode(y = odeinfoLref$y0, times = times, func = odeinfoLref$odefun)
@@ -73,15 +70,12 @@ test_that("lumping handles first-pass effect correctly", {
 
     skip("Illustration of first-pass effect issue")
 
-    M <- CompartmentModel$
-        new()$
-        addCompartment("gut", 10)$
-        addCompartment("liv", 0)$
-        addCompartment("blo", 0)$
-        addReaction("blo","liv","Q*blo/Vblo")$
-        addReaction("liv","blo","Q*liv/(Vliv*Kliv)")$
-        addReaction("liv","",   "CL*liv/(Vliv*Kliv)")$
-        addReaction("gut","liv","ka*gut")
+    M <- compartment_model() |>
+        add_compartment(c("gut","liv","blo"), c(10, 0, 0)) |>
+        add_flow("gut", "liv", const = "ka") |>
+        add_flow("liv", "blo", const = "Q/(Vliv*Kliv)") |>
+        add_flow("blo", "liv", const = "Q/Vblo") |>
+        add_flow("liv", "", const = "CL/(Vliv*Kliv)")
 
     L <- lump_model(M,
                     partitioning = list(sys=c("blo","liv")),
@@ -100,8 +94,8 @@ test_that("lumping handles first-pass effect correctly", {
     )
     times <- 0:6
 
-    odeinfoM    <- M$toODE(paramValues = param)
-    odeinfoL    <- L$toODE(paramValues = param)
+    odeinfoM    <- to_ode(M, paramValues = param)
+    odeinfoL    <- to_ode(L, paramValues = param)
 
     outM    <- deSolve::ode(y = odeinfoM$y0, times = times, func = odeinfoM$odefun)
     outL    <- deSolve::ode(y = odeinfoL$y0, times = times, func = odeinfoL$odefun)

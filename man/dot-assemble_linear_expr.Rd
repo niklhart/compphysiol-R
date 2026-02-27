@@ -4,12 +4,12 @@
 \alias{.assemble_linear_expr}
 \title{Assemble the lumping equations for a strongly connected component (SCC)}
 \usage{
-.assemble_linear_expr(scc, reactions)
+.assemble_linear_expr(scc, flows)
 }
 \arguments{
 \item{scc}{A character vector, the strongly connected component (SCC) to be lumped}
 
-\item{reactions}{A list of \code{Reaction} objects}
+\item{flows}{A \code{Flows} object}
 }
 \value{
 A list with entries \code{A}, \code{b}

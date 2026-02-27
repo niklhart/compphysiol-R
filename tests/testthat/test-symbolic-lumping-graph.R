@@ -39,14 +39,9 @@ expect_adjacency <- function(adj, incoming, outgoing) {
 test_that("A->B->C graph processing works", {
 
     # Model definition
-    M <- CompartmentModel$new()
-
-    M$addCompartment("A", 0)
-    M$addCompartment("B", 0)
-    M$addCompartment("C", 0)
-
-    M$addReaction("A","B","kAB*A")
-    M$addReaction("B","C","kBC*B")
+    M <- compartment_model() |> 
+        add_compartment(c("A","B","C")) |>
+        add_flow(c("A","B"), c("B","C"), const = "k_from_to")
 
     # Graph processing
     res <- process_graph(M, refstate = "A")
@@ -72,15 +67,13 @@ test_that("A->B->C graph processing works", {
 test_that("A->B<->C graph processing works", {
 
     # Model definition
-    M <- CompartmentModel$new()
-
-    M$addCompartment("A", 0)
-    M$addCompartment("B", 0)
-    M$addCompartment("C", 0)
-
-    M$addReaction("A","B","kAB*A")
-    M$addReaction("B","C","kBC*B")
-    M$addReaction("C","B","kCB*C")
+    M <- compartment_model() |> 
+        add_compartment(c("A","B","C")) |>
+        add_flow(
+            from = c("A","B","C"), 
+            to = c("B","C","B"), 
+            const = "k_from_to"
+        )
 
     # Graph processing
     res <- process_graph(M, refstate = "A")
@@ -116,13 +109,10 @@ test_that("topo_order fails on cyclic graph", {
 test_that(" A->B->0 graph processing ignores elimination", {
 
     # Model definition
-    M <- CompartmentModel$new()
-
-    M$addCompartment("A", 0)
-    M$addCompartment("B", 0)
-
-    M$addReaction("A","B","kAB*A")
-    M$addReaction("B","","kB0*B")
+    M <- compartment_model() |> 
+        add_compartment(c("A","B")) |>
+        add_flow("A","B", const = "kAB") |>
+        add_flow("B","", const = "kB0")
 
     # Graph processing
     res <- process_graph(M, refstate = "A")

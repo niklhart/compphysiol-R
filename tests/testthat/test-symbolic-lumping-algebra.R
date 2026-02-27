@@ -1,18 +1,18 @@
 # Testing the linear algebra part of symbolic lumping
 
-test_that("classification of reactions works", {
+test_that("classification of flows works", {
     # Model definition
-    reactions <- list(
-        list(from = "A", to = "B", rate = "kAB*A"),
-        list(from = "B", to = "C", rate = "kBC*B"),
-        list(from = "C", to = "B", rate = "kCB*C"),
-        list(from = "B", to = "D", rate = "kBD*B"),
-        list(from = "C", to = NULL, rate = "kC0*C")
+    flows <- c(
+        flows(from = "A", to = "B", const = "kAB"),
+        flows(from = "B", to = "C", const = "kBC"),
+        flows(from = "C", to = "B", const = "kCB"),
+        flows(from = "B", to = "D", const = "kBD"),
+        flows(from = "C", to = NULL, const = "kC0")
     )
 
     scc <- c("B", "C")
 
-    cls <- .classify_reactions(reactions, scc)
+    cls <- .classify_flows(flows, scc)
 
     expect_equal(length(cls$internal), 2)
     expect_equal(length(cls$incoming), 1)
@@ -66,14 +66,14 @@ test_that("2x2 symbolic solve works for classes B and C in A->B<->C->0 model", {
 
 test_that("assemble_linear_expr builds correct 1x1 system", {
 
-    reactions <- list(
-        Reaction$new(from = "A", to = "B", const = "kAB"),
-        Reaction$new(from = "B", to = NULL, const = "kB0")
+    flows <- c(
+        flows(from = "A", to = "B", const = "kAB"),
+        flows(from = "B", to = NULL, const = "kB0")
     )
 
     scc <- "B"
 
-    sys <- .assemble_linear_expr(scc, reactions)
+    sys <- .assemble_linear_expr(scc, flows)
 
     expect_equal(
         sys$A,
@@ -88,16 +88,16 @@ test_that("assemble_linear_expr builds correct 1x1 system", {
 
 test_that("assemble_linear_expr builds correct 2x2 system", {
 
-    reactions <- list(
-        Reaction$new(from = "A", to = "B", const = "kAB"),
-        Reaction$new(from = "B", to = "C", const = "kBC"),
-        Reaction$new(from = "C", to = "B", const = "kCB"),
-        Reaction$new(from = "C", to = NULL, const = "kC0")
+    flows <- c(
+        flows(from = "A", to = "B", const = "kAB"),
+        flows(from = "B", to = "C", const = "kBC"),
+        flows(from = "C", to = "B", const = "kCB"),
+        flows(from = "C", to = NULL, const = "kC0")
     )
 
     scc <- c("B", "C")
 
-    sys <- .assemble_linear_expr(scc, reactions)
+    sys <- .assemble_linear_expr(scc, flows)
 
     A_expected <- matrix(
         list(

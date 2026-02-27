@@ -355,15 +355,7 @@ add_dosing <- function(
 #' @param model A `CompartmentModel` object.
 #' @return `TRUE` if all flows are linear, `FALSE` otherwise.
 #' @noRd
-.is_linear <- function(model) {
-    stateNames <- compartment_names(model)
-    all(vapply(
-        model$reactions,
-        function(r) r$isLinear(stateNames),
-        logical(1)
-    ))
-}
-
+.is_linear <- function(model) all(model$flows$type == "linear")
 
 #' Generate analytical solution function from a linear `CompartmentModel` object with a single bolus dose at time 0.
 #' @param model A `CompartmentModel` object.

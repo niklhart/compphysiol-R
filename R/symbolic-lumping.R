@@ -75,7 +75,7 @@ symbolic_lumping <- function(M, partitioning = list(), refstate = .get_default_r
 #' @returns A named list of expressions representing the lumping conditions. Names are compartment names and
 #'   expressions are in terms of the reference state and rate constants.
 #' @examples 
-#' # Example: Huisinga/Pilari (2010) lumping conditions for PBPK 12-compartment model
+#' # Example: Pilari/Huisinga (2010) lumping conditions for PBPK 12-compartment model
 #' M <- sMD_PBPK_12CMT_wellstirred()
 #' res <- get_lumping_conditions(M, refstate = "ven", simplify = "Ryacas")
 #' @export
@@ -90,6 +90,6 @@ get_lumping_conditions <- function(M, refstate, maxdegree = 2, simplify = c("non
     }
 
     # algebraic part
-    .solve_model_symbolic(cond, M$reactions, simplify = match.arg(simplify))
+    .solve_model_symbolic(cond, M$flows, simplify = match.arg(simplify))
 
 }

@@ -2,13 +2,10 @@
 
 test_that("reference state is preserved and downstream states are expressed w.r.t. it", {
     ## --- build model ---
-    M <- CompartmentModel$new()
-
-    M$addCompartment("A", 0)
-    M$addCompartment("B", 0)
-
-    M$addReaction("A", "B", const = "kAB")
-    M$addReaction("B", NULL, const = "kB0")
+    M <- compartment_model() |>
+        add_compartment(c("A", "B")) |>
+        add_flow("A", "B", const = "kAB") |>
+        add_flow("B", "", const = "kB0")
 
     refstate <- "A"
 
@@ -26,19 +23,16 @@ test_that("reference state is preserved and downstream states are expressed w.r.
     expect_equal(f(2, 4, 8), 1)
 })
 
-test_that("full symbolic assembly works for A->B->C->0", {
+test_that("full symbolic assembly works for A->B->C->D->0", {
     # Model definition
-    M <- CompartmentModel$new()
-
-    M$addCompartment("A", 0)
-    M$addCompartment("B", 0)
-    M$addCompartment("C", 0)
-    M$addCompartment("D", 0)
-
-    M$addReaction("A", "B", const = "kAB")
-    M$addReaction("B", "C", const = "kBC")
-    M$addReaction("C", "D", const = "kCD")
-    M$addReaction("D", "", const = "kD0")
+    M <- compartment_model() |>
+        add_compartment(c("A", "B", "C", "D")) |>
+        add_flow(
+            from = c("A", "B", "C"),
+            to = c("B", "C", "D"),
+            const = "k_from_to"
+        ) |>
+        add_flow("D", "", const = "kD0")
 
     ## --- lumping ---
     res <- get_lumping_conditions(M, refstate = "A")

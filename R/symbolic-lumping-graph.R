@@ -22,15 +22,8 @@
 #'     columns `from` and `to`) and `nodes` (a character vector)
 #' @export
 .make_graph <- function(model, refstate) {
-    nodes <- model$getStateNames()
-    edges <- model$reactions |>
-        lapply(function(r) {
-            data.frame(
-                from = r$from,
-                to = if (!is.null(r$to)) r$to else NA
-            )
-        }) |>
-        do.call(what = rbind)
+    nodes <- names(model$compartments)
+    edges <- data.frame(from = model$flows$from, to = model$flows$to)
 
     # remove elimination edges and edges towards refstate (break cycle)
     edges <- edges |>
