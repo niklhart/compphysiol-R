@@ -3,7 +3,7 @@
 #' Symbolic lumping of a linear `CompartmentModel` based on its graph structure
 #' @param flows A `Flows` object
 #' @param scc A character vector, the strongly connected component (SCC) to be lumped
-#' @returns A list with entries `internal`, `incoming`, `outgoing`, `elimination`, each a list of `Reaction` objects
+#' @returns A list with entries `internal`, `incoming`, `outgoing`, `elimination`, each a `Flows` object
 .classify_flows <- function(flows, scc) {
     .check_class(flows, "Flows")
     list(
@@ -33,7 +33,7 @@
 .neg <- function(x) if (x == 0) 0 else call("-", x)
 .add <- function(x, y) if (x == 0) y else if (y == 0) x else call("+", x, y)
 .sub <- function(x, y) if (y == 0) x else if (x == 0) .neg(y) else call("-", x, y)
-.mul <- function(x, y) if (x == 0 || y == 0) 0 else call("*", x, y)
+.mul <- function(x, y) if (x == 0 || y == 0) 0 else if (x == 1) y else if (y == 1) x else call("*", x, y)
 .div <- function(x, y) if (x == 0) 0 else call("/", x, y)
 
 #' Solve a 1x1 linear system of equations Ax+b=0 with symbolic coefficients
@@ -102,21 +102,21 @@
     b[] <- list(quote(0))
 
     ## internal + elimination + outgoing → A
-    for (fl in c(cls$internal, cls$elimination, cls$outgoing)) {
-        i <- idx[fl$from]
+        for (fl in as.list(c(cls$internal, cls$elimination, cls$outgoing))) {
+            i <- idx[fl$from]
 
-        ## A[i,i] <- A[i,i] - k
-        A[[i, i]] <- .sub(A[[i, i]], fl$const)
+            ## A[i,i] <- A[i,i] - k
+            A[[i, i]] <- .sub(A[[i, i]], fl$const)
 
-        ## internal transfer: j <- i
-        if (!is.null(fl$to) && fl$to %in% scc) {
-            j <- idx[fl$to]
-            A[[j, i]] <- .add(A[[j, i]], fl$const)
+            ## internal transfer: j <- i
+            if (!is.null(fl$to) && fl$to %in% scc) {
+                j <- idx[fl$to]
+                A[[j, i]] <- .add(A[[j, i]], fl$const)
+            }
         }
-    }
 
     ## incoming → b
-    for (fl in cls$incoming) {
+    for (fl in as.list(cls$incoming)) {
         j <- idx[fl$to]
         b[[j]] <- .add(b[[j]], fl$rate)
     }

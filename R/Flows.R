@@ -164,6 +164,32 @@ as.data.frame.Flows <- function(x, ...) {
     x
 }
 
+#' Convert a `Flows` object to a list of `Flow` objects.
+#' 
+#' `Flow` objects are light-weighted representations of individual flows, 
+#' where each flow is represented as a list with entries 
+#' `from`, `to`, `rate`, `const`, and `type`. 
+#' This function is useful for iterating over flows in a `Flows` object.
+#' 
+#' @param x A `Flows` object
+#' @param ... Additional arguments (not used)
+#' @return A list of `Flow` objects, where each component is a list of the form `list(from, to, rate, const, type)`
+#' @export
+as.list.Flows <- function(x, ...) {
+    lst <- do.call(
+        what = Map, 
+        args = c(
+            list(list), 
+            as.list(as.data.frame(x)),
+            USE.NAMES = FALSE
+        )
+    )
+    lapply(lst, function(l) {
+        class(l) <- "Flow"
+        l
+    })
+}
+
 #' Subset a `Flows` object
 #' @param x A `Flows` object
 #' @param i Row indices to subset
@@ -193,4 +219,41 @@ c.Flows <- function(...) {
         lapply(FUN = as.data.frame) |>
         do.call(what = rbind) |>
         structure(class = "Flows")
+}
+
+#' Accessing an element in a `Flows` object
+#' @param x A `Flows` object
+#' @param i Row index to access
+#' @returns A `Flow` object, which is a list with entries `from`, `to`, `rate`, `const`, and `type`.
+#' @export
+`[[.Flows` <- function(x, i) {
+    if (!is.numeric(i) || length(i) != 1) stop("Index must be a single numeric value.")
+    if (i < 1 || i > length(x)) stop("Index out of bounds.")
+
+    structure(
+        list(
+            from = x$from[i],
+            to = x$to[i],
+            rate = x$rate[[i]],
+            const = x$const[[i]],
+            type = x$type[i]
+        ),
+        class = "Flow"
+    )
+}
+
+
+#' Print a `Flow` object
+#' @param x A `Flow` object
+#' @param ... Additional arguments (not used)
+#' @return The `Flow` object (invisible)
+#' @export
+print.Flow <- function(x, ...) {
+    cat(sprintf(
+        " Flow: %s \u2192 %s, rate = %s\n",
+        x$from,
+        x$to,
+        deparse(x$rate)
+    ))
+    invisible(x)
 }

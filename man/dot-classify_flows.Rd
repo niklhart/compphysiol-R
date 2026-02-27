@@ -12,7 +12,7 @@
 \item{scc}{A character vector, the strongly connected component (SCC) to be lumped}
 }
 \value{
-A list with entries \code{internal}, \code{incoming}, \code{outgoing}, \code{elimination}, each a list of \code{Reaction} objects
+A list with entries \code{internal}, \code{incoming}, \code{outgoing}, \code{elimination}, each a \code{Flows} object
 }
 \description{
 Symbolic lumping of a linear \code{CompartmentModel} based on its graph structure
