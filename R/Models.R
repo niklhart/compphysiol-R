@@ -9,9 +9,6 @@
 #' @export
 #' @examples
 #' \donttest{
-#' library(compphysiol)
-#' library(deSolve)
-#'
 #' # Load the PBPK model
 #' M <- sMD_PBPK_12CMT_wellstirred() |>
 #'     add_dosing(target = "ven", time = 0, amount = 1) |>   # IV bolus dosing
@@ -58,7 +55,7 @@
 #'
 #' # Run simulation
 #' times <- seq(0, 24, by = 0.1)
-#' out <- ode(
+#' out <- deSolve::ode(
 #'     y = odeinfo$y0,
 #'     times = times,
 #'     func = odeinfo$odefun,
@@ -131,9 +128,6 @@ sMD_PBPK_12CMT_wellstirred <- function() {
 #' @export
 #' @examples
 #' \donttest{
-#' library(compphysiol)
-#' library(deSolve)
-#'
 #' # Load the PBPK model
 #' M <- sMD_PBPK_12CMT_permbased() |>
 #'     add_dosing(target = "ven", time = 0, amount = 1) |>  # IV bolus dosing
@@ -214,7 +208,7 @@ sMD_PBPK_12CMT_wellstirred <- function() {
 #'
 #' # Run simulation
 #' times <- seq(0, 24, by = 0.1)
-#' out <- ode(
+#' out <- deSolve::ode(
 #'     y = odeinfo$y0,
 #'     times = times,
 #'     func = odeinfo$odefun,
@@ -345,7 +339,9 @@ sMD_PBPK_12CMT_permbased <- function() {
 #'
 #' @param ncomp Number of compartments (>=1)
 #' @param type Style of parameterization: "micro" (rate constants) or "macro" (volumes + clearances)
-#' @return A CompartmentModel object
+#' @return A `CompartmentModel` object
+#' @examples 
+#' multiCompModel(ncomp = 3, type = "macro")
 #' @export
 multiCompModel <- function(ncomp = 1, type = c("micro", "macro")) {
     type <- match.arg(type)
@@ -358,7 +354,7 @@ multiCompModel <- function(ncomp = 1, type = c("micro", "macro")) {
     # First assemble compartments and observables
     model <- compartment_model() |>
         add_compartment(compNames, initial = 0) |>
-        add_observable(C1Conc = C1/V1)
+        add_observable(obs = observables(name = "C1Conc", expr = "C1/V1"))
 
     # Next assemble reactions, depending on parameterization style
     if (type == "micro") {
@@ -399,149 +395,148 @@ multiCompModel <- function(ncomp = 1, type = c("micro", "macro")) {
 
 # Old (R6) models to be refactored or removed
 
+# #' Cell-level PK/PD model
+# celllevel_pkpd <- function() {
 
-#' Cell-level PK/PD model
-celllevel_pkpd <- function() {
+#     CompartmentModel$
+#         new()$
+#         addCompartment("pla", 0)$
+#         addCompartment("int", 0)$
+#         addCompartment("R", 0)$
+#         addCompartment("Ri", 0)$
+#         addCompartment("RL", 0)$
+#         addCompartment("RC", 0)$
+#         addReaction("pla", "int", "qpi * pla/Vpla")$
+#         addReaction("int", "pla", "qip * int/Vint")$
+#         addReaction("pla", NULL,  "CLlin * pla/Vpla")$
+#         addReaction("R", "RL", "kon * R * L")$
+#         addReaction("RL", "R", "koff * RL")$
+#         addReaction("RL", "RC", "kint * RL")$
+#         addReaction("RC", "Ri", "kdeg * RC")$
+#         addReaction("Ri", "R", "krecycle * Ri")$
+#         addObservable("Cpla", "pla / Vpla")$
+#         addObservable("Cint", "int / Vint")
 
-    CompartmentModel$
-        new()$
-        addCompartment("pla", 0)$
-        addCompartment("int", 0)$
-        addCompartment("R", 0)$
-        addCompartment("Ri", 0)$
-        addCompartment("RL", 0)$
-        addCompartment("RC", 0)$
-        addReaction("pla", "int", "qpi * pla/Vpla")$
-        addReaction("int", "pla", "qip * int/Vint")$
-        addReaction("pla", NULL,  "CLlin * pla/Vpla")$
-        addReaction("R", "RL", "kon * R * L")$
-        addReaction("RL", "R", "koff * RL")$
-        addReaction("RL", "RC", "kint * RL")$
-        addReaction("RC", "Ri", "kdeg * RC")$
-        addReaction("Ri", "R", "krecycle * Ri")$
-        addObservable("Cpla", "pla / Vpla")$
-        addObservable("Cint", "int / Vint")
+# }
 
-}
-
-#' Receptor binding and internalization module
-#' 
-#' TODO: parametrize initial condition (initialize at steady-state -- ligand-free??)
-#' 
-#' @param ligands Character vector of ligand names (default: "L")
-#' @param dynamic Whether to include ligand dynamics (default: TRUE). If FALSE, ligands 
-#'     are treated as a (constant) parameter instead of a compartment.
-#' @return A CompartmentModel object
-#' @export
-receptor_system <- function(ligands = "L", dynamic = TRUE) {
+# #' Receptor binding and internalization module
+# #' 
+# #' TODO: parametrize initial condition (initialize at steady-state -- ligand-free??)
+# #' 
+# #' @param ligands Character vector of ligand names (default: "L")
+# #' @param dynamic Whether to include ligand dynamics (default: TRUE). If FALSE, ligands 
+# #'     are treated as a (constant) parameter instead of a compartment.
+# #' @return A CompartmentModel object
+# #' @export
+# receptor_system <- function(ligands = "L", dynamic = TRUE) {
     
-    M <- CompartmentModel$new()
+#     M <- CompartmentModel$new()
 
-    # Receptor compartments  
-    M$addCompartment("R", 0)      # free receptor
-    M$addCompartment("Ri", 0)     # internalized receptor
+#     # Receptor compartments  
+#     M$addCompartment("R", 0)      # free receptor
+#     M$addCompartment("Ri", 0)     # internalized receptor
     
-    # Receptor turnover (synthesis-recycling-degradation)
-    M$addReaction(NULL, "R", "ksynR")
-    M$addReaction("R", "Ri", "kdegR*R")
-    M$addReaction("Ri", "R", "krecyRi * Ri")
-    M$addReaction("Ri", NULL, "kdegRi * Ri")
+#     # Receptor turnover (synthesis-recycling-degradation)
+#     M$addReaction(NULL, "R", "ksynR")
+#     M$addReaction("R", "Ri", "kdegR*R")
+#     M$addReaction("Ri", "R", "krecyRi * Ri")
+#     M$addReaction("Ri", NULL, "kdegRi * Ri")
   
-    # Ligand-related compartments
-    dynamic <- rep_len(dynamic, length.out = length(ligands))
-    for (i in seq_along(ligands)) {
-        lig <- ligands[i]
-        includeLigandDynamics <- dynamic[i]
-        RLcpx <- paste0("R",lig)  
-        M$addCompartment(RLcpx, 0)  # natural ligand  
-        if (includeLigandDynamics){
-            M$addCompartment(lig, 0)  # dynamic ligand compartment
-            RLind <- c("R",lig) 
+#     # Ligand-related compartments
+#     dynamic <- rep_len(dynamic, length.out = length(ligands))
+#     for (i in seq_along(ligands)) {
+#         lig <- ligands[i]
+#         includeLigandDynamics <- dynamic[i]
+#         RLcpx <- paste0("R",lig)  
+#         M$addCompartment(RLcpx, 0)  # natural ligand  
+#         if (includeLigandDynamics){
+#             M$addCompartment(lig, 0)  # dynamic ligand compartment
+#             RLind <- c("R",lig) 
 
-        } else {
-            RLind <- c("R",lig) 
-        }
+#         } else {
+#             RLind <- c("R",lig) 
+#         }
       
-        M$addReaction(RLind, RLcpx, paste0("kon",lig," * R * ",lig))
-        M$addReaction(RLcpx, RLind, paste0("koff",RLcpx," * ",RLcpx))
-        M$addReaction(RLcpx, NULL,  paste0("kdeg",RLcpx," * ",RLcpx))
-    }
+#         M$addReaction(RLind, RLcpx, paste0("kon",lig," * R * ",lig))
+#         M$addReaction(RLcpx, RLind, paste0("koff",RLcpx," * ",RLcpx))
+#         M$addReaction(RLcpx, NULL,  paste0("kdeg",RLcpx," * ",RLcpx))
+#     }
 
-    M
-}
+#     M
+# }
 
-#' Empirical PK model relative to number of receptors
-#' 
-#' 
-#' 
-#' @return A CompartmentModel object
-#' @export
-empirical_pk_receptor <- function() {
-    CompartmentModel$new()$
-        addCompartment("pla", 0)$
-        addCompartment("int", 0)$
-        addReaction("pla", "int", "qpi * pla/Vpla")$
-        addReaction("int", "pla", "qip * int/Vint")$
-        addReaction("pla", NULL,  "CLlin * pla/Vpla")$
-        addReaction("int", NULL,  "CLrec * R * int/Vint")$
-        addObservable("Cpla", "pla / Vpla")$
-        addObservable("Cint", "int / Vint")
-}
+# #' Empirical PK model relative to number of receptors
+# #' 
+# #' 
+# #' 
+# #' @return A CompartmentModel object
+# #' @export
+# empirical_pk_receptor <- function() {
+#     CompartmentModel$new()$
+#         addCompartment("pla", 0)$
+#         addCompartment("int", 0)$
+#         addReaction("pla", "int", "qpi * pla/Vpla")$
+#         addReaction("int", "pla", "qip * int/Vint")$
+#         addReaction("pla", NULL,  "CLlin * pla/Vpla")$
+#         addReaction("int", NULL,  "CLrec * R * int/Vint")$
+#         addObservable("Cpla", "pla / Vpla")$
+#         addObservable("Cint", "int / Vint")
+# }
 
 
 
-#' Lammerts van Bueren model
-#' 
-lammertsvanbueren <- function() {
+# #' Lammerts van Bueren model
+# #' 
+# lammertsvanbueren <- function() {
    
-    CompartmentModel$
-        new()$
-        addCompartment("pla", 0)$
-        addCompartment("int", 0)$
-        addCompartment("rec", 0)$
-        addReaction("pla", "int", "qpi * pla/Vpla")$
-        addReaction("int", "pla", "qip * int/Vint")$
-        addReaction("pla", NULL,  "CLlin * pla/Vpla")$
-        addReaction("int", "rec", "kb*BmaxPK*(int/Vint)/(KMPK+int/Vint)")$
-        addReaction("rec", "int", "kb*rec")$
-        addObservable("Cpla", "pla / Vpla")$
-        addObservable("Cint", "int / Vint")
-}
+#     CompartmentModel$
+#         new()$
+#         addCompartment("pla", 0)$
+#         addCompartment("int", 0)$
+#         addCompartment("rec", 0)$
+#         addReaction("pla", "int", "qpi * pla/Vpla")$
+#         addReaction("int", "pla", "qip * int/Vint")$
+#         addReaction("pla", NULL,  "CLlin * pla/Vpla")$
+#         addReaction("int", "rec", "kb*BmaxPK*(int/Vint)/(KMPK+int/Vint)")$
+#         addReaction("rec", "int", "kb*rec")$
+#         addObservable("Cpla", "pla / Vpla")$
+#         addObservable("Cint", "int / Vint")
+# }
 
-#' Lumped PBPK model based on sMD_PBPK_12CMT_wellstirred
-#' @param partitioning A named list defining the lumping scheme
-#' @param autonormalize Whether to automatically normalize the lumped volumes
-#' @return A CompartmentModel object
-#' @export
-sMD_PBPK_xCMT_lumped <- function(partitioning, autonormalize = TRUE) {
+# #' Lumped PBPK model based on sMD_PBPK_12CMT_wellstirred
+# #' @param partitioning A named list defining the lumping scheme
+# #' @param autonormalize Whether to automatically normalize the lumped volumes
+# #' @return A CompartmentModel object
+# #' @export
+# sMD_PBPK_xCMT_lumped <- function(partitioning, autonormalize = TRUE) {
 
-    M <- sMD_PBPK_12CMT_wellstirred()
+#     M <- sMD_PBPK_12CMT_wellstirred()
 
-    if (autonormalize) {
-        normalize_arg <- get_lumping_conditions(M, refstate = "ven", simplify = "Ryacas")
-    } else {
-        normalize_arg <- list(
-            ven = "Vven",
-            art = "Vart",
-            adi = "Vadi*Kadi",
-            bon = "Vbon*Kbon",
-            gut = "Vgut*Kgut",
-            hea = "Vhea*Khea",
-            mus = "Vmus*Kmus",
-            kid = "Vkid*Kkid",
-            liv = "Vliv*Kliv*Q/(Q+CL)",
-            lun = "Vlun*Klun",
-            ski = "Vski*Kski",
-            spl = "Vspl*Kspl"
-        )
-    }
-    L <- lump_model(
-        M,
-        partitioning = partitioning,
-        normalize = normalize_arg
-    )
-    # Specific for first-pass effect
-    warning(
-        "Lumping with first-pass metabolism: please verify that the lumped model is correct."
-    )
-}
+#     if (autonormalize) {
+#         normalize_arg <- get_lumping_conditions(M, refstate = "ven", simplify = "Ryacas")
+#     } else {
+#         normalize_arg <- list(
+#             ven = "Vven",
+#             art = "Vart",
+#             adi = "Vadi*Kadi",
+#             bon = "Vbon*Kbon",
+#             gut = "Vgut*Kgut",
+#             hea = "Vhea*Khea",
+#             mus = "Vmus*Kmus",
+#             kid = "Vkid*Kkid",
+#             liv = "Vliv*Kliv*Q/(Q+CL)",
+#             lun = "Vlun*Klun",
+#             ski = "Vski*Kski",
+#             spl = "Vspl*Kspl"
+#         )
+#     }
+#     L <- lump_model(
+#         M,
+#         partitioning = partitioning,
+#         normalize = normalize_arg
+#     )
+#     # Specific for first-pass effect
+#     warning(
+#         "Lumping with first-pass metabolism: please verify that the lumped model is correct."
+#     )
+# }

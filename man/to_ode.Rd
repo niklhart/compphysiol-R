@@ -19,7 +19,6 @@ and \code{freeParams} (character vector).
 Generate ODE function, initial values, observables, and free parameters from a \code{CompartmentModel} object.
 }
 \examples{
-M <- multi_comp_model(ncomp = 2, type = "micro")
+M <- multiCompModel(ncomp = 2, type = "micro")
 odeinfo <- to_ode(M, paramValues = list(k10 = 0.05))
-
 }

@@ -14,9 +14,6 @@ RoxygenNote: 7.3.3
 Imports:
     R6,
     deSolve,
-    dplyr,
-    tidyr,
-    tibble,
     expm
 Description: Toolbox for computational physiology, in particular physiologically-based pharmacokinetic (PBPK) modeling.
 License: MIT + file LICENSE

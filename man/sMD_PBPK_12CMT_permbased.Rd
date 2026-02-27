@@ -16,9 +16,6 @@ and plasma concentration.
 }
 \examples{
 \donttest{
-library(compphysiol)
-library(deSolve)
-
 # Load the PBPK model
 M <- sMD_PBPK_12CMT_permbased() |>
     add_dosing(target = "ven", time = 0, amount = 1) |>  # IV bolus dosing
@@ -99,7 +96,7 @@ odeinfo <- to_ode(M, paramValues)
 
 # Run simulation
 times <- seq(0, 24, by = 0.1)
-out <- ode(
+out <- deSolve::ode(
     y = odeinfo$y0,
     times = times,
     func = odeinfo$odefun,

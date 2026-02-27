@@ -1,5 +1,3 @@
-# Equations S3 class, similar to Observables
-
 #' Create an `Equations` object
 #' @param name Name of the equation(s), character scalar or vector
 #' @param expr Expression (as an R call)

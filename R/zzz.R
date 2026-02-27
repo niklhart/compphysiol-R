@@ -15,4 +15,6 @@
 
 #' @importFrom stats rlnorm rnorm setNames
 #' @importFrom utils head tail
+#' @importFrom R6 R6Class
+#' @importFrom deSolve ode
 NULL

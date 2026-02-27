@@ -22,7 +22,7 @@ Generate analytical solution function from a linear \code{CompartmentModel} obje
 }
 \examples{
 M <- multiCompModel(ncomp = 2, type = "micro")
-sol <- M$toAnalytical(paramValues = list(k10 = 0.05))  # fix one param
+sol <- to_analytical(M, paramValues = list(k10 = 0.05))  # fix one param
 
 # Evaluate ODE state at t = 5 with free params
 sol$statefun(5, params = list(k12 = 0.2, k21 = 0.1))

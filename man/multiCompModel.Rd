@@ -12,8 +12,11 @@ multiCompModel(ncomp = 1, type = c("micro", "macro"))
 \item{type}{Style of parameterization: "micro" (rate constants) or "macro" (volumes + clearances)}
 }
 \value{
-A CompartmentModel object
+A \code{CompartmentModel} object
 }
 \description{
 Create a generic multi-compartment PK model
+}
+\examples{
+multiCompModel(ncomp = 3, type = "macro")
 }

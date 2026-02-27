@@ -15,6 +15,8 @@ add_flow(
 )
 }
 \arguments{
+\item{model}{A \code{CompartmentModel} object.}
+
 \item{from}{Source compartment}
 
 \item{to}{Target compartment}

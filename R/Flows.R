@@ -1,5 +1,3 @@
-# S3 class "Flows" for flows between compartments, formerly known as R6 class "Reaction"
-
 #' Flows Class
 #'
 #' Represents a flow between two compartments in a pharmacokinetic model.
@@ -241,7 +239,6 @@ c.Flows <- function(...) {
         class = "Flow"
     )
 }
-
 
 #' Print a `Flow` object
 #' @param x A `Flow` object

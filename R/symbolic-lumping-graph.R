@@ -26,8 +26,7 @@
     edges <- data.frame(from = model$flows$from, to = model$flows$to)
 
     # remove elimination edges and edges towards refstate (break cycle)
-    edges <- edges |>
-        subset(to != refstate)   # NAs are dropped here as well
+    edges <- edges[edges$to != refstate & !is.na(edges$to), , drop = FALSE]
 
     # check for missing nodes
     stopifnot(edges$from %in% nodes, edges$to %in% nodes)
