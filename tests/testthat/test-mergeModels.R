@@ -20,18 +20,20 @@ test_that("mergeModels merges two CompartmentModels without suffixes (collision=
     merged <- mergeModels(abs, pk, suffix1 = NULL, suffix2 = NULL, collision = "merge")
 
     # Compartments: Gut + Central + Peripheral
-    expect_equal(names(merged$compartments), c("Gut", "Central", "Peripheral"))
+    expect_setequal(names(merged$compartments), c("Gut", "Central", "Peripheral"))
 
-    # Flows: absorption connects to Central in systemic model
-    flow_strings <- sapply(merged$flows, function(f) paste(f$from, f$to, deparse(f$rate)))
-    expect_true(any(grepl("Gut Central ka \\* Gut", flow_strings)))
-    expect_true(any(grepl("Central Peripheral k12 \\* Central", flow_strings)))
-    expect_true(any(grepl("Peripheral Central k21 \\* Peripheral", flow_strings)))
-    expect_true(any(grepl("Central  k10 \\* Central", flow_strings)))
+    # Flows: absorption correctly connects to Central in systemic model
+    expect_equal(merged$flow$from, c("Gut", "Central", "Peripheral", "Central"))
+    expect_equal(merged$flow$to, c("Central", "Peripheral", "Central", NA_character_))
+    expect_equal(merged$flow$rate |> unclass(), list(
+        quote(ka * Gut),
+        quote(k12 * Central),
+        quote(k21 * Peripheral),
+        quote(k10 * Central)
+    ))
 
     # Observables
-    observable_names <- names(merged$observables)
-    expect_true(all(c("GutObs", "CentralObs") %in% observable_names))
+    expect_setequal(names(merged$observables), c("GutObs", "CentralObs"))
 
     # Dosing
     expect_equal(length(merged$doses), 1)
@@ -60,19 +62,16 @@ test_that("mergeModels can merge two distinct drugs with suffixes", {
     # Merge with suffixes to keep compartments separate
     merged <- mergeModels(drugA, drugB, suffix1 = "A", suffix2 = "B", collision = "error")
 
-    # Compartments
-    expect_equal(
-        merged$getStateNames(),
-        c("Central_A", "Peripheral_A", "Central_B", "Peripheral_B")
-    )
+    # Compartments & Observables should have suffixes
+    expect_setequal(names(merged$compartments), c("Central_A", "Peripheral_A", "Central_B", "Peripheral_B"))
+    expect_setequal(names(merged$observables), c("CentralObs_A", "CentralObs_B"))
 
     # Reactions should reference suffixed compartments
-    reaction_strings <- sapply(merged$reactions, function(r) paste(r$from, r$to, deparse(r$rate)))
-    expect_true(all(grepl("Central_A|Peripheral_A|Central_B|Peripheral_B", reaction_strings)))
-
-    # Observables
-    observable_names <- sapply(merged$observables, function(o) o$name)
-    expect_true(all(c("CentralObs_A", "CentralObs_B") %in% observable_names))
+    endsWithAB <- function(x) endsWith(x, "_A") | endsWith(x, "_B")
+    expect_all_true(endsWithAB(merged$flows$from))
+    expect_true(all(endsWithAB(merged$flows$to) | is.na(merged$flows$to)))
+    rate_names <- Reduce(union, lapply(merged$flows$rate, all.vars))
+    expect_all_true(endsWithAB(rate_names))
 })
 
 test_that("mergeModels auto-renames two distinct drugs correctly", {
@@ -130,11 +129,9 @@ test_that("mergeModels respects shared parameters (skip suffixing)", {
                           shared = shared,
                           collision = "error")
 
-    # Check that state names are suffixed (no collision)
-    expect_equal(
-        names(merged$compartments),
-        c("Liver_A", "Central_A", "Liver_B", "Central_B")
-    )
+    # Check that state names and observables are suffixed (no collision)
+    expect_setequal(names(merged$compartments), c("Liver_A", "Central_A", "Liver_B", "Central_B"))
+    expect_setequal(names(merged$observables), c("CentralObs_A", "CentralObs_B"))
 
     # Check that shared parameters remain unsuffixed
     flow_strings <- vapply(merged$flows$rate, deparse, character(1))
@@ -144,9 +141,5 @@ test_that("mergeModels respects shared parameters (skip suffixing)", {
     # Check that partition coefficients (drug-specific) were suffixed
     expect_true(any(grepl("K_liver_A", flow_strings)))
     expect_true(any(grepl("K_liver_B", flow_strings)))
-
-    # Observables have suffixes
-    observable_names <- names(merged$observables)
-    expect_true(all(c("CentralObs_A", "CentralObs_B") %in% observable_names))
 })
 

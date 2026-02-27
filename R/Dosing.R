@@ -37,6 +37,11 @@ dosing <- function(target, time, amount = NULL, rate = NULL, duration = NULL) {
     if (!is.null(rate)) stopifnot(is.numeric(rate), rate >= 0)
     if (!is.null(duration)) stopifnot(is.numeric(duration), duration > 0)
 
+    # Early return if dosing time is empty (no dosing events)
+    if (length(time) == 0) {
+        return(empty_dosing())
+    }
+
     # More strict checks on argument lengths than data.frame recycling rules, to avoid silent bugs from unintended recycling.
     arg_lengths <- c(
         target = length(target),
