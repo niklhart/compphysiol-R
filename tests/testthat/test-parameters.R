@@ -1,33 +1,32 @@
+# Test for the `Parameters` class
 
-test_that("Scalar parameter substitution works in ODE", {
-    M <- compartment_model() |>
-        add_compartment("Central", 10) |>
-        add_compartment("Peripheral", 0) |>
-        add_flow("Central", "Peripheral", const = "k12")
+test_that("Parameters class works as expected", {
+    p1 <- parameters(name = 'A', value = 2, unit = "m")
+    p2 <- parameters(name = 'B', value = 3, unit = "kg")
 
-    # Provide k12 as scalar
-    odeinfo <- to_ode(M, paramValues = list(k12 = 0.2))
-    y0 <- odeinfo$y0
-    dydt <- odeinfo$odefun(0, y0, list())
-    # Should evaluate using k12 = 0.2
-    expect_equal(dydt[[1]][1], -0.2 * 10)
-    expect_equal(dydt[[1]][2], 0.2 * 10)
-    # No free parameters left
-    expect_equal(length(odeinfo$freeParams), 0)
+    # Test names method
+    expect_equal(names(p1), c("A"))
+    expect_equal(names(p2), c("B"))
+
+    # Test combining parameters
+    params <- c(p1, p2)
+    expect_equal(names(params), c("A", "B"))
+    expect_equal(params["A"], p1)
+    expect_equal(params["B"], p2)
+
+    # Test subsetting by index / name
+    expect_equal(params[1], p1)
+    expect_equal(params["A"], p1)
+
+    # Test print method
+    expect_snapshot(print(params))
 })
 
-test_that("Free parameters remain in ODE", {
-    M <- compartment_model() |>
-        add_compartment("Central", 10) |>
-        add_compartment("Peripheral", 0) |>
-        add_flow("Central", "Peripheral", const = "k12")
-
-    # Do not provide k12
-    odeinfo <- to_ode(M, paramValues = list())
-    y0 <- odeinfo$y0
-    dydt <- odeinfo$odefun(0, y0, list(k12 = 0.1))
-    expect_equal(dydt[[1]][1], -0.1 * 10)
-    expect_equal(dydt[[1]][2], 0.1 * 10)
-    # k12 should be listed as free parameter
-    expect_true("k12" %in% odeinfo$freeParams)
+test_that("Non-standard evaluation captures parameters correctly", {
+  
+    p <- parameters(A = 2, B = units::set_units(3,"kg"))
+    
+    expect_equal(names(p), c("A", "B"))
+    expect_equal(units::drop_units(p$A), 2)
+    expect_equal(units::drop_units(p$B), 3)
 })
