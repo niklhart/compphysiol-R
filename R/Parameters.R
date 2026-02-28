@@ -2,35 +2,72 @@
 
 #' `Parameters` class.
 #'
-#' Parameters can be specified in two ways:
-#' 1. As name-value pairs using non-standard evaluation (where each value can optionally have an associated unit).
-#' 2. Via the `name`, `value`, and `unit` arguments (where `name` is a character vector of parameter names, 
+#' Parameters can be specified in three different ways:
+#' 
+#' 1. As name-value pairs using standard evaluation (values can optionally be given as units objects, e.g., `parameters(A = 2, B = units::set_units(3, "m"))`).
+#' 2. As name-value pairs using non-standard evaluation, with the unit given in square brackets after the value (e.g., `A = 2 [m]`). 
+#'    This allows for a more concise syntax when specifying parameters with units.
+#' 3. Via the `name`, `value`, and `unit` arguments (where `name` is a character vector of parameter names, 
 #' `value` is a numeric vector of parameter values, and `unit` is an optional character vector of units).
 #'
-#' @param ... Parameter values, either as named arguments or as a list of named parameters.
+#' @param ... Parameter values as name-value pairs, where values can optionally have units (e.g., `A = 2 [m]`).
 #' @param name Optional parameter names (if not using named arguments).
 #' @param value Optional parameter values (if not using named arguments).
 #' @param unit Optional parameter units (if not using named arguments).
 #' @returns A `Parameters` object containing the specified parameters.
+#' @examples
+#' # Standard evaluation
+#' parameters(name = c("A", "B"), value = c(2, 3), unit = c("", "m"))
+#' # The same using non-standard evaluation
+#' parameters(A = 2, B = 3[m])
 #' @export
 parameters <- function(..., name = NULL, value = NULL, unit = NULL) {
+
     # Non-standard evaluation to capture parameter names and values
-    args <- list(...)
+    args <- eval(substitute(alist(...)))
+
     if (length(args) > 0) {
         if (!is.null(name) || !is.null(value) || !is.null(unit)) {
             stop("Cannot use both '...' and 'name'/'value/unit' arguments.")
         }
+
         name <- names(args)
-        value <- unlist(args, use.names = FALSE)
-        unit <- vapply(args, function(x) if (inherits(x, c("units", "mixed_units"))) units::deparse_unit(x) else "", character(1))
+        value <- vector("list", length(args)) |> setNames(nm = name)
+
+        # For each argument, find out if the `[unit]` notation is being used and evaluate inputs safely
+        for (i in seq_along(args)) {
+            arg <- args[[i]]
+            if (is.call(arg) && length(arg) == 3 && arg[[1]] == quote(`[`)) {
+                val <- eval(arg[[2]], envir = parent.frame())
+                unit <- paste(deparse(arg[[3]]), collapse = "")
+                if (
+                    inherits(val, 'units') &&
+                        !units::ud_are_convertible(val, unit)
+                ) {
+                    stop(sprintf(
+                        "Units of parameter '%s' are not compatible with specified unit '%s'.",
+                        name[i],
+                        unit
+                    ))
+                }
+                value[[i]] <- units::set_units(val, unit, mode = "standard")
+            } else {
+                value[[i]] <- eval(arg, envir = parent.frame())
+            }
+        }
+    } else {
+        if (length(name) != length(value)) stop("All parameters must be named.")
+        if (!(length(unit) %in% c(0,1,length(value)))) stop("'unit' must be NULL, scalar or match length of 'value'.")
+        if (length(unit) == 1) unit <- rep(unit, length(value))
+        if (!is.null(unit)) {
+            Map(function(v, u) if (u != "") units::set_units(v, u, mode = "standard") else v, value, unit) |>
+                setNames(nm = name) -> value
+        }
     }
 
-    if (length(name) != length(value)) stop("All parameters must be named.")
-    names(value) <- name
-    if (!is.null(unit)) value <- units::mixed_units(value, unit)
     structure(
-        value,
-        class = c("Parameters", "mixed_units", "list")
+        value %||% list(),
+        class = c("Parameters", "list")
     )
 }
 
@@ -49,7 +86,7 @@ names.Parameters <- function(x) names(unclass(x))
 `[.Parameters` <- function(x, i, ...) {
     structure(
         unclass(x)[i],
-        class = c("Parameters", "mixed_units", "list")
+        class = c("Parameters", "list")
     )
 }
 
@@ -65,7 +102,7 @@ c.Parameters <- function(...) {
     params_list |>
         lapply(FUN = unclass) |>
         do.call(what = "c") |>
-        structure(class = c("Parameters", "mixed_units", "list"))
+        structure(class = c("Parameters", "list"))
 }
 
 #' Print method for `Parameters` objects
@@ -81,7 +118,7 @@ print.Parameters <- function(x, ...) {
                 "  (%s) %s = %s\n",
                 seq_along(x),
                 names(x),
-                format(x)
+                vapply(x, format, "")
             ),
             sep = ""
         )

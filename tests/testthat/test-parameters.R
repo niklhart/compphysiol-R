@@ -22,11 +22,11 @@ test_that("Parameters class works as expected", {
     expect_snapshot(print(params))
 })
 
-test_that("Non-standard evaluation captures parameters correctly", {
-  
-    p <- parameters(A = 2, B = units::set_units(3,"kg"))
-    
-    expect_equal(names(p), c("A", "B"))
-    expect_equal(units::drop_units(p$A), 2)
-    expect_equal(units::drop_units(p$B), 3)
+test_that("Non-standard evaluation captures names, values and units correctly", {
+
+    p_SE  <- parameters(name = c('A','B'), value = c(2,3), unit = c("","kg"))
+    p_NSE <- parameters(A = 2, B = 3[kg])
+
+    expect_equal(p_SE, p_NSE)
+
 })

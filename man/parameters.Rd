@@ -7,7 +7,7 @@
 parameters(..., name = NULL, value = NULL, unit = NULL)
 }
 \arguments{
-\item{...}{Parameter values, either as named arguments or as a list of named parameters.}
+\item{...}{Parameter values as name-value pairs, where values can optionally have units (e.g., \code{A = 2 [m]}).}
 
 \item{name}{Optional parameter names (if not using named arguments).}
 
@@ -19,10 +19,20 @@ parameters(..., name = NULL, value = NULL, unit = NULL)
 A \code{Parameters} object containing the specified parameters.
 }
 \description{
-Parameters can be specified in two ways:
+Parameters can be specified in three different ways:
+}
+\details{
 \enumerate{
-\item As name-value pairs using non-standard evaluation (where each value can optionally have an associated unit).
+\item As name-value pairs using standard evaluation (values can optionally be given as units objects, e.g., \code{parameters(A = 2, B = units::set_units(3, "m"))}).
+\item As name-value pairs using non-standard evaluation, with the unit given in square brackets after the value (e.g., \code{A = 2 [m]}).
+This allows for a more concise syntax when specifying parameters with units.
 \item Via the \code{name}, \code{value}, and \code{unit} arguments (where \code{name} is a character vector of parameter names,
 \code{value} is a numeric vector of parameter values, and \code{unit} is an optional character vector of units).
 }
+}
+\examples{
+# Standard evaluation
+parameters(name = c("A", "B"), value = c(2, 3), unit = c("", "m"))
+# The same using non-standard evaluation
+parameters(A = 2, B = 3[m])
 }
