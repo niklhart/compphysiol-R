@@ -1,12 +1,10 @@
 # Code to build predefined models (executed at package build time)
 build_models <- function() {
 
-    M <- CompartmentModel$new()
-
-    # compartments (can be vectorized later)
-    M$addCompartment("test", 0)
-    M$addReaction("test", "", "ke * test")
-    M$addObservable("Ctest", "2*test")
+    M <- compartment_model() |>
+        add_compartment("test", 0) |>
+        add_flow("test", "", rate = "ke * test") |>
+        add_observable("Ctest", "2*test")
 
     list(test_model_sysdata = M)
 }

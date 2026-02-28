@@ -9,22 +9,16 @@
 #' phys$param_table
 #'
 #' # Export for model
-#' param_list <- phys$to_param_list()
+#' param_list <- to_param_list(phys)
 #' print(param_list)
 human35m <- function() {
 
-    # Create physiology object
-    phys <- Physiology$new()
+    physiology() |>
+        add_scalar("BW", 70, "kg", reference = "Smith et al.", assumption = "Standard male") |>
+        add_scalar("CO", 5.6, "L/min", reference = "Derived", assumption = "BW^0.75 scaling") |>
+        add_tissue_param("Liver", "V", 1.5, "L", reference = "ICRP", assumption = "Fraction of BW") |>
+        add_tissue_param("Liver", "Q", 1.35, "L/min", reference = "Brown et al.", assumption = "25% of CO")
 
-    # Add scalars
-    phys$add_scalar("BW", 70, "kg", reference="Smith et al.", assumption="Standard male")
-    phys$add_scalar("CO", 5.6, "L/min", reference="Derived", assumption="BW^0.75 scaling")
-
-    # Add tissue parameters
-    phys$add_tissue_param("Liver", "V", 1.5, "L", reference="ICRP", assumption="Fraction of BW")
-    phys$add_tissue_param("Liver", "Q", 1.35, "L/min", reference="Brown et al.", assumption="25% of CO")
-
-    phys
 }
 
 
@@ -32,7 +26,7 @@ human35m <- function() {
 #' @returns A `Physiology` object
 #' @export
 rat250 <- function() {
-    .physiologies$rat250$clone(deep = TRUE)
+    .physiologies$rat250
 }
 
 
@@ -40,5 +34,5 @@ rat250 <- function() {
 #' @returns A `Physiology` object
 #' @export
 rat475 <- function() {
-    .physiologies$rat475$clone(deep = TRUE)
+    .physiologies$rat475
 }

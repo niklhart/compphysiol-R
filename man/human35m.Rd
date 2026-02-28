@@ -17,6 +17,6 @@ phys <- human35m()
 phys$param_table
 
 # Export for model
-param_list <- phys$to_param_list()
+param_list <- to_param_list(phys)
 print(param_list)
 }

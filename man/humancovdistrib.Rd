@@ -12,7 +12,7 @@ humancovdistrib(N, sex)
 \item{sex}{Character, either "male" or "female"}
 }
 \value{
-List of Physiology objects
+List of \code{Physiology} objects
 }
 \description{
 To generate pairs of (BH,BW) values, independent (BH, BMI) pairs are first

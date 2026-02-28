@@ -8,10 +8,10 @@
 #' These are then used to generate BW from the relation BMI = BW/BH^2.
 #'
 #' Reference: de la Grandmaison et al., Forensic Sci. Int. 119 (2001): 149-154
-
+#'
 #' @param N Number of individuals (positive integer)
 #' @param sex Character, either "male" or "female"
-#' @return List of Physiology objects
+#' @returns List of `Physiology` objects
 #' @examples
 #' humans <- humancovdistrib(5, "female")
 #' @export
@@ -46,14 +46,13 @@ humancovdistrib <- function(N, sex) {
     # Create list of Physiology objects
     humans <- vector("list", N)
     for (i in seq_len(N)) {
-        phys <- Physiology$new()
-        phys$add_scalar("species", species)
-        phys$add_scalar("type", type)
-        phys$add_scalar("sex", sex)
-        phys$add_scalar("age", age, "year")
-        phys$add_scalar("BW", BW[i], "kg")
-        phys$add_scalar("BH", BH[i], "m")
-        humans[[i]] <- phys
+        humans[[i]] <- physiology() |>
+            add_scalar("species", species) |>
+            add_scalar("type", type) |>
+            add_scalar("sex", sex) |>
+            add_scalar("age", age, "year") |>
+            add_scalar("BW", BW[i], "kg") |>
+            add_scalar("BH", BH[i], "m")
     }
 
     humans
