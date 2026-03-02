@@ -42,7 +42,7 @@ parameters <- function(..., name = NULL, value = NULL, unit = NULL) {
                 unit <- paste(deparse(arg[[3]]), collapse = "")
                 if (
                     inherits(val, 'units') &&
-                        !units::ud_are_convertible(val, unit)
+                        !units::ud_are_convertible(units(val), unit)
                 ) {
                     stop(sprintf(
                         "Units of parameter '%s' are not compatible with specified unit '%s'.",
@@ -59,10 +59,12 @@ parameters <- function(..., name = NULL, value = NULL, unit = NULL) {
         if (length(name) != length(value)) stop("All parameters must be named.")
         if (!(length(unit) %in% c(0,1,length(value)))) stop("'unit' must be NULL, scalar or match length of 'value'.")
         if (length(unit) == 1) unit <- rep(unit, length(value))
-        if (!is.null(unit)) {
-            Map(function(v, u) if (u != "") units::set_units(v, u, mode = "standard") else v, value, unit) |>
-                setNames(nm = name) -> value
-        }
+        value <- if (!is.null(unit)) {
+                Map(function(v, u) if (u != "") units::set_units(v, u, mode = "standard") else v, value, unit)
+            } else {
+                list(value)
+            } 
+        value <- setNames(value, nm = name)
     }
 
     structure(

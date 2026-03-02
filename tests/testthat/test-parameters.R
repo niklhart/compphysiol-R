@@ -23,10 +23,24 @@ test_that("Parameters class works as expected", {
 })
 
 test_that("Non-standard evaluation captures names, values and units correctly", {
-
-    p_SE  <- parameters(name = c('A','B'), value = c(2,3), unit = c("","kg"))
+    # Numeric parameters with units
+    p_SE <- parameters(name = c('A', 'B'), value = c(2, 3), unit = c("", "kg"))
     p_NSE <- parameters(A = 2, B = 3[kg])
 
     expect_equal(p_SE, p_NSE)
 
+    # Variables with units
+    A_m <- units::set_units(1, "m")
+    p_SE_var <- parameters(name = 'A', value = A_m)
+    p_NSE_var <- parameters(A = A_m)
+    expect_equal(p_SE_var, p_NSE_var)
+})
+
+test_that("On-the-fly unit conversion works correctly in NSE mode", {
+    A_km <- units::set_units(1, "km")
+    A_m <- units::set_units(1000, "m")
+
+    p1 <- parameters(A = A_km)
+    p2 <- parameters(A = A_m[km])
+    expect_equal(p1, p2)
 })

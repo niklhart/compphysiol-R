@@ -114,7 +114,6 @@ sMD_PBPK_12CMT_wellstirred <- function() {
         add_flow(from = "ven", to = "lun", const = "(Qadi+Qbon+Qhea+Qliv+Qmus+Qkid+Qski) / Vven") |>
         add_flow(from = "lun", to = "art", const = "(Qadi+Qbon+Qhea+Qliv+Qmus+Qkid+Qski) / (Vlun * Klun)") |>
         add_flow(from = "liv", to = "", const = "CL / (Vliv * Kliv)")
-
 }
 
 

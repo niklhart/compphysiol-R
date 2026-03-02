@@ -32,3 +32,18 @@ test_that("Adding empty compartment works", {
     comp <- empty_compartment()
     expect_equal(length(comp), 0)
 })
+
+test_that("Compartments with units work correctly", {
+
+    val <- units::set_units(1, 'mg')
+    comp <- compartments("test", val)
+    expect_equal(comp$initial, val)
+
+    skip("Extra unit argument to be added to compartments()")
+
+})
+
+test_that("Parametrized initial conditions work correctly", {
+    # This test is a placeholder for when we implement parametrized compartments
+    skip("Parametrized initial conditions not yet implemented")
+})

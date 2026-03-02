@@ -134,7 +134,11 @@ print.Flows = function(x, ...) {
             seq_along(x),
             from,
             to,
-            vapply(x$rate, deparse, character(1))
+            vapply(
+                x$rate, 
+                function(r) r |> deparse() |> paste(collapse = ""), 
+                character(1)
+            )
         ), sep = "")
     } else {
         cat(" Flows: (none)\n")
