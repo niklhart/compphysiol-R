@@ -42,6 +42,9 @@ test_that("Compartments with units work correctly", {
     comp <- compartments("test", 1, unit = "mg")
     expect_equal(initials(comp, named = FALSE), val)
 
+    comp <- compartments("test", 1 [mg])
+    expect_equal(initials(comp, named = FALSE), val)
+
 })
 
 test_that("Parametrized initial conditions work correctly", {

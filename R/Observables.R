@@ -9,7 +9,7 @@
 #'     expr = c("Central/Vcentral/BP", "Central/Vcentral")
 #' )
 #' @export
-observables <- function(name, expr) {
+observables <- function(name = character(0), expr = character(0)) {
     if (!is.vector(expr)) expr <- list(expr)
     if (length(name) != length(expr)) stop("Arguments 'name' and 'expr' must have the same length.")
 
@@ -78,8 +78,3 @@ c.Observables <- function(...) {
          do.call(what = "c") |>
          structure(class = "Observables")
 }
-
-#' Create an empty `Observables` object
-#' @returns An empty `Observables` object
-#' @export
-empty_observable <- function() observables(name = character(0), expr = character(0))

@@ -21,7 +21,7 @@ test_that("Flows are created correctly", {
 })
 
 test_that("Empty flows are handled correctly", {
-    f1 <- empty_flow()
+    f1 <- flows()
     f2 <- flows(from = "A", to = "B", const = "k")
 
     expect_equal(length(f1), 0)

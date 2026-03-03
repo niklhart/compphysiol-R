@@ -45,7 +45,7 @@ test_that("Equations with mismatched name and expr lengths throw error", {
 })
 
 test_that("Empty Equations objects behave as expected", {
-    eq <- empty_equation()
+    eq <- equations()
     expect_equal(length(eq), 0)
 
     eq2 <- equations(name = "co", expr = "Qadi+Qbon+Qhea+Qkid+Qliv+Qmus+Qski")

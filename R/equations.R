@@ -8,7 +8,8 @@
 #'     expr = "Qadi+Qbon+Qhea+Qkid+Qliv+Qmus+Qski"
 #' )
 #' @export
-equations <- function(name, expr) {
+equations <- function(name = character(0), expr = character(0)) {
+
     if (!is.vector(expr)) expr <- list(expr)
     if (length(name) != length(expr)) stop("Arguments 'name' and 'expr' must have the same length.")
 
@@ -77,8 +78,3 @@ c.Equations <- function(...) {
          do.call(what = "c") |>
          structure(class = "Equations")
 }
-
-#' Create an empty `Equations` object
-#' @returns An empty `Equations` object
-#' @export
-empty_equation <- function() equations(name = character(0), expr = character(0))

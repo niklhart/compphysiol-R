@@ -45,7 +45,7 @@ test_that("Observables with mismatched name and expr lengths throw error", {
 })
 
 test_that("Empty Observables objects behave as expected", {
-    obs <- empty_observable()
+    obs <- observables()
     expect_equal(length(obs), 0)
 
     obs2 <- observables(name = "Cpla", expr = "blo/Vblo/BP")

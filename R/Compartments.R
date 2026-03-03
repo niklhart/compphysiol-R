@@ -8,7 +8,9 @@
 #' @param state State names for the compartments (character scalar or vector, default = `"A" + name`).
 #' @return A `Compartments` object
 #' @examples
-#' compartments(c("adi","bon"), 10)
+#' compartments(c("adi","bon"), initial = 10)
+#' compartments('adi', unit = "mg")
+#' compartments('adi', initial = 10 [mg])
 #' @export
 compartments <- function(
     name = character(0),
@@ -16,6 +18,10 @@ compartments <- function(
     unit = NULL,
     state = paste0("A", name, recycle0 = TRUE)
 ) {
+    initial <- .process_nse_arg(
+        expr = substitute(initial),
+        envir = parent.frame(n = 1)
+    )
     initial <- as.list(initial)
     if (length(initial) == 1) initial <- rep(initial, length(name))
     if (any(length(name) != c(length(initial), length(state)))) {
@@ -155,9 +161,8 @@ c.Compartments <- function(...) {
         }
     }
 
-    compartments(
-        name = x$name[i],
-        initial = x$initial[i],
-        state = x$state[i]
+    structure(
+        list(name = x$name[i], initial = x$initial[i], state = x$state[i]),
+        class = "Compartments"
     )
 }

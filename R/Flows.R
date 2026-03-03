@@ -16,8 +16,18 @@
 flows <- function(from, to, ..., rate = NULL, const = NULL) {
 
     # Early return for empty flows
-    if (identical(from, character(0)) || identical(to, character(0))) {
-        return(empty_flow())
+    if (missing(from) || missing(to) || identical(from, character(0)) || identical(to, character(0))) {
+        return(structure(
+            data.frame(
+                from = character(),
+                to = character(),
+                rate = I(list()),
+                const = I(list()),
+                type = character(),
+                stringsAsFactors = FALSE
+            ),
+            class = "Flows"
+        ))
     }
 
     # Convert NULL/"" from/to to NA for easier handling of source/sink compartments
@@ -101,24 +111,6 @@ flows <- function(from, to, ..., rate = NULL, const = NULL) {
         class = "Flows"
     )
 }
-
-#' Create an empty `Flows` object
-#' @return An empty `Flows` object
-#' @export
-empty_flow <- function() {
-    structure(
-        data.frame(
-            from = character(),
-            to = character(),
-            rate = I(list()),
-            const = I(list()),
-            type = character(),
-            stringsAsFactors = FALSE
-        ),
-        class = "Flows"
-    )
-}
-
 
 #' Print a `Flows` object
 #' @param x A `Flows` object

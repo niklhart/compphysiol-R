@@ -32,7 +32,7 @@ parameters <- function(..., name = NULL, value = NULL, unit = NULL) {
         }
         value <- lapply(args, .process_nse_arg, envir = parent.frame())
 
-    } else {
+    } else if (!is.null(name)) {
         if (length(name) != length(value)) stop("All parameters must be named.")
         if (!(length(unit) %in% c(0,1,length(value)))) stop("'unit' must be NULL, scalar or match length of 'value'.")
         if (length(unit) == 1) unit <- rep(unit, length(value))

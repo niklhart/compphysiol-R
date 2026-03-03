@@ -28,5 +28,7 @@ A \code{Compartments} object
 Represents one or several model compartments with names and initial amounts.
 }
 \examples{
-compartments(c("adi","bon"), 10)
+compartments(c("adi","bon"), initial = 10)
+compartments('adi', unit = "mg")
+compartments('adi', initial = 10 [mg])
 }

@@ -30,19 +30,28 @@
 #' dosing("Central", time = c(0, 24, 48), amount = 100)
 #' dosing("Central", time = c(0, 24), amount = c(50, 60), rate = 10)
 #' @export
-dosing <- function(target, time, amount = NULL, ..., rate = NULL, duration = NULL) {
+dosing <- function(target = character(0), time = numeric(0), amount = NULL, ..., rate = NULL, duration = NULL) {
     
+    # Early return for empty dosing
+    if (length(time) == 0) {
+        return(structure(
+            data.frame(
+                target = character(0),
+                time = numeric(0),
+                amount = numeric(0),
+                rate = numeric(0),
+                duration = numeric(0)
+            ),
+            class = "Dosing"
+        ))
+    }
+
     # Validate inputs
     stopifnot(is.character(target))
     stopifnot(is.numeric(time))
     if (!is.null(amount)) stopifnot(is.numeric(amount), amount >= 0)
     if (!is.null(rate)) stopifnot(is.numeric(rate), rate >= 0)
     if (!is.null(duration)) stopifnot(is.numeric(duration), duration > 0)
-
-    # Early return if dosing time is empty (no dosing events)
-    if (length(time) == 0) {
-        return(empty_dosing())
-    }
 
     # More strict checks on argument lengths than data.frame recycling rules, to avoid silent bugs from unintended recycling.
     arg_lengths <- c(
@@ -75,7 +84,8 @@ dosing <- function(target, time, amount = NULL, ..., rate = NULL, duration = NUL
 
     # Case 2: infusion dosing (need exactly two out of amount, rate, duration)
     nset <- sum(!sapply(list(amount, rate, duration), is.null))
-    if (nset != 2) stop("Infusion dosing requires exactly two of: amount, rate, duration.")
+    if (nset > 2) stop("Only two of amount, rate, and duration can be specified.")
+    if (nset < 2) stop("Incomplete set of dosing arguments.")
 
     if (is.null(amount)) {
         amount <- rate * duration
@@ -92,22 +102,6 @@ dosing <- function(target, time, amount = NULL, ..., rate = NULL, duration = NUL
             amount = amount,
             rate = rate,
             duration = duration
-        ),
-        class = "Dosing"
-    )
-}
-
-#' Create an empty `Dosing` object
-#' @return An empty `Dosing` object with zero rows
-#' @export
-empty_dosing <- function() {
-    structure(
-        data.frame(
-            target = character(0),
-            time = numeric(0),
-            amount = numeric(0),
-            rate = numeric(0),
-            duration = numeric(0)
         ),
         class = "Dosing"
     )

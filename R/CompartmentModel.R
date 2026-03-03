@@ -6,10 +6,11 @@ compartment_model <- function() {
     structure(
         list(
             compartments = compartments(),
-            flows = empty_flow(),
-            equations = empty_equation(),
-            observables = empty_observable(),
-            doses = empty_dosing(),
+            flows = flows(),
+            equations = equations(),
+            observables = observables(),
+            parameters = parameters(),
+            doses = dosing(),
             infusionEvents = data.frame(
                 var = character(),
                 time = numeric(),

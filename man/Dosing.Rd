@@ -4,7 +4,14 @@
 \alias{dosing}
 \title{Dosing specification}
 \usage{
-dosing(target, time, amount = NULL, ..., rate = NULL, duration = NULL)
+dosing(
+  target = character(0),
+  time = numeric(0),
+  amount = NULL,
+  ...,
+  rate = NULL,
+  duration = NULL
+)
 }
 \arguments{
 \item{target}{Target compartment name (character scalar)}
