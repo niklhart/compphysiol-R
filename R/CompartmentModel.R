@@ -72,14 +72,10 @@ print.CompartmentModel <- function(x, ...) {
 # ------------------------------------ `add_*` functions for CompartmentModel composition in a pipeline ------------------------------------
 
 #' Add one or several compartments to a `CompartmentModel` object.
-#'
 #' @param model A `CompartmentModel` object.
-#' @param name Name of the compartment(s)
-#' @param initial Initial amount(s) (default 0)
-#' @param unit Optional units for the initial amount(s) (e.g., `"mg"`, the default `NULL` means unitless)
-#'   If provided, must be either a single unit applied to all compartments or a vector of units matching the length of `name`.
-#' @param state Optional state name(s) for the compartment(s)  (character scalar or vector, default = `"A" + name`).
+#' @inheritParams compartments
 #' @param comp A `Compartments` object. Constructed from the other inputs if not provided.
+#' @returns The modified `CompartmentModel` object.
 #' @export
 add_compartment <- function(
     model,
@@ -87,10 +83,21 @@ add_compartment <- function(
     initial = 0,
     unit = NULL,
     state = paste0("A", name, recycle0 = TRUE),
-    comp = compartments(name, initial, unit, state)
+    comp
 ) {
     .check_class(model, "CompartmentModel")
+
+    call <- match.call(expand.dots = FALSE)
+
+    comp <- .forward_or_use(
+        object_arg_name = "comp",
+        constructor_name = "compartments",
+        call = call,
+        parent_env = parent.frame()
+    )
+
     .check_class(comp, "Compartments")
+
     model$compartments <- c(model$compartments, comp)
     model
 }
@@ -109,13 +116,20 @@ add_compartment <- function(
 #' model <- compartment_model() |>
 #'     add_flow(from = "A", to = "B", const = "k1")
 #' @export
-add_flow <- function(model, from, to, ..., rate = NULL, const = NULL, flow = flows(from, to, rate = rate, const = const)) {
+add_flow <- function(
+    model,
+    from,
+    to,
+    ...,
+    rate = NULL,
+    const = NULL,
+    flow = flows(from, to, rate = rate, const = const)
+) {
     .check_class(model, "CompartmentModel")
     .check_class(flow, "Flows")
     model$flows <- c(model$flows, flow)
     return(model)
 }
-
 
 #' Add an observable to a `CompartmentModel` object.
 #'
@@ -220,6 +234,8 @@ add_parameter <- function(
 #' @param target Name of the target compartment(s) for the dose(s)
 #' @param time Time of the dosing event(s)
 #' @param amount Amount(s) to be dosed (for bolus or infusion)
+#' @param time_unit Optional unit for time (character scalar, e.g., "h", or `NULL`, the default)
+#' @param amount_unit Optional unit for amount (character scalar, e.g., "mg", or `NULL`, the default)
 #' @param ... Unused, enforces `rate` / `duration` / `dose` to be specified as named arguments only, not positional
 #' @param rate Infusion rate (for infusion)
 #' @param duration Infusion duration (for infusion)
@@ -234,6 +250,8 @@ add_dosing <- function(
     target,
     time,
     amount = NULL,
+    time_unit = NULL,
+    amount_unit = NULL,
     ...,
     rate = NULL,
     duration = NULL,
@@ -241,6 +259,8 @@ add_dosing <- function(
         target = target,
         time = time,
         amount = amount,
+        time_unit = time_unit,
+        amount_unit = amount_unit,
         rate = rate,
         duration = duration
     )

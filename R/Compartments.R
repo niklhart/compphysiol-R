@@ -134,13 +134,17 @@ c.Compartments <- function(...) {
     }
 
     name <- unlist(lapply(objs, `[[`, "name"))
-    initial <- unlist(lapply(objs, `[[`, "initial"))
     state <- unlist(lapply(objs, `[[`, "state"))
 
     if (anyDuplicated(name)) stop("Duplicate compartment names are not allowed.")
     if (anyDuplicated(state)) stop("Duplicate compartment states are not allowed.")
     
-    compartments(name = name, initial = initial, state = state)
+    initial <- do.call(c, lapply(objs, `[[`, "initial"))
+
+    structure(
+        list(name = name, initial = initial, state = state),
+        class = "Compartments"
+    )
 }
 
 #' Subset method for `Compartments` class

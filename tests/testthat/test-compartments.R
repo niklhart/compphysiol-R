@@ -47,14 +47,20 @@ test_that("Compartments with units work correctly", {
 
 })
 
-test_that("Parametrized initial conditions work correctly", {
-    # This test is a placeholder for when we implement parametrized compartments
-    skip("Parametrized initial conditions not yet implemented")
+test_that("Compartments concatenation with units works correctly", {
+
+    comp1 <- compartments("adi", 10, unit = "mg")
+    comp2 <- compartments("bon", 20, unit = "mg")
+    expect_equal(initials(c(comp1, comp2), named = FALSE), units::set_units(c(10, 20), "mg"))
 })
 
 test_that("Compartment state definition works correctly", {
 
     comp <- compartments("cmt", state = "state")
     expect_equal(states(comp), "state")
+})
 
+test_that("Parametrized initial conditions work correctly", {
+    # This test is a placeholder for when we implement parametrized compartments
+    skip("Parametrized initial conditions not yet implemented")
 })

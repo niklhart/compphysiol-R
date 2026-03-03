@@ -9,11 +9,13 @@ add_dosing(
   target,
   time,
   amount = NULL,
+  time_unit = NULL,
+  amount_unit = NULL,
   ...,
   rate = NULL,
   duration = NULL,
-  dose = dosing(target = target, time = time, amount = amount, rate = rate, duration =
-    duration)
+  dose = dosing(target = target, time = time, amount = amount, time_unit = time_unit,
+    amount_unit = amount_unit, rate = rate, duration = duration)
 )
 }
 \arguments{
@@ -24,6 +26,10 @@ add_dosing(
 \item{time}{Time of the dosing event(s)}
 
 \item{amount}{Amount(s) to be dosed (for bolus or infusion)}
+
+\item{time_unit}{Optional unit for time (character scalar, e.g., "h", or \code{NULL}, the default)}
+
+\item{amount_unit}{Optional unit for amount (character scalar, e.g., "mg", or \code{NULL}, the default)}
 
 \item{...}{Unused, enforces \code{rate} / \code{duration} / \code{dose} to be specified as named arguments only, not positional}
 

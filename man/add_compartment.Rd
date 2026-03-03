@@ -10,22 +10,25 @@ add_compartment(
   initial = 0,
   unit = NULL,
   state = paste0("A", name, recycle0 = TRUE),
-  comp = compartments(name, initial, unit, state)
+  comp
 )
 }
 \arguments{
 \item{model}{A \code{CompartmentModel} object.}
 
-\item{name}{Name of the compartment(s)}
+\item{name}{Compartment name(s), character scalar or vector}
 
-\item{initial}{Initial amount(s) (default 0)}
+\item{initial}{Initial amounts for the compartments (numeric scalar or vector, default = \code{0})}
 
-\item{unit}{Optional units for the initial amount(s) (e.g., \code{"mg"}, the default \code{NULL} means unitless)
+\item{unit}{Units for the initial amounts (character scalar or vector, default = \code{NULL}).
 If provided, must be either a single unit applied to all compartments or a vector of units matching the length of \code{name}.}
 
-\item{state}{Optional state name(s) for the compartment(s)  (character scalar or vector, default = \code{"A" + name}).}
+\item{state}{State names for the compartments (character scalar or vector, default = \code{"A" + name}).}
 
 \item{comp}{A \code{Compartments} object. Constructed from the other inputs if not provided.}
+}
+\value{
+The modified \code{CompartmentModel} object.
 }
 \description{
 Add one or several compartments to a \code{CompartmentModel} object.

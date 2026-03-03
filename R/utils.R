@@ -67,3 +67,31 @@
     }
     res
 }
+
+
+#' Helper function to forward the NSE logic from pipable add_x methods to the underlying constructors
+#' @param object_arg_name Name of the argument in the constructor that takes the object being added to 
+#'   (e.g. "comp" for `add_compartment()`, "dose" for `add_dosing()`)
+#' @param constructor_name Name of the constructor function to call (e.g. "compartments" for `add_compartment()`, 
+#'   "dosing" for `add_dosing()`)
+#' @param call The matched call from the add_x method
+#' @param parent_env The parent environment to evaluate the call in (usually `parent.frame()`)
+#' @returns The object created by the constructor, which will then be added to the model by the add_x method
+#' @noRd
+.forward_or_use <- function(
+    object_arg_name, # string, e.g. "comp"
+    constructor_name, # string, e.g. "compartments"
+    call,
+    parent_env
+) {
+    if (!is.null(call[[object_arg_name]])) {
+        # object explicitly supplied
+        return(eval(call[[object_arg_name]], parent_env))
+    }
+
+    # Rewrite call to constructor
+    call[[1]] <- as.name(constructor_name)
+    call$model <- NULL
+
+    eval(call, parent_env)
+}
