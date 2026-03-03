@@ -2,20 +2,22 @@
 % Please edit documentation in R/Models.R
 \name{multiCompModel}
 \alias{multiCompModel}
-\title{Create a generic multi-compartment PK model}
+\title{Create an empirical multi-compartment PK model in micro- or macro-parameterization}
 \usage{
-multiCompModel(ncomp = 1, type = c("micro", "macro"))
+multiCompModel(ncomp = 1, type = c("micro", "macro"), unit = NULL)
 }
 \arguments{
 \item{ncomp}{Number of compartments (>=1)}
 
 \item{type}{Style of parameterization: "micro" (rate constants) or "macro" (volumes + clearances)}
+
+\item{unit}{Units for initial amounts (character scalar or \code{NULL}, the default).}
 }
 \value{
 A \code{CompartmentModel} object
 }
 \description{
-Create a generic multi-compartment PK model
+Create an empirical multi-compartment PK model in micro- or macro-parameterization
 }
 \examples{
 multiCompModel(ncomp = 3, type = "macro")

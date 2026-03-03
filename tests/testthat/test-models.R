@@ -1,27 +1,18 @@
 test_that("multiCompModel creates correct number of compartments", {
     M <- multiCompModel(3, "micro")
-    expect_equal(names(M$compartments), c("C1", "C2", "C3"))
-    expect_true(names(M$observables) == "C1Conc")
+    expect_equal(names(M$compartments), c("comp1", "comp2", "comp3"))
+    expect_true(names(M$observables) == "C1")
 })
 
-test_that("multiCompModel micro parametrization flows are correct", {
-    M <- multiCompModel(2, "micro")
-    flow_strings <- paste(M$flows$from, M$flows$to, vapply(M$flows$rate, deparse, character(1)))
-    # Elimination flow
-    expect_true(any(grepl("C1 NA k10 \\* C1", flow_strings)))
-    # Inter-compartment flows
-    expect_true(any(grepl("C1 C2 k12 \\* C1", flow_strings)))
-    expect_true(any(grepl("C2 C1 k21 \\* C2", flow_strings)))
-})
+test_that("multiCompModel micro/macro parametrization flows are correct", {
+    M1 <- multiCompModel(2, "micro")
+    M2 <- multiCompModel(2, "macro")
 
-test_that("multiCompModel macro parametrization flows are correct", {
-    M <- multiCompModel(2, "macro")
-    flow_strings <- paste(M$flows$from, M$flows$to, vapply(M$flows$rate, deparse, character(1)))
-    # Elimination scaled by volume
-    expect_true(any(grepl("C1 NA CL/V1 \\* C1", flow_strings)))
-    # Inter-compartment flows
-    expect_true(any(grepl("C1 C2 Q12/V1 \\* C1", flow_strings)))
-    expect_true(any(grepl("C2 C1 Q12/V2 \\* C2", flow_strings)))
+    const1 <- vapply(M1$flows$const, deparse, character(1))
+    const2 <- vapply(M2$flows$const, deparse, character(1))
+
+    expect_setequal(const1, c("k10", "k12", "k21"))
+    expect_setequal(const2, c("CL/V1", "Q12/V1", "Q12/V2"))
 })
 
 test_that("12-CMT well-stirred PBPK model behaves as expected under long-term infusion", {

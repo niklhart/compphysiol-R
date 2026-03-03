@@ -49,3 +49,21 @@
     }
     invisible(x)
 }
+
+#' Process a quoted call `expr` of the form `value` or `value[unit]` into a `units` object or numeric value
+#' @param expr Quoted call to process
+#' @returns A `units` object if a unit is specified, otherwise a numeric value
+#' @noRd
+.process_nse_arg <- function(expr, envir = parent.frame(n = 1)) {
+    if (is.call(expr) && length(expr) == 3 && expr[[1]] == quote(`[`)) {
+        val <- eval(expr[[2]], envir = envir)
+        unit <- paste(deparse(expr[[3]]), collapse = "")
+        if (inherits(val, 'units') && !units::ud_are_convertible(units(val), unit)) {
+            stop(sprintf("Value %s cannot be converted to specified unit '%s'.", val, unit))
+        }
+        res <- units::set_units(val, unit, mode = "standard")
+    } else {
+        res <- eval(expr, envir = envir)
+    }
+    res
+}

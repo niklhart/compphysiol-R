@@ -5,12 +5,10 @@
 \title{Combine multiple \code{Compartments} objects into one
 Combines multiple \code{Compartments} objects by concatenating their names and initial values.}
 \usage{
-\method{c}{Compartments}(..., recursive = FALSE)
+\method{c}{Compartments}(...)
 }
 \arguments{
 \item{...}{One or more \code{Compartments} objects to combine.}
-
-\item{recursive}{ignored}
 }
 \value{
 A single \code{Compartments} object containing all compartments from the inputs.

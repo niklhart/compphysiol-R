@@ -4,12 +4,22 @@
 \alias{compartments}
 \title{\code{Compartments} Class}
 \usage{
-compartments(name, initial = 0)
+compartments(
+  name = character(0),
+  initial = 0,
+  unit = NULL,
+  state = paste0("A", name, recycle0 = TRUE)
+)
 }
 \arguments{
 \item{name}{Compartment name(s), character scalar or vector}
 
-\item{initial}{Initial amounts for the compartments (numeric scalar or vector, default = 0)}
+\item{initial}{Initial amounts for the compartments (numeric scalar or vector, default = \code{0})}
+
+\item{unit}{Units for the initial amounts (character scalar or vector, default = \code{NULL}).
+If provided, must be either a single unit applied to all compartments or a vector of units matching the length of \code{name}.}
+
+\item{state}{State names for the compartments (character scalar or vector, default = \code{"A" + name}).}
 }
 \value{
 A \code{Compartments} object

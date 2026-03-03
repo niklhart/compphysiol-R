@@ -5,7 +5,7 @@ compartment_model <- function() {
 
     structure(
         list(
-            compartments = empty_compartment(),
+            compartments = compartments(),
             flows = empty_flow(),
             equations = empty_equation(),
             observables = empty_observable(),
@@ -68,86 +68,30 @@ print.CompartmentModel <- function(x, ...) {
     invisible(x)
 }
 
+# ------------------------------------ `add_*` functions for CompartmentModel composition in a pipeline ------------------------------------
 
 #' Add one or several compartments to a `CompartmentModel` object.
-#' 
+#'
 #' @param model A `CompartmentModel` object.
 #' @param name Name of the compartment(s)
 #' @param initial Initial amount(s) (default 0)
+#' @param unit Optional units for the initial amount(s) (e.g., `"mg"`, the default `NULL` means unitless)
+#'   If provided, must be either a single unit applied to all compartments or a vector of units matching the length of `name`.
+#' @param state Optional state name(s) for the compartment(s)  (character scalar or vector, default = `"A" + name`).
 #' @param comp A `Compartments` object. Constructed from the other inputs if not provided.
 #' @export
-add_compartment <- function(model, name, initial = 0, comp = compartments(name, initial)) {
+add_compartment <- function(
+    model,
+    name,
+    initial = 0,
+    unit = NULL,
+    state = paste0("A", name, recycle0 = TRUE),
+    comp = compartments(name, initial, unit, state)
+) {
     .check_class(model, "CompartmentModel")
     .check_class(comp, "Compartments")
     model$compartments <- c(model$compartments, comp)
     model
-}
-
-#' Get initial states of a `CompartmentModel` as a named or unnamed vector.
-#' @param model A `CompartmentModel` object.
-#' @param named A boolean, should the initial states be named (default: `TRUE`)?
-#' @returns A named or unnamed numeric vector of initial states, in the same order as `compartment_names(model)`.
-#' @export
-initials <- function(model, named = TRUE) {
-    .check_class(model, "CompartmentModel")
-    y0 <- model$compartments$initial
-    if (named) {
-        setNames(y0, nm = compartment_names(model))
-    } else {
-        y0
-    }
-}
-
-#' Get compartment names of a `CompartmentModel`.
-#' @param model A `CompartmentModel` object.
-#' @returns A character vector of compartment names.
-#' @export
-compartment_names <- function(model) {
-    .check_class(model, "CompartmentModel")
-    names(model$compartments)
-}
-
-
-#' Generate events data.frame for `deSolve` from stored dosing.
-#'
-#' This unifies bolus and infusion dosing into a single events data.frame, which is then used in
-#' the `toODE` method to generate the final events list for `deSolve`.
-#' @param model A `CompartmentModel` object.
-#' @returns A list with a single element `data`, which is a data.frame with columns `var`, `time`, `value`, and `method` (add or replace).
-.dosing_to_events <- function(model) {
-    .check_class(model, "CompartmentModel")
-
-    events <- data.frame(
-        var = character(),
-        time = numeric(),
-        value = numeric(),
-        method = character(),
-        stringsAsFactors = FALSE
-    )
-
-    # boluses
-    if (length(model$doses) > 0) {
-        doses <- model$doses
-        events <- rbind(
-            events,
-            data.frame(
-                var = doses$target,
-                time = doses$time,
-                value = doses$amount,
-                method = "add",
-                stringsAsFactors = FALSE
-            )
-        )
-    }
-
-    # infusion rate events
-    if (length(model$infusionEvents) > 0) {
-        events <- rbind(events, model$infusionEvents)
-    }
-
-    # sort by time
-    events <- events[order(events$time), ]
-    list(data = events)
 }
 
 #' Add one or several flows to a `CompartmentModel` object.
@@ -237,6 +181,26 @@ add_equation <- function(model, ..., eq = NULL) {
     return(model)
 }
 
+#' Add one or several parameters to a `CompartmentModel` object.
+#' Parameters can be added interactively as name-value pairs (potentially with units), or programmatically as a `Parameters` object.
+#' @param model A `CompartmentModel` object.
+#' @param ... Parameter values as name-value pairs, where values can optionally have units (e.g., `A = 2 [m]`).
+#' @param name Optional parameter names (if not using named arguments).
+#' @param value Optional parameter values (if not using named arguments).
+#' @param unit Optional parameter units (if not using named arguments).
+#' @param param A `Parameters` object. Constructed from the other inputs if not provided.
+#' @returns The modified `CompartmentModel` object.
+#' @export
+add_parameter <- function(
+    model, ..., name = NULL, value = NULL, unit = NULL, 
+    param = parameters(..., name = name, value = value, unit = unit)
+) {
+    .check_class(model, "CompartmentModel")
+    .check_class(param, "Parameters")
+    model$parameters <- c(model$parameters, param)
+    return(model)
+}
+
 #' Add one or several dosing events (bolus or infusion).
 #'
 #' This function allows the user to specify dosing events for a compartment model.
@@ -304,7 +268,7 @@ add_dosing <- function(
     # Convert infusion dosing into bolus-to-bag + infusion rate events, and add to model
     bag_names <- paste0("InfusionBag_", infus$target)
     rate_names <- paste0("InfusionRate_", infus$target)
-    comp_names <- compartment_names(model)
+    comp_names <- names(model$compartments)
     new_bag_names <- setdiff(bag_names, comp_names)
     new_rate_names <- setdiff(rate_names, comp_names)
 
@@ -349,14 +313,7 @@ add_dosing <- function(
         )
 }
 
-#' Linearity check for CompartmentModel object.
-#' 
-#' Checks if all flows in the model are linear with respect to the state variables.
-#' 
-#' @param model A `CompartmentModel` object.
-#' @return `TRUE` if all flows are linear, `FALSE` otherwise.
-#' @noRd
-.is_linear <- function(model) all(model$flows$type == "linear")
+# ------------------------------------ `to_*` functions for CompartmentModel exporting ------------------------------------
 
 #' Generate analytical solution function from a linear `CompartmentModel` object with a single bolus dose at time 0.
 #' @param model A `CompartmentModel` object.
@@ -376,7 +333,7 @@ to_analytical <- function(model, paramValues = list()) {
 
     .check_class(model, "CompartmentModel")
 
-    stateNames <- compartment_names(model)
+    stateNames <- names(model$compartments)
     nStates <- length(stateNames)
     name2idx <- setNames(seq_along(stateNames), stateNames)
 
@@ -470,7 +427,7 @@ to_analytical <- function(model, paramValues = list()) {
                 )
             }
         }
-        x0 <- initials(model)
+        x0 <- initials(model$compartments)
         res <- as.matrix(vapply(
             t,
             function(tt) expm::expm(A_eval * tt) %*% x0,
@@ -522,7 +479,7 @@ to_analytical <- function(model, paramValues = list()) {
 #' odeinfo <- to_ode(M, paramValues = list(k10 = 0.05))
 #' @export
 to_ode <- function(model, paramValues = list()) {
-    stateNames <- compartment_names(model)
+    stateNames <- names(model$compartments)
     name2idx <- setNames(seq_along(stateNames), stateNames)
 
     # ---- Validation: check that all flows point to known compartments ----
@@ -619,7 +576,61 @@ to_ode <- function(model, paramValues = list()) {
         stateNames = stateNames,
         obsFuncs = obsFuncs,
         freeParams = sort(unique(freeParams$list)),
-        y0 = initials(model),
+        y0 = initials(model$compartments, named = TRUE),
         events = .dosing_to_events(model)
     )
 }
+
+# ------------------------------------ Non-exported helper functions for CompartmentModel processing ------------------------------------
+
+#' Linearity check for CompartmentModel object.
+#' 
+#' Checks if all flows in the model are linear with respect to the state variables.
+#' 
+#' @param model A `CompartmentModel` object.
+#' @return `TRUE` if all flows are linear, `FALSE` otherwise.
+#' @noRd
+.is_linear <- function(model) all(model$flows$type == "linear")
+
+#' Generate events data.frame for `deSolve` from stored dosing.
+#'
+#' This unifies bolus and infusion dosing into a single events data.frame, which is then used in
+#' the `toODE` method to generate the final events list for `deSolve`.
+#' @param model A `CompartmentModel` object.
+#' @returns A list with a single element `data`, which is a data.frame with columns `var`, `time`, `value`, and `method` (add or replace).
+.dosing_to_events <- function(model) {
+    .check_class(model, "CompartmentModel")
+
+    events <- data.frame(
+        var = character(),
+        time = numeric(),
+        value = numeric(),
+        method = character(),
+        stringsAsFactors = FALSE
+    )
+
+    # boluses
+    if (length(model$doses) > 0) {
+        doses <- model$doses
+        events <- rbind(
+            events,
+            data.frame(
+                var = doses$target,
+                time = doses$time,
+                value = doses$amount,
+                method = "add",
+                stringsAsFactors = FALSE
+            )
+        )
+    }
+
+    # infusion rate events
+    if (length(model$infusionEvents) > 0) {
+        events <- rbind(events, model$infusionEvents)
+    }
+
+    # sort by time
+    events <- events[order(events$time), ]
+    list(data = events)
+}
+

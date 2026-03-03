@@ -61,7 +61,7 @@ lump_model <- function(M, partitioning = list(), normalize = list()) {
     )
 
     # --- lump initial conditions & VK ----------------------------------------
-    X0orig <- initials(M, named = TRUE)
+    X0orig <- initials(M$compartments, named = TRUE)
 
     # simple summation by lump
     lump <- function(x) tapply(x, grp[names(x)], sum)

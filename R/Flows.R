@@ -15,6 +15,11 @@
 #' @export
 flows <- function(from, to, ..., rate = NULL, const = NULL) {
 
+    # Early return for empty flows
+    if (identical(from, character(0)) || identical(to, character(0))) {
+        return(empty_flow())
+    }
+
     # Convert NULL/"" from/to to NA for easier handling of source/sink compartments
     from <- if (is.null(from)) NA_character_ else from
     to <- if (is.null(to)) NA_character_ else to

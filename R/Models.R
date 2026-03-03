@@ -334,59 +334,41 @@ sMD_PBPK_12CMT_permbased <- function() {
 }
 
 
-#' Create a generic multi-compartment PK model
+#' Create an empirical multi-compartment PK model in micro- or macro-parameterization
 #'
 #' @param ncomp Number of compartments (>=1)
 #' @param type Style of parameterization: "micro" (rate constants) or "macro" (volumes + clearances)
+#' @param unit Units for initial amounts (character scalar or `NULL`, the default).
 #' @return A `CompartmentModel` object
-#' @examples 
+#' @examples
 #' multiCompModel(ncomp = 3, type = "macro")
 #' @export
-multiCompModel <- function(ncomp = 1, type = c("micro", "macro")) {
+multiCompModel <- function(ncomp = 1, type = c("micro", "macro"), unit = NULL) {
     type <- match.arg(type)
     stopifnot(ncomp >= 1)
 
-    # Compartment names: central is C1
-    compNames <- paste0("C", seq_len(ncomp))
-    central_idx <- 1
+    # Compartment names: central is comp1
+    compNames <- paste0("comp", seq_len(ncomp))
+    iperiph <- seq_len(ncomp)[-1]
 
-    # First assemble compartments and observables
-    model <- compartment_model() |>
-        add_compartment(compNames, initial = 0) |>
-        add_observable(obs = observables(name = "C1Conc", expr = "C1/V1"))
-
-    # Next assemble reactions, depending on parameterization style
+    # express rate constants differently depending on parameterization style
     if (type == "micro") {
-        # Micro: first-order rate constants
-        # Elimination from central
-        model <- add_flow(model, "C1", "", const = "k10")
-        # Inter-compartmental rates
-        for (i in seq_len(ncomp)) {
-            if (i == central_idx) {
-                next
-            }
-            ki <- paste0("k1", i)
-            k_back <- paste0("k", i, "1")
-            model <- model |>
-                add_flow("C1", compNames[i], const = ki) |>
-                add_flow(compNames[i], "C1", const = k_back)
-        }
+        k10 <- "k10"
+        k1i <- paste0("k1", iperiph)
+        ki1 <- paste0("k", iperiph, "1")
     } else if (type == "macro") {
-        # Macro: flows and volumes
-        # Elimination from central scaled by volume
-        model <- add_flow(model, "C1", "", const = "CL / V1")
-        # Inter-compartmental flows
-        for (i in seq_len(ncomp)) {
-            if (i == central_idx) {
-                next
-            }
-            model <- model |>
-                add_flow("C1", compNames[i], const = paste0("Q1", i, " / V1")) |>
-                add_flow(compNames[i], "C1", const = paste0("Q1", i, " / V", i))
-        }
+        k10 <- "CL / V1"
+        k1i <- paste0("Q1", iperiph, " / V1")
+        ki1 <- paste0("Q1", iperiph, " / V", iperiph)
     }
 
-    model
+    # Model construction
+    compartment_model() |>
+        add_compartment(compNames, state = paste0("A", seq_len(ncomp))) |>
+        add_flow("comp1", "", const = k10) |>
+        add_flow("comp1", compNames[iperiph], const = k1i) |>
+        add_flow(compNames[iperiph], "comp1", const = ki1) |>
+        add_observable(obs = observables(name = "C1", expr = "A1/V1"))
 }
 
 

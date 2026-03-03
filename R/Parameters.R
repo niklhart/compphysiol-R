@@ -30,31 +30,8 @@ parameters <- function(..., name = NULL, value = NULL, unit = NULL) {
         if (!is.null(name) || !is.null(value) || !is.null(unit)) {
             stop("Cannot use both '...' and 'name'/'value/unit' arguments.")
         }
+        value <- lapply(args, .process_nse_arg, envir = parent.frame())
 
-        name <- names(args)
-        value <- vector("list", length(args)) |> setNames(nm = name)
-
-        # For each argument, find out if the `[unit]` notation is being used and evaluate inputs safely
-        for (i in seq_along(args)) {
-            arg <- args[[i]]
-            if (is.call(arg) && length(arg) == 3 && arg[[1]] == quote(`[`)) {
-                val <- eval(arg[[2]], envir = parent.frame())
-                unit <- paste(deparse(arg[[3]]), collapse = "")
-                if (
-                    inherits(val, 'units') &&
-                        !units::ud_are_convertible(units(val), unit)
-                ) {
-                    stop(sprintf(
-                        "Units of parameter '%s' are not compatible with specified unit '%s'.",
-                        name[i],
-                        unit
-                    ))
-                }
-                value[[i]] <- units::set_units(val, unit, mode = "standard")
-            } else {
-                value[[i]] <- eval(arg, envir = parent.frame())
-            }
-        }
     } else {
         if (length(name) != length(value)) stop("All parameters must be named.")
         if (!(length(unit) %in% c(0,1,length(value)))) stop("'unit' must be NULL, scalar or match length of 'value'.")

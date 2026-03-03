@@ -28,8 +28,8 @@ test_that("Compartments with mismatched name and initial lengths throw error", {
     expect_error(compartments(c("adi", "bon", "gut"), c(10, 20)))
 })
 
-test_that("Adding empty compartment works", {
-    comp <- empty_compartment()
+test_that("Zero inputs to compartments() results in valid but empty object", {
+    comp <- compartments()
     expect_equal(length(comp), 0)
 })
 
@@ -37,13 +37,21 @@ test_that("Compartments with units work correctly", {
 
     val <- units::set_units(1, 'mg')
     comp <- compartments("test", val)
-    expect_equal(comp$initial, val)
+    expect_equal(initials(comp, named = FALSE), val)
 
-    skip("Extra unit argument to be added to compartments()")
+    comp <- compartments("test", 1, unit = "mg")
+    expect_equal(initials(comp, named = FALSE), val)
 
 })
 
 test_that("Parametrized initial conditions work correctly", {
     # This test is a placeholder for when we implement parametrized compartments
     skip("Parametrized initial conditions not yet implemented")
+})
+
+test_that("Compartment state definition works correctly", {
+
+    comp <- compartments("cmt", state = "state")
+    expect_equal(states(comp), "state")
+
 })

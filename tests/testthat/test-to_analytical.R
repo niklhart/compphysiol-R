@@ -2,7 +2,7 @@ test_that("1-CMT model can be solved analytically with / without hard-wired para
 
     # Testing 1-CMT model with and without hard-wired parameters
     M <- multiCompModel(ncomp = 1, type = "micro")
-    M$compartments$initial <- 10
+    M$compartments$initial <- list(10)
 
     params <- list(k10 = 1)
 
