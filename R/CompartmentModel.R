@@ -36,6 +36,7 @@ print.CompartmentModel <- function(x, ...) {
     print(x$flows)
     print(x$equations)
     print(x$observables)
+    print(x$parameters)
 
     # dosing (boluses + infusions unified) 
     # 
@@ -53,10 +54,10 @@ print.CompartmentModel <- function(x, ...) {
             ev <- events[i, ]
             cat(
                 "   - at t =",
-                ev$time,
+                format(ev$time),
                 ":",
                 ev$method,
-                ev$value,
+                format(ev$value),
                 "\u2192",
                 ev$var,
                 "\n"
@@ -105,11 +106,7 @@ add_compartment <- function(
 #' Add one or several flows to a `CompartmentModel` object.
 #'
 #' @param model A `CompartmentModel` object.
-#' @param from Source compartment
-#' @param to Target compartment
-#' @param ... Unused, enforces `rate` / `const` / `flow` to be specified as named arguments only, not positional
-#' @param rate Optional flow rate expression as character
-#' @param const Optional rate constant name (for linear flows)
+#' @inheritParams flows
 #' @param flow A `Flows` object. Constructed from the other inputs if not provided.
 #' @returns The modified `CompartmentModel` object.
 #' @examples
@@ -123,10 +120,21 @@ add_flow <- function(
     ...,
     rate = NULL,
     const = NULL,
-    flow = flows(from, to, rate = rate, const = const)
+    flow
 ) {
     .check_class(model, "CompartmentModel")
+
+    call <- match.call(expand.dots = FALSE)
+
+    flow <- .forward_or_use(
+        object_arg_name = "flow",
+        constructor_name = "flows",
+        call = call,
+        parent_env = parent.frame()
+    )
+
     .check_class(flow, "Flows")
+
     model$flows <- c(model$flows, flow)
     return(model)
 }
@@ -199,19 +207,31 @@ add_equation <- function(model, ..., eq = NULL) {
 #' Add one or several parameters to a `CompartmentModel` object.
 #' Parameters can be added interactively as name-value pairs (potentially with units), or programmatically as a `Parameters` object.
 #' @param model A `CompartmentModel` object.
-#' @param ... Parameter values as name-value pairs, where values can optionally have units (e.g., `A = 2 [m]`).
-#' @param name Optional parameter names (if not using named arguments).
-#' @param value Optional parameter values (if not using named arguments).
-#' @param unit Optional parameter units (if not using named arguments).
+#' @inheritParams parameters
 #' @param param A `Parameters` object. Constructed from the other inputs if not provided.
 #' @returns The modified `CompartmentModel` object.
 #' @export
 add_parameter <- function(
-    model, ..., name = NULL, value = NULL, unit = NULL, 
-    param = parameters(..., name = name, value = value, unit = unit)
+    model,
+    ...,
+    name = NULL,
+    value = NULL,
+    unit = NULL,
+    param
 ) {
     .check_class(model, "CompartmentModel")
+
+    call <- match.call(expand.dots = FALSE)
+
+    param <- .forward_or_use(
+        object_arg_name = "param",
+        constructor_name = "parameters",
+        call = call,
+        parent_env = parent.frame()
+    )
+
     .check_class(param, "Parameters")
+
     model$parameters <- c(model$parameters, param)
     return(model)
 }
@@ -225,20 +245,8 @@ add_parameter <- function(
 #' such as adding infusion bag and rate compartments, and creating the appropriate events for
 #' starting and stopping the infusion.
 #'
-#' TODO: Currently there is an infinite loop caused by the pipeline of `add_dosing` calling `add_dosing`
-#' when processing infusion dosing. This is a temporary issue that will be resolved in the next iteration
-#' of the code refactor, where the internal handling of infusion dosing will be separated from the user-facing
-#' `add_dosing` function.
-#'
 #' @param model A `CompartmentModel` object.
-#' @param target Name of the target compartment(s) for the dose(s)
-#' @param time Time of the dosing event(s)
-#' @param amount Amount(s) to be dosed (for bolus or infusion)
-#' @param time_unit Optional unit for time (character scalar, e.g., "h", or `NULL`, the default)
-#' @param amount_unit Optional unit for amount (character scalar, e.g., "mg", or `NULL`, the default)
-#' @param ... Unused, enforces `rate` / `duration` / `dose` to be specified as named arguments only, not positional
-#' @param rate Infusion rate (for infusion)
-#' @param duration Infusion duration (for infusion)
+#' @inheritParams dosing
 #' @param dose A `Dosing` object. Constructed from the other inputs if not provided.
 #' @returns The modified `CompartmentModel` object.
 #' @examples
@@ -255,17 +263,19 @@ add_dosing <- function(
     ...,
     rate = NULL,
     duration = NULL,
-    dose = dosing(
-        target = target,
-        time = time,
-        amount = amount,
-        time_unit = time_unit,
-        amount_unit = amount_unit,
-        rate = rate,
-        duration = duration
-    )
+    dose
 ) {
     .check_class(model, "CompartmentModel")
+
+    call <- match.call(expand.dots = FALSE)
+
+    dose <- .forward_or_use(
+        object_arg_name = "dose",
+        constructor_name = "dosing",
+        call = call,
+        parent_env = parent.frame()
+    )
+
     .check_class(dose, "Dosing")
 
     # Separate bolus and infusion dosing for different handling

@@ -5,14 +5,7 @@
 \title{Add one or several parameters to a \code{CompartmentModel} object.
 Parameters can be added interactively as name-value pairs (potentially with units), or programmatically as a \code{Parameters} object.}
 \usage{
-add_parameter(
-  model,
-  ...,
-  name = NULL,
-  value = NULL,
-  unit = NULL,
-  param = parameters(..., name = name, value = value, unit = unit)
-)
+add_parameter(model, ..., name = NULL, value = NULL, unit = NULL, param)
 }
 \arguments{
 \item{model}{A \code{CompartmentModel} object.}

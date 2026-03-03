@@ -14,28 +14,27 @@ add_dosing(
   ...,
   rate = NULL,
   duration = NULL,
-  dose = dosing(target = target, time = time, amount = amount, time_unit = time_unit,
-    amount_unit = amount_unit, rate = rate, duration = duration)
+  dose
 )
 }
 \arguments{
 \item{model}{A \code{CompartmentModel} object.}
 
-\item{target}{Name of the target compartment(s) for the dose(s)}
+\item{target}{Target compartment name (character scalar)}
 
-\item{time}{Time of the dosing event(s)}
+\item{time}{Dosing time(s) (numeric scalar or vector)}
 
-\item{amount}{Amount(s) to be dosed (for bolus or infusion)}
+\item{amount}{Amount(s) of dose (non-negative numeric scalar or vector, optional)}
 
 \item{time_unit}{Optional unit for time (character scalar, e.g., "h", or \code{NULL}, the default)}
 
 \item{amount_unit}{Optional unit for amount (character scalar, e.g., "mg", or \code{NULL}, the default)}
 
-\item{...}{Unused, enforces \code{rate} / \code{duration} / \code{dose} to be specified as named arguments only, not positional}
+\item{...}{Unused, enforces \code{rate} and \code{duration} to be specified as named arguments only, not positional}
 
-\item{rate}{Infusion rate (for infusion)}
+\item{rate}{Infusion rate (non-negative numeric scalar or vector, optional)}
 
-\item{duration}{Infusion duration (for infusion)}
+\item{duration}{Infusion duration (positive numeric scalar or vector, optional)}
 
 \item{dose}{A \code{Dosing} object. Constructed from the other inputs if not provided.}
 }
@@ -50,11 +49,6 @@ Dosing events can be either bolus (instantaneous) or infusion (continuous over t
 The function handles the necessary modifications to the model structure for infusion dosing,
 such as adding infusion bag and rate compartments, and creating the appropriate events for
 starting and stopping the infusion.
-
-TODO: Currently there is an infinite loop caused by the pipeline of \code{add_dosing} calling \code{add_dosing}
-when processing infusion dosing. This is a temporary issue that will be resolved in the next iteration
-of the code refactor, where the internal handling of infusion dosing will be separated from the user-facing
-\code{add_dosing} function.
 }
 \examples{
 model <- compartment_model() |>

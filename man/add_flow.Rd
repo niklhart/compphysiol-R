@@ -4,28 +4,20 @@
 \alias{add_flow}
 \title{Add one or several flows to a \code{CompartmentModel} object.}
 \usage{
-add_flow(
-  model,
-  from,
-  to,
-  ...,
-  rate = NULL,
-  const = NULL,
-  flow = flows(from, to, rate = rate, const = const)
-)
+add_flow(model, from, to, ..., rate = NULL, const = NULL, flow)
 }
 \arguments{
 \item{model}{A \code{CompartmentModel} object.}
 
-\item{from}{Source compartment}
+\item{from}{The name of the source compartment(s) (character vector or NULL for source compartments)}
 
-\item{to}{Target compartment}
+\item{to}{The name of the destination compartment(s) (character vector or NULL for sink compartments)}
 
-\item{...}{Unused, enforces \code{rate} / \code{const} / \code{flow} to be specified as named arguments only, not positional}
+\item{...}{Unused, enforces \code{rate} and \code{const} to be specified as named arguments only, not positional}
 
-\item{rate}{Optional flow rate expression as character}
+\item{rate}{The flow rate (numeric, optional, mutually exclusive with \code{const})}
 
-\item{const}{Optional rate constant name (for linear flows)}
+\item{const}{Rate constant for first-order flows (numeric, optional, mutually exclusive with \code{rate})}
 
 \item{flow}{A \code{Flows} object. Constructed from the other inputs if not provided.}
 }
