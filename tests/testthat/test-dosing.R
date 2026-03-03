@@ -114,3 +114,39 @@ test_that("Subsetting dosing objects works", {
     expect_equal(doses_subset$time, c(0, 24))
     expect_equal(doses_subset$amount, c(100, 200))
 })
+
+# Dosing with units tests
+
+test_that("Dosing with units is created correctly (single dose)", {
+
+    amt <- units::set_units(100, "mg")
+    t <- units::set_units(0, "h")
+
+    d1 <- dosing(target = "Central", time = 0, amount = 100, time_unit = "h", amount_unit = "mg")
+    expect_equal(d1$time, t)
+    expect_equal(d1$amount, amt)
+
+    d2 <- dosing(target = "Central", time = t, amount = amt)
+    expect_equal(d2$time, t)
+    expect_equal(d2$amount, amt)
+
+    d3 <- dosing(target = "Central", time = 0 [h], amount = 100 [mg])
+    expect_equal(d3$time, t)
+    expect_equal(d3$amount, amt)
+})
+
+test_that("Dosing with units is created correctly (multiple doses)", {
+    
+    t12 <- units::set_units(c(0, 24), "h")
+    amt1 <- units::set_units(100, "mg")
+    amt2 <- units::set_units(200, "mg")
+    amt12 <- units::set_units(c(100, 200), "mg")
+
+    d1 <- dosing(target = "Central", time = t12, amount = amt1)
+    expect_equal(d1$time, t12)
+    expect_equal(d1$amount, rep(amt1, 2))
+
+    d2 <- dosing(target = "Central", time = t12, amount = amt12)
+    expect_equal(d2$time, t12)
+    expect_equal(d2$amount, amt12)
+})

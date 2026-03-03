@@ -8,6 +8,8 @@ dosing(
   target = character(0),
   time = numeric(0),
   amount = NULL,
+  time_unit = NULL,
+  amount_unit = NULL,
   ...,
   rate = NULL,
   duration = NULL
@@ -19,6 +21,10 @@ dosing(
 \item{time}{Dosing time(s) (numeric scalar or vector)}
 
 \item{amount}{Amount(s) of dose (non-negative numeric scalar or vector, optional)}
+
+\item{time_unit}{Optional unit for time (character scalar, e.g., "h", or \code{NULL}, the default)}
+
+\item{amount_unit}{Optional unit for amount (character scalar, e.g., "mg", or \code{NULL}, the default)}
 
 \item{...}{Unused, enforces \code{rate} and \code{duration} to be specified as named arguments only, not positional}
 

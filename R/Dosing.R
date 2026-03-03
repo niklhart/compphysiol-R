@@ -1,8 +1,8 @@
 #' Dosing specification
-#' 
+#'
 #' Represents a dosing event for a `CompartmentModel`. A dose can be
 #' specified either as a bolus (instantaneous input) or as an infusion (continuous input over time).
-#' 
+#'
 #' ## Bolus
 #' Provide only `amount`. The dose is given at `time`.
 #' ## Infusion
@@ -10,11 +10,13 @@
 #' \deqn{amount = rate * duration}
 #' \deqn{rate = amount / duration}
 #' \deqn{duration = amount / rate}
-#' The `rate` and `duration` argument must be specified as named arguments, not positional, to avoid any ambiguity. 
-#' 
+#' The `rate` and `duration` argument must be specified as named arguments, not positional, to avoid any ambiguity.
+#'
 #' @param target Target compartment name (character scalar)
 #' @param time Dosing time(s) (numeric scalar or vector)
 #' @param amount Amount(s) of dose (non-negative numeric scalar or vector, optional)
+#' @param time_unit Optional unit for time (character scalar, e.g., "h", or `NULL`, the default)
+#' @param amount_unit Optional unit for amount (character scalar, e.g., "mg", or `NULL`, the default)
 #' @param ... Unused, enforces `rate` and `duration` to be specified as named arguments only, not positional
 #' @param rate Infusion rate (non-negative numeric scalar or vector, optional)
 #' @param duration Infusion duration (positive numeric scalar or vector, optional)
@@ -30,10 +32,29 @@
 #' dosing("Central", time = c(0, 24, 48), amount = 100)
 #' dosing("Central", time = c(0, 24), amount = c(50, 60), rate = 10)
 #' @export
-dosing <- function(target = character(0), time = numeric(0), amount = NULL, ..., rate = NULL, duration = NULL) {
-    
+dosing <- function(
+    target = character(0),
+    time = numeric(0),
+    amount = NULL,
+    time_unit = NULL,
+    amount_unit = NULL,
+    ...,
+    rate = NULL,
+    duration = NULL
+) {
+    # Process NSE arguments for time, amount, rate, and duration, which might include units via `value[unit]`
+    time <- .process_nse_arg(expr = substitute(time), envir = parent.frame(n = 1))
+    amount <- .process_nse_arg(expr = substitute(amount), envir = parent.frame(n = 1))
+    rate <- .process_nse_arg(expr = substitute(rate), envir = parent.frame(n = 1))
+    duration <- .process_nse_arg(expr = substitute(duration), envir = parent.frame(n = 1))
+
+    # Set units if specified via time_unit and amount_unit arguments
+    if (!is.null(time_unit)) time <- units::set_units(time, time_unit, mode = "standard")
+    if (!is.null(amount_unit)) amount <- units::set_units(amount, amount_unit, mode = "standard")
+
     # Early return for empty dosing
-    if (length(time) == 0) {
+    ndose <- length(time)
+    if (ndose == 0) {
         return(structure(
             data.frame(
                 target = character(0),
@@ -49,27 +70,25 @@ dosing <- function(target = character(0), time = numeric(0), amount = NULL, ...,
     # Validate inputs
     stopifnot(is.character(target))
     stopifnot(is.numeric(time))
-    if (!is.null(amount)) stopifnot(is.numeric(amount), amount >= 0)
-    if (!is.null(rate)) stopifnot(is.numeric(rate), rate >= 0)
-    if (!is.null(duration)) stopifnot(is.numeric(duration), duration > 0)
+    if (!is.null(amount)) stopifnot(is.numeric(amount), units::set_units(amount, NULL) >= 0)
+    if (!is.null(rate)) stopifnot(is.numeric(rate), units::set_units(rate, NULL) >= 0)
+    if (!is.null(duration)) stopifnot(is.numeric(duration), units::set_units(duration, NULL) > 0)
 
     # More strict checks on argument lengths than data.frame recycling rules, to avoid silent bugs from unintended recycling.
-    arg_lengths <- c(
-        target = length(target),
-        time = length(time),
-        amount = if (!is.null(amount)) length(amount) else NA_integer_,
-        rate = if (!is.null(rate)) length(rate) else NA_integer_,
-        duration = if (!is.null(duration)) length(duration) else NA_integer_
+    stopifnot(
+        "target must be scalar or match length of time" = length(target) %in% c(1, ndose),
+        "amount must be NULL, scalar or match length of time" = length(amount) %in% c(0, 1, ndose),
+        "rate must be NULL, scalar or match length of time" = length(rate) %in% c(0, 1, ndose),
+        "duration must be NULL, scalar or match length of time" = length(duration) %in% c(0, 1, ndose)
     )
-    valid_lengths <- arg_lengths[!is.na(arg_lengths)]
-    non_scalar <- valid_lengths[valid_lengths > 1]
-    if (length(unique(non_scalar)) > 1) {
-        stop("Incompatible argument lengths: all non-scalar dosing arguments must have the same length.")
-    }
+
+    # Variables with units are not automatically recycled by data.frame -> do it here
+    if (!is.null(amount)) amount <- rep(amount, length.out = ndose)
+    if (!is.null(rate)) rate <- rep(rate, length.out = ndose)
+    if (!is.null(duration)) duration <- rep(duration, length.out = ndose)
 
     # Case 1: bolus dosing -- early return
     if (!is.null(amount) && is.null(rate) && is.null(duration)) {
-        # Bolus dosing
         return(structure(
             data.frame(
                 target = target,
@@ -145,31 +164,38 @@ print.Dosing <- function(x, ...) {
     n <- length(x)
     if (n > 0) {
 
+        bol <- is_bolus(x)
+        inf <- is_infusion(x)
+
         # assemble string to be printed, differentiating bolus vs infusion events
         dosing_strings <- character(length = n)
-        dosing_strings[is_bolus(x)] <- paste0(
-            "   - Bolus: ",
-            format(x$amount[is_bolus(x)]),
-            " \u2192 ",
-            x$target[is_bolus(x)],
-            " at t = ",
-            format(x$time[is_bolus(x)])
-        )
-        dosing_strings[is_infusion(x)] <- paste0(
-            "   - Infusion: ",
-            format(x$amount[is_infusion(x)]),
-            " \u2192 ",
-            x$target[is_infusion(x)],
-            " from t = ",
-            format(x$time[is_infusion(x)]),
-            " to t = ",
-            format(x$time[is_infusion(x)] + x$duration[is_infusion(x)]),
-            " (rate = ",
-            format(x$rate[is_infusion(x)]),
-            ")"
-        )
+        if (any(bol)) {
+            dosing_strings[bol] <- paste0(
+                "Bolus: ",
+                format(x$amount[bol]),
+                " \u2192 ",
+                x$target[bol],
+                " at t = ",
+                format(x$time[bol])
+            )
+        }
+        if (any(inf)) {
+            dosing_strings[inf] <- paste0(
+                "Infusion: ",
+                format(x$amount[is_infusion(x)]),
+                " \u2192 ",
+                x$target[is_infusion(x)],
+                " from t = ",
+                format(x$time[is_infusion(x)]),
+                " to t = ",
+                format(x$time[is_infusion(x)] + x$duration[is_infusion(x)]),
+                " (rate = ",
+                format(x$rate[is_infusion(x)]),
+                ")"
+            )
+        }
         cat(" Dosing:\n")
-        cat(dosing_strings, sep = "\n")
+        cat(sprintf('  (%s) %s\n', seq_len(n), dosing_strings), sep = "")
     } else {
         cat(" Dosing: (none)\n")
     }
