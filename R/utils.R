@@ -111,10 +111,10 @@
 .to_dimensions <- function(var, length = "m", mass = "kg", time = "s", amount = "mol", current = "A", temperature = "K", intensity = "cd") {
     inherits(var, "units") || return(var)
 
-    var_si <- units::convert_to_base(var, keep_fraction = FALSE)
+    var_si <- units::convert_to_base(var)
 
     si_units <- c("m", "kg", "s", "mol", "A", "K", "cd")
-    output_units <- c(length, mass, time, amount, current = current, temperature = temperature, intensity = intensity)
+    output_units <- c(length, mass, time, amount, current, temperature, intensity)
 
     is_convertible <- units::ud_are_convertible(si_units, output_units)
     all(is_convertible) || stop(

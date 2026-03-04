@@ -51,7 +51,7 @@
 #' )
 #'
 #' # Generate ODE function and auxiliary structures
-#' odeinfo <- to_ode(M, paramValues)
+#' odeinfo <- to_ode(M)
 #'
 #' # Run simulation
 #' times <- seq(0, 24, by = 0.1)
@@ -203,7 +203,7 @@ sMD_PBPK_12CMT_wellstirred <- function() {
 #' )
 #'
 #' # Generate ODE function and auxiliary structures
-#' odeinfo <- to_ode(M, paramValues)
+#' odeinfo <- to_ode(M)
 #'
 #' # Run simulation
 #' times <- seq(0, 24, by = 0.1)
