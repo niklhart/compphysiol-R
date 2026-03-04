@@ -67,12 +67,12 @@ dosing <- function(
         ))
     }
 
-    # Validate inputs
+    # Validate inputs (using sign to support variables with/without units)
     stopifnot(is.character(target))
     stopifnot(is.numeric(time))
-    if (!is.null(amount)) stopifnot(is.numeric(amount), units::set_units(amount, NULL) >= 0)
-    if (!is.null(rate)) stopifnot(is.numeric(rate), units::set_units(rate, NULL) >= 0)
-    if (!is.null(duration)) stopifnot(is.numeric(duration), units::set_units(duration, NULL) > 0)
+    if (!is.null(amount)) stopifnot(is.numeric(amount), sign(amount) >= 0)
+    if (!is.null(rate)) stopifnot(is.numeric(rate), sign(rate) >= 0)
+    if (!is.null(duration)) stopifnot(is.numeric(duration), sign(duration) == 1)
 
     # More strict checks on argument lengths than data.frame recycling rules, to avoid silent bugs from unintended recycling.
     stopifnot(
