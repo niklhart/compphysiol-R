@@ -95,3 +95,38 @@
 
     eval(call, parent_env)
 }
+
+#' Convert a variable with or without units to a specified set of dimensions.
+#' This is used to create a consistent internal representation of variables.
+#' @param var A numeric variable, with or without units
+#' @param length The unit to convert length dimensions to (default "m")
+#' @param mass The unit to convert mass dimensions to (default "kg")
+#' @param time The unit to convert time dimensions to (default "s")
+#' @param amount The unit to convert amount of substance dimensions to (default "mol")
+#' @param current The unit to convert electric current dimensions to (default "A")
+#' @param temperature The unit to convert temperature dimensions to (default "K")
+#' @param intensity The unit to convert luminous intensity dimensions to (default "cd")
+#' @returns The variable converted to the specified dimensions if it has units, otherwise returned unchanged
+#' @noRd
+.to_dimensions <- function(var, length = "m", mass = "kg", time = "s", amount = "mol", current = "A", temperature = "K", intensity = "cd") {
+    inherits(var, "units") || return(var)
+
+    var_si <- units::convert_to_base(var, keep_fraction = FALSE)
+
+    si_units <- c("m", "kg", "s", "mol", "A", "K", "cd")
+    output_units <- c(length, mass, time, amount, current = current, temperature = temperature, intensity = intensity)
+
+    is_convertible <- units::ud_are_convertible(si_units, output_units)
+    all(is_convertible) || stop(
+        sprintf(
+            "The following SI dimensions cannot be converted to the specified output dimensions: %s",
+            paste(si_units[!is_convertible], collapse = ", ")
+        )
+    )
+    
+    map <- setNames(output_units, nm = si_units)
+    units(var_si)$numerator <- unname(map[units(var_si)$numerator])
+    units(var_si)$denominator <- unname(map[units(var_si)$denominator])
+    var_si
+}
+
