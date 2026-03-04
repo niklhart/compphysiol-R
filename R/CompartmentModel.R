@@ -80,7 +80,7 @@ print.CompartmentModel <- function(x, ...) {
 #' @export
 add_compartment <- function(
     model,
-    name,
+    name = character(0),
     initial = 0,
     unit = NULL,
     state = paste0("A", name, recycle0 = TRUE),
@@ -679,3 +679,147 @@ to_ode <- function(model, paramValues = list()) {
     list(data = events)
 }
 
+#' Unit consistency check for CompartmentModel object.
+#' 
+#' Checks that all flows, observables, and equations in the model are dimensionally consistent with respect to the units of the compartments, parameters and dosing.
+#' 
+#' @param model A `CompartmentModel` object.
+#' @return `TRUE` if all units are consistent, otherwise an error is raised.
+#' @noRd
+.check_unit_consistency <- function(model) {
+    .check_class(model, "CompartmentModel")
+
+    # Available variables for unit checking: compartment initials and parameters
+    varlist <-  c(
+        setNames(model$compartments$initial, nm = states(model$compartments)), 
+        unclass(model$parameters)
+    )
+    varnames <- names(varlist)
+
+    # Check dosing units against compartment units
+    for (i in seq_along(model$doses)) {
+        amt <- model$doses$amount[[i]]
+        tar <- model$doses$target[[i]]
+        tar_value <- initials(model$compartments[tar])
+        isunit_amt <- inherits(amt, "units")
+        isunit_tar <- inherits(tar_value, "units")
+        if (isunit_amt || isunit_tar) {
+            if (!(isunit_amt && isunit_tar) ) stop(
+                sprintf("In dosing (%s), inconsistent units for dosing amount and target compartment '%s': one has units while the other does not.", i, tar)
+            )
+            if (!units::ud_are_convertible(units(amt), units(tar_value))) stop(
+                sprintf(
+                    "In dosing (%s), inconsistent units for dosing amount and target compartment '%s': %s vs. %s",
+                    i, tar, units(amt), units(tar_value)
+                )
+            )
+        }
+    }
+
+    # Check if flow rates are unit consistent
+    parnames <- names(model$parameters)
+    for (i in seq_along(model$flows)) {
+        rate <- model$flows$rate[[i]]
+        from <- model$flows$from[[i]]
+        to <- model$flows$to[[i]]
+        type <- model$flows$type[[i]]
+
+        # Check that 'from' and 'to' compartments have compatible units (if both are defined)
+        from_val <- if (!is.na(from)) initials(model$compartments[from]) else NULL
+        to_val <- if (!is.na(to)) initials(model$compartments[to]) else NULL
+        if (!is.null(from_val) &&  !is.null(to_val)) {
+
+            isunit_from <- inherits(from_val, "units")
+            isunit_to <- inherits(to_val, "units")
+            if (!isunit_from && !isunit_to) next
+            if (isunit_from != isunit_to) stop(
+                sprintf("In flow (%d), inconsistent units for 'from' and 'to' compartments: one has units while the other does not.", i)
+            )
+            units::ud_are_convertible(units(from_val), units(to_val)) || stop(
+                sprintf(
+                    "In flow (%d), inconsistent units for 'from' and 'to' compartments: %s vs. %s",
+                    i, units(from_val), units(to_val)
+                )
+            )
+        }
+
+        if (type == "linear") {
+
+            # Check that all parameters in the rate constant are defined in the model, warn if not (we cannot check units in this case)
+            const <- model$flows$const[[i]]
+            if (!all(all.vars(const) %in% parnames)) {
+                warning("Cannot check units for flow (",i,"): some parameter(s) in the rate constant are not defined in the model.")
+                next
+            }
+            # Evaluate the rate constant with the parameter values to check that it has units of 1/time (if parameters have units)
+            const_val <- tryCatch(
+                eval(const, envir = as.list(model$parameters)), 
+                error = function(e) {
+                    stop(sprintf("In flow (%s), unit inconsistency in rate constant expression: %s", i, e$message))
+                }
+            )
+            if (!inherits(const_val, "units")) next
+            units::ud_are_convertible(units(const_val), "1/h") || stop(
+                sprintf("In flow (%d), unit of rate constant (%s) must be type 1/Time.", i, units(const_val))
+            )
+        } else { # type == "nonlinear"
+
+            # Check that all parameters in the rate expression are defined in the model, warn if not (we cannot check units in this case)
+            rate <- model$flows$rate[[i]]
+            if (!all(all.vars(rate) %in% varnames)) {
+                warning("Cannot check units for flow (", i, "): some parameter(s) in the rate expression are not defined in the model.")
+                next
+            }
+            # Evaluate the rate expression with all variables to check that it has units of [cmt unit]/time
+            rate_val <- tryCatch(
+                eval(rate, envir = varlist),
+                error = function(e) {
+                    stop(sprintf("In flow (%s), unit inconsistency in rate expression: %s", i, e$message))
+                }
+            )
+            if (!inherits(rate_val, "units")) next
+            one_h <- units::set_units(1, "h")
+            expected <- c(from_val, to_val) / one_h
+            units::ud_are_convertible(units(rate_val), units(expected)) || stop(
+                sprintf(
+                    "In flow (%d), unit inconsistency of rate expression (%s) must be compatible with unit of compartment per time (%s)",
+                    i, units(rate_val), units(expected)
+                )
+            )
+        }
+    }
+
+    # Check that observables definitions are valid in terms of compartment and parameter units (if units are involved)
+    obsnames <- names(model$observables)
+    for (i in seq_along(model$observables)) {
+        obs_expr <- model$observables[[i]]
+        if (!all(all.vars(obs_expr) %in% varnames)) {
+            warning("Cannot check units for observable '", obsnames[[i]], "': some parameter(s) in the observable are not defined in the model.")
+            next
+        }
+        # Evaluate the observable with the compartment initial amounts and parameter values to check that it can be evaluated without unit errors
+        tryCatch(
+            eval(obs_expr, envir = varlist), 
+            error = function(e) {
+                stop(sprintf("In observable '%s', unit inconsistency in expression: %s", obsnames[[i]], e$message))
+            }
+        )
+    }
+
+    # Check that equation definitions are valid in terms of compartment and parameter units (if units are involved)
+    eqnames <- names(model$equations)
+    for (i in seq_along(model$equations)) {
+        eq_expr <- model$equations[[i]]
+        if (!all(all.vars(eq_expr) %in% varnames)) {
+            warning("Cannot check units for equation '", eqnames[[i]], "': some parameter(s) in the equation are not defined in the model.")
+            next
+        }
+        # Evaluate the equation with the compartment initial amounts and parameter values to check that it can be evaluated without unit errors
+        tryCatch(
+            eval(eq_expr, envir = varlist), 
+            error = function(e) {
+                stop(sprintf("In equation '%s', unit inconsistency in expression: %s", eqnames[[i]], e$message))
+            }
+        )
+    }
+}

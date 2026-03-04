@@ -6,7 +6,7 @@
 \usage{
 add_compartment(
   model,
-  name,
+  name = character(0),
   initial = 0,
   unit = NULL,
   state = paste0("A", name, recycle0 = TRUE),
