@@ -524,19 +524,20 @@ to_analytical <- function(model, paramValues = list()) {
 #' odeinfo <- to_ode(M, paramValues = list(k10 = 0.05))
 #' @export
 to_ode <- function(model, paramValues = list()) {
-    stateNames <- names(model$compartments)
+    compNames <- names(model$compartments)
+    stateNames <- names(model$compartments) # TODO: should become states(model$compartments) once the distinction is finalized
     name2idx <- setNames(seq_along(stateNames), stateNames)
 
     # ---- Validation: check that all flows point to known compartments ----
     check_comp <- function(nm) {
-        if (!is.null(nm) && any(!(nm %in% stateNames))) {
-            missing <- nm[!(nm %in% stateNames)]
+        if (!is.null(nm) && any(!(nm %in% compNames))) {
+            missing <- nm[!(nm %in% compNames)]
             stop(
                 "Flow references unknown compartment: ",
                 paste(missing, collapse = ", "),
                 ". ",
                 "Compartment names in this model: ",
-                paste(stateNames, collapse = ", "),
+                paste(compNames, collapse = ", "),
                 ". ",
                 "Did you mean to merge this model with another?"
             )
