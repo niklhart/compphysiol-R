@@ -1,4 +1,4 @@
-# compphysiol (development version)
+# compphysiol 0.2.1
 
 # compphysiol 0.2.0
 
