@@ -2,23 +2,24 @@
 % Please edit documentation in R/CompartmentModel.R
 \name{to_ode}
 \alias{to_ode}
-\title{Generate ODE function, initial values, observables, and free parameters from a \code{CompartmentModel} object.}
+\title{Generate ODE function, initial values, observables, and free parameters from a \code{CompartmentModel} object}
 \usage{
-to_ode(model, paramValues = list())
+to_ode(model, dimensions = NULL)
 }
 \arguments{
-\item{model}{A \code{CompartmentModel} object.}
+\item{model}{A \code{CompartmentModel} object}
 
-\item{paramValues}{Named list of parameter values to inline in ODEs.}
+\item{dimensions}{Named list of unit dimensions used for inlining parameters in ODEs (default: SI units)}
 }
 \value{
 A list with elements \code{odefun} (function), \code{y0} (named numeric vector), \code{obsFuncs} (list of functions),
 and \code{freeParams} (character vector).
 }
 \description{
-Generate ODE function, initial values, observables, and free parameters from a \code{CompartmentModel} object.
+Generate ODE function, initial values, observables, and free parameters from a \code{CompartmentModel} object
 }
 \examples{
-M <- multiCompModel(ncomp = 2, type = "micro")
-odeinfo <- to_ode(M, paramValues = list(k10 = 0.05))
+M <- multiCompModel(ncomp = 2, type = "micro", unit = "mg") |>
+   add_parameter(k10 = 0.05 [1/h])  # fix one param
+odeinfo <- to_ode(M, dimensions = list(time = "h"))
 }

@@ -4,9 +4,10 @@ test_that("Full simulation with bolus dosing works", {
     M <- compartment_model() |>
          add_compartment(c("Central","Peripheral"), 0) |>
          add_flow("Central", "Peripheral", const = "k12") |>
-         add_dosing("Central", amount = 100, time = 0)
+         add_dosing("Central", amount = 100, time = 0) |>
+         add_parameter(k12 = 0.1)
 
-    odeinfo <- to_ode(M, paramValues = list(k12 = 0.1))
+    odeinfo <- to_ode(M)
     y0 <- odeinfo$y0
     times <- seq(0, 10, 1)
     out <- ode(y = y0, 
@@ -26,9 +27,10 @@ test_that("Full simulation with infusion dosing works", {
     M <- compartment_model() |>
         add_compartment(c("Central", "Peripheral"), 0) |>
         add_flow("Central", "Peripheral", const = "k12") |>
-        add_dosing(target = "Central", rate = 10, duration = 5, time = 0)     # infusion: rate=10 units/h, duration=5h, start at t=0
-
-    odeinfo <- to_ode(M, paramValues = list(k12 = 0.1))
+        add_dosing(target = "Central", rate = 10, duration = 5, time = 0) |> 
+        add_parameter(k12 = 0.1)
+    
+    odeinfo <- to_ode(M)
  
     times <- seq(0, 10, 0.5)
     out <- ode(
@@ -36,7 +38,8 @@ test_that("Full simulation with infusion dosing works", {
         times = times, 
         func = odeinfo$odefun, 
         parms = list(), 
-        events = odeinfo$events)
+        events = odeinfo$events
+    )
 
     # Central compartment should increase during infusion and then plateau/decrease
     central <- out[, "Central"]
@@ -55,9 +58,10 @@ test_that("One-compartment model with first-order elimination matches analytical
     # Build model
     M <- compartment_model() |>
         add_compartment("Central", A0) |>
-        add_flow("Central", "", const = "k")  # elimination
+        add_flow("Central", "", const = "k") |>
+        add_parameter(k = k)
 
-    odeinfo <- to_ode(M, paramValues = list(k = k))
+    odeinfo <- to_ode(M)
 
     out <- ode(
         y = odeinfo$y0,
@@ -87,9 +91,10 @@ test_that("Two-compartment oral absorption model matches Bateman function", {
         add_compartment("Gut", D) |>
         add_compartment("Central", 0) |>
         add_flow("Gut", "Central", const = "ka") |>
-        add_flow("Central", "", const = "ke")
+        add_flow("Central", "", const = "ke") |>
+        add_parameter(ka = ka, ke = ke)
 
-    odeinfo <- to_ode(M, paramValues = list(ka = ka, ke = ke))
+    odeinfo <- to_ode(M)
 
     out <- ode(
         y = odeinfo$y0,
@@ -117,9 +122,10 @@ test_that("One-compartment model with observed concentration matches analytic so
     M <- compartment_model() |>
         add_compartment("Central", A0) |>
         add_flow("Central", "", const = "k") |>
-        add_observable(C = Central / V)
+        add_observable(C = Central / V) |>
+        add_parameter(k = k, V = V)
 
-    odeinfo <- to_ode(M, paramValues = list(k = k, V = V))
+    odeinfo <- to_ode(M)
 
     out <- ode(
         y = odeinfo$y0,
@@ -143,10 +149,11 @@ test_that("to_ode flags flows pointing to unknown compartments", {
     # Simple one-compartment model with a flow to a non-existent compartment
     M <- compartment_model() |>
         add_compartment("gut", 100) |>
-        add_flow("gut", "central", const = "ka")
+        add_flow("gut", "central", const = "ka") |>
+        add_parameter(ka = 0.1)
     
     expect_error(
-        to_ode(M, paramValues = list(ka = 0.1)),
+        to_ode(M),
         regexp = "Flow references unknown compartment: central."
     )
 

@@ -1,7 +1,8 @@
 test_that("lumping is exact in a 3-CMT model with identical peripherals", {
 
     M <- multiCompModel(ncomp = 3, type = "micro") |>
-        add_dosing(target = "comp1", time = 0, amount = 10)
+        add_dosing(target = "comp1", time = 0, amount = 10) |>
+        add_parameter(k10 = 5, V1 = 1, k12 = 5, k13 = 10, k21 = 3, k31 = 3)
 
     L <- lump_model(M,
                     partitioning = list(c("comp2","comp3")),
@@ -11,12 +12,8 @@ test_that("lumping is exact in a 3-CMT model with identical peripherals", {
                     )
     )
 
-    # same intercompartmental clearances --> identical kinetic timescales
-    param <- list(CL = 5, V1 = 1, V2 = 5, V3 = 10, Q12 = 3, Q13 = 3)
-    param <- list(k10 = 5, V1 = 1, k12 = 5, k13 = 10, k21 = 3, k31 = 3)
-
-    odeinfoM <- to_ode(M, paramValues = param)
-    odeinfoL <- to_ode(L, paramValues = param)
+    odeinfoM <- to_ode(M)
+    odeinfoL <- to_ode(L)
 
     times <- 0:6
 
@@ -34,7 +31,8 @@ test_that("lumping works for 2-CMT blood/tissue model with CL", {
         add_compartment(c("blo","tis"), c(10,0)) |>
         add_flow("blo", "tis", const = "Q/Vblo") |>
         add_flow("tis", "blo", const = "Q/(Vtis*Ktis)") |>
-        add_flow("tis", "", const = "CL/(Vtis*Ktis)")
+        add_flow("tis", "", const = "CL/(Vtis*Ktis)") |>
+        add_parameter(Q = 1, Vblo = 1, Vtis = 3, Ktis = 10, CL = 2)
 
     L <- lump_model(M,
                     partitioning = list(c("blo","tis")),
@@ -45,19 +43,13 @@ test_that("lumping works for 2-CMT blood/tissue model with CL", {
 
     Lref <- compartment_model() |>
         add_compartment("blo_tis", 10) |>
-        add_flow("blo_tis", "", const = "CL*Q/(Vblo*(Q+CL)+Vtis*Ktis*Q)")
+        add_flow("blo_tis", "", const = "CL*Q/(Vblo*(Q+CL)+Vtis*Ktis*Q)") |> 
+        add_parameter(Q = 1, Vblo = 1, Vtis = 3, Ktis = 10, CL = 2)
 
-    param <- list(
-        Q = 1,
-        Vblo = 1,
-        Vtis = 3,
-        Ktis = 10,
-        CL = 2
-    )
     times <- 0:6
 
-    odeinfoL    <- to_ode(L, paramValues = param)
-    odeinfoLref <- to_ode(Lref, paramValues = param)
+    odeinfoL    <- to_ode(L)
+    odeinfoLref <- to_ode(Lref)
 
     outL    <- deSolve::ode(y = odeinfoL$y0, times = times, func = odeinfoL$odefun)
     outLref <- deSolve::ode(y = odeinfoLref$y0, times = times, func = odeinfoLref$odefun)
@@ -75,7 +67,8 @@ test_that("lumping handles first-pass effect correctly", {
         add_flow("gut", "liv", const = "ka") |>
         add_flow("liv", "blo", const = "Q/(Vliv*Kliv)") |>
         add_flow("blo", "liv", const = "Q/Vblo") |>
-        add_flow("liv", "", const = "CL/(Vliv*Kliv)")
+        add_flow("liv", "", const = "CL/(Vliv*Kliv)") |>
+        add_parameter(ka = 1, Q = 1, Vliv = 1, Kliv = 10, Vblo = 10, CL = 10)
 
     L <- lump_model(M,
                     partitioning = list(sys=c("blo","liv")),
@@ -84,18 +77,10 @@ test_that("lumping handles first-pass effect correctly", {
                         liv = "Vliv*Kliv*Q/(Q+CL)"
                     ))
 
-    param <- list(
-        Q = 1,
-        Vblo = 10,
-        Vliv = 1,
-        Kliv = 10,
-        CL = 10,
-        ka = 1
-    )
     times <- 0:6
 
-    odeinfoM    <- to_ode(M, paramValues = param)
-    odeinfoL    <- to_ode(L, paramValues = param)
+    odeinfoM    <- to_ode(M)
+    odeinfoL    <- to_ode(L)
 
     outM    <- deSolve::ode(y = odeinfoM$y0, times = times, func = odeinfoM$odefun)
     outL    <- deSolve::ode(y = odeinfoL$y0, times = times, func = odeinfoL$odefun)

@@ -18,23 +18,19 @@ test_that("multiCompModel micro/macro parametrization flows are correct", {
 test_that("12-CMT well-stirred PBPK model behaves as expected under long-term infusion", {
 
     dur <- 1000
-    M <- sMD_PBPK_12CMT_wellstirred() |>
-        add_dosing(target = "ven", time = 0, amount = 1, duration = dur) |>   # long-term infusion to test steady-state behaviour
-        add_observable(Cpla = BP * ven / Vven)
-
     paramValues <- list(
         BP = 1,
         CL = 5,
         Kadi = 1,
-        Kbon = 2,
-        Kgut = 3,
-        Khea = 4,
-        Kkid = 5,
-        Kliv = 6,
-        Klun = 7,
-        Kmus = 8,
-        Kski = 9,
-        Kspl = 10,
+        Kbon = 1,
+        Kgut = 1,
+        Khea = 1,
+        Kkid = 1,
+        Kliv = 1,
+        Klun = 1,
+        Kmus = 1,
+        Kski = 1,
+        Kspl = 1,
         Qadi = 0.5,
         Qbon = 0.5,
         Qgut = 0.5,
@@ -57,13 +53,17 @@ test_that("12-CMT well-stirred PBPK model behaves as expected under long-term in
         Vspl = 1,
         Vven = 1
     )
-    odeinfo <- to_ode(M, paramValues)
+    M <- sMD_PBPK_12CMT_wellstirred() |>
+        add_dosing(target = "ven", time = 0, amount = 1, duration = dur) |>   # long-term infusion to test steady-state behaviour
+        add_observable(Cpla = BP * ven / Vven) |> 
+        add_parameter(param = do.call(parameters, paramValues))
+    
+    odeinfo <- to_ode(M)
     times <- c(0, dur)
     out <- deSolve::ode(
         y = odeinfo$y0,
         times = times,
         func = odeinfo$odefun,
-        parms = paramValues,
         events = odeinfo$events
     )
     out_df <- as.data.frame(out)
@@ -78,14 +78,8 @@ test_that("12-CMT well-stirred PBPK model behaves as expected under long-term in
 
 
 test_that("Permeation-based model reduces to well-stirred in the fast permeability limit", {
-    
     dose <- dosing(target = "ven", amount = 1, time = 0)
     times <- 0:24
-
-    Mws <- sMD_PBPK_12CMT_wellstirred() |>
-        add_dosing(dose = dose)
-    Mpb <- sMD_PBPK_12CMT_permbased() |>
-        add_dosing(dose = dose)
 
     paramValues_ws <- list(
         BP = 1,
@@ -193,13 +187,19 @@ test_that("Permeation-based model reduces to well-stirred in the fast permeabili
         Vven = 1
     )
 
-    odeinfo_ws <- to_ode(Mws, paramValues_ws)
-    odeinfo_pb <- to_ode(Mpb, paramValues_pb)
+    Mws <- sMD_PBPK_12CMT_wellstirred() |>
+        add_dosing(dose = dose) |>
+        add_parameter(param = do.call(parameters, paramValues_ws))
+    Mpb <- sMD_PBPK_12CMT_permbased() |>
+        add_dosing(dose = dose) |>
+        add_parameter(param = do.call(parameters, paramValues_pb))
+
+    odeinfo_ws <- to_ode(Mws)
+    odeinfo_pb <- to_ode(Mpb)
     out_ws <- deSolve::ode(
         y = odeinfo_ws$y0,
         times = times,
         func = odeinfo_ws$odefun,
-        parms = paramValues_ws,
         events = odeinfo_ws$events
     )
 
@@ -207,19 +207,32 @@ test_that("Permeation-based model reduces to well-stirred in the fast permeabili
         y = odeinfo_pb$y0,
         times = times,
         func = odeinfo_pb$odefun,
-        parms = paramValues_pb,
         events = odeinfo_pb$events
     )
 
     # Compare amounts in tissues at all time points - should be very close in the fast permeability limit
-    tissue_comps <- c("adi", "bon", "gut", "hea", "kid", "liv", "lun", "mus", "ski", "spl")
+    tissue_comps <- c(
+        "adi",
+        "bon",
+        "gut",
+        "hea",
+        "kid",
+        "liv",
+        "lun",
+        "mus",
+        "ski",
+        "spl"
+    )
     for (tissue in tissue_comps) {
         comp_pb <- paste0(tissue, c("_exc", "_cel"))
-        expect_equal(out_ws[,tissue], rowSums(out_pb[,comp_pb]), tolerance = 0.0001)
+        expect_equal(
+            out_ws[, tissue],
+            rowSums(out_pb[, comp_pb]),
+            tolerance = 0.0001
+        )
     }
 
     # Compare amounts in blood compartments
-    expect_equal(out_ws[,"ven"], out_pb[,"ven"], tolerance = 0.0001)
-    expect_equal(out_ws[,"art"], out_pb[,"art"], tolerance = 0.0001)
-
+    expect_equal(out_ws[, "ven"], out_pb[, "ven"], tolerance = 0.0001)
+    expect_equal(out_ws[, "art"], out_pb[, "art"], tolerance = 0.0001)
 })

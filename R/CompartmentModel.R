@@ -514,19 +514,26 @@ to_analytical <- function(model, paramValues = list()) {
     )
 }
 
-#' Generate ODE function, initial values, observables, and free parameters from a `CompartmentModel` object.
-#' @param model A `CompartmentModel` object.
-#' @param paramValues Named list of parameter values to inline in ODEs.
-#' @returns A list with elements `odefun` (function), `y0` (named numeric vector), `obsFuncs` (list of functions), 
+#' Generate ODE function, initial values, observables, and free parameters from a `CompartmentModel` object
+#' @param model A `CompartmentModel` object
+#' @param dimensions Named list of unit dimensions used for inlining parameters in ODEs (default: SI units)
+#' @returns A list with elements `odefun` (function), `y0` (named numeric vector), `obsFuncs` (list of functions),
 #' and `freeParams` (character vector).
 #' @examples
-#' M <- multiCompModel(ncomp = 2, type = "micro")
-#' odeinfo <- to_ode(M, paramValues = list(k10 = 0.05))
+#' M <- multiCompModel(ncomp = 2, type = "micro", unit = "mg") |>
+#'    add_parameter(k10 = 0.05 [1/h])  # fix one param
+#' odeinfo <- to_ode(M, dimensions = list(time = "h"))
 #' @export
-to_ode <- function(model, paramValues = list()) {
+to_ode <- function(
+    model,
+    dimensions = NULL
+) {
     compNames <- names(model$compartments)
     stateNames <- names(model$compartments) # TODO: should become states(model$compartments) once the distinction is finalized
     name2idx <- setNames(seq_along(stateNames), stateNames)
+
+    paramValues <- lapply(model$parameters, function(p) do.call(.to_dimensions, c(list(p), dimensions))) # TODO: look up dimensions in global dimensions list instead of passing as argument?
+    paramValues <- vapply(paramValues, function(x) units::set_units(x,NULL), numeric(1))
 
     # ---- Validation: check that all flows point to known compartments ----
     check_comp <- function(nm) {
@@ -544,7 +551,10 @@ to_ode <- function(model, paramValues = list()) {
         }
     }
 
-    flow_comps <- setdiff(unique(c(model$flows$from, model$flows$to)), NA_character_)
+    flow_comps <- setdiff(
+        unique(c(model$flows$from, model$flows$to)),
+        NA_character_
+    )
     lapply(flow_comps, check_comp)
 
     # Environment container for free parameters
@@ -616,13 +626,20 @@ to_ode <- function(model, paramValues = list()) {
     })
     names(obsFuncs) <- names(model$observables)
 
+    # Initial values in output units
+    # y0 <- initials(model$compartments, named = TRUE) # OLD (no unit handling)
+    y0 <- model$compartments$initial |>
+        lapply(function(x) do.call(.to_dimensions, c(list(x), dimensions))) |>
+        vapply(function(x) units::set_units(x, NULL), numeric(1)) |> 
+        setNames(stateNames)
+
     # Output list
     list(
         odefun = odefun,
         stateNames = stateNames,
         obsFuncs = obsFuncs,
         freeParams = sort(unique(freeParams$list)),
-        y0 = initials(model$compartments, named = TRUE),
+        y0 = y0,
         events = .dosing_to_events(model)
     )
 }

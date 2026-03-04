@@ -5,9 +5,10 @@ test_that("ODE generation handles first-order reaction with bolus dosing", {
     M <- compartment_model() |>
         add_compartment("Central", 10) |>
         add_compartment("Peripheral", 0) |>
-        add_flow("Central", "Peripheral", const = "k12")
+        add_flow("Central", "Peripheral", const = "k12") |>
+        add_parameter(k12 = 0.1)
   
-    odeinfo <- to_ode(M, paramValues = list(k12 = 0.1))
+    odeinfo <- to_ode(M)
 
     # Function generation and correct state names
     expect_true(is.function(odeinfo$odefun))

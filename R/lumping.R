@@ -110,6 +110,7 @@ lump_model <- function(M, partitioning = list(), normalize = list()) {
     d$target <- grp[d$target]
     L <- add_dosing(L, dose = d)
 
+    L <- add_parameter(L, param = M$parameters)
     L
 }
 

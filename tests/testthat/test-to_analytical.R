@@ -18,16 +18,17 @@ test_that("1-CMT model can be solved analytically with / without hard-wired para
 
 test_that("2-CMT model can be solved analytically", {
 
+    paramValues <- list(k10 = 1, k12 = 2, k21 = 3)
+
     # Testing 2-CMT model via ODE or analytical solution
-    M <- multiCompModel(ncomp = 2, type = "micro")
+    M <- multiCompModel(ncomp = 2, type = "micro") |>
+        add_parameter(param = do.call(parameters, paramValues))
     M$compartments$initial[[1]] <- 10
 
-    params <- list(k10 = 1, k12 = 2, k21 = 3)
+    sol_aly <- to_analytical(M)
+    y_aly <- sol_aly$statefun(t = 0:3, params = paramValues)
 
-    sol_aly <- to_analytical(M, paramValues = params)
-    y_aly <- sol_aly$statefun(t = 0:3)
-
-    sol_num <- to_ode(M, paramValues = params)
+    sol_num <- to_ode(M)
     y_num <- deSolve::ode(y=sol_num$y0, times = 0:3, func = sol_num$odefun)
     attributes(y_num) <- attributes(y_num)[c("dim", "dimnames")]
 
@@ -37,13 +38,14 @@ test_that("2-CMT model can be solved analytically", {
 
 test_that("1-CMT model observables are correctly handled", {
 
-    M <- multiCompModel(ncomp = 1, type = "micro")
-    M$compartments$initial[[1]] <- 10
-
     params <- list(k10 = 1, V1 = 2)
 
+    M <- multiCompModel(ncomp = 1, type = "micro") |>
+        add_parameter(param = do.call(parameters, params))
+    M$compartments$initial[[1]] <- 10
+
     sol_aly <- to_analytical(M, paramValues = params)
-    sol_num <- to_ode(M, paramValues = params)
+    sol_num <- to_ode(M)
 
     expect_identical(
         functionBody(sol_num$obsFuncs$C1Conc),
