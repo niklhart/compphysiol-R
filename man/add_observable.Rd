@@ -4,28 +4,45 @@
 \alias{add_observable}
 \title{Add an observable to a \code{CompartmentModel} object.}
 \usage{
-add_observable(model, ..., obs = NULL)
+add_observable(model, ..., name = character(0), expr = character(0), obs)
 }
 \arguments{
 \item{model}{A \code{CompartmentModel} object.}
 
-\item{...}{Name-expression pairs for observables, e.g. \code{Cblo = blo / Vblo}}
+\item{...}{Name-expression pairs defining the observables. The expressions can be provided as character strings or as R calls.}
 
-\item{obs}{An \code{Observables} object.}
+\item{name}{Name of the observable(s), character scalar or vector}
+
+\item{expr}{Expression(s) for the observable(s), as character scalar/vector or as R call / lists of R calls.
+Expressions may contain parameters that are added to the model's parameters list, as well as compartment states (not compartment names!)}
+
+\item{obs}{An \code{Observables} object. Constructed from the other inputs if not provided.}
 }
 \value{
 The modified \code{CompartmentModel} object.
 }
 \description{
-Add an observable to a \code{CompartmentModel} object.
+Observables are quantities of interest that are calculated from the state variables
+(compartments) and parameters, but are not part of the ODE system.
+}
+\details{
+Observables and equations are very similar, but there are two key differences:
+\enumerate{
+\item For each observable (but not for equations), \code{to_ode()} returns a function to calculate it based on the ODE output.
+\item Equations can be used in the definitions of flows, while observables cannot.
+}
 }
 \examples{
 ## Interactive path with name-expression pairs
 compartment_model() |>
     add_compartment("blo") |>
-    add_observable(Cblo = blo/Vblo)
+    add_observable(Cblo = Ablo / Vblo)
+## Programmatic path with name and expression vectors
+compartment_model() |>
+    add_compartment("blo") |>
+    add_observable(name = "Cblo", expr = "Ablo/Vblo")
 ## Programmatic path with Observables object
-obs <- observables(name = "Cblo", expr = "blo/Vblo")
+obs <- observables(name = "Cblo", expr = "Ablo/Vblo")
 compartment_model() |>
     add_compartment("blo") |>
     add_observable(obs = obs)

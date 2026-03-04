@@ -4,27 +4,45 @@
 \alias{add_equation}
 \title{Add one or several equations to a \code{CompartmentModel} object.}
 \usage{
-add_equation(model, ..., eq = NULL)
+add_equation(model, ..., name = character(0), expr = character(0), eq)
 }
 \arguments{
 \item{model}{A \code{CompartmentModel} object.}
 
-\item{...}{Name-expression pairs for equations, e.g. \code{co = Qadi+Qbon+Qhea+Qkid+Qliv+Qmus+Qski}}
+\item{...}{Name-expression pairs defining the equations. The expressions can be provided as character strings or as R calls.}
 
-\item{eq}{An \code{Equations} object.}
+\item{name}{Name of the equation(s), character scalar or vector}
+
+\item{expr}{Expression(s) for the equation(s), as character scalar/vector or as R call / lists of R calls.
+Expressions may contain parameters that are added to the model's parameters list, as well as compartment states (not compartment names!)}
+
+\item{eq}{An \code{Equations} object. Constructed from the other inputs if not provided.}
 }
 \value{
 The modified \code{CompartmentModel} object.
 }
 \description{
-Add one or several equations to a \code{CompartmentModel} object.
+Equations allow to define algebraic relationships between model variables,
+which can be used in flows and observables. The main purpose of equations is to
+define physiologically meaningful aggregate parameters (such as cardiac output)
+that are composed of more basic parameters (such as blood flows to individual organs).
+}
+\details{
+Observables and equations are very similar, but there are two key differences:
+\enumerate{
+\item For each observable (but not for equations), \code{to_ode()} returns a function to calculate it based on the ODE output.
+\item Equations can be used in the definitions of flows, while observables cannot.
+}
 }
 \examples{
 ## Interactive path with name-expression pairs
 compartment_model() |>
-    add_equation(co = Qadi+Qbon+Qhea+Qkid+Qliv+Qmus+Qski)
+    add_equation(co = Qadi + Qbon + Qhea + Qkid + Qliv + Qmus + Qski)
+## Programmatic path with name and expression vectors
+compartment_model() |>
+    add_equation(name = "co", expr = "Qadi + Qbon + Qhea + Qkid + Qliv + Qmus + Qski")
 ## Programmatic path with Equations object
-eq <- equations(name = "co", expr = "Qadi+Qbon+Qhea+Qkid+Qliv+Qmus+Qski")
+eq <- equations(name = "co", expr = "Qadi + Qbon + Qhea + Qkid + Qliv + Qmus + Qski")
 compartment_model() |>
     add_equation(eq = eq)
 }

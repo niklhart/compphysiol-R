@@ -1,15 +1,42 @@
 
 #' Create an `Observables` object
+#' 
+#' Observables are quantities of interest that are calculated from the state variables 
+#' (compartments) and parameters, but are not part of the ODE system. 
+#' 
+#' Observables and equations are very similar, but there are two key differences:
+#' 
+#' 1. For each observable (but not for equations), `to_ode()` returns a function to calculate it based on the ODE output.
+#' 2. Equations can be used in the definitions of flows, while observables cannot.
+#' 
+#' @param ... Name-expression pairs defining the observables. The expressions can be provided as character strings or as R calls. 
 #' @param name Name of the observable(s), character scalar or vector
-#' @param expr Expression (as an R call)
+#' @param expr Expression(s) for the observable(s), as character scalar/vector or as R call / lists of R calls.
+#'   Expressions may contain parameters that are added to the model's parameters list, as well as compartment states (not compartment names!)
 #' @returns An `Observables` object
 #' @examples
+#' ## Interactive path with name-expression pairs
+#' observables(
+#'     Cpla = Acen/Vcen/BP,
+#'     Cblo = Acen/Vcen
+#' )
+#' ## Programmatic path with name and expression vectors
 #' observables(
 #'     name = c("Cpla","Cblo"), 
-#'     expr = c("Central/Vcentral/BP", "Central/Vcentral")
+#'     expr = c("Acen/Vcen/BP", "Acen/Vcen")
 #' )
 #' @export
-observables <- function(name = character(0), expr = character(0)) {
+observables <- function(..., name = character(0), expr = character(0)) {
+
+    dots <- as.list(substitute(list(...)))[-1]
+    if (length(dots) > 0) {
+        if (length(name) > 0 || length(expr) > 0) {
+            stop("Cannot use both '...' and 'name'/'expr' arguments.")
+        }
+        name <- names(dots)
+        expr <- unname(dots)
+    }
+
     if (!is.vector(expr)) expr <- list(expr)
     if (length(name) != length(expr)) stop("Arguments 'name' and 'expr' must have the same length.")
 

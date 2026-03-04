@@ -1,25 +1,25 @@
 # Test the Observables class
 
 test_that("Observables object is created correctly", {
-    obs <- observables(c("Cpla", "Cblo"), c("blo/Vblo/BP", "blo/Vblo"))
+    obs <- observables(name = c("Cpla", "Cblo"), expr = c("blo/Vblo/BP", "blo/Vblo"))
     expect_s3_class(obs, "Observables")
 })
 
 test_that("Length and names methods work for Observables", {
-    obs <- observables(c("Cpla", "Cblo", "Cper"), c("cen/Vcen/BP", "cen/Vcen", "per/Vper"))
+    obs <- observables(name = c("Cpla", "Cblo", "Cper"), expr = c("cen/Vcen/BP", "cen/Vcen", "per/Vper"))
     expect_equal(length(obs), 3)
     expect_equal(names(obs), c("Cpla", "Cblo", "Cper"))
 })
 
 test_that("Print method for Observables works", {
-    obs <- observables(c("Cpla", "Cblo"), c("blo/Vblo/BP", "blo/Vblo"))
+    obs <- observables(name = c("Cpla", "Cblo"), expr = c("blo/Vblo/BP", "blo/Vblo"))
     expect_snapshot(print(obs))
 })
 
 test_that("Subsetting Observables object works", {
     obs <- observables(
-        c("Cpla", "Cblo", "Cper"),
-        c("blo/Vblo/BP", "blo/Vblo", "per/Vper")
+        name = c("Cpla", "Cblo", "Cper"),
+        expr = c("blo/Vblo/BP", "blo/Vblo", "per/Vper")
     )
     obs_subset <- obs[1:2]
     expect_equal(length(obs_subset), 2)
@@ -28,8 +28,8 @@ test_that("Subsetting Observables object works", {
 })
 
 test_that("Concatenating Observables objects works", {
-    obs1 <- observables(c("Cpla", "Cblo"), c("blo/Vblo/BP", "blo/Vblo"))
-    obs2 <- observables(c("Cper"), c("per/Vper"))
+    obs1 <- observables(name = c("Cpla", "Cblo"), expr = c("blo/Vblo/BP", "blo/Vblo"))
+    obs2 <- observables(name = "Cper", expr = "per/Vper")
     combined_obs <- c(obs1, obs2)
 
     expect_equal(length(combined_obs), 3)
@@ -39,8 +39,8 @@ test_that("Concatenating Observables objects works", {
 
 test_that("Observables with mismatched name and expr lengths throw error", {
     expect_error(observables(
-        c("cen", "per"),
-        c("blo/Vblo/BP", "blo/Vblo", "per/Vper")
+        name = c("cen", "per"),
+        expr = c("blo/Vblo/BP", "blo/Vblo", "per/Vper")
     ))
 })
 
@@ -54,7 +54,7 @@ test_that("Empty Observables objects behave as expected", {
 })
 
 test_that("add_observable works in programmatic and interactive paths", {
-    # Programmatic path
+    # Programmatic path 1
     obs <- observables(name = "Cblo", expr = "blo/Vblo")
     M1 <- compartment_model() |>
         add_compartment("blo") |>
@@ -64,12 +64,21 @@ test_that("add_observable works in programmatic and interactive paths", {
     expect_equal(names(M1$observables), "Cblo")
     expect_equal(M1$observables[[1]], quote(blo/Vblo))
 
-    # Interactive path
+    # Programmatic path 2
     M2 <- compartment_model() |>
         add_compartment("blo") |>
-        add_observable(Cblo = blo/Vblo)
+        add_observable(name = "Cblo", expr = "blo/Vblo")
 
     expect_equal(length(M2$observables), 1)
     expect_equal(names(M2$observables), "Cblo")
-    expect_equal(M2$observables[[1]], quote(blo/Vblo))
+    expect_equal(M2$observables[[1]], quote(blo / Vblo))
+
+    # Interactive path
+    M3 <- compartment_model() |>
+        add_compartment("blo") |>
+        add_observable(Cblo = blo/Vblo)
+
+    expect_equal(length(M3$observables), 1)
+    expect_equal(names(M3$observables), "Cblo")
+    expect_equal(M3$observables[[1]], quote(blo/Vblo))
 })

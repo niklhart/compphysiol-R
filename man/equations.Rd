@@ -4,22 +4,35 @@
 \alias{equations}
 \title{Create an \code{Equations} object}
 \usage{
-equations(name = character(0), expr = character(0))
+equations(..., name = character(0), expr = character(0))
 }
 \arguments{
+\item{...}{Name-expression pairs defining the equations. The expressions can be provided as character strings or as R calls.}
+
 \item{name}{Name of the equation(s), character scalar or vector}
 
-\item{expr}{Expression (as an R call)}
+\item{expr}{Expression(s) for the equation(s), as character scalar/vector or as R call / lists of R calls.
+Expressions may contain parameters that are added to the model's parameters list, as well as compartment states (not compartment names!)}
 }
 \value{
 An \code{Equations} object
 }
 \description{
-Create an \code{Equations} object
+Equations allow to define algebraic relationships between model variables,
+which can be used in flows and observables. The main purpose of equations is to
+define physiologically meaningful aggregate parameters (such as cardiac output)
+that are composed of more basic parameters (such as blood flows to individual organs).
+}
+\details{
+Observables and equations are very similar, but there are two key differences:
+\enumerate{
+\item For each observable (but not for equations), \code{to_ode()} returns a function to calculate it based on the ODE output.
+\item Equations can be used in the definitions of flows, while observables cannot.
+}
 }
 \examples{
-equations(
-    name = "co", 
-    expr = "Qadi+Qbon+Qhea+Qkid+Qliv+Qmus+Qski"
-)
+## Interactive path with name-expression pairs
+equations(co = Qadi + Qbon + Qhea + Qkid + Qliv + Qmus + Qski)
+## Programmatic path with name and expression vectors
+equations(name = "co", expr = "Qadi + Qbon + Qhea + Qkid + Qliv + Qmus + Qski")
 }

@@ -88,7 +88,7 @@ add_compartment <- function(
 ) {
     .check_class(model, "CompartmentModel")
 
-    call <- match.call(expand.dots = FALSE)
+    call <- match.call()
 
     comp <- .forward_or_use(
         object_arg_name = "comp",
@@ -124,7 +124,7 @@ add_flow <- function(
 ) {
     .check_class(model, "CompartmentModel")
 
-    call <- match.call(expand.dots = FALSE)
+    call <- match.call()
 
     flow <- .forward_or_use(
         object_arg_name = "flow",
@@ -141,65 +141,79 @@ add_flow <- function(
 
 #' Add an observable to a `CompartmentModel` object.
 #'
+#' @inherit observables description details
+#' 
 #' @param model A `CompartmentModel` object.
-#' @param ... Name-expression pairs for observables, e.g. `Cblo = blo / Vblo`
-#' @param obs An `Observables` object.
+#' @inheritParams observables
+#' @param obs An `Observables` object. Constructed from the other inputs if not provided.
 #' @returns The modified `CompartmentModel` object.
 #' @examples
 #' ## Interactive path with name-expression pairs
 #' compartment_model() |>
 #'     add_compartment("blo") |>
-#'     add_observable(Cblo = blo/Vblo)
+#'     add_observable(Cblo = Ablo / Vblo)
+#' ## Programmatic path with name and expression vectors
+#' compartment_model() |>
+#'     add_compartment("blo") |>
+#'     add_observable(name = "Cblo", expr = "Ablo/Vblo")
 #' ## Programmatic path with Observables object
-#' obs <- observables(name = "Cblo", expr = "blo/Vblo")
+#' obs <- observables(name = "Cblo", expr = "Ablo/Vblo")
 #' compartment_model() |>
 #'     add_compartment("blo") |>
 #'     add_observable(obs = obs)
 #' @export
-add_observable <- function(model, ..., obs = NULL) {
+add_observable <- function(model, ..., name = character(0), expr = character(0), obs) {
     .check_class(model, "CompartmentModel")
-    if (!is.null(obs)) {
-        # programmatic path
-        .check_class(obs, "Observables")
-    } else {
-        # interactive path
-        dots <- as.list(substitute(list(...)))[-1]
-        obs <- observables(
-            name = names(dots),
-            expr = unname(dots)
-        )
-    }
+
+    call <- match.call()
+
+    obs <- .forward_or_use(
+        object_arg_name = "obs",
+        constructor_name = "observables",
+        call = call,
+        parent_env = parent.frame()
+    )
+
+    .check_class(obs, "Observables")
+
     model$observables <- c(model$observables, obs)
     return(model)
 }
 
 #' Add one or several equations to a `CompartmentModel` object.
+#' 
+#' @inherit equations description details
+#' 
 #' @param model A `CompartmentModel` object.
-#' @param ... Name-expression pairs for equations, e.g. `co = Qadi+Qbon+Qhea+Qkid+Qliv+Qmus+Qski`
-#' @param eq An `Equations` object.
+#' @inheritParams equations
+#' @param eq An `Equations` object. Constructed from the other inputs if not provided.
 #' @returns The modified `CompartmentModel` object.
 #' @examples
 #' ## Interactive path with name-expression pairs
 #' compartment_model() |>
-#'     add_equation(co = Qadi+Qbon+Qhea+Qkid+Qliv+Qmus+Qski)
+#'     add_equation(co = Qadi + Qbon + Qhea + Qkid + Qliv + Qmus + Qski)
+#' ## Programmatic path with name and expression vectors
+#' compartment_model() |>
+#'     add_equation(name = "co", expr = "Qadi + Qbon + Qhea + Qkid + Qliv + Qmus + Qski")
 #' ## Programmatic path with Equations object
-#' eq <- equations(name = "co", expr = "Qadi+Qbon+Qhea+Qkid+Qliv+Qmus+Qski")
+#' eq <- equations(name = "co", expr = "Qadi + Qbon + Qhea + Qkid + Qliv + Qmus + Qski")
 #' compartment_model() |>
 #'     add_equation(eq = eq)
 #' @export
-add_equation <- function(model, ..., eq = NULL) {
+add_equation <- function(model, ..., name = character(0), expr = character(0), eq) {
     .check_class(model, "CompartmentModel")
-    if (!is.null(eq)) {
-        # programmatic path
-        .check_class(eq, "Equations")
-    } else {
-        # interactive path
-        dots <- as.list(substitute(list(...)))[-1]
-        eq <- equations(
-            name = names(dots),
-            expr = unname(dots)
-        )
-    }
+    
+    call <- match.call()
+
+    eq <- .forward_or_use(
+        object_arg_name = "eq",
+        constructor_name = "equations",
+        call = call,
+        parent_env = parent.frame()
+    )
+    
+    .check_class(eq, "Equations")
+
     model$equations <- c(model$equations, eq)
     return(model)
 }
@@ -221,7 +235,7 @@ add_parameter <- function(
 ) {
     .check_class(model, "CompartmentModel")
 
-    call <- match.call(expand.dots = FALSE)
+    call <- match.call()
 
     param <- .forward_or_use(
         object_arg_name = "param",
@@ -267,7 +281,7 @@ add_dosing <- function(
 ) {
     .check_class(model, "CompartmentModel")
 
-    call <- match.call(expand.dots = FALSE)
+    call <- match.call()
 
     dose <- .forward_or_use(
         object_arg_name = "dose",
