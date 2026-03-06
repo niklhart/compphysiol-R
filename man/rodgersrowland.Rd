@@ -31,6 +31,9 @@ options for each tissue in argument \code{organs}:}
 
 \item{respectThermodynamics}{A boolean (default: \code{TRUE})}
 }
+\value{
+TO BE DISCUSSED
+}
 \description{
 Function \code{rodgersrowland} predicts tissue-to-unbound plasma partition
 coefficients using the method described in Rodgers et al. (2005,2006).

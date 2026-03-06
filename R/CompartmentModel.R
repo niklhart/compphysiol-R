@@ -1,5 +1,13 @@
-#' Create a new CompartmentModel object.
+#' Create a new `CompartmentModel` object.
+#' 
+#' A compartment model consists of compartments, flows between compartments, equations defining auxiliary variables, 
+#' observables defined as functions of the states and parameters, parameters, and dosing events. 
+#' This function initializes an empty model that can then be built up by adding these components using the `add_*` functions.
+#' 
 #' @returns A new `CompartmentModel` object.
+#' @seealso [add_compartment()], [add_flow()], [add_equation()], [add_observable()], [add_parameter()], [add_dosing()] 
+#'   for building up a `CompartmentModel` object, and [to_ode()], [to_analytical()] for exporting a `CompartmentModel` 
+#'   to ODE or analytical solution format.
 #' @export
 compartment_model <- function() {
 
@@ -23,7 +31,8 @@ compartment_model <- function() {
     )
 }
 
-#' Print method for CompartmentModel class
+#' Print method for `CompartmentModel` class
+#' 
 #' Pretty-prints a `CompartmentModel` object.
 #' @param x A `CompartmentModel` object.
 #' @param ... ignored
@@ -73,10 +82,23 @@ print.CompartmentModel <- function(x, ...) {
 # ------------------------------------ `add_*` functions for CompartmentModel composition in a pipeline ------------------------------------
 
 #' Add one or several compartments to a `CompartmentModel` object.
+#' 
+#' @inherit compartment description details
 #' @param model A `CompartmentModel` object.
 #' @inheritParams compartments
 #' @param comp A `Compartments` object. Constructed from the other inputs if not provided.
 #' @returns The modified `CompartmentModel` object.
+#' @examples 
+#' # Several compartments added in a single call
+#' compartment_model() |>
+#'     add_compartment(c("A","B"), unit = "mg")
+#' 
+#' # Different ways of adding compartments
+#' M1 <- compartment_model() |>
+#'     add_compartment("A", initial = 10 [mg])
+#' M2 <- compartment_model() |>
+#'     add_compartment("A", initial = 10, unit = "mg")
+#' identical(M1, M2)
 #' @export
 add_compartment <- function(
     model,
@@ -105,13 +127,23 @@ add_compartment <- function(
 
 #' Add one or several flows to a `CompartmentModel` object.
 #'
+#' @inherit flows description details
 #' @param model A `CompartmentModel` object.
 #' @inheritParams flows
 #' @param flow A `Flows` object. Constructed from the other inputs if not provided.
 #' @returns The modified `CompartmentModel` object.
 #' @examples
-#' model <- compartment_model() |>
+#' # Add a linear flow
+#' compartment_model() |>
 #'     add_flow(from = "A", to = "B", const = "k1")
+#' # Add a nonlinear flow
+#' compartment_model() |>
+#'     add_flow(from = "A", to = "B", rate = "k2 * A / (A + Km)")
+#' # Vectorized calls using naming abbreviation
+#' compartment_model() |>
+#'     add_flow("A", c("B", "C"), const = "k_to")
+#' compartment_model() |>
+#'     add_flow(c("A", "B"), c("B", "C"), const = "k_from_to")
 #' @export
 add_flow <- function(
     model,
@@ -142,7 +174,6 @@ add_flow <- function(
 #' Add an observable to a `CompartmentModel` object.
 #'
 #' @inherit observables description details
-#' 
 #' @param model A `CompartmentModel` object.
 #' @inheritParams observables
 #' @param obs An `Observables` object. Constructed from the other inputs if not provided.
@@ -183,7 +214,6 @@ add_observable <- function(model, ..., name = character(0), expr = character(0),
 #' Add one or several equations to a `CompartmentModel` object.
 #' 
 #' @inherit equations description details
-#' 
 #' @param model A `CompartmentModel` object.
 #' @inheritParams equations
 #' @param eq An `Equations` object. Constructed from the other inputs if not provided.
@@ -219,7 +249,8 @@ add_equation <- function(model, ..., name = character(0), expr = character(0), e
 }
 
 #' Add one or several parameters to a `CompartmentModel` object.
-#' Parameters can be added interactively as name-value pairs (potentially with units), or programmatically as a `Parameters` object.
+#' 
+#' @inherit parameters description details
 #' @param model A `CompartmentModel` object.
 #' @inheritParams parameters
 #' @param param A `Parameters` object. Constructed from the other inputs if not provided.
@@ -252,11 +283,12 @@ add_parameter <- function(
 
 #' Add one or several dosing events (bolus or infusion).
 #'
-#' This function allows the user to specify dosing events for a compartment model.
+#' This function allows the user to add dosing events to a compartment model.
 #' Dosing events can be either bolus (instantaneous) or infusion (continuous over time).
 #'
-#' The function handles the necessary modifications to the model structure for infusion dosing,
-#' such as adding infusion bag and rate compartments, and creating the appropriate events for
+#' Unlike the other `add_*` functions, `add_dosing()` does not simply append the new dosing events 
+#' to the model, but also handles the necessary modifications to the model structure for infusion dosing,
+#' i.e., adding infusion bag and rate compartments, and creating the appropriate events for
 #' starting and stopping the infusion.
 #'
 #' @param model A `CompartmentModel` object.
@@ -360,7 +392,11 @@ add_dosing <- function(
 
 # ------------------------------------ `to_*` functions for CompartmentModel exporting ------------------------------------
 
-#' Generate analytical solution function from a linear `CompartmentModel` object with a single bolus dose at time 0.
+#' Generate analytical solution function from a linear `CompartmentModel` object, possibly with a single bolus dose at time 0.
+#' 
+#' For linear compartment models, the system of ODEs can be solved analytically using matrix exponentials. 
+#' This function generates a state function that evaluates this analytical solution at given time points and parameter values.
+#' 
 #' @param model A `CompartmentModel` object.
 #' @param paramValues Named list of parameter values to inline in ODEs.
 #' @returns A length 2 list named `state` (a function) and `observable`
@@ -515,18 +551,35 @@ to_analytical <- function(model, paramValues = list()) {
 }
 
 #' Generate ODE function, initial values, observables, and free parameters from a `CompartmentModel` object
+#' 
+#' This function converts a `CompartmentModel` object into a format suitable for numerical ODE solvers, 
+#' such as those in the `deSolve` package.
+#' 
+#' If the model specification uses units, the `dimensions` argument can be used to specify the unit dimensions
+#' for time, mass, length, amount, etc., which will be used to inline the parameters in the ODEs with consistent units.
+#' The dimensions default to SI base units and will be appended to the output list for reference, 
+#' but the user can specify custom dimensions (e.g., time in hours instead of seconds) if desired.
+#' 
+#' Any variable that is neither defined as a parameter nor as a state variable will be treated as a free parameter 
+#' and included in the `freeParams` output. These parameters need to be passed to the ODE solver as a vector.
+#' They can be used for simulation or estimation purposes.
+#' 
 #' @param model A `CompartmentModel` object
 #' @param dimensions Named list of unit dimensions used for inlining parameters in ODEs (default: SI units)
+#' @param backend Character scalar specifying the ODE solver backend (default: "deSolve") for which the output should be optimized. 
+#'   This argument is currently ignored, but may be extended in the future.
 #' @returns A list with elements `odefun` (function), `y0` (named numeric vector), `obsFuncs` (list of functions),
-#' and `freeParams` (character vector).
+#' `freeParams` (character vector) and `dimensions` (named list).
 #' @examples
 #' M <- multiCompModel(ncomp = 2, type = "micro", unit = "mg") |>
-#'    add_parameter(k10 = 0.05 [1/h])  # fix one param
+#'    add_parameter(k10 = 0.05 [1/h]) |> # fix one param
+#'    add_dosing(target = "cen", time = 0 [h], amount = 100 [mg])
 #' odeinfo <- to_ode(M, dimensions = list(time = "h"))
 #' @export
 to_ode <- function(
     model,
-    dimensions = NULL
+    dimensions = NULL,
+    backend = "deSolve"
 ) {
     compNames <- names(model$compartments)
     stateNames <- names(model$compartments) # TODO: should become states(model$compartments) once the distinction is finalized
@@ -627,11 +680,13 @@ to_ode <- function(
     names(obsFuncs) <- names(model$observables)
 
     # Initial values in output units
-    # y0 <- initials(model$compartments, named = TRUE) # OLD (no unit handling)
     y0 <- model$compartments$initial |>
         lapply(function(x) do.call(.to_dimensions, c(list(x), dimensions))) |>
         vapply(function(x) units::set_units(x, NULL), numeric(1)) |> 
         setNames(stateNames)
+
+    # Dosing events table in output units
+    events <- .dosing_to_events(model)
 
     # Output list
     list(
@@ -640,7 +695,7 @@ to_ode <- function(
         obsFuncs = obsFuncs,
         freeParams = sort(unique(freeParams$list)),
         y0 = y0,
-        events = .dosing_to_events(model)
+        events = events
     )
 }
 

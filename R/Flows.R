@@ -1,6 +1,7 @@
 #' Flows Class
 #'
-#' Represents a flow between two compartments in a pharmacokinetic model.
+#' Flows represent mass/amount-preserving transitions between two compartments in a pharmacokinetic model.
+#' 
 #' @param from The name of the source compartment(s) (character vector or NULL for source compartments)
 #' @param to The name of the destination compartment(s) (character vector or NULL for sink compartments)
 #' @param ... Unused, enforces `rate` and `const` to be specified as named arguments only, not positional
@@ -113,6 +114,7 @@ flows <- function(from, to, ..., rate = NULL, const = NULL) {
 }
 
 #' Print a `Flows` object
+#'
 #' @param x A `Flows` object
 #' @param ... Additional arguments (not used)
 #' @return The `Flows` object (invisible)
@@ -120,23 +122,28 @@ flows <- function(from, to, ..., rate = NULL, const = NULL) {
 print.Flows = function(x, ...) {
 
     from <- x$from
-    from[is.na(from)] <- "\u2205" # empty set symbol for source compartments
     to <- x$to
-    to[is.na(to)] <- "\u2205" # empty set symbol for sink compartments
+
+    empty_symbol <- "\u2205" # empty set symbol for source/sink compartments
+    from[is.na(from)] <- empty_symbol
+    to[is.na(to)] <- empty_symbol
 
     if (length(x) > 0) {
         cat(" Flows:\n")
-        cat(sprintf(
-            "  (%i) %s \u2192 %s, rate = %s\n",
-            seq_along(x),
-            from,
-            to,
-            vapply(
-                x$rate, 
-                function(r) r |> deparse() |> paste(collapse = ""), 
-                character(1)
-            )
-        ), sep = "")
+        cat(
+            sprintf(
+                "  (%i) %s \u2192 %s, rate = %s\n",
+                seq_along(x),
+                from,
+                to,
+                vapply(
+                    x$rate,
+                    function(r) r |> deparse() |> paste(collapse = ""),
+                    character(1)
+                )
+            ),
+            sep = ""
+        )
     } else {
         cat(" Flows: (none)\n")
     }
@@ -146,6 +153,7 @@ print.Flows = function(x, ...) {
 
 
 #' Length of a `Flows` object
+#' 
 #' @param x A `Flows` object
 #' @return The number of flows in the object
 #' @export
@@ -154,6 +162,7 @@ length.Flows <- function(x) {
 }
 
 #' Convert a `Flows` object to a data frame
+#' 
 #' @param x A `Flows` object
 #' @param ... Additional arguments (not used)
 #' @return A data frame representation of the `Flows` object
@@ -190,6 +199,7 @@ as.list.Flows <- function(x, ...) {
 }
 
 #' Subset a `Flows` object
+#' 
 #' @param x A `Flows` object
 #' @param i Row indices to subset
 #' @param ... Additional arguments (not used)
@@ -203,6 +213,7 @@ as.list.Flows <- function(x, ...) {
 }
 
 #' Combine multiple `Flows` objects into one
+#' 
 #' @param ... Multiple `Flows` objects to combine
 #' @return A combined `Flows` object
 #' @export
@@ -221,6 +232,7 @@ c.Flows <- function(...) {
 }
 
 #' Accessing an element in a `Flows` object
+#' 
 #' @param x A `Flows` object
 #' @param i Row index to access
 #' @returns A `Flow` object, which is a list with entries `from`, `to`, `rate`, `const`, and `type`.
@@ -242,6 +254,7 @@ c.Flows <- function(...) {
 }
 
 #' Print a `Flow` object
+#' 
 #' @param x A `Flow` object
 #' @param ... Additional arguments (not used)
 #' @return The `Flow` object (invisible)

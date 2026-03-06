@@ -23,7 +23,7 @@
 #' @param fupIncludesLipids A boolean (default: `TRUE`)
 #' @param treatNegativeBindingAsZero A boolean (default: `FALSE`)
 #' @param respectThermodynamics A boolean (default: `TRUE`)
-#'
+#' @returns TO BE DISCUSSED
 #' @export
 rodgersrowland <- function(phys, drug, organs, plasmaWaterFraction = 0.93,
                            fupIncludesLipids = TRUE, treatNegativeBindingAsZero = FALSE,

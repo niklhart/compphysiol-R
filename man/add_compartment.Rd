@@ -33,3 +33,15 @@ The modified \code{CompartmentModel} object.
 \description{
 Add one or several compartments to a \code{CompartmentModel} object.
 }
+\examples{
+# Several compartments added in a single call
+compartment_model() |>
+    add_compartment(c("A","B"), unit = "mg")
+
+# Different ways of adding compartments
+M1 <- compartment_model() |>
+    add_compartment("A", initial = 10 [mg])
+M2 <- compartment_model() |>
+    add_compartment("A", initial = 10, unit = "mg")
+identical(M1, M2)
+}

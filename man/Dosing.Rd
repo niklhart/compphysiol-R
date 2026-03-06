@@ -42,12 +42,13 @@ specified either as a bolus (instantaneous input) or as an infusion (continuous 
 \details{
 \subsection{Bolus}{
 
-Provide only \code{amount}. The dose is given at \code{time}.
+Provide \code{target}, \code{time}, and \code{amount}.
 }
 
 \subsection{Infusion}{
 
-Provide any two of \code{amount}, \code{rate}, and \code{duration}. The missing quantity is derived automatically:
+In addition to \code{target} and \code{time}, provide any two of \code{amount}, \code{rate}, and \code{duration}.
+The missing quantity is derived automatically:
 \deqn{amount = rate * duration}
 \deqn{rate = amount / duration}
 \deqn{duration = amount / rate}

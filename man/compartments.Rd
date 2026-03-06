@@ -25,7 +25,7 @@ If provided, must be either a single unit applied to all compartments or a vecto
 A \code{Compartments} object
 }
 \description{
-Represents one or several model compartments with names and initial amounts.
+Compartments represent model compartments with names and initial amounts (potentially with units).
 }
 \examples{
 compartments(c("adi","bon"), initial = 10)

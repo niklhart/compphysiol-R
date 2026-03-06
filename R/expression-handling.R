@@ -9,8 +9,8 @@
 #' @param freeParamsEnv Environment containing names of free parameters, will be
 #'     updated by reference.
 #' @param obsFunc logical, `TRUE` if in observable (matrix indexing)
-#'
 #' @return An R expression with substitutions applied
+#' @noRd
 substitute_expr <- function(expr, stateNames, name2idx,
                             paramValues = list(),
                             freeParamsEnv = NULL,

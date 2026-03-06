@@ -12,16 +12,17 @@ humancovdistrib(N, sex)
 \item{sex}{Character, either "male" or "female"}
 }
 \value{
-List of \code{Physiology} objects
+A length \code{N} list of \code{Physiology} objects
 }
 \description{
-To generate pairs of (BH,BW) values, independent (BH, BMI) pairs are first
-generated, assuming
+Generate pairs of body height (BH) and body weight (BW) values for a specified number of individuals.
+}
+\details{
+To generate pairs of (BH,BW) values, independent (BH, BMI) pairs are first generated, assuming
 BH  ~ Normal(muBH,sdBH^2)
 BMI ~ logNormal(log_muBMI,log_sdBMI^2)
 These are then used to generate BW from the relation BMI = BW/BH^2.
-}
-\details{
+
 Reference: de la Grandmaison et al., Forensic Sci. Int. 119 (2001): 149-154
 }
 \examples{

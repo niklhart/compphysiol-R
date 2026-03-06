@@ -2,7 +2,7 @@
 % Please edit documentation in R/Physiology.R
 \name{summary.Physiology}
 \alias{summary.Physiology}
-\title{Summarize Physiology as a string.}
+\title{Summarize a \code{Physiology} object as a string.}
 \usage{
 \method{summary}{Physiology}(object, ...)
 }
@@ -15,5 +15,5 @@
 A summary string
 }
 \description{
-Summarize Physiology as a string.
+Summarize a \code{Physiology} object as a string.
 }

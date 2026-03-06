@@ -1,8 +1,9 @@
 
 #' Simulate a covariate distribution in adult humans
 #'
-#' To generate pairs of (BH,BW) values, independent (BH, BMI) pairs are first
-#' generated, assuming
+#' Generate pairs of body height (BH) and body weight (BW) values for a specified number of individuals.
+#' 
+#' To generate pairs of (BH,BW) values, independent (BH, BMI) pairs are first generated, assuming
 #' BH  ~ Normal(muBH,sdBH^2)
 #' BMI ~ logNormal(log_muBMI,log_sdBMI^2)
 #' These are then used to generate BW from the relation BMI = BW/BH^2.
@@ -11,7 +12,7 @@
 #'
 #' @param N Number of individuals (positive integer)
 #' @param sex Character, either "male" or "female"
-#' @returns List of `Physiology` objects
+#' @returns A length `N` list of `Physiology` objects
 #' @examples
 #' humans <- humancovdistrib(5, "female")
 #' @export

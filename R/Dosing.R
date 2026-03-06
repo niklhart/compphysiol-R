@@ -4,9 +4,10 @@
 #' specified either as a bolus (instantaneous input) or as an infusion (continuous input over time).
 #'
 #' ## Bolus
-#' Provide only `amount`. The dose is given at `time`.
+#' Provide `target`, `time`, and `amount`.
 #' ## Infusion
-#' Provide any two of `amount`, `rate`, and `duration`. The missing quantity is derived automatically:
+#' In addition to `target` and `time`, provide any two of `amount`, `rate`, and `duration`. 
+#' The missing quantity is derived automatically:
 #' \deqn{amount = rate * duration}
 #' \deqn{rate = amount / duration}
 #' \deqn{duration = amount / rate}
@@ -145,7 +146,9 @@ is_infusion <- function(dose) {
 }
 
 #' Length method for Dosing class
+#' 
 #' Returns the number of dosing events in a `Dosing` object.
+#' 
 #' @param x A `Dosing` object
 #' @return The number of dosing events (number of rows in the data frame)
 #' @export
@@ -154,7 +157,9 @@ length.Dosing <- function(x) {
 }
 
 #' Print method for Dosing class
+#' 
 #' Pretty-prints a `Dosing` object.
+#' 
 #' @param x A `Dosing` object
 #' @param ... ignored
 #' @return The `Dosing` object (invisibly)
@@ -203,7 +208,9 @@ print.Dosing <- function(x, ...) {
 }
 
 #' Subset method for `Dosing` class
+#' 
 #' Allows subsetting a `Dosing` object while preserving its class.
+#' 
 #' @param x A `Dosing` object
 #' @param i Row indices to subset
 #' @param ... ignored
@@ -215,7 +222,9 @@ print.Dosing <- function(x, ...) {
 }
 
 #' Combine multiple `Dosing` objects into one
+#' 
 #' Combines multiple `Dosing` objects by row-binding their data.
+#' 
 #' @param ... One or more `Dosing` objects to combine.
 #' @return A single `Dosing` object containing all dosing events from the inputs.
 #' @export

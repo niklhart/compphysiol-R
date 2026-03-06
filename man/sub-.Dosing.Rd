@@ -2,8 +2,7 @@
 % Please edit documentation in R/Dosing.R
 \name{[.Dosing}
 \alias{[.Dosing}
-\title{Subset method for \code{Dosing} class
-Allows subsetting a \code{Dosing} object while preserving its class.}
+\title{Subset method for \code{Dosing} class}
 \usage{
 \method{[}{Dosing}(x, i, ...)
 }
@@ -18,6 +17,5 @@ Allows subsetting a \code{Dosing} object while preserving its class.}
 A subsetted \code{Dosing} object
 }
 \description{
-Subset method for \code{Dosing} class
 Allows subsetting a \code{Dosing} object while preserving its class.
 }

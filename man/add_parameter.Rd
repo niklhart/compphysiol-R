@@ -2,8 +2,7 @@
 % Please edit documentation in R/CompartmentModel.R
 \name{add_parameter}
 \alias{add_parameter}
-\title{Add one or several parameters to a \code{CompartmentModel} object.
-Parameters can be added interactively as name-value pairs (potentially with units), or programmatically as a \code{Parameters} object.}
+\title{Add one or several parameters to a \code{CompartmentModel} object.}
 \usage{
 add_parameter(model, ..., name = NULL, value = NULL, unit = NULL, param)
 }
@@ -24,6 +23,15 @@ add_parameter(model, ..., name = NULL, value = NULL, unit = NULL, param)
 The modified \code{CompartmentModel} object.
 }
 \description{
-Add one or several parameters to a \code{CompartmentModel} object.
-Parameters can be added interactively as name-value pairs (potentially with units), or programmatically as a \code{Parameters} object.
+The \code{Parameters} class represents a collection of named parameters, which can optionally have associated units.
+}
+\details{
+Parameters can be specified in three different ways:
+\enumerate{
+\item As name-value pairs, where values can be categorical, numeric or \code{units} objects, e.g., \code{parameters(A = 2, B = units::set_units(3, "m"))}.
+\item As name-value pairs specifying the unit in square brackets after the value (e.g., \code{A = 2 [m]}).
+This allows for a more concise syntax when specifying parameters with units.
+\item Via the \code{name}, \code{value}, and \code{unit} arguments (where \code{name} is a character vector of parameter names,
+\code{value} is a numeric vector of parameter values, and \code{unit} is an optional character vector of units).
+}
 }

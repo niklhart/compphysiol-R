@@ -1,6 +1,7 @@
 #' `Compartments` Class
 #'
-#' Represents one or several model compartments with names and initial amounts.
+#' Compartments represent model compartments with names and initial amounts (potentially with units).
+#' 
 #' @param name Compartment name(s), character scalar or vector
 #' @param initial Initial amounts for the compartments (numeric scalar or vector, default = `0`)
 #' @param unit Units for the initial amounts (character scalar or vector, default = `NULL`).
@@ -49,6 +50,7 @@ compartments <- function(
 }
 
 #' Length method for `Compartments` class
+#' 
 #' Returns the number of compartments in a `Compartments` object.
 #' @param x A `Compartments` object
 #' @return The number of compartments (length of the `name` vector)
@@ -58,6 +60,7 @@ length.Compartments <- function(x) {
 }
 
 #' Names method for `Compartments` class
+#' 
 #' Returns the names of compartments in a `Compartments` object.
 #' @param x A `Compartments` object
 #' @return A character vector of compartment names
@@ -75,8 +78,10 @@ states <- function(comp) {
 }
 
 #' Initial conditions of a `Compartments` object
-#' Returns the initial amounts of compartments in a `Compartments` object. The type of the returned object depends 
-#' on the presence of units in the initial conditions: 
+#' 
+#' Returns the initial amounts of compartments in a `Compartments` object. 
+#' 
+#' The type of the returned object depends on the presence of units in the initial conditions: 
 #' 
 #' - if all compartment initial conditions are numeric without units, a numeric vector is returned
 #' - if all compartment initial conditions have consistent units, the returned vector will be of class `units`, 
@@ -84,7 +89,7 @@ states <- function(comp) {
 #' 
 #' @param comp A `Compartments` object
 #' @param named If `TRUE`, returns a named list of initial amounts; if `FALSE` (default), it is unnamed
-#' @return A vector of initial amounts for each compartment
+#' @return A vector of initial amounts for each compartment (see Details)
 #' @export
 initials <- function(comp, named = FALSE) {
     .check_class(comp, "Compartments")
@@ -100,7 +105,9 @@ initials <- function(comp, named = FALSE) {
     return(if (named) setNames(y0, nm = names(comp)) else y0)
 } 
 #' Print method for `Compartments` class
+#' 
 #' Pretty-prints a `Compartments` object.
+#' 
 #' @param x A `Compartments` object.
 #' @param ... ignored
 #' @return The `Compartments` object (invisibly).
@@ -111,7 +118,8 @@ print.Compartments <- function(x, ...) {
     if (length(x) > 0) {
         cat(" Compartments:\n")
         cat(
-            sprintf("  (%s) %s (state = %s, initial = %s)\n", seq_along(x), x$name, x$state, init_str),
+            sprintf("  (%s) %s (initial = %s)\n", seq_along(x), x$name, init_str),
+            # sprintf("  (%s) %s (state = %s, initial = %s)\n", seq_along(x), x$name, x$state, init_str),
             sep = ""
         )
     } else {
@@ -121,7 +129,9 @@ print.Compartments <- function(x, ...) {
 }
 
 #' Combine multiple `Compartments` objects into one
+#' 
 #' Combines multiple `Compartments` objects by concatenating their names and initial values.
+#' 
 #' @param ... One or more `Compartments` objects to combine.
 #' @return A single `Compartments` object containing all compartments from the inputs.
 #' @export
@@ -151,6 +161,7 @@ c.Compartments <- function(...) {
 #' 
 #' Allows subsetting a `Compartments` object by index or name, 
 #' returning a new `Compartments` object with the selected compartments.
+#' 
 #' @param x A `Compartments` object
 #' @param i Index or name(s) of compartments to select
 #' @param ... ignored

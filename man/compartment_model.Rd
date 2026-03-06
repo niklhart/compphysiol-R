@@ -2,7 +2,7 @@
 % Please edit documentation in R/CompartmentModel.R
 \name{compartment_model}
 \alias{compartment_model}
-\title{Create a new CompartmentModel object.}
+\title{Create a new \code{CompartmentModel} object.}
 \usage{
 compartment_model()
 }
@@ -10,5 +10,12 @@ compartment_model()
 A new \code{CompartmentModel} object.
 }
 \description{
-Create a new CompartmentModel object.
+A compartment model consists of compartments, flows between compartments, equations defining auxiliary variables,
+observables defined as functions of the states and parameters, parameters, and dosing events.
+This function initializes an empty model that can then be built up by adding these components using the \verb{add_*} functions.
+}
+\seealso{
+\code{\link[=add_compartment]{add_compartment()}}, \code{\link[=add_flow]{add_flow()}}, \code{\link[=add_equation]{add_equation()}}, \code{\link[=add_observable]{add_observable()}}, \code{\link[=add_parameter]{add_parameter()}}, \code{\link[=add_dosing]{add_dosing()}}
+for building up a \code{CompartmentModel} object, and \code{\link[=to_ode]{to_ode()}}, \code{\link[=to_analytical]{to_analytical()}} for exporting a \code{CompartmentModel}
+to ODE or analytical solution format.
 }

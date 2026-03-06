@@ -97,7 +97,9 @@
 }
 
 #' Convert a variable with or without units to a specified set of dimensions.
-#' This is used to create a consistent internal representation of variables.
+#' 
+#' This function is used to create a consistent internal representation of variables.
+#' 
 #' @param var A numeric variable, with or without units
 #' @param length The unit to convert length dimensions to (default "m")
 #' @param mass The unit to convert mass dimensions to (default "kg")

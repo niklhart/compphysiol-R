@@ -20,7 +20,7 @@
 #' @param refstate A string, corresponding to the state used as reference.
 #' @returns A length two named list with entries `edges` (a data frame with
 #'     columns `from` and `to`) and `nodes` (a character vector)
-#' @export
+#' @noRd
 .make_graph <- function(model, refstate) {
     nodes <- names(model$compartments)
     edges <- data.frame(from = model$flows$from, to = model$flows$to)
@@ -43,7 +43,6 @@
 #' @param edges A data frame with columns `from`, `to` (and `rate`, unused)
 #' @returns A named list with elements `incoming` and `outgoing`, each a named list of character vectors
 #' @noRd
-#' @export
 .adjacency_list <- function(nodes, edges) {
     incoming <- split(edges$from, edges$to)
     outgoing <- split(edges$to, edges$from)
@@ -63,7 +62,6 @@
 #' @param outgoing A list, outcoing connections per graph node
 #' @returns A list of character vectors, each entry corresponding to an SCC
 #' @noRd
-#' @export
 .tarjan_scc <- function(nodes, outgoing) {
     index <- 0
     stack <- character()
@@ -115,7 +113,6 @@
 #' @param sccs A list of character vectors (output of `.tarjan_scc()`)
 #' @returns A list with entries `nodes`, `edges`, `sccs`, `scc_id`
 #' @noRd
-#' @export
 .condense_graph <- function(nodes, edges, sccs) {
     # map each original node -> SCC index
     scc_id <- setNames(
@@ -149,7 +146,6 @@
 #' @param incoming Named list of characters (same length as `nodes`), corresponding to incoming connections
 #' @returns A vector of integers (same length as `nodes`), the order to visit states for a topological traversal of the DAG.
 #' @noRd
-#' @export
 .topo_order <- function(nodes, incoming) {
     visited <- setNames(rep(FALSE, length(nodes)), nodes)
     order <- integer()

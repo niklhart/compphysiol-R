@@ -2,10 +2,12 @@
 
 #' `Parameters` class.
 #'
+#' The `Parameters` class represents a collection of named parameters, which can optionally have associated units.
+#' 
 #' Parameters can be specified in three different ways:
 #' 
-#' 1. As name-value pairs using standard evaluation (values can optionally be given as units objects, e.g., `parameters(A = 2, B = units::set_units(3, "m"))`).
-#' 2. As name-value pairs using non-standard evaluation, with the unit given in square brackets after the value (e.g., `A = 2 [m]`). 
+#' 1. As name-value pairs, where values can be categorical, numeric or `units` objects, e.g., `parameters(A = 2, B = units::set_units(3, "m"))`.
+#' 2. As name-value pairs specifying the unit in square brackets after the value (e.g., `A = 2 [m]`). 
 #'    This allows for a more concise syntax when specifying parameters with units.
 #' 3. Via the `name`, `value`, and `unit` arguments (where `name` is a character vector of parameter names, 
 #' `value` is a numeric vector of parameter values, and `unit` is an optional character vector of units).
@@ -16,9 +18,9 @@
 #' @param unit Optional parameter units (if not using named arguments).
 #' @returns A `Parameters` object containing the specified parameters.
 #' @examples
-#' # Standard evaluation
+#' # Specification using name/value/unit vectors (programmatic use)
 #' parameters(name = c("A", "B"), value = c(2, 3), unit = c("", "m"))
-#' # The same using non-standard evaluation
+#' # Shorthand notation for interactive use
 #' parameters(A = 2, B = 3[m])
 #' @export
 parameters <- function(..., name = NULL, value = NULL, unit = NULL) {
@@ -65,6 +67,23 @@ names.Parameters <- function(x) names(unclass(x))
 `[.Parameters` <- function(x, i, ...) {
     structure(
         unclass(x)[i],
+        class = c("Parameters", "list")
+    )
+}
+
+#' Replace parts of a `Parameters` object
+#' @param x A `Parameters` object
+#' @param i Indices or names of the parameters to replace
+#' @param value Another `Parameters` object with the new values to insert
+#' @returns The modified `Parameters` object
+#' @export
+`[<-.Parameters` <- function(x, i, value) {
+    x <- unclass(x)
+    x[i] <- unclass(value)
+    if (is.character(i)) i <- match(i, names(x))
+    names(x)[i] <- names(value)
+    structure(
+        x,
         class = c("Parameters", "list")
     )
 }

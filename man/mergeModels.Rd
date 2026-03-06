@@ -16,8 +16,8 @@ mergeModels(
 \arguments{
 \item{M1, M2}{\code{CompartmentModel} objects}
 
-\item{suffix1, suffix2}{Optional character suffixes for compartment names in M1/M2.
-Use NULL to leave names unchanged.}
+\item{suffix1, suffix2}{Optional character suffixes for compartment names in \code{M1}/\code{M2}.
+Use \code{NULL} to leave names unchanged.}
 
 \item{collision}{What to do in case of name collisions:
 "error" (default), "auto" (rename with suffixes 1/2), or "merge"
@@ -32,7 +32,8 @@ that should be shared, i.e. they are not suffixed.}
 A new \code{CompartmentModel} containing both.
 }
 \description{
-Merge two \code{CompartmentModel} objects into one.
+This function allows to combine two \code{CompartmentModel} objects into a single model,
+with options for handling name collisions and shared parameters/compartments.
 }
 \examples{
 # Example 1: Merging oral absorption and one-compartment PK

@@ -2,8 +2,7 @@
 % Please edit documentation in R/Compartments.R
 \name{names.Compartments}
 \alias{names.Compartments}
-\title{Names method for \code{Compartments} class
-Returns the names of compartments in a \code{Compartments} object.}
+\title{Names method for \code{Compartments} class}
 \usage{
 \method{names}{Compartments}(x)
 }
@@ -14,6 +13,5 @@ Returns the names of compartments in a \code{Compartments} object.}
 A character vector of compartment names
 }
 \description{
-Names method for \code{Compartments} class
 Returns the names of compartments in a \code{Compartments} object.
 }

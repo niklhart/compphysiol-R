@@ -2,8 +2,7 @@
 % Please edit documentation in R/Dosing.R
 \name{length.Dosing}
 \alias{length.Dosing}
-\title{Length method for Dosing class
-Returns the number of dosing events in a \code{Dosing} object.}
+\title{Length method for Dosing class}
 \usage{
 \method{length}{Dosing}(x)
 }
@@ -14,6 +13,5 @@ Returns the number of dosing events in a \code{Dosing} object.}
 The number of dosing events (number of rows in the data frame)
 }
 \description{
-Length method for Dosing class
 Returns the number of dosing events in a \code{Dosing} object.
 }

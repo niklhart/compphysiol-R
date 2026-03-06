@@ -19,20 +19,21 @@ parameters(..., name = NULL, value = NULL, unit = NULL)
 A \code{Parameters} object containing the specified parameters.
 }
 \description{
-Parameters can be specified in three different ways:
+The \code{Parameters} class represents a collection of named parameters, which can optionally have associated units.
 }
 \details{
+Parameters can be specified in three different ways:
 \enumerate{
-\item As name-value pairs using standard evaluation (values can optionally be given as units objects, e.g., \code{parameters(A = 2, B = units::set_units(3, "m"))}).
-\item As name-value pairs using non-standard evaluation, with the unit given in square brackets after the value (e.g., \code{A = 2 [m]}).
+\item As name-value pairs, where values can be categorical, numeric or \code{units} objects, e.g., \code{parameters(A = 2, B = units::set_units(3, "m"))}.
+\item As name-value pairs specifying the unit in square brackets after the value (e.g., \code{A = 2 [m]}).
 This allows for a more concise syntax when specifying parameters with units.
 \item Via the \code{name}, \code{value}, and \code{unit} arguments (where \code{name} is a character vector of parameter names,
 \code{value} is a numeric vector of parameter values, and \code{unit} is an optional character vector of units).
 }
 }
 \examples{
-# Standard evaluation
+# Specification using name/value/unit vectors (programmatic use)
 parameters(name = c("A", "B"), value = c(2, 3), unit = c("", "m"))
-# The same using non-standard evaluation
+# Shorthand notation for interactive use
 parameters(A = 2, B = 3[m])
 }

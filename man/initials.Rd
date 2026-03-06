@@ -2,9 +2,7 @@
 % Please edit documentation in R/Compartments.R
 \name{initials}
 \alias{initials}
-\title{Initial conditions of a \code{Compartments} object
-Returns the initial amounts of compartments in a \code{Compartments} object. The type of the returned object depends
-on the presence of units in the initial conditions:}
+\title{Initial conditions of a \code{Compartments} object}
 \usage{
 initials(comp, named = FALSE)
 }
@@ -14,9 +12,13 @@ initials(comp, named = FALSE)
 \item{named}{If \code{TRUE}, returns a named list of initial amounts; if \code{FALSE} (default), it is unnamed}
 }
 \value{
-A vector of initial amounts for each compartment
+A vector of initial amounts for each compartment (see Details)
 }
 \description{
+Returns the initial amounts of compartments in a \code{Compartments} object.
+}
+\details{
+The type of the returned object depends on the presence of units in the initial conditions:
 \itemize{
 \item if all compartment initial conditions are numeric without units, a numeric vector is returned
 \item if all compartment initial conditions have consistent units, the returned vector will be of class \code{units},

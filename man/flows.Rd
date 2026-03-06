@@ -21,7 +21,7 @@ flows(from, to, ..., rate = NULL, const = NULL)
 A \code{Flows} object
 }
 \description{
-Represents a flow between two compartments in a pharmacokinetic model.
+Flows represent mass/amount-preserving transitions between two compartments in a pharmacokinetic model.
 }
 \examples{
 # Linear flow

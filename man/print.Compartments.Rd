@@ -2,8 +2,7 @@
 % Please edit documentation in R/Compartments.R
 \name{print.Compartments}
 \alias{print.Compartments}
-\title{Print method for \code{Compartments} class
-Pretty-prints a \code{Compartments} object.}
+\title{Print method for \code{Compartments} class}
 \usage{
 \method{print}{Compartments}(x, ...)
 }
@@ -16,6 +15,5 @@ Pretty-prints a \code{Compartments} object.}
 The \code{Compartments} object (invisibly).
 }
 \description{
-Print method for \code{Compartments} class
 Pretty-prints a \code{Compartments} object.
 }

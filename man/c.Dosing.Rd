@@ -2,8 +2,7 @@
 % Please edit documentation in R/Dosing.R
 \name{c.Dosing}
 \alias{c.Dosing}
-\title{Combine multiple \code{Dosing} objects into one
-Combines multiple \code{Dosing} objects by row-binding their data.}
+\title{Combine multiple \code{Dosing} objects into one}
 \usage{
 \method{c}{Dosing}(...)
 }
@@ -14,6 +13,5 @@ Combines multiple \code{Dosing} objects by row-binding their data.}
 A single \code{Dosing} object containing all dosing events from the inputs.
 }
 \description{
-Combine multiple \code{Dosing} objects into one
 Combines multiple \code{Dosing} objects by row-binding their data.
 }

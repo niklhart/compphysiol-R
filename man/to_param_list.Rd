@@ -2,9 +2,7 @@
 % Please edit documentation in R/Physiology.R
 \name{to_param_list}
 \alias{to_param_list}
-\title{Export parameters as a named list
-Scalars: name → value
-Tissues: \code{paste0(parameter, "[", context, "]")} → value}
+\title{Export parameters as a named list}
 \usage{
 to_param_list(phys)
 }
@@ -15,7 +13,6 @@ to_param_list(phys)
 A named list of parameters and metadata
 }
 \description{
-Export parameters as a named list
-Scalars: name → value
-Tissues: \code{paste0(parameter, "[", context, "]")} → value
+This function converts the parameters in the \code{param_table} of a \code{Physiology} object into a named list,
+where the names are either the parameter name (for scalars) or \code{parameter[context]} (for tissue parameters).
 }

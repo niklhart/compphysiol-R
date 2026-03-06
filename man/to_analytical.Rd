@@ -2,7 +2,7 @@
 % Please edit documentation in R/CompartmentModel.R
 \name{to_analytical}
 \alias{to_analytical}
-\title{Generate analytical solution function from a linear \code{CompartmentModel} object with a single bolus dose at time 0.}
+\title{Generate analytical solution function from a linear \code{CompartmentModel} object, possibly with a single bolus dose at time 0.}
 \usage{
 to_analytical(model, paramValues = list())
 }
@@ -18,7 +18,8 @@ solution at time \code{t} for free parameters \code{param}, while \code{observab
 calculates the \code{i}-th observable defined in the CompartmentModel.
 }
 \description{
-Generate analytical solution function from a linear \code{CompartmentModel} object with a single bolus dose at time 0.
+For linear compartment models, the system of ODEs can be solved analytically using matrix exponentials.
+This function generates a state function that evaluates this analytical solution at given time points and parameter values.
 }
 \examples{
 M <- multiCompModel(ncomp = 2, type = "micro")

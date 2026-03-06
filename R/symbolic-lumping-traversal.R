@@ -7,7 +7,6 @@
 #' @param simplify Method for simplifying the resulting expressions.
 #' @returns A named list of solution expressions
 #' @noRd
-#' @export
 .solve_model_symbolic <- function(cond, flows, simplify) {
 
     adj <- .adjacency_list(cond$nodes, cond$edges)

@@ -1,9 +1,12 @@
 
 #' Merge two `CompartmentModel` objects into one.
 #'
+#' This function allows to combine two `CompartmentModel` objects into a single model, 
+#' with options for handling name collisions and shared parameters/compartments.
+#' 
 #' @param M1,M2 `CompartmentModel` objects
-#' @param suffix1,suffix2 Optional character suffixes for compartment names in M1/M2.
-#'        Use NULL to leave names unchanged.
+#' @param suffix1,suffix2 Optional character suffixes for compartment names in `M1`/`M2`.
+#'        Use `NULL` to leave names unchanged.
 #' @param collision What to do in case of name collisions:
 #'        "error" (default), "auto" (rename with suffixes 1/2), or "merge"
 #'        (merge compartments, adding initial amounts).

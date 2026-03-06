@@ -44,3 +44,9 @@ test_that("On-the-fly unit conversion works correctly in NSE mode", {
     p2 <- parameters(A = A_m[km])
     expect_equal(p1, p2)
 })
+
+test_that("Parameter replacement works correctly", {
+    p <- parameters(name = c('A', 'B'), value = c(2, 3), unit = c("", "kg"))
+    p["A"] <- parameters(name = 'C', value = 5, unit = "m")
+    expect_equal(p[["C"]], units::set_units(5, "m"))
+})

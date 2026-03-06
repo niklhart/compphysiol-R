@@ -1,15 +1,14 @@
 
 #' 12-CMT PBPK model with well-stirred tissue distribution
 #'
-#' This example demonstrates a full workflow from loading the model,
-#' setting parameters, running a simulation, and plotting compartment amounts
-#' and plasma concentration.
+#' This model implements a 12-compartment PBPK model with well-stirred tissue distribution.
 #'
-#' @return An R6 object of class `CompartmentModel`
+#' @return An object of class `CompartmentModel`
 #' @export
 #' @examples
 #' \donttest{
-#' # Load the PBPK model
+#' ## Full workflow from model specification to plotting
+#' # Model specification
 #' M <- sMD_PBPK_12CMT_wellstirred() |>
 #'     add_dosing(target = "ven", time = 0, amount = 1) |>   # IV bolus dosing
 #'     add_observable(Cpla = BP * ven / Vven)                # plasma concentration observable
@@ -119,15 +118,14 @@ sMD_PBPK_12CMT_wellstirred <- function() {
 
 #' 12-CMT PBPK model with permeation-based tissue distribution
 #'
-#' This example demonstrates a full workflow from loading the model,
-#' setting parameters, running a simulation, and plotting compartment amounts
-#' and plasma concentration.
+#' This model implements a 12-compartment PBPK model with permeation-based tissue distribution.
 #'
-#' @return An R6 object of class `CompartmentModel`
+#' @return An object of class `CompartmentModel`
 #' @export
 #' @examples
 #' \donttest{
-#' # Load the PBPK model
+#' ## Full workflow from model specification to plotting
+#' # Model specification
 #' M <- sMD_PBPK_12CMT_permbased() |>
 #'     add_dosing(target = "ven", time = 0, amount = 1) |>  # IV bolus dosing
 #'     add_observable(Cpla = BP * ven / Vven)               # plasma concentration observable

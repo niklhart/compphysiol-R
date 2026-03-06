@@ -1,10 +1,12 @@
 # compphysiol (development version)
 
+* Subassignment for container classes implemented.
+
 # compphysiol 0.2.1
 
 ## Enhancements
 
-* Minilanguage for units implemented: `name=value[unit]`
+* Minilanguage for units implemented: `name=value[unit]`.
 * Uniformized behavior of `add_*` wrappers and removed code duplication.
 * Now possible to specify output units when generating ODEs.
 

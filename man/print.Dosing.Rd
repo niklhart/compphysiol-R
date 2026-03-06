@@ -2,8 +2,7 @@
 % Please edit documentation in R/Dosing.R
 \name{print.Dosing}
 \alias{print.Dosing}
-\title{Print method for Dosing class
-Pretty-prints a \code{Dosing} object.}
+\title{Print method for Dosing class}
 \usage{
 \method{print}{Dosing}(x, ...)
 }
@@ -16,6 +15,5 @@ Pretty-prints a \code{Dosing} object.}
 The \code{Dosing} object (invisibly)
 }
 \description{
-Print method for Dosing class
 Pretty-prints a \code{Dosing} object.
 }

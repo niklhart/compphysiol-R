@@ -25,9 +25,18 @@ add_flow(model, from, to, ..., rate = NULL, const = NULL, flow)
 The modified \code{CompartmentModel} object.
 }
 \description{
-Add one or several flows to a \code{CompartmentModel} object.
+Flows represent mass/amount-preserving transitions between two compartments in a pharmacokinetic model.
 }
 \examples{
-model <- compartment_model() |>
+# Add a linear flow
+compartment_model() |>
     add_flow(from = "A", to = "B", const = "k1")
+# Add a nonlinear flow
+compartment_model() |>
+    add_flow(from = "A", to = "B", rate = "k2 * A / (A + Km)")
+# Vectorized calls using naming abbreviation
+compartment_model() |>
+    add_flow("A", c("B", "C"), const = "k_to")
+compartment_model() |>
+    add_flow(c("A", "B"), c("B", "C"), const = "k_from_to")
 }

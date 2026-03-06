@@ -1,4 +1,5 @@
 #' Create a new `Physiology` object
+#' 
 #' @param params A data frame with physiology parameters
 #' @param meta A list of metadata (e.g. species, sex)
 #' @returns A new `Physiology` object
@@ -26,6 +27,7 @@ physiology <- function(params = NULL, meta = NULL) {
 }
 
 #' Add a scalar parameter to a `Physiology` object
+#' 
 #' @param phys A `Physiology` object
 #' @param name Name of the parameter
 #' @param value Numeric value
@@ -55,6 +57,7 @@ add_scalar <- function(phys, name, value, unit = "", reference = "", assumption 
 }
 
 #' Add a tissue parameter (e.g. volume, flow) to a `Physiology` object
+#' 
 #' @param phys A `Physiology` object
 #' @param tissue Tissue name (e.g. "Liver")
 #' @param name Parameter name (e.g. "V" or "Q")
@@ -82,6 +85,7 @@ add_tissue_param <- function(phys, tissue, name, value, unit = "", reference = "
 }
 
 #' Add metadata (categorical attributes) to a `Physiology` object as name-value pairs.
+#' 
 #' @param phys A `Physiology` object
 #' @param ... Name-value pairs.
 #' @examples
@@ -99,6 +103,7 @@ add_meta <- function(phys, ...) {
 }
 
 #' Print method for `Physiology` objects, showing metadata and a summary of parameters.
+#' 
 #' @param x A `Physiology` object
 #' @param ... Additional arguments (not used)
 #' @return The `Physiology` object (invisible)
@@ -145,7 +150,8 @@ print.Physiology <- function(x, ...) {
     invisible(x)
 }
 
- #' Summarize Physiology as a string.
+ #' Summarize a `Physiology` object as a string.
+ #' 
  #' @param object A `Physiology` object
  #' @param ... Additional arguments (not used)
  #' @return A summary string
@@ -177,8 +183,10 @@ parameter <- function(phys, name, context = "scalar") {
 }
 
 #' Export parameters as a named list
-#' Scalars: name → value
-#' Tissues: `paste0(parameter, "[", context, "]")` → value
+#' 
+#' This function converts the parameters in the `param_table` of a `Physiology` object into a named list, 
+#' where the names are either the parameter name (for scalars) or `parameter[context]` (for tissue parameters).
+#' 
 #' @param phys A `Physiology` object
 #' @returns A named list of parameters and metadata
 #' @export

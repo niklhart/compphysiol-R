@@ -2,8 +2,7 @@
 % Please edit documentation in R/Compartments.R
 \name{length.Compartments}
 \alias{length.Compartments}
-\title{Length method for \code{Compartments} class
-Returns the number of compartments in a \code{Compartments} object.}
+\title{Length method for \code{Compartments} class}
 \usage{
 \method{length}{Compartments}(x)
 }
@@ -14,6 +13,5 @@ Returns the number of compartments in a \code{Compartments} object.}
 The number of compartments (length of the \code{name} vector)
 }
 \description{
-Length method for \code{Compartments} class
 Returns the number of compartments in a \code{Compartments} object.
 }

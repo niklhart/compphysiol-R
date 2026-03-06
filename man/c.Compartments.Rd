@@ -2,8 +2,7 @@
 % Please edit documentation in R/Compartments.R
 \name{c.Compartments}
 \alias{c.Compartments}
-\title{Combine multiple \code{Compartments} objects into one
-Combines multiple \code{Compartments} objects by concatenating their names and initial values.}
+\title{Combine multiple \code{Compartments} objects into one}
 \usage{
 \method{c}{Compartments}(...)
 }
@@ -14,6 +13,5 @@ Combines multiple \code{Compartments} objects by concatenating their names and i
 A single \code{Compartments} object containing all compartments from the inputs.
 }
 \description{
-Combine multiple \code{Compartments} objects into one
 Combines multiple \code{Compartments} objects by concatenating their names and initial values.
 }

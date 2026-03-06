@@ -4,6 +4,7 @@
 #' @param flows A `Flows` object
 #' @param scc A character vector, the strongly connected component (SCC) to be lumped
 #' @returns A list with entries `internal`, `incoming`, `outgoing`, `elimination`, each a `Flows` object
+#' @noRd
 .classify_flows <- function(flows, scc) {
     .check_class(flows, "Flows")
     list(
@@ -20,6 +21,7 @@
 #' @param b A list of right-hand side expressions
 #' @returns A named list of solution expressions
 #' @export
+#' @noRd
 .solve_linear_expr <- function(A, b) {
     switch(
         nrow(A),
@@ -82,7 +84,7 @@
 #' @param scc A character vector, the strongly connected component (SCC) to be lumped
 #' @param flows A `Flows` object
 #' @returns A list with entries `A`, `b`
-#' @export
+#' @noRd
 .assemble_linear_expr <- function(scc, flows) {
     cls <- .classify_flows(flows, scc)
 

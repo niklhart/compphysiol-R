@@ -42,12 +42,13 @@ add_dosing(
 The modified \code{CompartmentModel} object.
 }
 \description{
-This function allows the user to specify dosing events for a compartment model.
+This function allows the user to add dosing events to a compartment model.
 Dosing events can be either bolus (instantaneous) or infusion (continuous over time).
 }
 \details{
-The function handles the necessary modifications to the model structure for infusion dosing,
-such as adding infusion bag and rate compartments, and creating the appropriate events for
+Unlike the other \verb{add_*} functions, \code{add_dosing()} does not simply append the new dosing events
+to the model, but also handles the necessary modifications to the model structure for infusion dosing,
+i.e., adding infusion bag and rate compartments, and creating the appropriate events for
 starting and stopping the infusion.
 }
 \examples{

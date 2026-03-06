@@ -4,22 +4,37 @@
 \alias{to_ode}
 \title{Generate ODE function, initial values, observables, and free parameters from a \code{CompartmentModel} object}
 \usage{
-to_ode(model, dimensions = NULL)
+to_ode(model, dimensions = NULL, backend = "deSolve")
 }
 \arguments{
 \item{model}{A \code{CompartmentModel} object}
 
 \item{dimensions}{Named list of unit dimensions used for inlining parameters in ODEs (default: SI units)}
+
+\item{backend}{Character scalar specifying the ODE solver backend (default: "deSolve") for which the output should be optimized.
+This argument is currently ignored, but may be extended in the future.}
 }
 \value{
 A list with elements \code{odefun} (function), \code{y0} (named numeric vector), \code{obsFuncs} (list of functions),
-and \code{freeParams} (character vector).
+\code{freeParams} (character vector) and \code{dimensions} (named list).
 }
 \description{
-Generate ODE function, initial values, observables, and free parameters from a \code{CompartmentModel} object
+This function converts a \code{CompartmentModel} object into a format suitable for numerical ODE solvers,
+such as those in the \code{deSolve} package.
+}
+\details{
+If the model specification uses units, the \code{dimensions} argument can be used to specify the unit dimensions
+for time, mass, length, amount, etc., which will be used to inline the parameters in the ODEs with consistent units.
+The dimensions default to SI base units and will be appended to the output list for reference,
+but the user can specify custom dimensions (e.g., time in hours instead of seconds) if desired.
+
+Any variable that is neither defined as a parameter nor as a state variable will be treated as a free parameter
+and included in the \code{freeParams} output. These parameters need to be passed to the ODE solver as a vector.
+They can be used for simulation or estimation purposes.
 }
 \examples{
 M <- multiCompModel(ncomp = 2, type = "micro", unit = "mg") |>
-   add_parameter(k10 = 0.05 [1/h])  # fix one param
+   add_parameter(k10 = 0.05 [1/h]) |> # fix one param
+   add_dosing(target = "cen", time = 0 [h], amount = 100 [mg])
 odeinfo <- to_ode(M, dimensions = list(time = "h"))
 }

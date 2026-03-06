@@ -7,16 +7,14 @@
 sMD_PBPK_12CMT_wellstirred()
 }
 \value{
-An R6 object of class \code{CompartmentModel}
+An object of class \code{CompartmentModel}
 }
 \description{
-This example demonstrates a full workflow from loading the model,
-setting parameters, running a simulation, and plotting compartment amounts
-and plasma concentration.
+This model implements a 12-compartment PBPK model with well-stirred tissue distribution.
 }
 \examples{
 \donttest{
-# Load the PBPK model
+# Full workflow: load model, set parameters, run simulation, plot compartment amounts and plasma concentration.
 M <- sMD_PBPK_12CMT_wellstirred() |>
     add_dosing(target = "ven", time = 0, amount = 1) |>   # IV bolus dosing
     add_observable(Cpla = BP * ven / Vven)                # plasma concentration observable
