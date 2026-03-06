@@ -83,7 +83,7 @@ print.CompartmentModel <- function(x, ...) {
 
 #' Add one or several compartments to a `CompartmentModel` object.
 #' 
-#' @inherit compartment description details
+#' @inherit compartments description details
 #' @param model A `CompartmentModel` object.
 #' @inheritParams compartments
 #' @param comp A `Compartments` object. Constructed from the other inputs if not provided.

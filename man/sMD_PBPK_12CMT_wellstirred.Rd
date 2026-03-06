@@ -14,7 +14,8 @@ This model implements a 12-compartment PBPK model with well-stirred tissue distr
 }
 \examples{
 \donttest{
-# Full workflow: load model, set parameters, run simulation, plot compartment amounts and plasma concentration.
+## Full workflow from model specification to plotting
+# Model specification
 M <- sMD_PBPK_12CMT_wellstirred() |>
     add_dosing(target = "ven", time = 0, amount = 1) |>   # IV bolus dosing
     add_observable(Cpla = BP * ven / Vven)                # plasma concentration observable

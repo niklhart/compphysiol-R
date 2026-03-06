@@ -1,7 +1,7 @@
 test_that("multiCompModel creates correct number of compartments", {
     M <- multiCompModel(3, "micro")
-    expect_equal(names(M$compartments), c("comp1", "comp2", "comp3"))
-    expect_true(names(M$observables) == "C1")
+    expect_equal(names(M$compartments), c("cen", "per1", "per2"))
+    expect_true(names(M$observables) == "Ccen")
 })
 
 test_that("multiCompModel micro/macro parametrization flows are correct", {
@@ -11,8 +11,8 @@ test_that("multiCompModel micro/macro parametrization flows are correct", {
     const1 <- vapply(M1$flows$const, deparse, character(1))
     const2 <- vapply(M2$flows$const, deparse, character(1))
 
-    expect_setequal(const1, c("k10", "k12", "k21"))
-    expect_setequal(const2, c("CL/V1", "Q12/V1", "Q12/V2"))
+    expect_setequal(const1, c("kc0", "kcp", "kpc"))
+    expect_setequal(const2, c("CL/Vc", "Qcp/Vc", "Qcp/Vp"))
 })
 
 test_that("12-CMT well-stirred PBPK model behaves as expected under long-term infusion", {

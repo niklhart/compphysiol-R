@@ -345,28 +345,28 @@ multiCompModel <- function(ncomp = 1, type = c("micro", "macro"), unit = NULL) {
     type <- match.arg(type)
     stopifnot(ncomp >= 1)
 
-    # Compartment names: central is comp1
-    compNames <- paste0("comp", seq_len(ncomp))
-    iperiph <- seq_len(ncomp)[-1]
+    # Compartment names: 'cen' and 'per' or 'per1', 'per2', ...
+    iperiph <- if (ncomp == 2) "" else seq_len(ncomp - 1)
+    compNames <- c("cen", paste0("per", iperiph, recycle0 = TRUE))
 
     # express rate constants differently depending on parameterization style
     if (type == "micro") {
-        k10 <- "k10"
-        k1i <- paste0("k1", iperiph)
-        ki1 <- paste0("k", iperiph, "1")
+        k10 <- "kc0"
+        k1i <- paste0("kcp", iperiph)
+        ki1 <- paste0("kp", iperiph, "c")
     } else if (type == "macro") {
-        k10 <- "CL / V1"
-        k1i <- paste0("Q1", iperiph, " / V1")
-        ki1 <- paste0("Q1", iperiph, " / V", iperiph)
+        k10 <- "CL / Vc"
+        k1i <- paste0("Qcp", iperiph, " / Vc")
+        ki1 <- paste0("Qcp", iperiph, " / Vp", iperiph)
     }
 
     # Model construction
     compartment_model() |>
-        add_compartment(compNames, state = paste0("A", seq_len(ncomp))) |>
-        add_flow("comp1", "", const = k10) |>
-        add_flow("comp1", compNames[iperiph], const = k1i) |>
-        add_flow(compNames[iperiph], "comp1", const = ki1) |>
-        add_observable(obs = observables(name = "C1", expr = "A1/V1"))
+        add_compartment(compNames, unit = unit) |>
+        add_flow("cen", "", const = k10) |>
+        add_flow("cen", compNames[-1], const = k1i) |>
+        add_flow(compNames[-1], "cen", const = ki1) |>
+        add_observable(obs = observables(name = "Ccen", expr = "cen/Vc"))
 }
 
 

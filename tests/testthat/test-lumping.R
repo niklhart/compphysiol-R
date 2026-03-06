@@ -1,14 +1,14 @@
 test_that("lumping is exact in a 3-CMT model with identical peripherals", {
 
     M <- multiCompModel(ncomp = 3, type = "micro") |>
-        add_dosing(target = "comp1", time = 0, amount = 10) |>
-        add_parameter(k10 = 5, V1 = 1, k12 = 5, k13 = 10, k21 = 3, k31 = 3)
+        add_dosing(target = "cen", time = 0, amount = 10) |>
+        add_parameter(kc0 = 5, Vc = 1, kcp1 = 5, kcp2 = 10, kp1c = 3, kp2c = 3)
 
     L <- lump_model(M,
-                    partitioning = list(c("comp2","comp3")),
+                    partitioning = list(c("per1","per2")),
                     normalize = list(
-                        comp2 = "k21",
-                        comp3 = "k31"
+                        per1 = "kp1c",
+                        per2 = "kp2c"
                     )
     )
 

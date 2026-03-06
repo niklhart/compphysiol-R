@@ -31,7 +31,7 @@ If provided, must be either a single unit applied to all compartments or a vecto
 The modified \code{CompartmentModel} object.
 }
 \description{
-Add one or several compartments to a \code{CompartmentModel} object.
+Compartments represent model compartments with names and initial amounts (potentially with units).
 }
 \examples{
 # Several compartments added in a single call
