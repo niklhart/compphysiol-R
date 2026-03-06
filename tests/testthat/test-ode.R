@@ -26,6 +26,36 @@ test_that("ODE generation handles first-order reaction with bolus dosing", {
 
 })
 
+test_that("ODE generation handles output dimensions", {
+    # PK example with first-order reactions only
+    M <- compartment_model() |>
+        add_compartment("Central", 10[mg]) |>
+        add_flow(from = "Central", to = "", const = "ke") |>
+        add_parameter(ke = 6 [1/h]) |>
+        add_dosing(target = "Central", amount = 100[mg], time = 1[h])
+
+    odeinfo <- to_ode(M, dimensions = list(mass = "g", time = "min"))
+
+    expect_equal(odeinfo$y0, c(Central = 0.01))
+    expect_equal(odeinfo$events$data$time, 60)
+    expect_equal(odeinfo$events$data$value, 0.1)
+})
+
+
+test_that("ODE generation processes equations correctly", {
+    # 1-CMT model with redefined elimination rate constant
+    M <- compartment_model() |>
+        add_compartment("Central") |>
+        add_flow(from = "Central", to = "", const = "ke_eq") |>
+        add_parameter(ke_par = 1) |>
+        add_equation(ke_eq = ke_par)
+
+    odeinfo <- to_ode(M)
+
+    expect_equal(odeinfo$freeParams, character(0))
+    expect_no_error(odeinfo$odefun(0, odeinfo$y0))
+
+})
 
 test_that("ODE generation handles various reaction orders", {
 

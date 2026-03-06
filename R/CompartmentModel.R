@@ -418,6 +418,8 @@ to_analytical <- function(model, paramValues = list()) {
     nStates <- length(stateNames)
     name2idx <- setNames(seq_along(stateNames), stateNames)
 
+    eqNames <- names(model$equations)
+    
     # Initialize symbolic system matrix
     A <- matrix("0", nStates, nStates)
     rownames(A) <- stateNames
@@ -527,6 +529,7 @@ to_analytical <- function(model, paramValues = list()) {
         expr_lang <- substitute_expr(
             o,
             stateNames,
+            eqNames,
             name2idx,
             paramValues = paramValues,
             freeParamsEnv = freeParams,
@@ -583,6 +586,7 @@ to_ode <- function(
 ) {
     compNames <- names(model$compartments)
     stateNames <- names(model$compartments) # TODO: should become states(model$compartments) once the distinction is finalized
+    eqNames <- names(model$equations)
     name2idx <- setNames(seq_along(stateNames), stateNames)
 
     paramValues <- lapply(model$parameters, function(p) do.call(.to_dimensions, c(list(p), dimensions))) # TODO: look up dimensions in global dimensions list instead of passing as argument?
@@ -618,6 +622,7 @@ to_ode <- function(
         substitute_expr(
             expr,
             stateNames,
+            eqNames,
             name2idx,
             paramValues = paramValues,
             freeParamsEnv = freeParams,
@@ -631,38 +636,34 @@ to_ode <- function(
         expr <- makeFun(model$flows$rate[[j]])
         expr_str <- deparse(expr, width.cutoff = 500) |>
             paste(collapse = " ")
-        if (!is.na(model$flows$from[[j]])) {
-            for (from in model$flows$from[[j]]) {
-                idx <- name2idx[[from]]
-                rhs[[idx]] <- c(rhs[[idx]], paste0("-(", expr_str, ")"))
-            }
+        from <- model$flows$from[[j]]
+        to <- model$flows$to[[j]]
+        if (!is.na(from)) {
+            idx <- name2idx[[from]]
+            rhs[[idx]] <- c(rhs[[idx]], paste0("-(", expr_str, ")"))
         }
-        if (!is.na(model$flows$to[[j]])) {
-            for (to in model$flows$to[[j]]) {
-                idx <- name2idx[[to]]
-                rhs[[idx]] <- c(rhs[[idx]], paste0("+(", expr_str, ")"))
-            }
+        if (!is.na(to)) {
+            idx <- name2idx[[to]]
+            rhs[[idx]] <- c(rhs[[idx]], paste0("+(", expr_str, ")"))
         }
     }
 
     # Build ODE function body (explicit, human-readable)
-    lines <- c(
-        "function(t,y,params) {",
-        paste0("    dydt <- numeric(", length(stateNames), ")")
-    )
+    lines <- "function(t,y,params) {"
+    for (i in seq_along(model$equations)) {
+        eq_rhs <- model$equations[[i]]
+        eq_nm <- names(model$equations)[i]
+        eq_expr <- makeFun(eq_rhs)
+        eq_str <- paste(deparse(eq_expr, width.cutoff = 500), collapse = " ")
+        lines <- c(lines, paste0("    ", eq_nm, " <- ", eq_str))
+        if (i == length(model$equations)) lines <- c(lines, "")
+    }
+    lines <- c(lines, paste0("    dydt <- numeric(", length(stateNames), ")"))
     for (i in seq_along(stateNames)) {
         if (length(rhs[[i]]) == 0) {
             lines <- c(lines, paste0("    dydt[", i, "] <- 0"))
         } else {
-            lines <- c(
-                lines,
-                paste0(
-                    "    dydt[",
-                    i,
-                    "] <- ",
-                    paste(rhs[[i]], collapse = " ")
-                )
-            )
+            lines <- c(lines, paste0("    dydt[", i, "] <- ", paste(rhs[[i]], collapse = " ")))
         }
     }
     lines <- c(lines, "    list(dydt)", "}")
@@ -687,6 +688,16 @@ to_ode <- function(
 
     # Dosing events table in output units
     events <- .dosing_to_events(model)
+    if (inherits(events$data$value, "units")) {
+        events$data$value <- events$data$value |>
+            lapply(function(x) do.call(.to_dimensions, c(list(x), dimensions))) |>
+            vapply(function(x) units::set_units(x, NULL), numeric(1))
+    }
+    if (inherits(events$data$time, "units")) {
+         events$data$time <- events$data$time |>
+            lapply(function(x) do.call(.to_dimensions, c(list(x), dimensions))) |>
+            vapply(function(x) units::set_units(x, NULL), numeric(1))
+    }
 
     # Output list
     list(

@@ -110,9 +110,11 @@ sMD_PBPK_12CMT_wellstirred <- function() {
         add_flow(from = "art", to = "liv", const = "(Qliv-Qgut-Qspl) / Vart") |> 
         add_flow(from = c("gut","spl"), to = "liv", const = "Q_from / (V_from * K_from)") |>
         add_flow(from = c("adi","bon","hea","liv","mus","kid","ski"), to = "ven", const = "Q_from / (V_from * K_from)") |>
-        add_flow(from = "ven", to = "lun", const = "(Qadi+Qbon+Qhea+Qliv+Qmus+Qkid+Qski) / Vven") |>
-        add_flow(from = "lun", to = "art", const = "(Qadi+Qbon+Qhea+Qliv+Qmus+Qkid+Qski) / (Vlun * Klun)") |>
-        add_flow(from = "liv", to = "", const = "CL / (Vliv * Kliv)")
+        add_flow(from = "ven", to = "lun", const = "co / Vven") |>
+        add_flow(from = "lun", to = "art", const = "co / (Vlun * Klun)") |>
+        add_flow(from = "liv", to = "", const = "CL / (Vliv * Kliv)") |>
+        add_equation(name = "co", expr = "Qadi+Qbon+Qhea+Qliv+Qmus+Qkid+Qski")
+
 }
 
 

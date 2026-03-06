@@ -1,12 +1,13 @@
 # ---- common prep work for tests ----
 stateNames <- c("Central", "Peripheral")
 name2idx <- setNames(seq_along(stateNames), stateNames)
+eqNames <- character(0)
 
 # Helper to call substitute_expr with a fresh freeParams environment
 call_sub <- function(expr, paramValues = list(), obsFunc = FALSE) {
     freeParams <- new.env(parent = emptyenv())
     freeParams$list <- character()
-    out <- substitute_expr(expr, stateNames, name2idx,
+    out <- substitute_expr(expr, stateNames, eqNames, name2idx,
                            paramValues = paramValues,
                            freeParamsEnv = freeParams,
                            obsFunc = obsFunc)

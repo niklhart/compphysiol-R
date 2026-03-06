@@ -4,6 +4,7 @@
 #'
 #' @param expr character string or R expression
 #' @param stateNames character vector of state names
+#' @param eqNames character vector of equation names, which are ignored in parameter counting logic
 #' @param name2idx named integer mapping from stateNames -> index
 #' @param paramValues named list of parameter values (scalars may be inlined)
 #' @param freeParamsEnv Environment containing names of free parameters, will be
@@ -11,7 +12,7 @@
 #' @param obsFunc logical, `TRUE` if in observable (matrix indexing)
 #' @return An R expression with substitutions applied
 #' @noRd
-substitute_expr <- function(expr, stateNames, name2idx,
+substitute_expr <- function(expr, stateNames, eqNames, name2idx,
                             paramValues = list(),
                             freeParamsEnv = NULL,
                             obsFunc = FALSE) {
@@ -31,7 +32,10 @@ substitute_expr <- function(expr, stateNames, name2idx,
                 else return(bquote(y[.(idx)]))
             }
 
-            # 2) paramValues
+            # 2) equation name (don't treat as parameter)
+            if (nm %in% eqNames) return(e)
+
+            # 3) paramValues
             if (nm %in% names(paramValues)) {
                 val <- paramValues[[nm]]
                 if (is.numeric(val) && length(val) == 1L) {
@@ -44,12 +48,12 @@ substitute_expr <- function(expr, stateNames, name2idx,
                 }
             }
 
-            # 3) reserved names or builtin functions/operators
+            # 4) reserved names or builtin functions/operators
             if (nm %in% reserved || exists(nm, mode = "function", inherits = TRUE)) {
                 return(e)
             }
 
-            # 4) treat as free parameter
+            # 5) treat as free parameter
             if (!is.null(freeParamsEnv)) {
                 freeParamsEnv$list <- union(freeParamsEnv$list, nm)
             }
