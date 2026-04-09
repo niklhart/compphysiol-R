@@ -125,3 +125,19 @@ print.Parameters <- function(x, ...) {
     }
     invisible(x)
 }
+
+#' Unlist method for `Parameters` objects (experimental).
+#' 
+#' Parameters may be scalars or vectors, but for some purposes it may be desirable to unlist them into a flat `Parameters` object.
+#' 
+#' @param x A `Parameters` object
+#' @param ... Additional arguments (not used)
+#' @returns An unlisted `Parameters` object
+#' @export
+unlist.Parameters <- function(x, ...) {
+    unlisted <- unlist(unclass(x), recursive = FALSE, use.names = TRUE)
+    structure(
+        as.list(unlisted),
+        class = c("Parameters", "list")
+    )
+}

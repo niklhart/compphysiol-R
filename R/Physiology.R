@@ -204,3 +204,13 @@ to_param_list <- function(phys) {
     # merge metadata at the end
     c(out, phys$meta)
 }
+
+
+# ------------ physiology database and methods ------------
+#' Load a physiology from the physiology database
+#' @param name The name of the physiology to load (e.g. "rat250" or "human35m")
+#' @returns A `Physiology` object containing the parameters and metadata for the specified physiology.
+#' @export
+loadphysiology <- function(name) {
+    .physiologydb[[name]]
+}

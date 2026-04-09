@@ -3,6 +3,7 @@
 #'
 #' This model implements a 12-compartment PBPK model with well-stirred tissue distribution.
 #'
+#' @param unit Units for compartment amounts (character scalar or `NULL`, the default).
 #' @return An object of class `CompartmentModel`
 #' @export
 #' @examples
@@ -102,10 +103,10 @@
 #'     main = "Plasma Concentration"
 #' )
 #' }
-sMD_PBPK_12CMT_wellstirred <- function() {
+sMD_PBPK_12CMT_wellstirred <- function(unit = NULL) {
 
     compartment_model() |>
-        add_compartment(name = c("ven", "art", "adi", "bon", "gut", "hea", "mus", "kid", "liv", "lun", "ski", "spl")) |>
+        add_compartment(name = c("ven", "art", "adi", "bon", "gut", "hea", "mus", "kid", "liv", "lun", "ski", "spl"), unit = unit) |>
         add_flow(from = "art", to = c("adi", "bon", "gut", "hea", "mus", "kid", "ski", "spl"), const = "Q_to / Vart") |>
         add_flow(from = "art", to = "liv", const = "(Qliv-Qgut-Qspl) / Vart") |> 
         add_flow(from = c("gut","spl"), to = "liv", const = "Q_from / (V_from * K_from)") |>
@@ -122,6 +123,7 @@ sMD_PBPK_12CMT_wellstirred <- function() {
 #'
 #' This model implements a 12-compartment PBPK model with permeation-based tissue distribution.
 #'
+#' @param unit Units for compartment amounts (character scalar or `NULL`, the default).
 #' @return An object of class `CompartmentModel`
 #' @export
 #' @examples
@@ -255,7 +257,7 @@ sMD_PBPK_12CMT_wellstirred <- function() {
 #'     main = "Plasma Concentration"
 #' )
 #' }
-sMD_PBPK_12CMT_permbased <- function() {
+sMD_PBPK_12CMT_permbased <- function(unit = NULL) {
 
     compartment_model() |>
         add_compartment(
@@ -282,7 +284,8 @@ sMD_PBPK_12CMT_permbased <- function() {
                 "ski_cel",
                 "spl_exc",
                 "spl_cel"
-            )
+            ),
+            unit = unit
         ) |>
         # organs with arterial inflow
         add_flow("art", "adi_exc", const = "Qadi / Vart") |>

@@ -21,6 +21,98 @@ You can download the development version of the package on GitHub:
 devtools::install_github("niklhart/compphysiol-R")
 ```
 
-## Usage
+## Usage - PBPK modeling workflow
 
-Add a few examples here, in particular a PBPK workflow.
+```{r}
+library(compphysiol)
+```
+
+For demonstrating a PBPK workflow, we will use the `sMD_PBPK_12CMT_wellstirred()` model, which is a generic 12-compartment whole-body PBPK model with well-stirred tissue compartments. We will load physiological parameters for a 35-year-old human and drug parameters for Warfarin from the built-in databases. We will then calculate tissue partition coefficients using the Rodgers and Rowland method.
+
+```{r}
+M <- sMD_PBPK_12CMT_wellstirred()
+
+phys <- loadphysiology("human35m")
+drug <- loaddrugdata("Warfarin", species = "human")
+
+compnames <- names(M$compartments)
+organs <- setdiff(compnames, c("ven","art"))
+Ktis <- rodgersrowland(phys, drug, organs = organs)
+```
+
+Physiological parameters (e.g., tissue volumes and blood flows), drug parameters (e.g., blood-to-plasma ratio and clearance) and tissue partition coefficients can be added to the model as follows:
+
+```{r}
+param <- c(
+    param(phys, name = c("Vtis","Qblo"), organs = organs),
+    param(drug, name = c("BP","CL")),
+    Ktis
+)
+M <- add_parameter(M, param = param)
+```
+
+Add a dosing regimen:
+
+```{r}
+M <- add_dosing(M, target = "ven", time = 0 [h], amount = 100 [mg])
+```
+
+Convert to ODEs and simulate:
+
+```{r}
+odeinfo <- to_ode(M, dimensions = list(time = "h", mass = "mg", length = "cm"))
+times <- seq(0, 24, by = 0.1)
+out <- deSolve::ode(
+    y = odeinfo$y0,
+    times = times,
+    func = odeinfo$odefun,
+    parms = paramValues,
+    events = odeinfo$events
+)
+out_df <- as.data.frame(out)
+```
+
+Plot compartment amounts
+```{r}
+matplot(
+    out_df$time,
+    out_df[, -1],
+    type = "l",
+    lty = 1,
+    col = 1:12,
+    xlab = "Time (h)",
+    ylab = "Amount",
+    main = "PBPK Model Compartments"
+)
+legend(
+    "topright",
+    legend = colnames(out_df)[-1],
+    col = 1:12,
+    lty = 1
+)
+```
+
+Evaluate observables at each time point
+
+```{r}
+obs_df <- as.data.frame(sapply(
+    odeinfo$obsFuncs,
+    function(f) f(out_df$time, as.matrix(out_df[, -1]), paramValues)
+))
+names(obs_df) <- names(odeinfo$obsFuncs)
+obs_df$time <- out_df$time
+```
+
+Plot plasma concentration
+
+```{r}
+plot(
+    obs_df$time,
+    obs_df$Cpla,
+    type = "l",
+    col = "black",
+    lwd = 2,
+    xlab = "Time (h)",
+    ylab = "Plasma concentration"
+)
+```

@@ -1,0 +1,25 @@
+Drug;Parameter;Species;Value;Unit;Reference;Assumption
+Amitriptyline;formula;;C20H23N;;;
+Amitriptyline;class;;small molecule;;;
+Amitriptyline;MW;;277.4;g/mol;;
+Amitriptyline;pKa_cat;;9.4;;;
+Amitriptyline;logPow;;4.9;;;
+Amitriptyline;fuP;rat;0.056;;;
+Amitriptyline;fuP;human;0.05;;;
+Amitriptyline;BP;rat;0.86;;;
+Amitriptyline;BP;human;0.86;;;
+Amitriptyline;CLblood_hep;human;12;mL/min/kg;;
+Amitriptyline;Egut;human;0.48;;;
+Warfarin;formula;;C19H16O4;;;
+Warfarin;class;;small molecule;;;
+Warfarin;MW;;308.33;g/mol;;
+Warfarin;pKa_ani;;5.08;;;
+Warfarin;logPow;;3;;;
+Warfarin;fuP;rat;0.02;;;
+Warfarin;fuP;human;0.08;;;
+Warfarin;BP;rat;0.58;;;
+Warfarin;BP;human;0.58;;;
+Warfarin;CLblood_hep;rat;0.36;mL/min/kg;;
+Warfarin;CLblood_hep;human;0.081;mL/min/kg;;
+Warfarin;lambda_po;rat;2;1/h;;
+Warfarin;lambda_po;human;47;1/day;;

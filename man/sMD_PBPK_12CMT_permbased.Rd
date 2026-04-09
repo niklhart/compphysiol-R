@@ -4,7 +4,10 @@
 \alias{sMD_PBPK_12CMT_permbased}
 \title{12-CMT PBPK model with permeation-based tissue distribution}
 \usage{
-sMD_PBPK_12CMT_permbased()
+sMD_PBPK_12CMT_permbased(unit = NULL)
+}
+\arguments{
+\item{unit}{Units for compartment amounts (character scalar or \code{NULL}, the default).}
 }
 \value{
 An object of class \code{CompartmentModel}

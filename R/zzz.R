@@ -3,7 +3,7 @@
 
     # Define hidden `.physiologies` object in the package namespace
     ns <- asNamespace(pkgname)
-    ns$.physiologies <- lapply(.physiology_data, function(cfg) {
+    ns$.physiologies <- lapply(.physiologydb, function(cfg) {
         P <- physiology(params = cfg$param)
         P <- do.call(add_meta, c(list(phys = P), cfg$meta))
         P
