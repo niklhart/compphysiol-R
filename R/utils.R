@@ -143,6 +143,9 @@
 .subst_eq <- function(flows, eqs) {
     lapply(flows, function(flow) {
         flow$rate <- do.call("substitute", list(flow$rate, env = unclass(eqs)))
+        if (!is.null(flow$const)) {
+            flow$const <- do.call("substitute", list(flow$const, env = unclass(eqs)))
+        }
         flow
     }) |> do.call(what = "c")
 }
