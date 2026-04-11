@@ -23,8 +23,15 @@ drug <- function(..., data = NULL) {
             Reference = NA_character_,     # TODO: support %ref% tag in NSE arguments
             Assumption = NA_character_     # TODO: support %assum% tag in NSE arguments
         )
+    } else {
+        data <- data %||% data.frame(
+            Parameter = character(0),
+            Species = character(0),
+            Value = I(list()),
+            Reference = character(0),
+            Assumption = character(0)
+        )
     }
-
     return(structure(data, class = c("Drug", "data.frame")))
 }
 
