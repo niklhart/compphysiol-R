@@ -268,3 +268,35 @@ print.Flow <- function(x, ...) {
     ))
     invisible(x)
 }
+
+#' Combine multiple `Flow` objects into a `Flows` object
+#' 
+#' @param ... Multiple `Flow` objects to combine
+#' @return A combined `Flows` object
+#' @export
+c.Flow <- function(...) {
+    objs <- list(...)
+    if (!all(sapply(objs, function(o) inherits(o, "Flow")))) {
+        stop("All inputs must be Flow objects.")
+    }
+    
+    # Combine the components into vectors/lists
+    from <- vapply(objs, function(o) o$from, character(1))
+    to <- vapply(objs, function(o) o$to, character(1))
+    rate <- lapply(objs, function(o) o$rate)
+    const <- lapply(objs, function(o) o$const)
+    type <- vapply(objs, function(o) o$type, character(1))
+
+    # Assemble into a Flows object
+    structure(
+        data.frame(
+            from = from,
+            to = to,
+            rate = I(rate),
+            const = I(const),
+            type = type,
+            stringsAsFactors = FALSE
+        ),
+        class = "Flows"
+    )
+}

@@ -8,7 +8,8 @@ compartments(
   name = character(0),
   initial = 0,
   unit = NULL,
-  state = paste0("A", name, recycle0 = TRUE)
+  state = paste0("A", name, recycle0 = TRUE),
+  volume = NULL
 )
 }
 \arguments{
@@ -20,6 +21,8 @@ compartments(
 If provided, must be either a single unit applied to all compartments or a vector of units matching the length of \code{name}.}
 
 \item{state}{State names for the compartments (character scalar or vector, default = \code{"A" + name}).}
+
+\item{volume}{Optional volume for each compartment (not currently used, reserved for future use)}
 }
 \value{
 A \code{Compartments} object

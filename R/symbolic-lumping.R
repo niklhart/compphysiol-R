@@ -90,6 +90,7 @@ get_lumping_conditions <- function(M, refstate, maxdegree = 2, simplify = c("non
     }
 
     # algebraic part
-    .solve_model_symbolic(cond, M$flows, simplify = match.arg(simplify))
+    fl <- .subst_eq(flows = M$flows, eqs = M$equations)
+    .solve_model_symbolic(cond, fl, simplify = match.arg(simplify))
 
 }

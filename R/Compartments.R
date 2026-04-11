@@ -7,6 +7,7 @@
 #' @param unit Units for the initial amounts (character scalar or vector, default = `NULL`).
 #'   If provided, must be either a single unit applied to all compartments or a vector of units matching the length of `name`.
 #' @param state State names for the compartments (character scalar or vector, default = `"A" + name`).
+#' @param volume Optional volume for each compartment (not currently used, reserved for future use)
 #' @return A `Compartments` object
 #' @examples
 #' compartments(c("adi","bon"), initial = 10)
@@ -17,7 +18,8 @@ compartments <- function(
     name = character(0),
     initial = 0,
     unit = NULL,
-    state = paste0("A", name, recycle0 = TRUE)
+    state = paste0("A", name, recycle0 = TRUE),
+    volume = NULL
 ) {
     initial <- .process_nse_arg(
         expr = substitute(initial),

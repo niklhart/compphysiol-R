@@ -132,3 +132,17 @@
     var_si
 }
 
+#' Substitute equations in flows
+#' 
+#' This function takes a `Flows` object and an `Equations` object, and substitutes the equations into the rate expressions of the flows.
+#' 
+#' @param flows A `Flows` object
+#' @param eqs An `Equations` object
+#' @returns A `Flows` object with the equations substituted into the rate expressions
+#' @noRd
+.subst_eq <- function(flows, eqs) {
+    lapply(flows, function(flow) {
+        flow$rate <- do.call("substitute", list(flow$rate, env = unclass(eqs)))
+        flow
+    }) |> do.call(what = "c")
+}
