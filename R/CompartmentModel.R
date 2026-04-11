@@ -405,10 +405,10 @@ add_dosing <- function(
 #' calculates the `i`-th observable defined in the CompartmentModel.
 #' @examples
 #' M <- multiCompModel(ncomp = 2, type = "micro")
-#' sol <- to_analytical(M, paramValues = list(k10 = 0.05))  # fix one param
+#' sol <- to_analytical(M, paramValues = list(kc0 = 0.05))  # fix one param
 #'
 #' # Evaluate ODE state at t = 5 with free params
-#' sol$statefun(5, params = list(k12 = 0.2, k21 = 0.1))
+#' sol$statefun(5, params = list(kcp = 0.2, kpc = 0.1))
 #' @export
 to_analytical <- function(model, paramValues = list()) {
 
