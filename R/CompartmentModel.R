@@ -15,6 +15,7 @@ compartment_model <- function() {
         list(
             compartments = compartments(),
             flows = flows(),
+            reactions = reactions(),
             equations = equations(),
             observables = observables(),
             parameters = parameters(),

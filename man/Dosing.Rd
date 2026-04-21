@@ -5,19 +5,18 @@
 \title{Dosing specification}
 \usage{
 dosing(
-  target = character(0),
   time = numeric(0),
   amount = NULL,
   time_unit = NULL,
   amount_unit = NULL,
+  molec = NULL,
+  cmt = NULL,
   ...,
   rate = NULL,
   duration = NULL
 )
 }
 \arguments{
-\item{target}{Target compartment name (character scalar)}
-
 \item{time}{Dosing time(s) (numeric scalar or vector)}
 
 \item{amount}{Amount(s) of dose (non-negative numeric scalar or vector, optional)}
@@ -26,7 +25,14 @@ dosing(
 
 \item{amount_unit}{Optional unit for amount (character scalar, e.g., "mg", or \code{NULL}, the default)}
 
-\item{...}{Unused, enforces \code{rate} and \code{duration} to be specified as named arguments only, not positional}
+\item{molec}{The name of the molecule to be dosed (character scalar).
+If only a single molecule is present in the model, this can be omitted.}
+
+\item{cmt}{Compartment name (character scalar). If only a single compartment is present in the model,
+this can be omitted.}
+
+\item{...}{Unused, enforces \code{rate} and \code{duration} for infusion dosing to be specified
+as named arguments only, not positional}
 
 \item{rate}{Infusion rate (non-negative numeric scalar or vector, optional)}
 
@@ -36,18 +42,18 @@ dosing(
 A \code{Dosing} object
 }
 \description{
-Represents a dosing event for a \code{CompartmentModel}. A dose can be
-specified either as a bolus (instantaneous input) or as an infusion (continuous input over time).
+Represents a dosing event for a \code{CompartmentModel}. A dose can be specified either as a bolus (instantaneous input)
+or as an infusion (continuous input over time).
 }
 \details{
 \subsection{Bolus}{
 
-Provide \code{target}, \code{time}, and \code{amount}.
+Provide \code{cmt}, \code{time}, and \code{amount}.
 }
 
 \subsection{Infusion}{
 
-In addition to \code{target} and \code{time}, provide any two of \code{amount}, \code{rate}, and \code{duration}.
+In addition to \code{cmt} and \code{time}, provide any two of \code{amount}, \code{rate}, and \code{duration}.
 The missing quantity is derived automatically:
 \deqn{amount = rate * duration}
 \deqn{rate = amount / duration}
@@ -57,12 +63,12 @@ The \code{rate} and \code{duration} argument must be specified as named argument
 }
 \examples{
 # Bolus of 100 at t=0
-dosing("Central", time = 0, amount = 100)
+dosing(time = 0, amount = 100, cmt = "Central")
 # Infusion examples (all equivalent)
-dosing("Central", time = 0, rate = 10, duration = 5)
-dosing("Central", time = 0, amount = 50, duration = 5)
-dosing("Central", time = 0, amount = 50, rate = 10)
+dosing(time = 0, rate = 10, duration = 5, cmt = "Central")
+dosing(time = 0, amount = 50, duration = 5, cmt = "Central")
+dosing(time = 0, amount = 50, rate = 10, cmt = "Central")
 # Vectorized dosing examples
-dosing("Central", time = c(0, 24, 48), amount = 100)
-dosing("Central", time = c(0, 24), amount = c(50, 60), rate = 10)
+dosing(time = c(0, 24, 48), amount = 100, cmt = "Central")
+dosing(time = c(0, 24), amount = c(50, 60), rate = 10, cmt = "Central")
 }

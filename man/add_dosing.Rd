@@ -20,8 +20,6 @@ add_dosing(
 \arguments{
 \item{model}{A \code{CompartmentModel} object.}
 
-\item{target}{Target compartment name (character scalar)}
-
 \item{time}{Dosing time(s) (numeric scalar or vector)}
 
 \item{amount}{Amount(s) of dose (non-negative numeric scalar or vector, optional)}
@@ -30,7 +28,8 @@ add_dosing(
 
 \item{amount_unit}{Optional unit for amount (character scalar, e.g., "mg", or \code{NULL}, the default)}
 
-\item{...}{Unused, enforces \code{rate} and \code{duration} to be specified as named arguments only, not positional}
+\item{...}{Unused, enforces \code{rate} and \code{duration} for infusion dosing to be specified
+as named arguments only, not positional}
 
 \item{rate}{Infusion rate (non-negative numeric scalar or vector, optional)}
 

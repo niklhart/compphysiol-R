@@ -1,44 +1,49 @@
 #' Dosing specification
 #'
-#' Represents a dosing event for a `CompartmentModel`. A dose can be
-#' specified either as a bolus (instantaneous input) or as an infusion (continuous input over time).
+#' Represents a dosing event for a `CompartmentModel`. A dose can be specified either as a bolus (instantaneous input) 
+#' or as an infusion (continuous input over time).
 #'
 #' ## Bolus
-#' Provide `target`, `time`, and `amount`.
+#' Provide `cmt`, `time`, and `amount`.
 #' ## Infusion
-#' In addition to `target` and `time`, provide any two of `amount`, `rate`, and `duration`. 
+#' In addition to `cmt` and `time`, provide any two of `amount`, `rate`, and `duration`. 
 #' The missing quantity is derived automatically:
 #' \deqn{amount = rate * duration}
 #' \deqn{rate = amount / duration}
 #' \deqn{duration = amount / rate}
 #' The `rate` and `duration` argument must be specified as named arguments, not positional, to avoid any ambiguity.
 #'
-#' @param target Target compartment name (character scalar)
 #' @param time Dosing time(s) (numeric scalar or vector)
 #' @param amount Amount(s) of dose (non-negative numeric scalar or vector, optional)
 #' @param time_unit Optional unit for time (character scalar, e.g., "h", or `NULL`, the default)
 #' @param amount_unit Optional unit for amount (character scalar, e.g., "mg", or `NULL`, the default)
-#' @param ... Unused, enforces `rate` and `duration` to be specified as named arguments only, not positional
+#' @param molec The name of the molecule to be dosed (character scalar). 
+#'   If only a single molecule is present in the model, this can be omitted.
+#' @param cmt Compartment name (character scalar). If only a single compartment is present in the model, 
+#'   this can be omitted.
+#' @param ... Unused, enforces `rate` and `duration` for infusion dosing to be specified 
+#'   as named arguments only, not positional
 #' @param rate Infusion rate (non-negative numeric scalar or vector, optional)
 #' @param duration Infusion duration (positive numeric scalar or vector, optional)
 #' @return A `Dosing` object
 #' @examples
 #' # Bolus of 100 at t=0
-#' dosing("Central", time = 0, amount = 100)
+#' dosing(time = 0, amount = 100, cmt = "Central")
 #' # Infusion examples (all equivalent)
-#' dosing("Central", time = 0, rate = 10, duration = 5)
-#' dosing("Central", time = 0, amount = 50, duration = 5)
-#' dosing("Central", time = 0, amount = 50, rate = 10)
+#' dosing(time = 0, rate = 10, duration = 5, cmt = "Central")
+#' dosing(time = 0, amount = 50, duration = 5, cmt = "Central")
+#' dosing(time = 0, amount = 50, rate = 10, cmt = "Central")
 #' # Vectorized dosing examples
-#' dosing("Central", time = c(0, 24, 48), amount = 100)
-#' dosing("Central", time = c(0, 24), amount = c(50, 60), rate = 10)
+#' dosing(time = c(0, 24, 48), amount = 100, cmt = "Central")
+#' dosing(time = c(0, 24), amount = c(50, 60), rate = 10, cmt = "Central")
 #' @export
 dosing <- function(
-    target = character(0),
     time = numeric(0),
     amount = NULL,
     time_unit = NULL,
     amount_unit = NULL,
+    molec = NULL,
+    cmt = NULL,
     ...,
     rate = NULL,
     duration = NULL
@@ -58,18 +63,18 @@ dosing <- function(
     if (ndose == 0) {
         return(structure(
             data.frame(
-                target = character(0),
                 time = numeric(0),
                 amount = numeric(0),
                 rate = numeric(0),
-                duration = numeric(0)
+                duration = numeric(0),
+                molec = character(0),
+                cmt = character(0)
             ),
             class = "Dosing"
         ))
     }
 
     # Validate inputs (using sign to support variables with/without units)
-    stopifnot(is.character(target))
     stopifnot(is.numeric(time))
     if (!is.null(amount)) stopifnot(is.numeric(amount), sign(amount) >= 0)
     if (!is.null(rate)) stopifnot(is.numeric(rate), sign(rate) >= 0)
@@ -77,10 +82,11 @@ dosing <- function(
 
     # More strict checks on argument lengths than data.frame recycling rules, to avoid silent bugs from unintended recycling.
     stopifnot(
-        "target must be scalar or match length of time" = length(target) %in% c(1, ndose),
         "amount must be NULL, scalar or match length of time" = length(amount) %in% c(0, 1, ndose),
         "rate must be NULL, scalar or match length of time" = length(rate) %in% c(0, 1, ndose),
-        "duration must be NULL, scalar or match length of time" = length(duration) %in% c(0, 1, ndose)
+        "duration must be NULL, scalar or match length of time" = length(duration) %in% c(0, 1, ndose),
+        "molec must be NULL or scalar" = length(molec) %in% c(0, 1),
+        "cmt must be NULL or scalar" = length(cmt) %in% c(0, 1)
     )
 
     # Variables with units are not automatically recycled by data.frame -> do it here
@@ -88,15 +94,20 @@ dosing <- function(
     if (!is.null(rate)) rate <- rep(rate, length.out = ndose)
     if (!is.null(duration)) duration <- rep(duration, length.out = ndose)
 
+    # Uniformize molec and cmt to NA if NULL, to avoid issues with data.frame handling of NULL vs NA
+    molec <- molec %||% NA_character_
+    cmt <- cmt %||% NA_character_
+
     # Case 1: bolus dosing -- early return
     if (!is.null(amount) && is.null(rate) && is.null(duration)) {
         return(structure(
             data.frame(
-                target = target,
                 time = time,
                 amount = amount,
                 rate = NA_real_,
-                duration = NA_real_
+                duration = NA_real_,
+                molec = molec,
+                cmt = cmt
             ),
             class = "Dosing"
         ))
@@ -117,11 +128,12 @@ dosing <- function(
 
     structure(
         data.frame(
-            target = target,
             time = time,
             amount = amount,
             rate = rate,
-            duration = duration
+            duration = duration,
+            molec = molec,
+            cmt = cmt
         ),
         class = "Dosing"
     )
@@ -153,7 +165,7 @@ is_infusion <- function(dose) {
 #' @return The number of dosing events (number of rows in the data frame)
 #' @export
 length.Dosing <- function(x) {
-    length(x$target)
+    length(x$time)
 }
 
 #' Print method for Dosing class
@@ -172,14 +184,24 @@ print.Dosing <- function(x, ...) {
         bol <- is_bolus(x)
         inf <- is_infusion(x)
 
+        target <- ifelse(
+            is.na(x$molec), 
+            yes = paste0(" in ", x$cmt), 
+            no = ifelse(
+                is.na(x$cmt), 
+                yes = paste0(" of ", x$molec), 
+                no = paste0(" of ", x$molec, " in ", x$cmt)
+            )
+    )
+
         # assemble string to be printed, differentiating bolus vs infusion events
         dosing_strings <- character(length = n)
         if (any(bol)) {
             dosing_strings[bol] <- paste0(
                 "Bolus: ",
                 format(x$amount[bol]),
-                " \u2192 ",
-                x$target[bol],
+#                " \u2192 ",
+                target[bol],
                 " at t = ",
                 format(x$time[bol])
             )
@@ -187,15 +209,15 @@ print.Dosing <- function(x, ...) {
         if (any(inf)) {
             dosing_strings[inf] <- paste0(
                 "Infusion: ",
-                format(x$amount[is_infusion(x)]),
-                " \u2192 ",
-                x$target[is_infusion(x)],
+                format(x$amount[inf]),
+ #               " \u2192 ",
+                target[inf],
                 " from t = ",
-                format(x$time[is_infusion(x)]),
+                format(x$time[inf]),
                 " to t = ",
-                format(x$time[is_infusion(x)] + x$duration[is_infusion(x)]),
+                format(x$time[inf] + x$duration[inf]),
                 " (rate = ",
-                format(x$rate[is_infusion(x)]),
+                format(x$rate[inf]),
                 ")"
             )
         }

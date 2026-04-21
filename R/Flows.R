@@ -4,6 +4,7 @@
 #' 
 #' @param from The name of the source compartment(s) (character vector or NULL for source compartments)
 #' @param to The name of the destination compartment(s) (character vector or NULL for sink compartments)
+#' @param molec The name of the molecule(s) being transferred (character vector, optional, default: all molecules)
 #' @param ... Unused, enforces `rate` and `const` to be specified as named arguments only, not positional
 #' @param rate The flow rate (numeric, optional, mutually exclusive with `const`)
 #' @param const Rate constant for first-order flows (numeric, optional, mutually exclusive with `rate`)
@@ -14,7 +15,7 @@
 #' # Nonlinear flow
 #' f2 <- flows(from = "A", to = "B", rate = "k1 * A*B/(B+K)")
 #' @export
-flows <- function(from, to, ..., rate = NULL, const = NULL) {
+flows <- function(from, to, molec = NULL, ..., rate = NULL, const = NULL) {
 
     # Early return for empty flows
     if (missing(from) || missing(to) || identical(from, character(0)) || identical(to, character(0))) {
@@ -22,6 +23,7 @@ flows <- function(from, to, ..., rate = NULL, const = NULL) {
             data.frame(
                 from = character(),
                 to = character(),
+                molec = character(),
                 rate = I(list()),
                 const = I(list()),
                 type = character(),
@@ -104,6 +106,7 @@ flows <- function(from, to, ..., rate = NULL, const = NULL) {
         data.frame(
             from = from,
             to = to,
+            molec = if (is.null(molec)) NA_character_ else molec,
             rate = I(rate),
             const = I(const),
             type = type,
@@ -205,31 +208,14 @@ as.list.Flows <- function(x, ...) {
 #' @param ... Additional arguments (not used)
 #' @return A subsetted `Flows` object
 #' @export
-`[.Flows` <- function(x, i, ...) {
-    structure(
-         as.data.frame(x)[i, , drop = FALSE],
-         class = "Flows"
-    )
-}
+`[.Flows` <- function(x, i, ...) .subset_df_like(x, i, byname = FALSE)
 
 #' Combine multiple `Flows` objects into one
 #' 
 #' @param ... Multiple `Flows` objects to combine
 #' @return A combined `Flows` object
 #' @export
-c.Flows <- function(...) {
-
-    objs <- list(...)
-    if (!all(sapply(objs, function(o) inherits(o, "Flows")))) {
-        stop("All inputs must be Flows objects.")
-    }
-    
-    # Combine the data frames by row-binding
-    objs |>
-        lapply(FUN = as.data.frame) |>
-        do.call(what = rbind) |>
-        structure(class = "Flows")
-}
+c.Flows <- function(...) .combine_df_like(...)
 
 #' Accessing an element in a `Flows` object
 #' 

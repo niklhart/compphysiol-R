@@ -149,3 +149,65 @@
         flow
     }) |> do.call(what = "c")
 }
+
+
+
+
+#' Subsetting logic for data frame-like classes (named or unnamed)
+#' 
+#' This function is used to implement the `[` method for classes like `Molecules`, `Compartments`, etc. 
+#' It applies the subset to the underlying data frame and then reconstructs the object with the same class.
+#' 
+#' @param x The object to subset (e.g. a `Molecules` object)
+#' @param i The row indices to subset
+#' @param byname If `TRUE`, allows subsetting by name; if `FALSE` (default), only allows numeric indices
+#' @param ... Additional arguments (not used)
+#' @returns A subsetted object of the same class (e.g. a `Molecules` object)
+#' @noRd
+.subset_df_like <- function(x, i, byname = FALSE, ...) {
+
+    # Handle character indexing via names
+    if (is.character(i)) {
+        if (!byname) stop(sprintf("Subsetting by name is not allowed for class '%s'.", class(x)[1]))
+        i <- match(i, names(x))
+        if (any(is.na(i))) stop("Unknown name.")
+    }
+
+    df_subset <- as.data.frame(x)[i, , drop = FALSE]
+    structure(df_subset, class = class(x))
+}
+
+#' Combine multiple data frame-like objects (e.g. `Molecules`, `Compartments`) into one
+#'
+#' @param ... Multiple objects of the same class to combine
+#' @returns A combined object of the same class
+#' @noRd
+.combine_df_like <- function(...) {
+    objs <- list(...)
+    class1 <- class(objs[[1]])
+    if (!all(sapply(objs, function(o) inherits(o, class1)))) {
+        stop(sprintf("All inputs must be of class '%s'.", class1[1]))
+    }
+
+    # Combine the data frames by row-binding
+    combined_df <- do.call(rbind, lapply(objs, as.data.frame))
+    structure(combined_df, class = class(objs[[1]]))
+}
+
+#' Extraction method for data frame-like class
+#' 
+#' Thise method are intentionally not implemented to prevent direct element access, 
+#' which could lead to confusion given their internal data frame-like structure. 
+#' Instead, users should use subsetting with `[` and a scalar index.
+#' @param x The object to extract from
+#' @param i Row index to access
+#' @param ... Additional arguments (not used)
+#' @returns Nothing (errors)
+#' @noRd
+.extract_df_like <- function(x, i, ...) {
+
+    stop(sprintf(
+        "Direct element access is not supported for class '%s'. Use subsetting with [ and a scalar index instead.",
+        class(x)[1]
+    ))
+}
