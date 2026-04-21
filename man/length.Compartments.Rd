@@ -10,7 +10,7 @@
 \item{x}{A \code{Compartments} object}
 }
 \value{
-The number of compartments (length of the \code{name} vector)
+The number of compartments
 }
 \description{
 Returns the number of compartments in a \code{Compartments} object.

@@ -33,8 +33,8 @@ A \code{Molecules} object containing the compartment and initial conditioninform
 Represents the molecules in a PBPK model.
 }
 \examples{
-# No compartment specified: all molecules are assumed to be in the same compartment
-molecules(name = c("NFkB", "IkB"), initial = c(100, 50))
+# No compartment specified: molecules are assumed to be present in all compartments
+molecules(name = c("NFkB", "IkB"), unit = "mol/L")
 # Compartment specified: each molecule is associated with a specific compartment
-molecules(name = c("NFkB", "IkB"), cmt = c("cytoplasm", "nucleus"), initial = c(100, 50))
+molecules(name = c("NFkB", "IkB"), cmt = c("cytoplasm", "nucleus"), initial = c(100, 50) [mol/L])
 }

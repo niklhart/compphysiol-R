@@ -18,12 +18,9 @@ add_compartment(
 
 \item{name}{Compartment name(s), character scalar or vector}
 
-\item{initial}{Initial amounts for the compartments (numeric scalar or vector, default = \code{0})}
-
-\item{unit}{Units for the initial amounts (character scalar or vector, default = \code{NULL}).
-If provided, must be either a single unit applied to all compartments or a vector of units matching the length of \code{name}.}
-
-\item{state}{State names for the compartments (character scalar or vector, default = \code{"A" + name}).}
+\item{unit}{Unit for the compartment volume(s) (optional, default: \code{NULL}). If specified,
+it can be a single unit (applied to all volumes) or a vector of units corresponding to each volume.
+The \code{unit} argument is ignored (with a warning) if the \code{volume} argument is not numeric.}
 
 \item{comp}{A \code{Compartments} object. Constructed from the other inputs if not provided.}
 }
@@ -31,7 +28,7 @@ If provided, must be either a single unit applied to all compartments or a vecto
 The modified \code{CompartmentModel} object.
 }
 \description{
-Compartments represent model compartments with names and initial amounts (potentially with units).
+Compartments represent model compartments with names and fixed or parametrized volumes.
 }
 \examples{
 # Several compartments added in a single call

@@ -24,7 +24,7 @@ For degradation reactions, use an empty character vector or \code{NULL}.}
 
 \item{cmt}{Character vector of compartment names where the reaction(s) occur (optional, default: all compartments)}
 
-\item{...}{Unused, enforces \code{rate} and \code{const} to be specified as named arguments only, not positional}
+\item{...}{Errors if used, enforces \code{rate} and \code{const} to be specified as named arguments only, not positional.}
 
 \item{rate}{Character string representing the reaction rate (for nonlinear reactions).
 Use \code{c[A]} to refer to the concentration of molecule A, and \code{a[A]} to refer to its amount.}
@@ -32,9 +32,7 @@ Use \code{c[A]} to refer to the concentration of molecule A, and \code{a[A]} to 
 \item{const}{Character string representing the reaction constant (for mass-action reactions).
 Formally, this corresponds to \code{rate = const * c[input[1]] * c[input[2]] * ...}.
 In addition, the information that the reaction is elementary is encoded in the \code{type}
-column of the resulting \code{Reactions} object.
-The special expression \code{{cmt}} can be used in \code{const} to automatically substitute the compartment name,
-e.g., \verb{k_\{cmt\}} will become \code{k_cytoplasm} for reactions in the cytoplasm and \code{k_nucleus} for reactions in the nucleus.}
+column of the resulting \code{Reactions} object.}
 }
 \value{
 A \code{Reactions} object containing the reaction information.
@@ -43,6 +41,11 @@ A \code{Reactions} object containing the reaction information.
 The \code{Reactions} class can hold several reactions, each with an input, output, rate/constant, and compartment.
 However, each reaction needs to be defined separately, i.e., vectorized definitions are not supported for reactions
 as they can be for flows and molecules -- vector arguments are instead used for defining multiple reacting species within a single reaction.
+}
+\details{
+The special expression \code{{cmt}} can be used in \code{rate} or \code{const} to automatically substitute the compartment name,
+e.g., \verb{k_\{cmt\}} will become \code{k_cytoplasm} for reactions in the cytoplasm and \code{k_nucleus} for reactions in the nucleus.
+Replacement is only applied if the \code{cmt} argument is provided (otherwise, parameter names would change dynamically as compartments change).
 }
 \examples{
 # empty `Reactions` object
@@ -54,8 +57,8 @@ reactions(input = "", output = "A", const = "k2")
 # Michelis-Menten reaction (saturable, non-elementary)
 reactions(input = "A", output = "B", rate = "Vmax * c[A] / (Km + c[A])")
 # Reactions in several compartments (same rate constants)
-reactions(input = "A", output = "B", const = "kAB", cmt = c("cytoplasm", "nucleus"))
+reactions(input = "A", output = "B", cmt = c("cytoplasm", "nucleus"), const = "kAB")
 # Reactions in several compartments (different rate constants)
-reactions(input = "A", output = "B", const = "kAB_{cmt}", cmt = c("cytoplasm", "nucleus"))
+reactions(input = "A", output = "B", cmt = c("cytoplasm", "nucleus"), const = "kAB_{cmt}")
 
 }

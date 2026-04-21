@@ -7,11 +7,11 @@
 \method{c}{Compartments}(...)
 }
 \arguments{
-\item{...}{One or more \code{Compartments} objects to combine.}
+\item{...}{Multiple \code{Compartments} objects to combine}
 }
 \value{
-A single \code{Compartments} object containing all compartments from the inputs.
+A combined \code{Compartments} object
 }
 \description{
-Combines multiple \code{Compartments} objects by concatenating their names and initial values.
+Combine multiple \code{Compartments} objects into one
 }

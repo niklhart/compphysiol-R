@@ -9,10 +9,10 @@
 #' @param type Type of initial condition, either `"concentration"` (the default) or `"amount"`.
 #' @return A `Molecules` object containing the compartment and initial conditioninformation for each molecule.
 #' @examples 
-#' # No compartment specified: all molecules are assumed to be in the same compartment
-#' molecules(name = c("NFkB", "IkB"), initial = c(100, 50))
+#' # No compartment specified: molecules are assumed to be present in all compartments
+#' molecules(name = c("NFkB", "IkB"), unit = "mol/L")
 #' # Compartment specified: each molecule is associated with a specific compartment
-#' molecules(name = c("NFkB", "IkB"), cmt = c("cytoplasm", "nucleus"), initial = c(100, 50))
+#' molecules(name = c("NFkB", "IkB"), cmt = c("cytoplasm", "nucleus"), initial = c(100, 50) [mol/L])
 #' @export
 molecules <- function(name = character(0), cmt = NULL, initial = 0, unit = NULL, type = c("concentration","amount")) {
     
@@ -144,19 +144,17 @@ as.data.frame.Molecules <- function(x, ...) {
     x
 }
 
-#' Print a `Molecules` object
-#'
+#' Print method for `Molecules` class
+#' 
+#' Pretty-prints a `Molecules` object.
+#' 
 #' @param x A `Molecules` object
 #' @param ... Additional arguments (not used)
 #' @return The `Molecules` object (invisible)
 #' @export
 print.Molecules <- function(x, ...) {
 
-    cmt <- vapply(
-        x$cmt, 
-        function(c) if (is.na(c)) "<all cmt>" else paste0("[", c, "]", collapse = ","), 
-        character(1)
-    )
+    cmt <- ifelse(is.na(x$cmt), "<all cmt>", x$cmt)
     init_str <- vapply(x$init, format, character(1))
 
     if (length(x) > 0) {
@@ -175,7 +173,6 @@ print.Molecules <- function(x, ...) {
     } else {
         cat(" Molecules: (none)\n")
     }
-
 
     invisible(x)
 }
@@ -199,3 +196,33 @@ names.Molecules <- function(x, ...) {
 length.Molecules <- function(x, ...) {
     nrow(as.data.frame(x))
 }
+
+# ---- Code snippet for retrieving initial conditions from when they were defined in Compartments objects, for potential later use ----
+#  
+# #' Initial conditions of a `Compartments` object
+# #' 
+# #' Returns the initial amounts of compartments in a `Compartments` object. 
+# #' 
+# #' The type of the returned object depends on the presence of units in the initial conditions: 
+# #' 
+# #' - if all compartment initial conditions are numeric without units, a numeric vector is returned
+# #' - if all compartment initial conditions have consistent units, the returned vector will be of class `units`, 
+# #' - if the compartment initial conditions have mixed units,  the returned vector will be of class `mixed_units`.
+# #' 
+# #' @param comp A `Compartments` object
+# #' @param named If `TRUE`, returns a named list of initial amounts; if `FALSE` (default), it is unnamed
+# #' @return A vector of initial amounts for each compartment (see Details)
+# #' @export
+# initials <- function(comp, named = FALSE) {
+#     .check_class(comp, "Compartments")
+#     y0 <- comp$initial
+
+#     # Allow mixed units in initial conditions if required by temporarily setting allow_mixed = TRUE
+#     oldopt <- units::units_options(allow_mixed = TRUE)
+#     on.exit(units::units_options(oldopt), add = TRUE)
+
+#     # flatten list of initial values into a vector
+#     y0 <- do.call(what = c, args = y0) %||% numeric(0)
+
+#     return(if (named) setNames(y0, nm = names(comp)) else y0)
+# } 

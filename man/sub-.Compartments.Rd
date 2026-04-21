@@ -2,21 +2,20 @@
 % Please edit documentation in R/Compartments.R
 \name{[.Compartments}
 \alias{[.Compartments}
-\title{Subset method for \code{Compartments} class}
+\title{Subset a \code{Compartments} object}
 \usage{
 \method{[}{Compartments}(x, i, ...)
 }
 \arguments{
 \item{x}{A \code{Compartments} object}
 
-\item{i}{Index or name(s) of compartments to select}
+\item{i}{Index or name(s) of compartments to subset}
 
-\item{...}{ignored}
+\item{...}{Additional arguments (not used)}
 }
 \value{
-A new \code{Compartments} object containing only the selected compartments
+A subsetted \code{Compartments} object
 }
 \description{
-Allows subsetting a \code{Compartments} object by index or name,
-returning a new \code{Compartments} object with the selected compartments.
+Subset a \code{Compartments} object
 }

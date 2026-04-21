@@ -2,7 +2,7 @@
 % Please edit documentation in R/Molecules.R
 \name{print.Molecules}
 \alias{print.Molecules}
-\title{Print a \code{Molecules} object}
+\title{Print method for \code{Molecules} class}
 \usage{
 \method{print}{Molecules}(x, ...)
 }
@@ -15,5 +15,5 @@
 The \code{Molecules} object (invisible)
 }
 \description{
-Print a \code{Molecules} object
+Pretty-prints a \code{Molecules} object.
 }

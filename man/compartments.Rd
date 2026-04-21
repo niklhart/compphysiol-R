@@ -4,34 +4,30 @@
 \alias{compartments}
 \title{\code{Compartments} Class}
 \usage{
-compartments(
-  name = character(0),
-  initial = 0,
-  unit = NULL,
-  state = paste0("A", name, recycle0 = TRUE),
-  volume = NULL
-)
+compartments(name = character(0), volume = "V{name}", unit = NULL)
 }
 \arguments{
 \item{name}{Compartment name(s), character scalar or vector}
 
-\item{initial}{Initial amounts for the compartments (numeric scalar or vector, default = \code{0})}
+\item{volume}{Volume(s) (numeric or character) for each compartment.
+The default \verb{V\{name\}} uses parametrized volumes, with \code{{name}} replaced by the compartment name(s).
+Parametrized volumes have to be provided via the \code{parameters} argument of \code{compartment_model()}, e.g., \code{parameters(Vadi = 5 [L])}.
+Fixed numeric volumes can also be provided, e.g., \code{volume = 5 [L]} or \verb{volume = 5, unit = "L"}.
+Can be a single value (applied to all compartments) or a vector of values corresponding to each compartment.}
 
-\item{unit}{Units for the initial amounts (character scalar or vector, default = \code{NULL}).
-If provided, must be either a single unit applied to all compartments or a vector of units matching the length of \code{name}.}
-
-\item{state}{State names for the compartments (character scalar or vector, default = \code{"A" + name}).}
-
-\item{volume}{Optional volume for each compartment (not currently used, reserved for future use)}
+\item{unit}{Unit for the compartment volume(s) (optional, default: \code{NULL}). If specified,
+it can be a single unit (applied to all volumes) or a vector of units corresponding to each volume.
+The \code{unit} argument is ignored (with a warning) if the \code{volume} argument is not numeric.}
 }
 \value{
 A \code{Compartments} object
 }
 \description{
-Compartments represent model compartments with names and initial amounts (potentially with units).
+Compartments represent model compartments with names and fixed or parametrized volumes.
 }
 \examples{
-compartments(c("adi","bon"), initial = 10)
-compartments('adi', unit = "mg")
-compartments('adi', initial = 10 [mg])
+compartments(c("adi","bon"))
+compartments('adi', volume = "Vadi")
+compartments('adi', volume = 5 [L])
+compartments('adi', volume = 5, unit = "L")
 }
