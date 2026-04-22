@@ -5,16 +5,17 @@
 #' This function initializes an empty model that can then be built up by adding these components using the `add_*` functions.
 #' 
 #' @returns A new `CompartmentModel` object.
-#' @seealso [add_compartment()], [add_flow()], [add_equation()], [add_observable()], [add_parameter()], [add_dosing()] 
-#'   for building up a `CompartmentModel` object, and [to_ode()], [to_analytical()] for exporting a `CompartmentModel` 
-#'   to ODE or analytical solution format.
+#' @seealso [add_compartment()], [add_molecule()], [add_transport()], [add_reaction()], [add_equation()], 
+#'   [add_observable()], [add_parameter()], [add_dosing()] for building up a `CompartmentModel` object, 
+#'   and [to_ode()], [to_analytical()] for exporting a `CompartmentModel` to ODE or analytical solution format.
 #' @export
 compartment_model <- function() {
 
     structure(
         list(
             compartments = compartments(),
-            flows = flows(),
+            molecules = molecules(),
+            transports = transports(),
             reactions = reactions(),
             equations = equations(),
             observables = observables(),
@@ -40,10 +41,12 @@ compartment_model <- function() {
 #' @returns The `CompartmentModel` object (invisibly).
 #' @export
 print.CompartmentModel <- function(x, ...) {
-    cat("<CompartmentModel>\n")
+    cat("CompartmentModel:\n")
 
     print(x$compartments)
-    print(x$flows)
+    print(x$molecules)
+    print(x$transports)
+    print(x$reactions)
     print(x$equations)
     print(x$observables)
     print(x$parameters)
@@ -78,317 +81,6 @@ print.CompartmentModel <- function(x, ...) {
     }
 
     invisible(x)
-}
-
-# ------------------------------------ `add_*` functions for CompartmentModel composition in a pipeline ------------------------------------
-
-#' Add one or several compartments to a `CompartmentModel` object.
-#' 
-#' @inherit compartments description details
-#' @param model A `CompartmentModel` object.
-#' @inheritParams compartments
-#' @param comp A `Compartments` object. Constructed from the other inputs if not provided.
-#' @returns The modified `CompartmentModel` object.
-#' @examples 
-#' # Several compartments added in a single call
-#' compartment_model() |>
-#'     add_compartment(c("A","B"), unit = "mg")
-#' 
-#' # Different ways of adding compartments
-#' M1 <- compartment_model() |>
-#'     add_compartment("A", initial = 10 [mg])
-#' M2 <- compartment_model() |>
-#'     add_compartment("A", initial = 10, unit = "mg")
-#' identical(M1, M2)
-#' @export
-add_compartment <- function(
-    model,
-    name = character(0),
-    initial = 0,
-    unit = NULL,
-    state = paste0("A", name, recycle0 = TRUE),
-    comp
-) {
-    .check_class(model, "CompartmentModel")
-
-    call <- match.call()
-
-    comp <- .forward_or_use(
-        object_arg_name = "comp",
-        constructor_name = "compartments",
-        call = call,
-        parent_env = parent.frame()
-    )
-
-    .check_class(comp, "Compartments")
-
-    model$compartments <- c(model$compartments, comp)
-    model
-}
-
-#' Add one or several flows to a `CompartmentModel` object.
-#'
-#' @inherit flows description details
-#' @param model A `CompartmentModel` object.
-#' @inheritParams flows
-#' @param flow A `Flows` object. Constructed from the other inputs if not provided.
-#' @returns The modified `CompartmentModel` object.
-#' @examples
-#' # Add a linear flow
-#' compartment_model() |>
-#'     add_flow(from = "A", to = "B", const = "k1")
-#' # Add a nonlinear flow
-#' compartment_model() |>
-#'     add_flow(from = "A", to = "B", rate = "k2 * A / (A + Km)")
-#' # Vectorized calls using naming abbreviation
-#' compartment_model() |>
-#'     add_flow("A", c("B", "C"), const = "k_to")
-#' compartment_model() |>
-#'     add_flow(c("A", "B"), c("B", "C"), const = "k_from_to")
-#' @export
-add_flow <- function(
-    model,
-    from,
-    to,
-    ...,
-    rate = NULL,
-    const = NULL,
-    flow
-) {
-    .check_class(model, "CompartmentModel")
-
-    call <- match.call()
-
-    flow <- .forward_or_use(
-        object_arg_name = "flow",
-        constructor_name = "flows",
-        call = call,
-        parent_env = parent.frame()
-    )
-
-    .check_class(flow, "Flows")
-
-    model$flows <- c(model$flows, flow)
-    return(model)
-}
-
-#' Add an observable to a `CompartmentModel` object.
-#'
-#' @inherit observables description details
-#' @param model A `CompartmentModel` object.
-#' @inheritParams observables
-#' @param obs An `Observables` object. Constructed from the other inputs if not provided.
-#' @returns The modified `CompartmentModel` object.
-#' @examples
-#' ## Interactive path with name-expression pairs
-#' compartment_model() |>
-#'     add_compartment("blo") |>
-#'     add_observable(Cblo = Ablo / Vblo)
-#' ## Programmatic path with name and expression vectors
-#' compartment_model() |>
-#'     add_compartment("blo") |>
-#'     add_observable(name = "Cblo", expr = "Ablo/Vblo")
-#' ## Programmatic path with Observables object
-#' obs <- observables(name = "Cblo", expr = "Ablo/Vblo")
-#' compartment_model() |>
-#'     add_compartment("blo") |>
-#'     add_observable(obs = obs)
-#' @export
-add_observable <- function(model, ..., name = character(0), expr = character(0), obs) {
-    .check_class(model, "CompartmentModel")
-
-    call <- match.call()
-
-    obs <- .forward_or_use(
-        object_arg_name = "obs",
-        constructor_name = "observables",
-        call = call,
-        parent_env = parent.frame()
-    )
-
-    .check_class(obs, "Observables")
-
-    model$observables <- c(model$observables, obs)
-    return(model)
-}
-
-#' Add one or several equations to a `CompartmentModel` object.
-#' 
-#' @inherit equations description details
-#' @param model A `CompartmentModel` object.
-#' @inheritParams equations
-#' @param eq An `Equations` object. Constructed from the other inputs if not provided.
-#' @returns The modified `CompartmentModel` object.
-#' @examples
-#' ## Interactive path with name-expression pairs
-#' compartment_model() |>
-#'     add_equation(co = Qadi + Qbon + Qhea + Qkid + Qliv + Qmus + Qski)
-#' ## Programmatic path with name and expression vectors
-#' compartment_model() |>
-#'     add_equation(name = "co", expr = "Qadi + Qbon + Qhea + Qkid + Qliv + Qmus + Qski")
-#' ## Programmatic path with Equations object
-#' eq <- equations(name = "co", expr = "Qadi + Qbon + Qhea + Qkid + Qliv + Qmus + Qski")
-#' compartment_model() |>
-#'     add_equation(eq = eq)
-#' @export
-add_equation <- function(model, ..., name = character(0), expr = character(0), eq) {
-    .check_class(model, "CompartmentModel")
-    
-    call <- match.call()
-
-    eq <- .forward_or_use(
-        object_arg_name = "eq",
-        constructor_name = "equations",
-        call = call,
-        parent_env = parent.frame()
-    )
-    
-    .check_class(eq, "Equations")
-
-    model$equations <- c(model$equations, eq)
-    return(model)
-}
-
-#' Add one or several parameters to a `CompartmentModel` object.
-#' 
-#' @inherit parameters description details
-#' @param model A `CompartmentModel` object.
-#' @inheritParams parameters
-#' @param param A `Parameters` object. Constructed from the other inputs if not provided.
-#' @returns The modified `CompartmentModel` object.
-#' @export
-add_parameter <- function(
-    model,
-    ...,
-    name = NULL,
-    value = NULL,
-    unit = NULL,
-    param
-) {
-    .check_class(model, "CompartmentModel")
-
-    call <- match.call()
-
-    param <- .forward_or_use(
-        object_arg_name = "param",
-        constructor_name = "parameters",
-        call = call,
-        parent_env = parent.frame()
-    )
-
-    .check_class(param, "Parameters")
-
-    model$parameters <- c(model$parameters, param)
-    return(model)
-}
-
-#' Add one or several dosing events (bolus or infusion).
-#'
-#' This function allows the user to add dosing events to a compartment model.
-#' Dosing events can be either bolus (instantaneous) or infusion (continuous over time).
-#'
-#' Unlike the other `add_*` functions, `add_dosing()` does not simply append the new dosing events 
-#' to the model, but also handles the necessary modifications to the model structure for infusion dosing,
-#' i.e., adding infusion bag and rate compartments, and creating the appropriate events for
-#' starting and stopping the infusion.
-#'
-#' @param model A `CompartmentModel` object.
-#' @inheritParams dosing
-#' @param dose A `Dosing` object. Constructed from the other inputs if not provided.
-#' @returns The modified `CompartmentModel` object.
-#' @examples
-#' model <- compartment_model() |>
-#'     add_dosing(target = "ven", time = 0, amount = 100, duration = 5)
-#' @export
-add_dosing <- function(
-    model,
-    target,
-    time,
-    amount = NULL,
-    time_unit = NULL,
-    amount_unit = NULL,
-    ...,
-    rate = NULL,
-    duration = NULL,
-    dose
-) {
-    .check_class(model, "CompartmentModel")
-
-    call <- match.call()
-
-    dose <- .forward_or_use(
-        object_arg_name = "dose",
-        constructor_name = "dosing",
-        call = call,
-        parent_env = parent.frame()
-    )
-
-    .check_class(dose, "Dosing")
-
-    # Separate bolus and infusion dosing for different handling
-    bolus <- dose[is_bolus(dose)]
-    infus <- dose[is_infusion(dose)]
-
-    # Bolus dosing is simply appended to the models dosing list
-    model$doses <- c(model$doses, bolus)
-
-    # Early return if no infusion dosing
-    if (length(infus) == 0) {
-        return(model)
-    }
-
-    # --------------------------------------------------------------------------------------------------
-    # Infusion dosing requires more complex handling: we need to add infusion bag and rate compartments,
-    # convert the infusion dosing into bolus-to-bag + infusion rate events, and add flows from the bag
-    # to the target compartment with rate equal to the infusion rate.
-    # --------------------------------------------------------------------------------------------------
-
-    # Convert infusion dosing into bolus-to-bag + infusion rate events, and add to model
-    bag_names <- paste0("InfusionBag_", infus$target)
-    rate_names <- paste0("InfusionRate_", infus$target)
-    comp_names <- names(model$compartments)
-    new_bag_names <- setdiff(bag_names, comp_names)
-    new_rate_names <- setdiff(rate_names, comp_names)
-
-    # Helper function allowing to update the model in a single pipeline
-    add_infusion_events <- function(model, var, time, value, method) {
-        new_events <- data.frame(
-            var = var,
-            time = time,
-            value = value,
-            method = method,
-            stringsAsFactors = FALSE
-        )
-        model$infusionEvents <- rbind(model$infusionEvents, new_events)
-        return(model)
-    }
-
-    # Return the updated model
-    model |>
-        add_compartment(new_bag_names, 0) |>
-        add_compartment(new_rate_names, 0) |>
-        add_dosing(
-            target = bag_names,
-            time = infus$time,
-            amount = infus$rate * infus$duration
-        ) |>
-        add_flow(
-            from = bag_names,
-            to = infus$target,
-            rate = rate_names
-        ) |>
-        add_infusion_events(
-            var = rate_names,
-            time = infus$time,
-            value = infus$rate,
-            method = "add"
-        ) |>
-        add_infusion_events(
-            var = rate_names,
-            time = infus$time + infus$duration,
-            value = -infus$rate,
-            method = "add"
-        )
 }
 
 # ------------------------------------ `to_*` functions for CompartmentModel exporting ------------------------------------
@@ -715,12 +407,12 @@ to_ode <- function(
 
 #' Linearity check for CompartmentModel object.
 #' 
-#' Checks if all flows in the model are linear with respect to the state variables.
+#' Checks if all transports in the model are linear with respect to the state variables.
 #' 
 #' @param model A `CompartmentModel` object.
-#' @return `TRUE` if all flows are linear, `FALSE` otherwise.
+#' @return `TRUE` if all transports are linear, `FALSE` otherwise.
 #' @noRd
-.is_linear <- function(model) all(model$flows$type == "linear")
+.is_linear <- function(model) all(model$transports$type == "linear")
 
 #' Generate events data.frame for `deSolve` from stored dosing.
 #'

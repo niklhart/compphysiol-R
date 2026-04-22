@@ -4,7 +4,13 @@
 \alias{observables}
 \title{Create an \code{Observables} object}
 \usage{
-observables(..., name = character(0), expr = character(0))
+observables(
+  ...,
+  name = character(0),
+  expr = character(0),
+  cmt = NA_character_,
+  molec = NA_character_
+)
 }
 \arguments{
 \item{...}{Name-expression pairs defining the observables. The expressions can be provided as character strings or as R calls.}
@@ -13,6 +19,12 @@ observables(..., name = character(0), expr = character(0))
 
 \item{expr}{Expression(s) for the observable(s), as character scalar/vector or as R call / lists of R calls.
 Expressions may contain parameters that are added to the model's parameters list, as well as compartment states (not compartment names!)}
+
+\item{cmt}{Optional character vector specifying the compartment(s) associated with the observable(s).
+Used for automatic generation of common observables like concentrations and amounts.}
+
+\item{molec}{Optional character vector specifying the molecule(s) associated with the observable(s).
+Used for automatic generation of common observables like concentrations and amounts.}
 }
 \value{
 An \code{Observables} object
@@ -27,16 +39,26 @@ Observables and equations are very similar, but there are two key differences:
 \item For each observable (but not for equations), \code{to_ode()} returns a function to calculate it based on the ODE output.
 \item Equations can be used in the definitions of flows, while observables cannot.
 }
+
+The \code{cmt} and \code{molec} arguments allow for convenient generation of common observables like concentrations and amounts.
+They substitute \code{{cmt}} and \code{{molec}} in the names and expressions of the observables with the provided values.
+If both \code{cmt} and \code{molec} are provided, the substitution is performed for both, and all possible combinations of \code{cmt}
+and \code{molec} are generated for the names and expressions of the observables.
 }
 \examples{
-## Interactive path with name-expression pairs
+# Interactive path with name-expression pairs
 observables(
-    Cpla = Acen/Vcen/BP,
-    Cblo = Acen/Vcen
+    Cblo = c[cen],
+    Cpla = c[cen]/BP
 )
-## Programmatic path with name and expression vectors
+# Programmatic path with name and expression vectors
 observables(
-    name = c("Cpla","Cblo"), 
-    expr = c("Acen/Vcen/BP", "Acen/Vcen")
+    name = c("Cblo", "Cpla"), 
+    expr = c("c[cen]", "c[cen]/BP")
 )
+# Replacement of {cmt} in names and expressions
+observables(
+    "C{cmt}" = "c[{cmt}]", 
+    cmt = c("adi","bon")
+) 
 }

@@ -139,6 +139,115 @@ dosing <- function(
     )
 }
 
+#' Add one or several dosing events (bolus or infusion).
+#'
+#' This function allows the user to add dosing events to a compartment model.
+#' Dosing events can be either bolus (instantaneous) or infusion (continuous over time).
+#'
+#' Unlike the other `add_*` functions, `add_dosing()` does not simply append the new dosing events 
+#' to the model, but also handles the necessary modifications to the model structure for infusion dosing,
+#' i.e., adding infusion bag and rate compartments, and creating the appropriate events for
+#' starting and stopping the infusion.
+#'
+#' @param model A `CompartmentModel` object.
+#' @inheritParams dosing
+#' @param dose A `Dosing` object. Constructed from the other inputs if not provided.
+#' @returns The modified `CompartmentModel` object.
+#' @examples
+#' model <- compartment_model() |>
+#'     add_dosing(target = "ven", time = 0, amount = 100, duration = 5)
+#' @export
+add_dosing <- function(
+    model,
+    target,
+    time,
+    amount = NULL,
+    time_unit = NULL,
+    amount_unit = NULL,
+    ...,
+    rate = NULL,
+    duration = NULL,
+    dose
+) {
+    .check_class(model, "CompartmentModel")
+
+    call <- match.call()
+
+    dose <- .forward_or_use(
+        object_arg_name = "dose",
+        constructor_name = "dosing",
+        call = call,
+        parent_env = parent.frame()
+    )
+
+    .check_class(dose, "Dosing")
+
+    # Separate bolus and infusion dosing for different handling
+    bolus <- dose[is_bolus(dose)]
+    infus <- dose[is_infusion(dose)]
+
+    # Bolus dosing is simply appended to the models dosing list
+    model$doses <- c(model$doses, bolus)
+
+    # Early return if no infusion dosing
+    if (length(infus) == 0) {
+        return(model)
+    }
+
+    # --------------------------------------------------------------------------------------------------
+    # Infusion dosing requires more complex handling: we need to add infusion bag and rate compartments,
+    # convert the infusion dosing into bolus-to-bag + infusion rate events, and add flows from the bag
+    # to the target compartment with rate equal to the infusion rate.
+    # --------------------------------------------------------------------------------------------------
+
+    # Convert infusion dosing into bolus-to-bag + infusion rate events, and add to model
+    bag_names <- paste0("InfusionBag_", infus$target)
+    rate_names <- paste0("InfusionRate_", infus$target)
+    comp_names <- names(model$compartments)
+    new_bag_names <- setdiff(bag_names, comp_names)
+    new_rate_names <- setdiff(rate_names, comp_names)
+
+    # Helper function allowing to update the model in a single pipeline
+    add_infusion_events <- function(model, var, time, value, method) {
+        new_events <- data.frame(
+            var = var,
+            time = time,
+            value = value,
+            method = method,
+            stringsAsFactors = FALSE
+        )
+        model$infusionEvents <- rbind(model$infusionEvents, new_events)
+        return(model)
+    }
+
+    # Return the updated model
+    model |>
+        add_compartment(new_bag_names, 0) |>
+        add_compartment(new_rate_names, 0) |>
+        add_dosing(
+            target = bag_names,
+            time = infus$time,
+            amount = infus$rate * infus$duration
+        ) |>
+        add_flow(
+            from = bag_names,
+            to = infus$target,
+            rate = rate_names
+        ) |>
+        add_infusion_events(
+            var = rate_names,
+            time = infus$time,
+            value = infus$rate,
+            method = "add"
+        ) |>
+        add_infusion_events(
+            var = rate_names,
+            time = infus$time + infus$duration,
+            value = -infus$rate,
+            method = "add"
+        )
+}
+
 #' Check which dosing events are boluses.
 #' @param dose A `Dosing` object
 #' @return A logical vector in which the i-th entry is `TRUE` if the i-th dosing is a bolus and `FALSE` otherwise

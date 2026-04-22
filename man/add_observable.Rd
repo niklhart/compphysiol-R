@@ -31,6 +31,11 @@ Observables and equations are very similar, but there are two key differences:
 \item For each observable (but not for equations), \code{to_ode()} returns a function to calculate it based on the ODE output.
 \item Equations can be used in the definitions of flows, while observables cannot.
 }
+
+The \code{cmt} and \code{molec} arguments allow for convenient generation of common observables like concentrations and amounts.
+They substitute \code{{cmt}} and \code{{molec}} in the names and expressions of the observables with the provided values.
+If both \code{cmt} and \code{molec} are provided, the substitution is performed for both, and all possible combinations of \code{cmt}
+and \code{molec} are generated for the names and expressions of the observables.
 }
 \examples{
 ## Interactive path with name-expression pairs

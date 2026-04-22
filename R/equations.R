@@ -46,6 +46,43 @@ equations <- function(..., name = character(0), expr = character(0)) {
     )
 }
 
+#' Add one or several equations to a `CompartmentModel` object.
+#' 
+#' @inherit equations description details
+#' @param model A `CompartmentModel` object.
+#' @inheritParams equations
+#' @param eq An `Equations` object. Constructed from the other inputs if not provided.
+#' @returns The modified `CompartmentModel` object.
+#' @examples
+#' ## Interactive path with name-expression pairs
+#' compartment_model() |>
+#'     add_equation(co = Qadi + Qbon + Qhea + Qkid + Qliv + Qmus + Qski)
+#' ## Programmatic path with name and expression vectors
+#' compartment_model() |>
+#'     add_equation(name = "co", expr = "Qadi + Qbon + Qhea + Qkid + Qliv + Qmus + Qski")
+#' ## Programmatic path with Equations object
+#' eq <- equations(name = "co", expr = "Qadi + Qbon + Qhea + Qkid + Qliv + Qmus + Qski")
+#' compartment_model() |>
+#'     add_equation(eq = eq)
+#' @export
+add_equation <- function(model, ..., name = character(0), expr = character(0), eq) {
+    .check_class(model, "CompartmentModel")
+    
+    call <- match.call()
+
+    eq <- .forward_or_use(
+        object_arg_name = "eq",
+        constructor_name = "equations",
+        call = call,
+        parent_env = parent.frame()
+    )
+    
+    .check_class(eq, "Equations")
+
+    model$equations <- c(model$equations, eq)
+    return(model)
+}
+
 #' Names method for `Equations` objects
 #' @param x An `Equations` object
 #' @returns The names of the equations

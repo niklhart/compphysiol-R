@@ -75,6 +75,49 @@ compartments <- function(name = character(0), volume = "V{name}", unit = NULL) {
     )
 }
 
+#' Add one or several compartments to a `CompartmentModel` object.
+#'
+#' @inherit compartments description details
+#' @param model A `CompartmentModel` object.
+#' @inheritParams compartments
+#' @param comp A `Compartments` object. Constructed from the other inputs if not provided.
+#' @returns The modified `CompartmentModel` object.
+#' @examples
+#' # Several compartments added in a single call
+#' compartment_model() |>
+#'     add_compartment(c("A","B"))
+#'
+#' # Different ways of adding compartments
+#' M1 <- compartment_model() |>
+#'     add_compartment("A", volume = 10 [L])
+#' M2 <- compartment_model() |>
+#'     add_compartment("A", volume = 10, unit = "L")
+#' identical(M1, M2)
+#' @export
+add_compartment <- function(
+    model,
+    name = character(0),
+    volume = "V{name}",
+    unit = NULL,
+    comp
+) {
+    .check_class(model, "CompartmentModel")
+
+    call <- match.call()
+
+    comp <- .forward_or_use(
+        object_arg_name = "comp",
+        constructor_name = "compartments",
+        call = call,
+        parent_env = parent.frame()
+    )
+
+    .check_class(comp, "Compartments")
+
+    model$compartments <- c(model$compartments, comp)
+    model
+}
+
 #' Convert a `Compartments` object to a data frame
 #'
 #' @param x A `Compartments` object

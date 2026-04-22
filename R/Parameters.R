@@ -52,6 +52,40 @@ parameters <- function(..., name = NULL, value = NULL, unit = NULL) {
     )
 }
 
+#' Add one or several parameters to a `CompartmentModel` object.
+#' 
+#' @inherit parameters description details
+#' @param model A `CompartmentModel` object.
+#' @inheritParams parameters
+#' @param param A `Parameters` object. Constructed from the other inputs if not provided.
+#' @returns The modified `CompartmentModel` object.
+#' @export
+add_parameter <- function(
+    model,
+    ...,
+    name = NULL,
+    value = NULL,
+    unit = NULL,
+    param
+) {
+    .check_class(model, "CompartmentModel")
+
+    call <- match.call()
+
+    param <- .forward_or_use(
+        object_arg_name = "param",
+        constructor_name = "parameters",
+        call = call,
+        parent_env = parent.frame()
+    )
+
+    .check_class(param, "Parameters")
+
+    model$parameters <- c(model$parameters, param)
+    return(model)
+}
+
+
 #' Names method for `Parameters` objects
 #' @param x A `Parameters` object
 #' @returns The names of the parameters
