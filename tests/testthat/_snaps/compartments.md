@@ -1,9 +1,9 @@
 # Print method for Compartments works
 
     Code
-      print(comp)
+      print(cmt)
     Output
        Compartments:
-        (1) adi (initial = 10)
-        (2) bon (initial = 20)
+        (1) adi (volume = 10)
+        (2) bon (volume = 20)
 

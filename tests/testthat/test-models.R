@@ -8,11 +8,11 @@ test_that("multiCompModel micro/macro parametrization flows are correct", {
     M1 <- multiCompModel(2, "micro")
     M2 <- multiCompModel(2, "macro")
 
-    const1 <- vapply(M1$flows$const, deparse, character(1))
-    const2 <- vapply(M2$flows$const, deparse, character(1))
+    const1 <- vapply(M1$transports$const, deparse, character(1))
+    const2 <- vapply(M2$transports$const, deparse, character(1))
 
     expect_setequal(const1, c("kc0", "kcp", "kpc"))
-    expect_setequal(const2, c("CL/Vc", "Qcp/Vc", "Qcp/Vp"))
+    expect_setequal(const2, c("CL/Vcen", "Qcp/Vcen", "Qcp/Vper"))
 })
 
 test_that("12-CMT well-stirred PBPK model behaves as expected under long-term infusion", {
@@ -54,8 +54,7 @@ test_that("12-CMT well-stirred PBPK model behaves as expected under long-term in
         Vven = 1
     )
     M <- sMD_PBPK_12CMT_wellstirred() |>
-        add_dosing(target = "ven", time = 0, amount = 1, duration = dur) |>   # long-term infusion to test steady-state behaviour
-        add_observable(Cpla = BP * ven / Vven) |> 
+        add_dosing(time = 0, amount = 1, duration = dur) |>   # long-term infusion to test steady-state behaviour
         add_parameter(param = do.call(parameters, paramValues))
     
     odeinfo <- to_ode(M)

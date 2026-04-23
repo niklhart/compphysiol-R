@@ -4,6 +4,6 @@
       print(obs)
     Output
        Observables:
-        (1) Cpla = blo/Vblo/BP
-        (2) Cblo = blo/Vblo
+        (1) Cpla = c[blo]/BP
+        (2) Cblo = c[blo]
 

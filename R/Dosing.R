@@ -296,7 +296,11 @@ print.Dosing <- function(x, ...) {
 
         target <- ifelse(
             is.na(x$molec), 
-            yes = paste0(" in ", x$cmt), 
+            yes = ifelse(
+                is.na(x$cmt), 
+                yes = "", 
+                no = paste0(" in ", x$cmt)
+            ),
             no = ifelse(
                 is.na(x$cmt), 
                 yes = paste0(" of ", x$molec), 
