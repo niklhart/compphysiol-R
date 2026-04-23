@@ -120,8 +120,16 @@ reactions <- function(
                 const <- replace_pattern(const)
             }
             const <- lapply(const, .as_call)
-            input_cl <- input |> lapply(function(x) paste0("c[", x, "]")) |> lapply(.as_call)
+
+            # indexing by molec only (no cmt)
+            input_cl <- input |>
+                lapply(function(x) paste0("c[", x, "]")) |>
+                lapply(.as_call)
             rate <- lapply(const, function(k) Reduce(.mul, c(list(k), input_cl)))
+            if (!all(is.na(cmt))) {
+                rate <- Map(f = .add_expr_index, expr = rate, pos = 2, val = cmt)
+            }
+
         }
 
     )
@@ -270,3 +278,10 @@ print.Reactions = function(x, ...) {
     invisible(x)
 }
 
+#' Convert a `Reactions` object to a list of lists, where each inner list represents a reaction with its properties
+#' 
+#' @param x A `Reactions` object
+#' @param ... Additional arguments (not used)
+#' @return A list of lists, where each inner list represents a reaction with its properties
+#' @export
+as.list.Reactions <- function(x, ...) .listify_df_like(x)

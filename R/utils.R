@@ -196,7 +196,7 @@
 
 #' Extraction method for data frame-like class
 #' 
-#' Thise method are intentionally not implemented to prevent direct element access, 
+#' These methods are intentionally not implemented to prevent direct element access, 
 #' which could lead to confusion given their internal data frame-like structure. 
 #' Instead, users should use subsetting with `[` and a scalar index.
 #' @param x The object to extract from
@@ -211,3 +211,35 @@
         class(x)[1]
     ))
 }
+
+
+#' Convert a data frame-like object to a list of lists, where each inner list represents a row of the data frame
+#' @param x The data frame-like object to convert
+#' @returns A list of lists, where each inner list represents a row of the data frame
+#' @noRd
+.listify_df_like <- function(x) {
+    x <- as.data.frame(x)
+    lapply(seq_len(nrow(x)), function(i) as.list(x[i, , drop = FALSE]))
+}
+
+#' Replace all occurrences of `[x]` in a call by `[x,val]` or `[val,x]`
+#' @param expr A call
+#' @param pos The position to insert the index in (1 for first argument, 2 for second)
+#' @param val The value to insert as the index
+#' @returns A call with the indices replaced
+#' @noRd
+.add_expr_index <- function(expr, pos, val) {
+
+    # recursive substitution for calls
+    if (is.call(expr)) {
+        if (expr[[1]] == quote(`[`) && length(expr) == 3) {
+            return(as.call(append(as.list(expr), values = list(as.name(val)), after = pos+1)))
+        }
+        elems <- lapply(as.list(expr), .add_expr_index, pos = pos, val = val)
+        return(as.call(elems))
+    }
+
+    # leave numbers etc. untouched
+    expr
+}
+

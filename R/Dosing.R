@@ -155,15 +155,16 @@ dosing <- function(
 #' @returns The modified `CompartmentModel` object.
 #' @examples
 #' model <- compartment_model() |>
-#'     add_dosing(target = "ven", time = 0, amount = 100, duration = 5)
+#'     add_dosing(time = 0, amount = 100, duration = 5, cmt = "cen")
 #' @export
 add_dosing <- function(
     model,
-    target,
-    time,
+    time = numeric(0),
     amount = NULL,
     time_unit = NULL,
     amount_unit = NULL,
+    molec = NULL,
+    cmt = NULL,
     ...,
     rate = NULL,
     duration = NULL,
@@ -225,11 +226,11 @@ add_dosing <- function(
         add_compartment(new_bag_names, 0) |>
         add_compartment(new_rate_names, 0) |>
         add_dosing(
-            target = bag_names,
             time = infus$time,
-            amount = infus$rate * infus$duration
+            amount = infus$rate * infus$duration,
+            cmt = bag_names
         ) |>
-        add_flow(
+        add_transport(
             from = bag_names,
             to = infus$target,
             rate = rate_names

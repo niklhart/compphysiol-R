@@ -35,7 +35,7 @@ transports with different compartments and/or molecules involved.
 }
 \examples{
 # Linear transport
-f1 <- transports(from = "A", to = "B", const = "k1")   # rate will be k1 * A
+f1 <- transports(from = "A", to = "B", const = "k1")   # rate will be k1 * a[A]
 # Nonlinear transport
 f2 <- transports(from = "A", to = "B", rate = "k1 * A*B/(B+K)")
 }

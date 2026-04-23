@@ -83,6 +83,121 @@ print.CompartmentModel <- function(x, ...) {
     invisible(x)
 }
 
+#' Wire wildcard molecules and / or compartments into a compartment model
+#' 
+#' The `wire()` function allows users to replace wildcard molecule and compartment names 
+#' in transport and reaction definitions with actual names from the model. 
+#' A fully wired model is safe from any potentially unintended side effects when extending the model.
+#' `wire()` is also called before ODE generation to replace any remaining wildcards with the full set of molecule or compartment names.
+#' 
+#' If molecules / compartments have been defined in the model, then any transport or reaction that references the wildcard name 
+#' "<all molec>" / "<all cmt>" will be updated to reference all defined molecules / compartments, respectively 
+#' (note that this may increase the number of molecules, transports and reactions in the model).
+#' If no compartments or molecules have been defined, then a single dummy name ("molec" or "cmt") will be used 
+#' to replace the wildcard, with a message printed to the console to inform the user. 
+#' 
+#' @param model A `CompartmentModel` object
+#' @param what What to wire: `"molec"` for molecules, `"cmt"` for compartments, or both (the default)
+#' @examples
+#' # wire "drug" into transport rate expressions, replacing the <all molec> wildcard
+#' M <- compartment_model() |>
+#'   add_compartment(name = c("cen", "per")) |>
+#'   add_molecule(name = "drug") |>
+#'   add_transport(from = "cen", to = "per", const = "kcp") |> 
+#'   add_transport(from = "per", to = "cen", const = "kpc") |> 
+#'   wire(what = "molec")
+#' 
+#' # wire "cyt" and "nuc" into molecule definitions and reaction rate expressions, replacing the <all cmt> wildcard
+#' M <- compartment_model() |>
+#'   add_compartment(name = c("cyt", "nuc")) |>
+#'   add_molecule(name = c("A","B")) |>
+#'   add_reaction(input = "A", output = "B", const = "kAB") |>
+#'   wire(what = "cmt")
+#' @export
+wire <- function(model, what = c("molec", "cmt")) {
+        .check_class(model, "CompartmentModel")
+    
+        what <- match.arg(what, several.ok = TRUE)
+
+        if (length(what) == 0) return(model)
+
+        if ("molec" %in% what) {
+
+            # if no molecules defined, wire to a single dummy molecule "molec" and print message
+            if (length(model$molecules) == 0) {
+                message(
+                    "No molecules defined in model: wiring '<all molec>' to a single dummy molecule 'molec'."
+                )
+                model$molecules <- molecules(name = "molec")
+            }
+            molec_names <- names(model$molecules)
+            nmolec <- length(model$molecules)
+
+            # process all transports
+            model$transports <- model$transports |>
+                as.list() |>
+                lapply(function(tr) {
+                    if (is.na(tr$molec)) {
+                        tr$molec <- molec_names
+                        tr$rate <- I(lapply(molec_names, function(molec) {
+                            .add_expr_index(tr$rate, pos = 1, val = molec)
+                        }))
+                        tr$const <- I(rep(list(tr$const), nmolec))
+                    }
+                    return(tr)
+                }) |>
+                lapply(do.call, what = "data.frame") |>
+                lapply(structure, class = "Transports") |>
+                do.call(what = "c")
+        }
+    
+        if ("cmt" %in% what) {
+
+            # if no compartments defined, wire to a single dummy compartment "cmt" and print message
+            if (length(model$compartments) == 0) {
+                message("No compartments defined in model: wiring '<all cmt>' to a single dummy compartment 'cmt'.")
+                model$compartments <- compartments(name = "cmt", volume = NA_real_)
+            }
+            cmt_names <- names(model$compartments)
+            ncmt <- length(model$compartments)
+
+            # process all molecules
+            model$molecules <- model$molecules |>
+                as.list() |>
+                lapply(function(m) {
+                    if (is.na(m$cmt)) {
+                        m$cmt <- cmt_names
+                        m$init <- I(rep(m$init, ncmt))
+                    }
+                    return(m)
+                }) |>
+                lapply(do.call, what = "data.frame") |>
+                lapply(structure, class = "Molecules") |>
+                do.call(what = "c")
+
+            # process all reactions
+            model$reactions <- model$reactions |>
+                as.list() |>
+                lapply(function(m) {
+                    if (is.na(m$cmt)) {
+                        m$cmt <- cmt_names
+                        m$input <- I(rep(m$input, ncmt))
+                        m$output <- I(rep(m$output, ncmt))
+                        m$rate <- I(lapply(cmt_names, function(cmt) {
+                            .add_expr_index(m$rate[[1]], pos = 2, val = cmt)
+                        }))
+                        m$const <- I(rep(m$const, ncmt))}
+                    return(m)
+                }) |>
+                lapply(do.call, what = "data.frame") |>
+                lapply(structure, class = "Reactions") |>
+                do.call(what = "c")
+        }
+    
+        model
+}
+
+
 # ------------------------------------ `to_*` functions for CompartmentModel exporting ------------------------------------
 
 #' Generate analytical solution function from a linear `CompartmentModel` object, possibly with a single bolus dose at time 0.

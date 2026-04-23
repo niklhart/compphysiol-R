@@ -197,6 +197,14 @@ length.Molecules <- function(x, ...) {
     nrow(as.data.frame(x))
 }
 
+#' Convert a `Molecules` object to a list of lists, where each inner list represents a molecule with its properties
+#' 
+#' @param x A `Molecules` object
+#' @param ... Additional arguments (not used)
+#' @return A list of lists, where each inner list represents a molecule with its properties
+#' @export
+as.list.Molecules <- function(x, ...) .listify_df_like(x)
+
 # ---- Code snippet for retrieving initial conditions from when they were defined in Compartments objects, for potential later use ----
 #  
 # #' Initial conditions of a `Compartments` object

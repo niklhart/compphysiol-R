@@ -18,7 +18,7 @@
 #' @return A `Transports` object
 #' @examples
 #' # Linear transport
-#' f1 <- transports(from = "A", to = "B", const = "k1")   # rate will be k1 * A
+#' f1 <- transports(from = "A", to = "B", const = "k1")   # rate will be k1 * a[A]
 #' # Nonlinear transport
 #' f2 <- transports(from = "A", to = "B", rate = "k1 * A*B/(B+K)")
 #' @export
@@ -57,11 +57,12 @@ transports <- function(from, to, molec = NA_character_, ..., rate = NULL, const 
     # Input lengths
     nFrom <- length(from)
     nTo <- length(to)
+    nMolec <- length(molec)
     nRate <- length(rate)
     nConst <- length(const)
 
     # Check that all inputs are either NULL, scalar or vector of the same length
-    nMax <- max(nFrom, nTo)
+    nMax <- max(nFrom, nTo, nMolec)
     if (!all(c(nFrom, nTo, nRate, nConst) %in% c(0, 1, nMax))) {
         stop(
             "All inputs must be either NULL, scalar, or vector of the same length."
@@ -79,15 +80,16 @@ transports <- function(from, to, molec = NA_character_, ..., rate = NULL, const 
 
     from <- rep(from, nMax / nFrom)
     to <- rep(to, nMax / nTo)
+    molec <- rep(molec, nMax / nMolec)
 
     # If rate/const is scalar, apply special substitution rule
     replace_pattern <- function(x) {
         Map(
             function(f_, t_, m_) {
                 x |>
-                    gsub(pattern = "{from}", replacement = f_) |>
-                    gsub(pattern = "{to}", replacement = t_) |>
-                    gsub(pattern = "{molec}", replacement = m_)
+                    gsub(pattern = "\\{from\\}", replacement = f_) |>
+                    gsub(pattern = "\\{to\\}", replacement = t_) |>
+                    gsub(pattern = "\\{molec\\}", replacement = m_)
             },
             f_ = from,
             t_ = to,
@@ -113,8 +115,15 @@ transports <- function(from, to, molec = NA_character_, ..., rate = NULL, const 
                 stop("Linear transports must have a valid source compartment.")
             }
             if (nConst == 1 && is.character(const)) const <- replace_pattern(const)
-            const <- const |> lapply(.as_call) |> rep(length.out = nMax)
-            rate <- Map(function(f,c) .mul(c, .as_call(f)), from, const, USE.NAMES = FALSE)
+            const <- const |>
+                lapply(.as_call) |>
+                rep(length.out = nMax)
+            rate <- Map(
+                function(f, c) .mul(c, .as_call(f)),
+                ifelse(is.na(molec), paste0("a[", from, "]"), paste0("a[", molec, ",", from, "]")),
+                const,
+                USE.NAMES = FALSE
+            )
         }
     )
 
@@ -199,19 +208,20 @@ print.Transports = function(x, ...) {
     from[is.na(from)] <- empty_symbol
     to[is.na(to)] <- empty_symbol
 
+    molec <- ifelse(is.na(x$molec), "<all molec>", x$molec)
+    rate <- vapply(x$rate,deparse1,character(1))
+
     if (length(x) > 0) {
         cat(" Transports:\n")
         cat(
             sprintf(
-                "  (%i) %s \u2192 %s, rate = %s\n",
+                "  (%i) %s: %s \u2192 %s, rate = %s\n",
                 seq_along(x),
+#                paste0("a[", molec, "]"),
+                molec,
                 from,
                 to,
-                vapply(
-                    x$rate,
-                    function(r) r |> deparse() |> paste(collapse = ""),
-                    character(1)
-                )
+                rate
             ),
             sep = ""
         )
@@ -309,18 +319,24 @@ c.Transports <- function(...) .combine_df_like(...)
 }
 
 #' Print a `Transport` object
-#' 
+#'
 #' @param x A `Transport` object
 #' @param ... Additional arguments (not used)
 #' @return The `Transport` object (invisible)
 #' @export
 print.Transport <- function(x, ...) {
+    empty_symbol <- "\u2205" # empty set symbol for source/sink compartments
+    from <- if (is.na(x$from)) empty_symbol else x$from
+    to <- if (is.na(x$to)) empty_symbol else x$to
+    molec <- if (is.na(x$molec)) "<all molec>" else x$molec
+    rate <- deparse1(x$rate)
+
     cat(sprintf(
         " Transport: %s \u2192 %s, molec = %s, rate = %s\n",
-        x$from,
-        x$to,
-        x$molec,
-        deparse(x$rate)
+        from,
+        to,
+        molec,
+        rate
     ))
     invisible(x)
 }

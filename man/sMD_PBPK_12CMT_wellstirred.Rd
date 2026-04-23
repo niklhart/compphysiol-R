@@ -20,8 +20,7 @@ This model implements a 12-compartment PBPK model with well-stirred tissue distr
 ## Full workflow from model specification to plotting
 # Model specification
 M <- sMD_PBPK_12CMT_wellstirred() |>
-    add_dosing(target = "ven", time = 0, amount = 1) |>   # IV bolus dosing
-    add_observable(Cpla = BP * ven / Vven)                # plasma concentration observable
+    add_dosing(time = 0, amount = 1, cmt = "ven")  # IV bolus dosing
 
 paramValues <- list(
     BP = 1,

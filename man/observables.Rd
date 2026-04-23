@@ -8,8 +8,8 @@ observables(
   ...,
   name = character(0),
   expr = character(0),
-  cmt = NA_character_,
-  molec = NA_character_
+  cmt = NULL,
+  molec = NULL
 )
 }
 \arguments{
