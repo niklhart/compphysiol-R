@@ -1,8 +1,9 @@
 
 test_that("dosing + compartment amount mismatch errors", {
     M1 <- compartment_model() |>
-        add_compartment(name = 'cen', unit = "g") |>
-        add_dosing(target = 'cen', time = 0[h], amount = 1[mol])
+        add_compartment(name = 'cen', volume = 1 [L]) |>
+        add_molecule(name = 'drug', cmt = 'cen', unit = "g", type = "amount") |>
+        add_dosing(time = 0[h], amount = 1[mol], cmt = 'cen', molec = 'drug')
     expect_error(compphysiol:::.check_unit_consistency(M1), "mol vs. g")
 
     M2 <- compartment_model() |>

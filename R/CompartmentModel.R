@@ -20,14 +20,7 @@ compartment_model <- function() {
             equations = equations(),
             observables = observables(),
             parameters = parameters(),
-            doses = dosing(),
-            infusionEvents = data.frame(
-                var = character(),
-                time = numeric(),
-                value = numeric(),
-                method = character(),
-                stringsAsFactors = FALSE
-            )
+            doses = dosing()
         ),
         class = "CompartmentModel"
     )
@@ -50,35 +43,7 @@ print.CompartmentModel <- function(x, ...) {
     print(x$equations)
     print(x$observables)
     print(x$parameters)
-
-    # dosing (boluses + infusions unified) 
-    # 
-    # TODO: Leverage the print method of the dosing object instead of re-implementing this here. 
-    #       This requires to rethink the interface: model$doses currently contains only partial dosing information 
-    #       (bolus dosing and bolus into infusion bag), while changes of infusion rate are stored in model$infusionEvents
-    #       and handled separately in the toODE method.
-    # 
-    # print(.dosing_to_events(x)$data) # -> ugly
-
-    events <- .dosing_to_events(x)$data
-    if (nrow(events) > 0) {
-        cat(" Dosing events:\n")
-        for (i in seq_len(nrow(events))) {
-            ev <- events[i, ]
-            cat(
-                "   - at t =",
-                format(ev$time),
-                ":",
-                ev$method,
-                format(ev$value),
-                "\u2192",
-                ev$var,
-                "\n"
-            )
-        }
-    } else {
-        cat(" Dosing: (none)\n")
-    }
+    print(x$doses)
 
     invisible(x)
 }
@@ -95,6 +60,8 @@ print.CompartmentModel <- function(x, ...) {
 #' (note that this may increase the number of molecules, transports and reactions in the model).
 #' If no compartments or molecules have been defined, then a single dummy name ("molec" or "cmt") will be used 
 #' to replace the wildcard, with a message printed to the console to inform the user. 
+#' In addition, rate expressions and observables that include statements of the form `[molec]` or `[cmt]` will be 
+#' expanded to include the implicit molecule and compartment names (i.e., into the form `[molec,cmt]`).
 #' 
 #' @param model A `CompartmentModel` object
 #' @param what What to wire: `"molec"` for molecules, `"cmt"` for compartments, or both (the default)
@@ -148,7 +115,7 @@ wire <- function(model, what = c("molec", "cmt")) {
                 }) |>
                 lapply(do.call, what = "data.frame") |>
                 lapply(structure, class = "Transports") |>
-                do.call(what = "c")
+                do.call(what = "c")  %||% transports()
         }
     
         if ("cmt" %in% what) {
@@ -191,11 +158,168 @@ wire <- function(model, what = c("molec", "cmt")) {
                 }) |>
                 lapply(do.call, what = "data.frame") |>
                 lapply(structure, class = "Reactions") |>
-                do.call(what = "c")
+                do.call(what = "c") %||% reactions()
         }
     
         model
 }
+
+#' Extract the initial states (with names) from a `CompartmentModel` object
+#'
+#  The type of the returned object depends on the presence of units in the initial conditions:
+#
+#  - if all compartment initial conditions are numeric without units, a numeric vector is returned
+#  - if all compartment initial conditions have consistent units, the returned vector will be of class `units`,
+#  - if the compartment initial conditions have mixed units,  the returned vector will be of class `mixed_units`.
+#' @param model A `CompartmentModel` object
+#' @param type The type of initials to extract: the default `"a[] or c[]"` means amounts are attempted first, 
+#'   but concentrations given if amounts cannot be calculated. `"c[] or a[]"` does the opposite, 
+#'   while `"a[] only"` and `"c[] only"` will return an error if the respective type cannot be calculated.
+#'   If all compartments have volumes (fixed or parametrized), then both types of initials can be calculated 
+#'   and the `type` argument only determines which one is returned. For compartments that have no defined volume, 
+#'   only the type of initial specified in the molecule definition can be calculated.
+#' @returns A named numeric vector of state initial values, where the names are in the format
+#'   `"a[molec,cmt]"` for amount states or `"c[molec,cmt]"` for concentration states.
+#' @export
+initials <- function(model, type = c("a[] or c[]", "c[] or a[]", "a[] only", "c[] only")) {
+    # input checking
+    .check_class(model, "CompartmentModel")
+    type <- match.arg(type)
+
+    # molec / cmt names
+    molec_nm <- names(model$molecules)
+    molec_cmt <- model$molecules$cmt
+    if (any(is.na(molec_cmt))) stop("Cannot extract initials: some molecules have undefined compartments. Please wire the model first to resolve any wildcards.")
+
+    # auxiliary quantity: compartment volume per state
+    state_vol <- model$compartments$volume[match(
+        molec_cmt,
+        names(model$compartments)
+    )]
+    value_vol <- vapply(
+        state_vol,
+        function(v) is.numeric(v),
+        FUN.VALUE = logical(1)
+    )
+    state_vol[!value_vol] <- list(NA_real_) # if volume is not numeric, set to NA for normalization     # TODO: query model$parameters for the respective value instead.
+
+    # Allow mixed units in initial conditions if required by temporarily setting allow_mixed = TRUE
+    oldopt <- units::units_options(allow_mixed = TRUE)
+    on.exit(units::units_options(oldopt), add = TRUE)
+
+    # flatten list of volumes/initial values into a vector
+    vol <- do.call(what = c, args = state_vol) %||% numeric(0)
+    init <- do.call(what = c, args = model$molecules$init) %||% numeric(0)
+
+    molec_type <- model$molecules$type
+    switch(
+        type,
+        "a[] or c[]" = {
+            in_amount <- molec_type == "amount"
+            out_amount <- in_amount | !is.na(vol)
+            to_convert <- out_amount & !in_amount
+            init <- Map(function(conv, x, v) if (conv) x * v else x, conv = to_convert, x = init, v = vol) |>
+                do.call(what = c)
+            prefix <- ifelse(out_amount, "a", "c")
+            name <- paste0(prefix,"[", molec_nm, ",", molec_cmt, "]")
+        },
+        "c[] or a[]" = {
+            in_conc <- molec_type == "concentration"
+            out_conc <- in_conc | !is.na(vol)
+            to_convert <- out_conc & !in_conc
+            init <- Map(function(conv, x, v) if (conv) x / v else x, conv = to_convert, x = init, v = vol) |>
+                do.call(what = c)
+            prefix <- ifelse(out_conc, "c", "a")
+            name <- paste0(prefix,"[", molec_nm, ",", molec_cmt, "]")
+        },
+        "a[] only" = {
+            needs_convert <- molec_type == "concentration"
+            cannot_convert <- is.na(vol) & needs_convert
+            if (any(cannot_convert)) stop("Cannot extract amount initials for molecules #", paste(which(cannot_convert), collapse = ", "),".")
+            init <- Map(function(conv, x, v) if (conv) x * v else x, conv = needs_convert, x = init, v = vol) |>
+                do.call(what = c)
+            name <- paste0("a[", molec_nm, ",", molec_cmt, "]")
+        },
+        "c[] only" = {
+            needs_convert <- molec_type == "amount"
+            cannot_convert <- is.na(vol) & needs_convert
+            if (any(cannot_convert)) stop("Cannot extract concentration initials for molecules #", paste(which(cannot_convert), collapse = ", "),".")
+            init <- Map(function(conv, x, v) if (conv) x / v else x, conv = needs_convert, x = init, v = vol) |>
+                do.call(what = c)
+            name <- paste0("c[", molec_nm, ",", molec_cmt, "]")
+        }
+    )
+
+    setNames(init, nm = name)
+}
+
+#' Make auxiliary structures in a `CompartmentModel` object for handling continuous inputs
+#' 
+#' This function adds auxiliary compartments and events to the model to handle continuous inputs:
+#' - `Depot_{molec}_{cmt}` and `ReleaseRate_{molec}_{cmt}` compartments 
+#'   (both with `NA` volumes and for each molecule / target compartment)
+#' - transports from the depot to its target compartment, at rate `a[ReleaseRate_{molec}_{cmt}]`
+#' - 3 (instantaneous) dosing events per infusion (fill depot at infusion start, 
+#'   increase release rate at infusion start, decrease release rate at infusion end)
+#' @param model A `CompartmentModel` object
+#' @returns An updated `CompartmentModel` object with the auxiliary compartments and events added.
+make_depot <- function(model) {
+
+    dose <- model$doses
+    infus <- dose[is_infusion(dose)]
+
+    # Early return if no infusion is defined
+    if (length(infus) == 0) return(model)
+
+    model$doses <- dose[!is_infusion(dose)]
+
+    # --------------------------------------------------------------------------------------------------
+    # Infusion dosing requires more complex handling: we need to add infusion bag and rate compartments,
+    # convert the infusion dosing into bolus-to-bag + infusion rate events, and add flows from the bag
+    # to the target compartment with rate equal to the infusion rate.
+    # --------------------------------------------------------------------------------------------------
+
+    # Convert continuous dosing into instantaneous-to-depot + release rate events, and add to model
+    bag_names <- paste("Depot", infus$molec, infus$cmt, sep = "_")
+    rate_names <- paste("ReleaseRate", infus$molec, infus$cmt, sep = "_")
+    comp_names <- names(model$compartments)
+    new_bag_cmt_names <- setdiff(bag_names, comp_names)
+    new_rate_cmt_names <- setdiff(rate_names, comp_names)
+
+    duplicates <- duplicated(bag_names)    # same for bag/rate names since they are generated from the same set of molecule/cmt names
+    unique_bag_names <- bag_names[!duplicates]
+
+    # Return the updated model (TODO: remove infusion dosing events!)
+    model |>
+        add_compartment(new_bag_cmt_names, volume = NA_real_) |>
+        add_compartment(new_rate_cmt_names, volume = NA_real_) |>
+        add_transport(
+            from = bag_names[!duplicates],
+            to = infus$cmt[!duplicates],
+            rate = paste0("a[", rate_names[!duplicates], "]"),
+            molec = infus$molec[!duplicates]
+        ) |>
+        add_dosing(
+            time = infus$time,
+            amount = infus$rate * infus$duration,
+            cmt = bag_names,
+            molec = infus$molec
+        ) |>
+        add_dosing(
+            time = infus$time,
+            amount = infus$rate,
+            cmt = rate_names,
+            molec = infus$molec
+        ) |>
+        add_dosing(
+            time = infus$time + infus$duration,
+            amount = -infus$rate,
+            cmt = rate_names,
+            molec = infus$molec
+        ) 
+}
+
+
 
 
 # ------------------------------------ `to_*` functions for CompartmentModel exporting ------------------------------------
@@ -552,7 +676,7 @@ to_ode <- function(
         events <- rbind(
             events,
             data.frame(
-                var = doses$target,
+                var = paste0("a[", doses$molec, ",", doses$cmt, "]"),
                 time = doses$time,
                 value = doses$amount,
                 method = "add",
@@ -561,10 +685,24 @@ to_ode <- function(
         )
     }
 
-    # infusion rate events
+    # infusion rate events (TODO: merge with commented code below)
     if (length(model$infusionEvents) > 0) {
         events <- rbind(events, model$infusionEvents)
     }
+
+    # # Helper function allowing to update the model in a single pipeline
+    # add_infusion_events <- function(model, var, time, value, method) {
+    #     new_events <- data.frame(
+    #         var = var,
+    #         time = time,
+    #         value = value,
+    #         method = method,
+    #         stringsAsFactors = FALSE
+    #     )
+    #     model$infusionEvents <- rbind(model$infusionEvents, new_events)
+    #     return(model)
+    # }
+
 
     # sort by time
     events <- events[order(events$time), ]
@@ -581,9 +719,9 @@ to_ode <- function(
 .check_unit_consistency <- function(model) {
     .check_class(model, "CompartmentModel")
 
-    # Available variables for unit checking: compartment initials and parameters
+    # Available variables for unit checking: compartment volumes, initial amounts/concentrations, and parameters
     varlist <-  c(
-        setNames(model$compartments$initial, nm = states(model$compartments)), 
+        setNames(model$compartments$volume, nm = states(model$compartments)), 
         unclass(model$parameters)
     )
     varnames <- names(varlist)

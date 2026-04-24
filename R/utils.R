@@ -174,6 +174,8 @@
     }
 
     df_subset <- as.data.frame(x)[i, , drop = FALSE]
+    rownames(df_subset) <- NULL
+    
     structure(df_subset, class = class(x))
 }
 

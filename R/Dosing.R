@@ -76,8 +76,8 @@ dosing <- function(
 
     # Validate inputs (using sign to support variables with/without units)
     stopifnot(is.numeric(time))
-    if (!is.null(amount)) stopifnot(is.numeric(amount), sign(amount) >= 0)
-    if (!is.null(rate)) stopifnot(is.numeric(rate), sign(rate) >= 0)
+    if (!is.null(amount)) stopifnot(is.numeric(amount))
+    if (!is.null(rate)) stopifnot(is.numeric(rate))
     if (!is.null(duration)) stopifnot(is.numeric(duration), sign(duration) == 1)
 
     # More strict checks on argument lengths than data.frame recycling rules, to avoid silent bugs from unintended recycling.
@@ -183,70 +183,8 @@ add_dosing <- function(
 
     .check_class(dose, "Dosing")
 
-    # Separate bolus and infusion dosing for different handling
-    bolus <- dose[is_bolus(dose)]
-    infus <- dose[is_infusion(dose)]
-
-    # Bolus dosing is simply appended to the models dosing list
-    model$doses <- c(model$doses, bolus)
-
-    # Early return if no infusion dosing
-    if (length(infus) == 0) {
-        return(model)
-    }
-
-    # --------------------------------------------------------------------------------------------------
-    # Infusion dosing requires more complex handling: we need to add infusion bag and rate compartments,
-    # convert the infusion dosing into bolus-to-bag + infusion rate events, and add flows from the bag
-    # to the target compartment with rate equal to the infusion rate.
-    # --------------------------------------------------------------------------------------------------
-
-    # Convert infusion dosing into bolus-to-bag + infusion rate events, and add to model
-    bag_names <- paste0("InfusionBag_", infus$target)
-    rate_names <- paste0("InfusionRate_", infus$target)
-    comp_names <- names(model$compartments)
-    new_bag_names <- setdiff(bag_names, comp_names)
-    new_rate_names <- setdiff(rate_names, comp_names)
-
-    # Helper function allowing to update the model in a single pipeline
-    add_infusion_events <- function(model, var, time, value, method) {
-        new_events <- data.frame(
-            var = var,
-            time = time,
-            value = value,
-            method = method,
-            stringsAsFactors = FALSE
-        )
-        model$infusionEvents <- rbind(model$infusionEvents, new_events)
-        return(model)
-    }
-
-    # Return the updated model
-    model |>
-        add_compartment(new_bag_names, 0) |>
-        add_compartment(new_rate_names, 0) |>
-        add_dosing(
-            time = infus$time,
-            amount = infus$rate * infus$duration,
-            cmt = bag_names
-        ) |>
-        add_transport(
-            from = bag_names,
-            to = infus$target,
-            rate = rate_names
-        ) |>
-        add_infusion_events(
-            var = rate_names,
-            time = infus$time,
-            value = infus$rate,
-            method = "add"
-        ) |>
-        add_infusion_events(
-            var = rate_names,
-            time = infus$time + infus$duration,
-            value = -infus$rate,
-            method = "add"
-        )
+    model$doses <- c(model$doses, dose)
+    model
 }
 
 #' Check which dosing events are boluses.

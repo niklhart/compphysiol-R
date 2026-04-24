@@ -23,6 +23,8 @@ If molecules / compartments have been defined in the model, then any transport o
 (note that this may increase the number of molecules, transports and reactions in the model).
 If no compartments or molecules have been defined, then a single dummy name ("molec" or "cmt") will be used
 to replace the wildcard, with a message printed to the console to inform the user.
+In addition, rate expressions and observables that include statements of the form \verb{[molec]} or \verb{[cmt]} will be
+expanded to include the implicit molecule and compartment names (i.e., into the form \verb{[molec,cmt]}).
 }
 \examples{
 # wire "drug" into transport rate expressions, replacing the <all molec> wildcard
