@@ -35,6 +35,6 @@ They can be used for simulation or estimation purposes.
 \examples{
 M <- multiCompModel(ncomp = 2, type = "micro", unit = "mg") |>
    add_parameter(k10 = 0.05 [1/h]) |> # fix one param
-   add_dosing(target = "cen", time = 0 [h], amount = 100 [mg])
+   add_dosing(time = 0 [h], amount = 100 [mg], cmt = "cen")
 odeinfo <- to_ode(M, dimensions = list(time = "h"))
 }

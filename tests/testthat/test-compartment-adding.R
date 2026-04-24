@@ -3,32 +3,30 @@
 
 test_that("Adding compartments works", {
     M <- compartment_model() |>
-        add_compartment("Central", initial = 10) |>
-        add_compartment("Peripheral", initial = 0)
+        add_compartment("Central", volume = 10) |>
+        add_compartment("Peripheral", volume = 0)
 
     compnames <- names(M$compartments)
     expect_equal(compnames, c("Central", "Peripheral"))
 
-    initials <- initials(M$compartments, named = FALSE)
-    expect_equal(initials, c(10, 0))
 })
 
 test_that("Adding flows works", {
     M <- compartment_model() |>
         add_compartment("Central", 10) |>
         add_compartment("Peripheral", 0) |>
-        add_flow("Central", "Peripheral", const = "k12")
+        add_transport("Central", "Peripheral", const = "k12")
 
-    expect_equal(length(M$flows), 1)
-    expect_equal(M$flows$from[[1]], "Central")
-    expect_equal(M$flows$to[[1]], "Peripheral")
-    expect_equal(M$flows$rate[[1]], quote(k12 * Central))
+    expect_equal(length(M$transports), 1)
+    expect_equal(M$transports$from[[1]], "Central")
+    expect_equal(M$transports$to[[1]], "Peripheral")
+    expect_equal(M$transports$rate[[1]], quote(k12 * a[Central]))
 })
 
 test_that("Bolus dosing is handled correctly", {
     M <- compartment_model() |>
-        add_compartment("Central", 0) |>
-        add_dosing(target = "Central", amount = 100, time = 2)
+        add_compartment("Central") |>
+        add_dosing(cmt = "Central", amount = 100, time = 2)
 
     compnames <- names(M$compartments)
     expect_false("InfusionBag_Central" %in% compnames)

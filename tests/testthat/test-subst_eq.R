@@ -1,14 +1,14 @@
 # unit test for .subst_eq() helper function
 
-test_that(".subst_eq() correctly substitutes equations into flows", {
+test_that(".subst_eq() correctly substitutes equations into transports", {
     # Define test flows and equations
-    flows <- c(
-        flows(
+    transp <- c(
+        transports(
             from = "A",
             to = "B",
-            rate = "k1 * A"
+            rate = "k1 * a[A]"
         ),
-        flows(
+        transports(
             from = "B",
             to = "C",
             const = "k2"
@@ -20,15 +20,15 @@ test_that(".subst_eq() correctly substitutes equations into flows", {
     )
 
     # Perform substitution
-    substituted_flows <- .subst_eq(flows, eqs)
+    substituted_transp <- .subst_eq(transp, eqs)
 
     # Check that const expressions have been correctly substituted
-    expect_null(substituted_flows$constr[[1]])
-    expect_equal(substituted_flows$const[[2]], quote(k21 + k22))
+    expect_null(substituted_transp$constr[[1]])
+    expect_equal(substituted_transp$const[[2]], quote(k21 + k22))
 
     # Check that rate expressions have been correctly substituted
-    # Note: we use all.equal() here because the substituted expressions lack a set of optional parentheses, 
+    # Note: we use all.equal() here because the substituted expressions lack a set of optional parentheses,
     # but they should be mathematically equivalent.
-    expect_true(all.equal(substituted_flows$rate[[1]], quote((k11 + k12) * A)))
-    expect_true(all.equal(substituted_flows$rate[[2]], quote((k21 + k22) * B)))
+    expect_true(all.equal(substituted_transp$rate[[1]], quote((k11 + k12) * a[A])))
+    expect_true(all.equal(substituted_transp$rate[[2]], quote((k21 + k22) * a[B])))
 })

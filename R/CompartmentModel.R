@@ -486,29 +486,29 @@ to_analytical <- function(model, paramValues = list()) {
 }
 
 #' Generate ODE function, initial values, observables, and free parameters from a `CompartmentModel` object
-#' 
-#' This function converts a `CompartmentModel` object into a format suitable for numerical ODE solvers, 
+#'
+#' This function converts a `CompartmentModel` object into a format suitable for numerical ODE solvers,
 #' such as those in the `deSolve` package.
-#' 
+#'
 #' If the model specification uses units, the `dimensions` argument can be used to specify the unit dimensions
 #' for time, mass, length, amount, etc., which will be used to inline the parameters in the ODEs with consistent units.
-#' The dimensions default to SI base units and will be appended to the output list for reference, 
+#' The dimensions default to SI base units and will be appended to the output list for reference,
 #' but the user can specify custom dimensions (e.g., time in hours instead of seconds) if desired.
-#' 
-#' Any variable that is neither defined as a parameter nor as a state variable will be treated as a free parameter 
+#'
+#' Any variable that is neither defined as a parameter nor as a state variable will be treated as a free parameter
 #' and included in the `freeParams` output. These parameters need to be passed to the ODE solver as a vector.
 #' They can be used for simulation or estimation purposes.
-#' 
+#'
 #' @param model A `CompartmentModel` object
 #' @param dimensions Named list of unit dimensions used for inlining parameters in ODEs (default: SI units)
-#' @param backend Character scalar specifying the ODE solver backend (default: "deSolve") for which the output should be optimized. 
+#' @param backend Character scalar specifying the ODE solver backend (default: "deSolve") for which the output should be optimized.
 #'   This argument is currently ignored, but may be extended in the future.
 #' @returns A list with elements `odefun` (function), `y0` (named numeric vector), `obsFuncs` (list of functions),
 #' `freeParams` (character vector) and `dimensions` (named list).
 #' @examples
 #' M <- multiCompModel(ncomp = 2, type = "micro", unit = "mg") |>
 #'    add_parameter(k10 = 0.05 [1/h]) |> # fix one param
-#'    add_dosing(target = "cen", time = 0 [h], amount = 100 [mg])
+#'    add_dosing(time = 0 [h], amount = 100 [mg], cmt = "cen")
 #' odeinfo <- to_ode(M, dimensions = list(time = "h"))
 #' @export
 to_ode <- function(
@@ -516,20 +516,28 @@ to_ode <- function(
     dimensions = NULL,
     backend = "deSolve"
 ) {
+    # Resolve wildcards, render depot compartments and check unit consistency before ODE generation
+    model <- model |> wire() |> make_depot() |> .check_unit_consistency()
+
+    # Initial values in output units
+    y0 <- .to_dimensions_vec(initials(model), dimensions)
+
+    # Different names for constructing the ODEs
     compNames <- names(model$compartments)
-    stateNames <- names(model$compartments) # TODO: should become states(model$compartments) once the distinction is finalized
+    stateNames <- names(y0) |>
+        gsub(pattern = "\\[|,|\\]", replacement = "_") # remove brackets for easier parsing in expressions
     eqNames <- names(model$equations)
     name2idx <- setNames(seq_along(stateNames), stateNames)
 
-    paramValues <- lapply(model$parameters, function(p) do.call(.to_dimensions, c(list(p), dimensions))) # TODO: look up dimensions in global dimensions list instead of passing as argument?
-    paramValues <- vapply(paramValues, function(x) units::set_units(x,NULL), numeric(1))
+    # TODO: look up dimensions in global dimensions list instead of passing as argument (also see y0 pipeline)?
+    paramValues <- .to_dimensions_vec(model$parameters, dimensions)
 
-    # ---- Validation: check that all flows point to known compartments ----
+    # ---- Validation: check that all transports point to known compartments ----
     check_comp <- function(nm) {
         if (!is.null(nm) && any(!(nm %in% compNames))) {
             missing <- nm[!(nm %in% compNames)]
             stop(
-                "Flow references unknown compartment: ",
+                "Transport references unknown compartment: ",
                 paste(missing, collapse = ", "),
                 ". ",
                 "Compartment names in this model: ",
@@ -540,11 +548,11 @@ to_ode <- function(
         }
     }
 
-    flow_comps <- setdiff(
-        unique(c(model$flows$from, model$flows$to)),
+    transport_comps <- setdiff(
+        unique(c(model$transports$from, model$transports$to)),
         NA_character_
     )
-    lapply(flow_comps, check_comp)
+    lapply(transport_comps, check_comp)
 
     # Environment container for free parameters
     freeParams <- new.env(parent = emptyenv())
@@ -564,12 +572,10 @@ to_ode <- function(
 
     # Collect RHS terms for ODEs
     rhs <- vector("list", length(stateNames))
-    for (j in seq_along(model$flows)) {
-        expr <- makeFun(model$flows$rate[[j]])
-        expr_str <- deparse(expr, width.cutoff = 500) |>
-            paste(collapse = " ")
-        from <- model$flows$from[[j]]
-        to <- model$flows$to[[j]]
+    for (j in seq_along(model$transports)) {
+        expr_str <- model$transports$rate[[j]] |> makeFun() |> deparse1()
+        from <- model$transports$from[[j]]
+        to <- model$transports$to[[j]]
         if (!is.na(from)) {
             idx <- name2idx[[from]]
             rhs[[idx]] <- c(rhs[[idx]], paste0("-(", expr_str, ")"))
@@ -585,8 +591,7 @@ to_ode <- function(
     for (i in seq_along(model$equations)) {
         eq_rhs <- model$equations[[i]]
         eq_nm <- names(model$equations)[i]
-        eq_expr <- makeFun(eq_rhs)
-        eq_str <- paste(deparse(eq_expr, width.cutoff = 500), collapse = " ")
+        eq_str <- eq_rhs |> makeFun() |> deparse1()
         lines <- c(lines, paste0("    ", eq_nm, " <- ", eq_str))
         if (i == length(model$equations)) lines <- c(lines, "")
     }
@@ -595,7 +600,10 @@ to_ode <- function(
         if (length(rhs[[i]]) == 0) {
             lines <- c(lines, paste0("    dydt[", i, "] <- 0"))
         } else {
-            lines <- c(lines, paste0("    dydt[", i, "] <- ", paste(rhs[[i]], collapse = " ")))
+            lines <- c(
+                lines,
+                paste0("    dydt[", i, "] <- ", paste(rhs[[i]], collapse = " "))
+            )
         }
     }
     lines <- c(lines, "    list(dydt)", "}")
@@ -603,41 +611,23 @@ to_ode <- function(
 
     # Observables (same substitution logic)
     obsFuncs <- lapply(model$observables, function(o) {
-        expr_lang <- makeFun(o, obsFunc = TRUE)
-        expr_str <- paste(
-            deparse(expr_lang, width.cutoff = 500),
-            collapse = " "
-        )
+        expr_str <- o |> makeFun(obsFunc = TRUE) |> deparse1()
         eval(parse(text = paste0("function(t,y,params) ", expr_str)))
     })
     names(obsFuncs) <- names(model$observables)
 
-    # Initial values in output units
-    y0 <- model$compartments$initial |>
-        lapply(function(x) do.call(.to_dimensions, c(list(x), dimensions))) |>
-        vapply(function(x) units::set_units(x, NULL), numeric(1)) |> 
-        setNames(stateNames)
-
     # Dosing events table in output units
     events <- .dosing_to_events(model)
-    if (inherits(events$data$value, "units")) {
-        events$data$value <- events$data$value |>
-            lapply(function(x) do.call(.to_dimensions, c(list(x), dimensions))) |>
-            vapply(function(x) units::set_units(x, NULL), numeric(1))
-    }
-    if (inherits(events$data$time, "units")) {
-         events$data$time <- events$data$time |>
-            lapply(function(x) do.call(.to_dimensions, c(list(x), dimensions))) |>
-            vapply(function(x) units::set_units(x, NULL), numeric(1))
-    }
+    events$data$value <- .to_dimensions_vec(events$data$value, dimensions)
+    events$data$time <- .to_dimensions_vec(events$data$time, dimensions)
 
     # Output list
     list(
         odefun = odefun,
-        stateNames = stateNames,
+        stateNames = names(y0),
         obsFuncs = obsFuncs,
         freeParams = sort(unique(freeParams$list)),
-        y0 = y0,
+        y0 = unname(y0),
         events = events
     )
 }
@@ -661,18 +651,17 @@ to_ode <- function(
 #' @returns A list with a single element `data`, which is a data.frame with columns `var`, `time`, `value`, and `method` (add or replace).
 .dosing_to_events <- function(model) {
     .check_class(model, "CompartmentModel")
+    doses <- model$doses
 
-    events <- data.frame(
-        var = character(),
-        time = numeric(),
-        value = numeric(),
-        method = character(),
-        stringsAsFactors = FALSE
-    )
-
-    # boluses
-    if (length(model$doses) > 0) {
-        doses <- model$doses
+    if (length(doses) == 0) {
+        events <- data.frame(
+            var = character(),
+            time = numeric(),
+            value = numeric(),
+            method = character(),
+            stringsAsFactors = FALSE
+        )
+    } else {
         events <- rbind(
             events,
             data.frame(
@@ -685,25 +674,6 @@ to_ode <- function(
         )
     }
 
-    # infusion rate events (TODO: merge with commented code below)
-    if (length(model$infusionEvents) > 0) {
-        events <- rbind(events, model$infusionEvents)
-    }
-
-    # # Helper function allowing to update the model in a single pipeline
-    # add_infusion_events <- function(model, var, time, value, method) {
-    #     new_events <- data.frame(
-    #         var = var,
-    #         time = time,
-    #         value = value,
-    #         method = method,
-    #         stringsAsFactors = FALSE
-    #     )
-    #     model$infusionEvents <- rbind(model$infusionEvents, new_events)
-    #     return(model)
-    # }
-
-
     # sort by time
     events <- events[order(events$time), ]
     list(data = events)
@@ -714,14 +684,14 @@ to_ode <- function(
 #' Checks that all flows, observables, and equations in the model are dimensionally consistent with respect to the units of the compartments, parameters and dosing.
 #' 
 #' @param model A `CompartmentModel` object.
-#' @return `TRUE` if all units are consistent, otherwise an error is raised.
+#' @return The model (invisibly) if all units are consistent, otherwise an error is raised.
 #' @noRd
 .check_unit_consistency <- function(model) {
     .check_class(model, "CompartmentModel")
 
     # Available variables for unit checking: compartment volumes, initial amounts/concentrations, and parameters
     varlist <-  c(
-        setNames(model$compartments$volume, nm = states(model$compartments)), 
+        unclass(initials(model)),
         unclass(model$parameters)
     )
     varnames <- names(varlist)
@@ -852,4 +822,5 @@ to_ode <- function(
             }
         )
     }
+    invisible(model)
 }

@@ -132,21 +132,36 @@
     var_si
 }
 
-#' Substitute equations in flows
+#' Apply `.to_dimensions()` to a vector of variables (TODO: improve naming and documentation)
 #' 
-#' This function takes a `Flows` object and an `Equations` object, and substitutes the equations into the rate expressions of the flows.
-#' 
-#' @param flows A `Flows` object
-#' @param eqs An `Equations` object
-#' @returns A `Flows` object with the equations substituted into the rate expressions
+#' @param vars A vector of variables, each with or without units
+#' @param dimensions A list of dimension specifications to pass to `.to_dimensions()`
+#' @returns A numeric vector of the variables converted to the specified dimensions 
+#'   if they have units, otherwise returned unchanged
 #' @noRd
-.subst_eq <- function(flows, eqs) {
-    lapply(flows, function(flow) {
-        flow$rate <- do.call("substitute", list(flow$rate, env = unclass(eqs)))
-        if (!is.null(flow$const)) {
-            flow$const <- do.call("substitute", list(flow$const, env = unclass(eqs)))
+.to_dimensions_vec <- function(vars, dimensions) {
+    if (!inherits(vars, "units")) return(vars)
+    vars |>
+        lapply(function(x) do.call(.to_dimensions, c(list(x), dimensions))) |>
+        vapply(function(x) units::set_units(x, NULL), numeric(1))
+}
+
+#' Substitute equations in transports
+#' 
+#' This function takes a `Transports` object and an `Equations` object, and substitutes 
+#' the equations into the rate expressions of the transports.
+#' 
+#' @param transp A `Transports` object
+#' @param eqs An `Equations` object
+#' @returns A `Transports` object with the equations substituted into the rate expressions
+#' @noRd
+.subst_eq <- function(transp, eqs) {
+    lapply(transp, function(tr) {
+        tr$rate <- do.call("substitute", list(tr$rate, env = unclass(eqs)))
+        if (!is.null(tr$const)) {
+            tr$const <- do.call("substitute", list(tr$const, env = unclass(eqs)))
         }
-        flow
+        tr
     }) |> do.call(what = "c")
 }
 

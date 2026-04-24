@@ -348,13 +348,14 @@ print.Transport <- function(x, ...) {
 #' @export
 c.Transport <- function(...) {
     objs <- list(...)
-    if (!all(sapply(objs, function(o) inherits(o, "Transports")))) {
-        stop("All inputs must be Transports objects.")
+    if (!all(sapply(objs, function(o) inherits(o, "Transport")))) {
+        stop("All inputs must be Transport objects.")
     }
     
     # Combine the components into vectors/lists
     from <- vapply(objs, function(o) o$from, character(1))
     to <- vapply(objs, function(o) o$to, character(1))
+    molec <- vapply(objs, function(o) o$molec, character(1))
     rate <- lapply(objs, function(o) o$rate)
     const <- lapply(objs, function(o) o$const)
     type <- vapply(objs, function(o) o$type, character(1))
@@ -364,6 +365,7 @@ c.Transport <- function(...) {
         data.frame(
             from = from,
             to = to,
+            molec = molec,
             rate = I(rate),
             const = I(const),
             type = type,
