@@ -3,7 +3,7 @@ test_that("Scalar parameter substitution works in ODE", {
     M <- compartment_model() |>
         add_compartment("Central", 10) |>
         add_compartment("Peripheral", 0) |>
-        add_flow("Central", "Peripheral", const = "k12") |>
+        add_transport("Central", "Peripheral", const = "k12") |>
         add_parameter(k12 = 0.2)
 
     # Provide k12 as scalar
@@ -21,7 +21,7 @@ test_that("Free parameters remain in ODE", {
     M <- compartment_model() |>
         add_compartment("Central", 10) |>
         add_compartment("Peripheral", 0) |>
-        add_flow("Central", "Peripheral", const = "k12")
+        add_transport("Central", "Peripheral", const = "k12")
 
     # Do not provide k12
     odeinfo <- to_ode(M)

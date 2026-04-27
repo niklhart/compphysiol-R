@@ -11,7 +11,7 @@ test_that("Adding compartments works", {
 
 })
 
-test_that("Adding flows works", {
+test_that("Adding transports works", {
     M <- compartment_model() |>
         add_compartment("Central", 10) |>
         add_compartment("Peripheral", 0) |>
@@ -32,24 +32,31 @@ test_that("Bolus dosing is handled correctly", {
     expect_false("InfusionBag_Central" %in% compnames)
     expect_false("InfusionRate_Central" %in% compnames)
 
-    events_data <- to_ode(M)$events$data
-    expect_equal(nrow(events_data), 1)
-    expect_equal(events_data$var, "Central")
-    expect_equal(events_data$time, 2)
-    expect_equal(events_data$value, 100)
+    dos <- M$doses
+
+    expect_equal(length(dos), 1)
+    expect_true(is_bolus(dos))
+    
 })
 
-test_that("Infusion dosing creates bag and rate compartments", {
-    M <- compartment_model() |>
-        add_compartment("Central", 0) |>
-        add_dosing("Central", rate = 5, duration = 4, time = 8)
+test_that("Infusion dosing creates bag and rate compartments only if requested", {
+    M1 <- compartment_model() |>
+        add_compartment("cen") |>
+        add_dosing(time = 8, rate = 5, duration = 4, cmt = "cen", molec = "drug")
+    M2 <- make_depot(M1)
 
-    compnames <- names(M$compartments)
-    expect_all_true(c("InfusionBag_Central", "InfusionRate_Central") %in% compnames)
+    nm1 <- names(M1$compartments)
+    nm2 <- names(M2$compartments)
 
-    # One bolus to bag + start and end events for infusion rate
-    events_data <- to_ode(M)$events$data
-    expect_equal(sum(events_data$var == "InfusionBag_Central"), 1)
-    expect_equal(sum(events_data$var == "InfusionRate_Central"), 2)
+    infusion_cmt <- c("Depot_drug_cen","ReleaseRate_drug_cen")
+
+    expect_all_false(infusion_cmt %in% nm1)
+    expect_all_true(infusion_cmt %in% nm2)
+
+    expect_all_true(is_infusion(M1$doses))
+    expect_all_true(is_bolus(M2$doses))
+
+    expect_length(M1$doses, 1)
+    expect_length(M2$doses, 3)
 })
 

@@ -2,17 +2,14 @@
 
 test_that("classification of flows works", {
     # Model definition
-    flows <- c(
-        flows(from = "A", to = "B", const = "kAB"),
-        flows(from = "B", to = "C", const = "kBC"),
-        flows(from = "C", to = "B", const = "kCB"),
-        flows(from = "B", to = "D", const = "kBD"),
-        flows(from = "C", to = NULL, const = "kC0")
+    trans <- c(
+        transports(from = c("A","B","C","B"), to = c("B","C","B","D"), const = "k{from}{to}"),
+        transports(from = "C", to = NULL, const = "kC0")
     )
 
     scc <- c("B", "C")
 
-    cls <- .classify_flows(flows, scc)
+    cls <- .classify_transports(trans, scc)
 
     expect_equal(length(cls$internal), 2)
     expect_equal(length(cls$incoming), 1)
@@ -66,14 +63,14 @@ test_that("2x2 symbolic solve works for classes B and C in A->B<->C->0 model", {
 
 test_that("assemble_linear_expr builds correct 1x1 system", {
 
-    flows <- c(
-        flows(from = "A", to = "B", const = "kAB"),
-        flows(from = "B", to = NULL, const = "kB0")
+    trans <- c(
+        transports(from = "A", to = "B", const = "kAB"),
+        transports(from = "B", to = NULL, const = "kB0")
     )
 
     scc <- "B"
 
-    sys <- .assemble_linear_expr(scc, flows)
+    sys <- .assemble_linear_expr(scc, trans)
 
     expect_equal(
         sys$A,
@@ -82,22 +79,20 @@ test_that("assemble_linear_expr builds correct 1x1 system", {
 
     expect_equal(
         sys$b,
-        list(B = quote(kAB * A))
+        list(B = quote(kAB * a[A]))
     )
 })
 
 test_that("assemble_linear_expr builds correct 2x2 system", {
 
-    flows <- c(
-        flows(from = "A", to = "B", const = "kAB"),
-        flows(from = "B", to = "C", const = "kBC"),
-        flows(from = "C", to = "B", const = "kCB"),
-        flows(from = "C", to = NULL, const = "kC0")
+    trans <- c(
+        transports(from = c("A","B","C"), to = c("B","C","B"), const = "k{from}{to}"),
+        transports(from = "C", to = NULL, const = "kC0")
     )
 
     scc <- c("B", "C")
 
-    sys <- .assemble_linear_expr(scc, flows)
+    sys <- .assemble_linear_expr(scc, trans)
 
     A_expected <- matrix(
         list(
@@ -111,7 +106,7 @@ test_that("assemble_linear_expr builds correct 2x2 system", {
     )
 
     b_expected <- list(
-        B = quote(kAB * A),
+        B = quote(kAB * a[A]),
         C = quote(0)
     )
 

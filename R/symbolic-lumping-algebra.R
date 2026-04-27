@@ -1,19 +1,19 @@
 # Linear algebra for symbolic lumping of ODE systems
 
 #' Symbolic lumping of a linear `CompartmentModel` based on its graph structure
-#' @param flows A `Flows` object
+#' @param trans A `Transports` object
 #' @param scc A character vector, the strongly connected component (SCC) to be lumped
-#' @returns A list with entries `internal`, `incoming`, `outgoing`, `elimination`, each a `Flows` object
+#' @returns A list with entries `internal`, `incoming`, `outgoing`, `elimination`, each a `Transports` object
 #' @noRd
-.classify_flows <- function(flows, scc) {
-    .check_class(flows, "Flows")
+.classify_transports <- function(trans, scc) {
+    .check_class(trans, "Transports")
     list(
-        internal = flows$from %in% scc & !is.na(flows$to) & flows$to %in% scc,
-        incoming = !(flows$from %in% scc) & flows$to %in% scc,
-        elimination = flows$from %in% scc & is.na(flows$to),
-        outgoing = flows$from %in% scc & !is.na(flows$to) & !(flows$to %in% scc)
+        internal = trans$from %in% scc & !is.na(trans$to) & trans$to %in% scc,
+        incoming = !(trans$from %in% scc) & trans$to %in% scc,
+        elimination = trans$from %in% scc & is.na(trans$to),
+        outgoing = trans$from %in% scc & !is.na(trans$to) & !(trans$to %in% scc)
     ) |> 
-        lapply(function(idx) flows[idx])
+        lapply(function(idx) trans[idx])
 }
 
 #' Solve a linear system of equations Ax+b=0 with symbolic coefficients
@@ -82,11 +82,11 @@
 
 #' Assemble the lumping equations for a strongly connected component (SCC)
 #' @param scc A character vector, the strongly connected component (SCC) to be lumped
-#' @param flows A `Flows` object
+#' @param trans A `Transports` object
 #' @returns A list with entries `A`, `b`
 #' @noRd
-.assemble_linear_expr <- function(scc, flows) {
-    cls <- .classify_flows(flows, scc)
+.assemble_linear_expr <- function(scc, trans) {
+    cls <- .classify_transports(trans, scc)
 
     n <- length(scc)
     idx <- setNames(seq_len(n), scc)
@@ -104,23 +104,23 @@
     b[] <- list(quote(0))
 
     ## internal + elimination + outgoing → A
-        for (fl in as.list(c(cls$internal, cls$elimination, cls$outgoing))) {
-            i <- idx[fl$from]
+        for (tr in as.list(c(cls$internal, cls$elimination, cls$outgoing))) {
+            i <- idx[tr$from]
 
             ## A[i,i] <- A[i,i] - k
-            A[[i, i]] <- .sub(A[[i, i]], fl$const)
+            A[[i, i]] <- .sub(A[[i, i]], tr$const)
 
             ## internal transfer: j <- i
-            if (!is.null(fl$to) && fl$to %in% scc) {
-                j <- idx[fl$to]
-                A[[j, i]] <- .add(A[[j, i]], fl$const)
+            if (!is.null(tr$to) && tr$to %in% scc) {
+                j <- idx[tr$to]
+                A[[j, i]] <- .add(A[[j, i]], tr$const)
             }
         }
 
     ## incoming → b
-    for (fl in as.list(cls$incoming)) {
-        j <- idx[fl$to]
-        b[[j]] <- .add(b[[j]], fl$rate)
+    for (tr in as.list(cls$incoming)) {
+        j <- idx[tr$to]
+        b[[j]] <- .add(b[[j]], tr$rate)
     }
 
     ## return symbolic linear system

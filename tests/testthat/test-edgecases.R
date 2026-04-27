@@ -35,15 +35,18 @@ test_that("Missing parameters are listed as free", {
 
 test_that("Overlapping infusion events handled correctly", {
     M <- compartment_model() |>
-        add_compartment("Central", 0) |> 
-        add_dosing(target = "Central", time = c(0,2), amount = 1, duration = 4)
+        add_compartment("Central", 0) |>
+        add_dosing(
+            cmt = "Central",
+            time = c(0, 2),
+            amount = 1,
+            duration = 4,
+            molec = "drug"
+        ) |>
+        make_depot()
 
-    eventsdata <- to_ode(M)$events$data
+    dos <- M$doses
 
-    # Check that infusion rate events are present for both start and end
-    rateEvents <- eventsdata[grepl("InfusionRate_Central", eventsdata$var), ]
-    expect_equal(nrow(rateEvents), 4) # 2 starts + 2 ends
-
-    # Events sorted by time
-    expect_true(all(diff(rateEvents$time) >= 0))
+    expect_length(dos, 6) # 2 doses + 4 infusion rate events
+    expect_all_true(diff(dos$time) >= 0) # Events sorted by time
 })

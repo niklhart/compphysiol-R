@@ -85,8 +85,8 @@ dosing <- function(
         "amount must be NULL, scalar or match length of time" = length(amount) %in% c(0, 1, ndose),
         "rate must be NULL, scalar or match length of time" = length(rate) %in% c(0, 1, ndose),
         "duration must be NULL, scalar or match length of time" = length(duration) %in% c(0, 1, ndose),
-        "molec must be NULL or scalar" = length(molec) %in% c(0, 1),
-        "cmt must be NULL or scalar" = length(cmt) %in% c(0, 1)
+        "molec must be NULL, scalar or match length of time" = length(molec) %in% c(0, 1, ndose),
+        "cmt must be NULL, scalar or match length of time" = length(cmt) %in% c(0, 1, ndose)
     )
 
     # Variables with units are not automatically recycled by data.frame -> do it here
@@ -298,9 +298,10 @@ print.Dosing <- function(x, ...) {
 #' Combine multiple `Dosing` objects into one
 #' 
 #' Combines multiple `Dosing` objects by row-binding their data.
+#' The resulting `Dosing` object will contain all dosing events from the inputs, sorted by time.
 #' 
 #' @param ... One or more `Dosing` objects to combine.
-#' @return A single `Dosing` object containing all dosing events from the inputs.
+#' @return A single `Dosing` object containing all dosing events from the inputs, sorted by time.
 #' @export
 c.Dosing <- function(...) {
     objs <- list(...)
@@ -310,6 +311,11 @@ c.Dosing <- function(...) {
 
     # Combine the data frames by row-binding
     combined_df <- do.call(rbind, lapply(objs, as.data.frame))
+
+    # sort by time to ensure correct order of dosing events
+    combined_df <- combined_df[order(combined_df$time), ]
+
+    # output as object of class Dosing
     structure(combined_df, class = "Dosing")
 }
 

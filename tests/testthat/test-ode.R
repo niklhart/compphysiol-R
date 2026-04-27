@@ -5,7 +5,7 @@ test_that("ODE generation handles first-order reaction with bolus dosing", {
     M <- compartment_model() |>
         add_compartment("Central", 10) |>
         add_compartment("Peripheral", 0) |>
-        add_flow("Central", "Peripheral", const = "k12") |>
+        add_transport("Central", "Peripheral", const = "k12") |>
         add_parameter(k12 = 0.1)
   
     odeinfo <- to_ode(M)
@@ -30,9 +30,9 @@ test_that("ODE generation handles output dimensions", {
     # PK example with first-order reactions only
     M <- compartment_model() |>
         add_compartment("Central", 10[mg]) |>
-        add_flow(from = "Central", to = "", const = "ke") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_parameter(ke = 6 [1/h]) |>
-        add_dosing(target = "Central", amount = 100[mg], time = 1[h])
+        add_dosing(cmt = "Central", amount = 100[mg], time = 1[h])
 
     odeinfo <- to_ode(M, dimensions = list(mass = "g", time = "min"))
 

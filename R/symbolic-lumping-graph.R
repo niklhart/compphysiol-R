@@ -23,7 +23,7 @@
 #' @noRd
 .make_graph <- function(model, refstate) {
     nodes <- names(model$compartments)
-    edges <- data.frame(from = model$flows$from, to = model$flows$to)
+    edges <- data.frame(from = model$transports$from, to = model$transports$to)
 
     # remove elimination edges and edges towards refstate (break cycle)
     edges <- edges[edges$to != refstate & !is.na(edges$to), , drop = FALSE]

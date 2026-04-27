@@ -151,12 +151,12 @@
 #' This function takes a `Transports` object and an `Equations` object, and substitutes 
 #' the equations into the rate expressions of the transports.
 #' 
-#' @param transp A `Transports` object
+#' @param trans A `Transports` object
 #' @param eqs An `Equations` object
 #' @returns A `Transports` object with the equations substituted into the rate expressions
 #' @noRd
-.subst_eq <- function(transp, eqs) {
-    lapply(transp, function(tr) {
+.subst_eq <- function(trans, eqs) {
+    lapply(trans, function(tr) {
         tr$rate <- do.call("substitute", list(tr$rate, env = unclass(eqs)))
         if (!is.null(tr$const)) {
             tr$const <- do.call("substitute", list(tr$const, env = unclass(eqs)))

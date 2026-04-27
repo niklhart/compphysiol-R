@@ -4,8 +4,8 @@ test_that("reference state is preserved and downstream states are expressed w.r.
     ## --- build model ---
     M <- compartment_model() |>
         add_compartment(c("A", "B")) |>
-        add_flow("A", "B", const = "kAB") |>
-        add_flow("B", "", const = "kB0")
+        add_transport("A", "B", const = "kAB") |>
+        add_transport("B", "", const = "kB0")
 
     refstate <- "A"
 
@@ -19,7 +19,7 @@ test_that("reference state is preserved and downstream states are expressed w.r.
     expect_true(is.language(res$B))
 
     ## --- numerical correctness ---
-    f <- function(A, kAB, kB0) eval(res$B)
+    f <- function(A, kAB, kB0) eval(res$B)       # TODO: replace `a[A]` by `A` to avoid this error
     expect_equal(f(2, 4, 8), 1)
 })
 
@@ -27,12 +27,12 @@ test_that("full symbolic assembly works for A->B->C->D->0", {
     # Model definition
     M <- compartment_model() |>
         add_compartment(c("A", "B", "C", "D")) |>
-        add_flow(
+        add_transport(
             from = c("A", "B", "C"),
             to = c("B", "C", "D"),
-            const = "k_from_to"
+            const = "k{from}{to}"
         ) |>
-        add_flow("D", "", const = "kD0")
+        add_transport("D", "", const = "kD0")
 
     ## --- lumping ---
     res <- get_lumping_conditions(M, refstate = "A")
