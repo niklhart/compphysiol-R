@@ -10,8 +10,9 @@
 \item{...}{One or more \code{Dosing} objects to combine.}
 }
 \value{
-A single \code{Dosing} object containing all dosing events from the inputs.
+A single \code{Dosing} object containing all dosing events from the inputs, sorted by time.
 }
 \description{
 Combines multiple \code{Dosing} objects by row-binding their data.
+The resulting \code{Dosing} object will contain all dosing events from the inputs, sorted by time.
 }

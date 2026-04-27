@@ -4,7 +4,16 @@
 \alias{add_transport}
 \title{Add one or several transports to a \code{CompartmentModel} object.}
 \usage{
-add_transport(model, from, to, ..., rate = NULL, const = NULL, trans)
+add_transport(
+  model,
+  from,
+  to,
+  molec = NA_character_,
+  ...,
+  rate = NULL,
+  const = NULL,
+  trans
+)
 }
 \arguments{
 \item{model}{A \code{CompartmentModel} object.}
@@ -12,6 +21,8 @@ add_transport(model, from, to, ..., rate = NULL, const = NULL, trans)
 \item{from}{The name of the source compartment(s) (character vector or NULL for source compartments)}
 
 \item{to}{The name of the destination compartment(s) (character vector or NULL for sink compartments)}
+
+\item{molec}{The name of the molecule(s) being transferred (character vector, optional, default: all molecules)}
 
 \item{...}{Unused, enforces \code{rate} and \code{const} to be specified as named arguments only, not positional}
 

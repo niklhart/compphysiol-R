@@ -166,11 +166,6 @@ wire <- function(model, what = c("molec", "cmt")) {
 
 #' Extract the initial states (with names) from a `CompartmentModel` object
 #'
-#  The type of the returned object depends on the presence of units in the initial conditions:
-#
-#  - if all compartment initial conditions are numeric without units, a numeric vector is returned
-#  - if all compartment initial conditions have consistent units, the returned vector will be of class `units`,
-#  - if the compartment initial conditions have mixed units,  the returned vector will be of class `mixed_units`.
 #' @param model A `CompartmentModel` object
 #' @param type The type of initials to extract: the default `"a[] or c[]"` means amounts are attempted first, 
 #'   but concentrations given if amounts cannot be calculated. `"c[] or a[]"` does the opposite, 
@@ -178,7 +173,7 @@ wire <- function(model, what = c("molec", "cmt")) {
 #'   If all compartments have volumes (fixed or parametrized), then both types of initials can be calculated 
 #'   and the `type` argument only determines which one is returned. For compartments that have no defined volume, 
 #'   only the type of initial specified in the molecule definition can be calculated.
-#' @returns A named numeric vector of state initial values, where the names are in the format
+#' @returns A named list of state initial values, where the names are in the format
 #'   `"a[molec,cmt]"` for amount states or `"c[molec,cmt]"` for concentration states.
 #' @export
 initials <- function(model, type = c("a[] or c[]", "c[] or a[]", "a[] only", "c[] only")) {
@@ -186,31 +181,29 @@ initials <- function(model, type = c("a[] or c[]", "c[] or a[]", "a[] only", "c[
     .check_class(model, "CompartmentModel")
     type <- match.arg(type)
 
+    # Early return for empty compartments and molecules: return empty named list
+    if (length(model$molecules) == 0 && length(model$compartments) == 0) {
+        return(setNames(list(), character(0)))
+    }
+
     # molec / cmt names
     molec_nm <- names(model$molecules)
     molec_cmt <- model$molecules$cmt
     if (any(is.na(molec_cmt))) stop("Cannot extract initials: some molecules have undefined compartments. Please wire the model first to resolve any wildcards.")
 
     # auxiliary quantity: compartment volume per state
-    state_vol <- model$compartments$volume[match(
+    vol <- model$compartments$volume[match(
         molec_cmt,
         names(model$compartments)
     )]
-    value_vol <- vapply(
-        state_vol,
+    is_value_vol <- vapply(
+        vol,
         function(v) is.numeric(v),
         FUN.VALUE = logical(1)
     )
-    state_vol[!value_vol] <- list(NA_real_) # if volume is not numeric, set to NA for normalization     # TODO: query model$parameters for the respective value instead.
+    vol[!is_value_vol] <- list(NA_real_) # if volume is not numeric, set to NA for normalization     # TODO: query model$parameters for the respective value instead.
 
-    # Allow mixed units in initial conditions if required by temporarily setting allow_mixed = TRUE
-    oldopt <- units::units_options(allow_mixed = TRUE)
-    on.exit(units::units_options(oldopt), add = TRUE)
-
-    # flatten list of volumes/initial values into a vector
-    vol <- do.call(what = c, args = state_vol) %||% numeric(0)
-    init <- do.call(what = c, args = model$molecules$init) %||% numeric(0)
-
+    init <- model$molecules$init
     molec_type <- model$molecules$type
     switch(
         type,
@@ -218,35 +211,31 @@ initials <- function(model, type = c("a[] or c[]", "c[] or a[]", "a[] only", "c[
             in_amount <- molec_type == "amount"
             out_amount <- in_amount | !is.na(vol)
             to_convert <- out_amount & !in_amount
-            init <- Map(function(conv, x, v) if (conv) x * v else x, conv = to_convert, x = init, v = vol) |>
-                do.call(what = c)
+            init <- Map(function(conv, x, v) if (conv) x * v else x, conv = to_convert, x = init, v = vol)
             prefix <- ifelse(out_amount, "a", "c")
-            name <- paste0(prefix,"[", molec_nm, ",", molec_cmt, "]")
+            name <- .make_state(molec = molec_nm, cmt = molec_cmt, prefix = prefix)
         },
         "c[] or a[]" = {
             in_conc <- molec_type == "concentration"
             out_conc <- in_conc | !is.na(vol)
             to_convert <- out_conc & !in_conc
-            init <- Map(function(conv, x, v) if (conv) x / v else x, conv = to_convert, x = init, v = vol) |>
-                do.call(what = c)
+            init <- Map(function(conv, x, v) if (conv) x / v else x, conv = to_convert, x = init, v = vol)
             prefix <- ifelse(out_conc, "c", "a")
-            name <- paste0(prefix,"[", molec_nm, ",", molec_cmt, "]")
+            name <- .make_state(molec = molec_nm, cmt = molec_cmt, prefix = prefix)
         },
         "a[] only" = {
             needs_convert <- molec_type == "concentration"
             cannot_convert <- is.na(vol) & needs_convert
             if (any(cannot_convert)) stop("Cannot extract amount initials for molecules #", paste(which(cannot_convert), collapse = ", "),".")
-            init <- Map(function(conv, x, v) if (conv) x * v else x, conv = needs_convert, x = init, v = vol) |>
-                do.call(what = c)
-            name <- paste0("a[", molec_nm, ",", molec_cmt, "]")
+            init <- Map(function(conv, x, v) if (conv) x * v else x, conv = needs_convert, x = init, v = vol)
+            name <- .make_state(molec = molec_nm, cmt = molec_cmt, prefix = "a")
         },
         "c[] only" = {
             needs_convert <- molec_type == "amount"
             cannot_convert <- is.na(vol) & needs_convert
             if (any(cannot_convert)) stop("Cannot extract concentration initials for molecules #", paste(which(cannot_convert), collapse = ", "),".")
-            init <- Map(function(conv, x, v) if (conv) x / v else x, conv = needs_convert, x = init, v = vol) |>
-                do.call(what = c)
-            name <- paste0("c[", molec_nm, ",", molec_cmt, "]")
+            init <- Map(function(conv, x, v) if (conv) x / v else x, conv = needs_convert, x = init, v = vol)
+            name <- .make_state(molec = molec_nm, cmt = molec_cmt, prefix = "c")
         }
     )
 
@@ -680,9 +669,9 @@ to_ode <- function(
 }
 
 #' Unit consistency check for CompartmentModel object.
-#' 
+#'
 #' Checks that all flows, observables, and equations in the model are dimensionally consistent with respect to the units of the compartments, parameters and dosing.
-#' 
+#'
 #' @param model A `CompartmentModel` object.
 #' @return The model (invisibly) if all units are consistent, otherwise an error is raised.
 #' @noRd
@@ -690,118 +679,181 @@ to_ode <- function(
     .check_class(model, "CompartmentModel")
 
     # Available variables for unit checking: compartment volumes, initial amounts/concentrations, and parameters
-    varlist <-  c(
-        unclass(initials(model)),
+    inits <- initials(model)
+    varenv <- c(
+        unclass(inits),
         unclass(model$parameters)
-    )
-    varnames <- names(varlist)
+    ) |> list2env()
+    varnames <- names(varenv)
 
     # Check dosing units against compartment units
     for (i in seq_along(model$doses)) {
         amt <- model$doses$amount[[i]]
-        tar <- model$doses$target[[i]]
-        tar_value <- initials(model$compartments[tar])
+        tar <- .make_state(
+            model$doses$molec[[i]],
+            model$doses$cmt[[i]],
+            type = "amount"
+        )
+        tar_value <- inits[[tar]]
         isunit_amt <- inherits(amt, "units")
         isunit_tar <- inherits(tar_value, "units")
         if (isunit_amt || isunit_tar) {
-            if (!(isunit_amt && isunit_tar) ) stop(
-                sprintf("In dosing (%s), inconsistent units for dosing amount and target compartment '%s': one has units while the other does not.", i, tar)
-            )
-            if (!units::ud_are_convertible(units(amt), units(tar_value))) stop(
-                sprintf(
-                    "In dosing (%s), inconsistent units for dosing amount and target compartment '%s': %s vs. %s",
-                    i, tar, units(amt), units(tar_value)
+            if (!(isunit_amt && isunit_tar)) {
+                stop(
+                    sprintf(
+                        "In dosing (%s), inconsistent units for dosing amount and target state '%s': one has units while the other does not.",
+                        i,
+                        tar
+                    )
                 )
-            )
+            }
+            if (!units::ud_are_convertible(units(amt), units(tar_value))) {
+                stop(
+                    sprintf(
+                        "In dosing (%s), inconsistent units for dosing amount and target state '%s': %s vs. %s",
+                        i,
+                        tar,
+                        units(amt),
+                        units(tar_value)
+                    )
+                )
+            }
         }
     }
 
-    # Check if flow rates are unit consistent
+    # Check if transport rates are unit consistent
     parnames <- names(model$parameters)
-    for (i in seq_along(model$flows)) {
-        rate <- model$flows$rate[[i]]
-        from <- model$flows$from[[i]]
-        to <- model$flows$to[[i]]
-        type <- model$flows$type[[i]]
+    for (i in seq_along(model$transports)) {
+        from <- model$transports$from[[i]]
+        to <- model$transports$to[[i]]
+        type <- model$transports$type[[i]]
+        molec <- model$transports$molec[[i]]
 
-        # Check that 'from' and 'to' compartments have compatible units (if both are defined)
-        from_val <- if (!is.na(from)) initials(model$compartments[from]) else NULL
-        to_val <- if (!is.na(to)) initials(model$compartments[to]) else NULL
-        if (!is.null(from_val) &&  !is.null(to_val)) {
-
+        state_from <- if (!is.na(from)) .make_state(molec, from, type = "amount") else NULL
+        state_to <- if (!is.na(to)) .make_state(molec, to, type = "amount") else NULL
+        
+        # Check that 'state_from' and 'state_to' compartments have compatible units (if both are defined)
+        from_val <- if (!is.null(state_from)) inits[[state_from]] else NULL
+        to_val <- if (!is.null(state_to)) inits[[state_to]] else NULL
+        if (!is.null(from_val) && !is.null(to_val)) {
             isunit_from <- inherits(from_val, "units")
             isunit_to <- inherits(to_val, "units")
-            if (!isunit_from && !isunit_to) next
-            if (isunit_from != isunit_to) stop(
-                sprintf("In flow (%d), inconsistent units for 'from' and 'to' compartments: one has units while the other does not.", i)
-            )
-            units::ud_are_convertible(units(from_val), units(to_val)) || stop(
-                sprintf(
-                    "In flow (%d), inconsistent units for 'from' and 'to' compartments: %s vs. %s",
-                    i, units(from_val), units(to_val)
+            if (!isunit_from && !isunit_to) {
+                next
+            }
+            if (isunit_from != isunit_to) {
+                stop(
+                    sprintf(
+                        "In flow (%d), inconsistent units for 'from' and 'to' compartments: one has units while the other does not.",
+                        i
+                    )
                 )
-            )
+            }
+            units::ud_are_convertible(units(from_val), units(to_val)) ||
+                stop(
+                    sprintf(
+                        "In flow (%d), inconsistent units for 'from' and 'to' compartments: %s vs. %s",
+                        i,
+                        units(from_val),
+                        units(to_val)
+                    )
+                )
         }
 
         if (type == "linear") {
-
             # Check that all parameters in the rate constant are defined in the model, warn if not (we cannot check units in this case)
-            const <- model$flows$const[[i]]
+            const <- model$transports$const[[i]]
             if (!all(all.vars(const) %in% parnames)) {
-                warning("Cannot check units for flow (",i,"): some parameter(s) in the rate constant are not defined in the model.")
+                warning("Cannot check units for transport (", i, "): some parameter(s) in the rate constant are not defined in the model.")
                 next
             }
             # Evaluate the rate constant with the parameter values to check that it has units of 1/time (if parameters have units)
             const_val <- tryCatch(
-                eval(const, envir = as.list(model$parameters)), 
+                eval(const, envir = as.list(model$parameters)),
                 error = function(e) {
-                    stop(sprintf("In flow (%s), unit inconsistency in rate constant expression: %s", i, e$message))
+                    stop(sprintf(
+                        "In transport (%s), unit inconsistency within rate constant expression: %s",
+                        i,
+                        e$message
+                    ))
                 }
             )
-            if (!inherits(const_val, "units")) next
-            units::ud_are_convertible(units(const_val), "1/h") || stop(
-                sprintf("In flow (%d), unit of rate constant (%s) must be type 1/Time.", i, units(const_val))
-            )
-        } else { # type == "nonlinear"
+            if (!inherits(const_val, "units")) {
+                next
+            }
+            units::ud_are_convertible(units(const_val), "1/h") ||
+                stop(
+                    sprintf(
+                        "In transport (%d), unit of rate constant (%s) must be type 1/Time.",
+                        i,
+                        units(const_val)
+                    )
+                )
+        } else {
+            # type == "nonlinear"
 
             # Check that all parameters in the rate expression are defined in the model, warn if not (we cannot check units in this case)
-            rate <- model$flows$rate[[i]]
-            if (!all(all.vars(rate) %in% varnames)) {
-                warning("Cannot check units for flow (", i, "): some parameter(s) in the rate expression are not defined in the model.")
+            rate <- model$transports$rate[[i]]
+            if (!all(.dsl_all_vars(rate) %in% varnames)) {
+                warning(
+                    "Cannot check units for transport (",
+                    i,
+                    "): some parameter(s) in the rate expression are not defined in the model."
+                )
                 next
             }
             # Evaluate the rate expression with all variables to check that it has units of [cmt unit]/time
             rate_val <- tryCatch(
-                eval(rate, envir = varlist),
+                .dsl_eval(rate, envir = varenv),
                 error = function(e) {
-                    stop(sprintf("In flow (%s), unit inconsistency in rate expression: %s", i, e$message))
+                    stop(sprintf(
+                        "In transport (%s), unit inconsistency in rate expression: %s",
+                        i,
+                        e$message
+                    ))
                 }
             )
-            if (!inherits(rate_val, "units")) next
+            if (!inherits(rate_val, "units")) {
+                next
+            }
             one_h <- units::set_units(1, "h")
             expected <- c(from_val, to_val) / one_h
-            units::ud_are_convertible(units(rate_val), units(expected)) || stop(
-                sprintf(
-                    "In flow (%d), unit inconsistency of rate expression (%s) must be compatible with unit of compartment per time (%s)",
-                    i, units(rate_val), units(expected)
+            units::ud_are_convertible(units(rate_val), units(expected)) ||
+                stop(
+                    sprintf(
+                        "In transport (%d), unit inconsistency of rate expression (%s) must be compatible with unit of compartment per time (%s)",
+                        i,
+                        units(rate_val),
+                        units(expected)
+                    )
                 )
-            )
         }
     }
 
-    # Check that observables definitions are valid in terms of compartment and parameter units (if units are involved)
+    # Check that reaction definitions are valid in terms of compartment and parameter units (if units are involved)
+    if (length(model$reactions) > 0) warning("Unit consistency check for reactions is not implemented yet: skipping unit checks for reaction definitions.")
+        
+    # Check that observable definitions are valid in terms of compartment and parameter units (if units are involved)
     obsnames <- names(model$observables)
     for (i in seq_along(model$observables)) {
         obs_expr <- model$observables[[i]]
-        if (!all(all.vars(obs_expr) %in% varnames)) {
-            warning("Cannot check units for observable '", obsnames[[i]], "': some parameter(s) in the observable are not defined in the model.")
+        if (!all(.dsl_all_vars(obs_expr) %in% varnames)) {
+            warning(
+                "Cannot check units for observable '",
+                obsnames[[i]],
+                "': some parameter(s) in the observable are not defined in the model."
+            )
             next
         }
         # Evaluate the observable with the compartment initial amounts and parameter values to check that it can be evaluated without unit errors
         tryCatch(
-            eval(obs_expr, envir = varlist), 
+            .dsl_eval(obs_expr, envir = varenv),
             error = function(e) {
-                stop(sprintf("In observable '%s', unit inconsistency in expression: %s", obsnames[[i]], e$message))
+                stop(sprintf(
+                    "In observable '%s', unit inconsistency in expression: %s",
+                    obsnames[[i]],
+                    e$message
+                ))
             }
         )
     }
@@ -810,15 +862,23 @@ to_ode <- function(
     eqnames <- names(model$equations)
     for (i in seq_along(model$equations)) {
         eq_expr <- model$equations[[i]]
-        if (!all(all.vars(eq_expr) %in% varnames)) {
-            warning("Cannot check units for equation '", eqnames[[i]], "': some parameter(s) in the equation are not defined in the model.")
+        if (!all(.dsl_all_vars(eq_expr) %in% varnames)) {
+            warning(
+                "Cannot check units for equation '",
+                eqnames[[i]],
+                "': some parameter(s) in the equation are not defined in the model."
+            )
             next
         }
         # Evaluate the equation with the compartment initial amounts and parameter values to check that it can be evaluated without unit errors
         tryCatch(
-            eval(eq_expr, envir = varlist), 
+            .dsl_eval(eq_expr, envir = varenv),
             error = function(e) {
-                stop(sprintf("In equation '%s', unit inconsistency in expression: %s", eqnames[[i]], e$message))
+                stop(sprintf(
+                    "In equation '%s', unit inconsistency in expression: %s",
+                    eqnames[[i]],
+                    e$message
+                ))
             }
         )
     }

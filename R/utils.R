@@ -260,3 +260,46 @@
     expr
 }
 
+
+# #' Evaluate a rate expression, handling `a[molec,cmt]` and `c[molec,cmt]` as variables
+# #'
+# #' The special syntax `a[molec,cmt]` and `c[molec,cmt]` is used in rate expressions
+# #' to refer to the amount and concentration of a molecule in a compartment, respectively.
+# #' This function allows to evaluate such an expression without decomposing it into a
+# #' `[(a,molec,cmt)` call.
+# #'
+# #' @param rate A quoted call representing the rate expression to evaluate
+# #' @param envir The environment to evaluate the expression in,
+# #'   usually constructed from model parameters and initial values
+# #' @returns The result of evaluating the rate expression
+# #' @noRd
+# .eval_rate <- function(rate, envir = parent.frame()) {
+
+#     escape_rule <- function(vec) gsub(x = vec, pattern = "\\[|, |\\]", replacement = "_")
+    
+#     is_special <- function(expr) {
+#         is.call(expr) &&
+#             expr[[1]] == quote(`[`) &&
+#             length(expr) > 2 &&
+#             (expr[[2]] == as.name("a") || expr[[2]] == as.name("c"))
+#     }
+#     unspecial <- function(expr) {
+#         expr |> 
+#             deparse1() |> 
+#             escape_rule() |> 
+#             as.name()
+#     }
+#     replace_specials <- function(expr) {
+#         if (is.call(expr)) {
+#             if (is_special(expr)) return(unspecial(expr))
+
+#             expr |> 
+#                 as.list() |> 
+#                 lapply(replace_specials) |> 
+#                 as.call()
+
+#         } else expr
+#     }
+#     expr <- replace_specials(expr)
+#     envir <- setNames(envir, escape_rule(names(envir)))
+# }

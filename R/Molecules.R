@@ -24,18 +24,18 @@ molecules <- function(name = character(0), cmt = NULL, initial = 0, unit = NULL,
         envir = parent.frame(n = 1)
     )
 
+
+    # Determine output length
+    nOut <- max(length(name), length(cmt), length(initial), length(unit))
+
     # Initial is a list-column --> manual recycing if needed
     initial <- as.list(initial)
-    if (length(initial) == 1) initial <- rep(initial, length(name))
-    if (length(name) != length(initial)) {
-        stop("Arguments 'name' and 'initial' must have compatible lengths.")
-    }
+    if (length(initial) == 1) initial <- rep(initial, nOut)
+    
     # Unit provided as a separate argument --> combine into initial
     if (!is.null(unit)) {
-        if (length(unit) == 1) unit <- rep(unit, length(name))
-        if (length(unit) != length(name)) {
-            stop("Argument 'unit' must be NULL, a scalar, or have the same length as 'name'.")
-        }
+        if (length(unit) == 1) unit <- rep(unit, nOut)
+        if (length(unit) != nOut) stop("Arguments 'initial' and 'unit' have incompatible lengths.")
 
         initial <- Map(
             function(init, u) if (u != "") units::set_units(init, u, mode = "standard") else init,
@@ -62,7 +62,7 @@ molecules <- function(name = character(0), cmt = NULL, initial = 0, unit = NULL,
     # Construct the Molecules object as a data frame with class "Molecules"
     molec <- data.frame(
         name = name,
-        cmt = cmt %||% rep(NA_character_, length(name)),
+        cmt = cmt %||% NA_character_,
         init = I(initial),
         type = type,
         stringsAsFactors = FALSE

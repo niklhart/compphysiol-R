@@ -170,6 +170,7 @@ add_transport <- function(
     model,
     from,
     to,
+    molec = NA_character_,
     ...,
     rate = NULL,
     const = NULL,

@@ -17,7 +17,7 @@ and the \code{type} argument only determines which one is returned. For compartm
 only the type of initial specified in the molecule definition can be calculated.}
 }
 \value{
-A named numeric vector of state initial values, where the names are in the format
+A named list of state initial values, where the names are in the format
 \code{"a[molec,cmt]"} for amount states or \code{"c[molec,cmt]"} for concentration states.
 }
 \description{
