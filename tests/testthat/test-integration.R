@@ -90,8 +90,8 @@ test_that("Two-compartment oral absorption model matches Bateman function", {
     M <- compartment_model() |>
         add_compartment("Gut", D) |>
         add_compartment("Central", 0) |>
-        add_flow("Gut", "Central", const = "ka") |>
-        add_flow("Central", "", const = "ke") |>
+        add_transport("Gut", "Central", const = "ka") |>
+        add_transport("Central", "", const = "ke") |>
         add_parameter(ka = ka, ke = ke)
 
     odeinfo <- to_ode(M)
@@ -121,7 +121,7 @@ test_that("One-compartment model with observed concentration matches analytic so
     # Build model
     M <- compartment_model() |>
         add_compartment("Central", A0) |>
-        add_flow("Central", "", const = "k") |>
+        add_transport("Central", "", const = "k") |>
         add_observable(C = Central / V) |>
         add_parameter(k = k, V = V)
 
@@ -145,16 +145,16 @@ test_that("One-compartment model with observed concentration matches analytic so
 })
 
 
-test_that("to_ode flags flows pointing to unknown compartments", {
-    # Simple one-compartment model with a flow to a non-existent compartment
+test_that("to_ode flags transports pointing to unknown compartments", {
+    # Simple one-compartment model with a transport to a non-existent compartment
     M <- compartment_model() |>
         add_compartment("gut", 100) |>
-        add_flow("gut", "central", const = "ka") |>
+        add_transport("gut", "central", const = "ka") |>
         add_parameter(ka = 0.1)
     
     expect_error(
         to_ode(M),
-        regexp = "Flow references unknown compartment: central."
+        regexp = "Transport references unknown compartment: central."
     )
 
 })
