@@ -452,33 +452,67 @@ make_depot <- function(model) {
 
 # ------------------------------------ `to_*` functions for CompartmentModel exporting ------------------------------------
 
-#' Generate analytical solution function from a linear `CompartmentModel` object, possibly with a single bolus dose at time 0.
+#' Generate analytical solution function from a linear `CompartmentModel` object.
 #' 
 #' For linear compartment models, the system of ODEs can be solved analytically using matrix exponentials. 
 #' This function generates a state function that evaluates this analytical solution at given time points and parameter values.
 #' 
 #' @param model A `CompartmentModel` object.
-#' @param paramValues Named list of parameter values to inline in ODEs.
 #' @returns A length 2 list named `state` (a function) and `observable`
 #' (a list of functions, possibly empty). `state(t,param)` calculates the ODE
 #' solution at time `t` for free parameters `param`, while `observable[[i]](t,param)`
 #' calculates the `i`-th observable defined in the CompartmentModel.
 #' @examples
-#' M <- multiCompModel(ncomp = 2, type = "micro")
-#' sol <- to_analytical(M, paramValues = list(kc0 = 0.05))  # fix one param
+#' M <- multiCompModel(ncomp = 2, type = "micro") |>
+#'     add_parameter(kc0 = 0.05)
+#' sol <- to_analytical(M)
 #'
 #' # Evaluate ODE state at t = 5 with free params
 #' sol$statefun(5, params = list(kcp = 0.2, kpc = 0.1))
 #' @export
-to_analytical <- function(model, paramValues = list()) {
+to_analytical <- function(model) {
 
     .check_class(model, "CompartmentModel")
 
-    stateNames <- names(model$compartments)
+    model <- model |> wire()
+
+    if (length(model$doses) > 0) {
+        stop("Analytical solutions with dosing events are not implemented yet.")
+    }
+    if (length(model$reactions) > 0) {
+        stop("Analytical solutions with reactions are not implemented yet.")
+    }
+    if (any(model$transports$type == "nonlinear")) {
+        stop("Model contains nonlinear transports: cannot compute analytical solution.")
+    }
+
+    y0_dsl <- initials(model)
+    dslStateNames <- names(y0_dsl)
+    auto_placeholder <- model$metadata$auto_placeholder %||% list()
+    outputStateNames <- .dsl_state_to_name(
+        dslStateNames,
+        omit_molec = isTRUE(auto_placeholder$molec),
+        omit_cmt = isTRUE(auto_placeholder$cmt)
+    )
+    if (anyDuplicated(outputStateNames)) {
+        stop("Output state names are not unique after sanitizing DSL state names.")
+    }
+
+    stateNames <- dslStateNames
     nStates <- length(stateNames)
     name2idx <- setNames(seq_along(stateNames), stateNames)
-
     eqNames <- names(model$equations)
+    paramValues <- unclass(model$parameters)
+
+    volume_by_cmt <- setNames(model$compartments$volume, names(model$compartments))
+    stateVolumes <- list()
+    for (i in seq_along(model$molecules)) {
+        molec <- model$molecules$name[[i]]
+        cmt <- model$molecules$cmt[[i]]
+        vol <- volume_by_cmt[[cmt]]
+        stateVolumes[[.dsl_make_state(molec = molec, cmt = cmt, prefix = "a")]] <- vol
+        stateVolumes[[.dsl_make_state(molec = molec, cmt = cmt, prefix = "c")]] <- vol
+    }
     
     # Initialize symbolic system matrix
     A <- matrix("0", nStates, nStates)
@@ -489,44 +523,32 @@ to_analytical <- function(model, paramValues = list()) {
     freeParams <- new.env(parent = emptyenv())
     freeParams$list <- character()
 
-    # ---- Process each flow ----
-    if (any(model$flows$type == "nonlinear")) {
-        stop("Model contains nonlinear flows: cannot compute analytical solution.")
+    makeFun <- function(expr, obsFunc = FALSE) {
+        substitute_expr(
+            expr,
+            stateNames,
+            eqNames,
+            name2idx,
+            paramValues = paramValues,
+            freeParamsEnv = freeParams,
+            obsFunc = obsFunc,
+            stateVolumes = stateVolumes,
+            obsStateNames = outputStateNames
+        )
     }
 
-    for (i in seq_along(model$flows)) {
-        coef_ast <- model$flows$const[[i]]
-        coef_str <- paste(deparse(coef_ast, width.cutoff = 500), collapse = " ")
+    # ---- Process each transport ----
+    for (i in seq_along(model$transports)) {
+        coef_str <- model$transports$const[[i]] |> makeFun() |> deparse1()
+        from <- model$transports$from[[i]]
+        to <- model$transports$to[[i]]
+        molec <- model$transports$molec[[i]]
 
-        # Inline paramValues numerically
-        if (length(paramValues) > 0) {
-            for (nm in names(paramValues)) {
-                coef_str <- gsub(
-                    paste0("\\b", nm, "\\b"),
-                    as.character(paramValues[[nm]]),
-                    coef_str
-                )
-            }
+        state_from <- .dsl_make_state(molec = molec, cmt = from, prefix = "a")
+        from_idx <- name2idx[[state_from]]
+        if (is.null(from_idx)) {
+            stop("Transport source state is not an analytical state: ", state_from)
         }
-
-        # Convert remaining symbols to params[["name"]] and collect freeParams
-        coef_symbols <- all.vars(parse(text = coef_str))
-        coef_symbols <- setdiff(coef_symbols, names(paramValues))
-        coef_symbols <- setdiff(coef_symbols, stateNames)
-        freeParams$list <- c(freeParams$list, coef_symbols)
-        for (s in coef_symbols) {
-            coef_str <- gsub(
-                paste0("\\b", s, "\\b"),
-                paste0('params[["', s, '"]]'),
-                coef_str
-            )
-        }
-
-        from <- model$flows$from[[i]]
-        to <- model$flows$to[[i]]
-
-        from_idx <- name2idx[[from]]
-        to_idx <- if (!is.na(to)) name2idx[[to]] else NA
 
         # Diagonal contribution
         if (A[from_idx, from_idx] == "0") {
@@ -541,7 +563,12 @@ to_analytical <- function(model, paramValues = list()) {
         }
 
         # Off-diagonal contribution
-        if (!is.na(to_idx) && to_idx != from_idx) {
+        if (!is.na(to)) {
+            state_to <- .dsl_make_state(molec = molec, cmt = to, prefix = "a")
+            to_idx <- name2idx[[state_to]]
+            if (is.null(to_idx)) {
+                stop("Transport target state is not an analytical state: ", state_to)
+            }
             if (A[to_idx, from_idx] == "0") {
                 A[to_idx, from_idx] <- paste0("+(", coef_str, ")")
             } else {
@@ -555,9 +582,6 @@ to_analytical <- function(model, paramValues = list()) {
         }
     }
 
-    # Replace empty entries with "0"
-    A[A == ""] <- "0"
-
     # ---- Construct vectorized statefun using matrix exponential ----
     statefun <- function(t, params = list()) {
         eval_env <- as.list(params)
@@ -570,7 +594,7 @@ to_analytical <- function(model, paramValues = list()) {
                 )
             }
         }
-        x0 <- initials(model$compartments)
+        x0 <- unlist(y0_dsl)
         res <- as.matrix(vapply(
             t,
             function(tt) expm::expm(A_eval * tt) %*% x0,
@@ -579,26 +603,14 @@ to_analytical <- function(model, paramValues = list()) {
         if (length(x0) > 1) {
             res <- t(res)
         }
-        colnames(res) <- stateNames
+        colnames(res) <- outputStateNames
         # Prepend t as the first column, as deSolve does
         cbind(time = t, res)
     }
 
     # Observables (same substitution logic)
     obsFuncs <- lapply(model$observables, function(o) {
-        expr_lang <- substitute_expr(
-            o,
-            stateNames,
-            eqNames,
-            name2idx,
-            paramValues = paramValues,
-            freeParamsEnv = freeParams,
-            obsFunc = TRUE
-        )
-        expr_str <- paste(
-            deparse(expr_lang, width.cutoff = 500),
-            collapse = " "
-        )
+        expr_str <- o |> makeFun(obsFunc = TRUE) |> deparse1()
         eval(parse(text = paste0("function(t,y,params) unname(", expr_str, ")")))
     })
     names(obsFuncs) <- names(model$observables)
@@ -606,7 +618,8 @@ to_analytical <- function(model, paramValues = list()) {
     # ---- Output ----
     list(
         statefun = statefun,
-        stateNames = stateNames,
+        stateNames = outputStateNames,
+        dslStateNames = dslStateNames,
         freeParams = sort(unique(freeParams$list)),
         obsFuncs = obsFuncs,
         A = A

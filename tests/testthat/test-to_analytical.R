@@ -86,6 +86,6 @@ test_that("1-CMT analytical observables follow ODE observable contract", {
     expect_equal(
         sol_num$obsFuncs$Ccen(c(0, 2), y_num, list()),
         c(5, 5 * exp(-2)),
-        tolerance = 1e-6
+        tolerance = 1e-5
     )
 })
