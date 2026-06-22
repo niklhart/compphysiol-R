@@ -62,6 +62,19 @@ substitute_expr <- function(expr, stateNames, eqNames, name2idx,
 
         # recursive substitution for calls
         if (is.call(e)) {
+            if (.dsl_is_special(e) && length(e) >= 4) {
+                nm <- .dsl_make_state(
+                    molec = as.character(e[[3]]),
+                    cmt = as.character(e[[4]]),
+                    prefix = as.character(e[[2]])
+                )
+                if (nm %in% stateNames) {
+                    idx <- name2idx[[nm]]
+                    if (obsFunc) return(bquote(y[, .(idx)]))
+                    else return(bquote(y[.(idx)]))
+                }
+            }
+
             elems <- lapply(as.list(e), substitute_symbols)
             return(as.call(elems))
         }

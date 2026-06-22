@@ -126,8 +126,8 @@ wire <- function(model, what = c("molec", "cmt")) {
                 )
                 model$molecules <- molecules(name = "molec")
             }
-            molec_names <- names(model$molecules)
-            nmolec <- length(model$molecules)
+            molec_names <- unique(names(model$molecules))
+            nmolec <- length(molec_names)
 
             # process all transports
             model$transports <- model$transports |>
@@ -551,13 +551,19 @@ to_ode <- function(
     # Resolve wildcards, render depot compartments and check unit consistency before ODE generation
     model <- model |> wire() |> make_depot() |> .check_unit_consistency()
 
-    # Initial values in output units
-    y0 <- .to_dimensions_vec(initials(model), dimensions)
+    # Initial values in output units. Keep DSL state names for semantic lookup
+    # and sanitized output names for deSolve-facing vectors/events.
+    y0_dsl <- .to_dimensions_vec(initials(model), dimensions)
+    dslStateNames <- names(y0_dsl)
+    outputStateNames <- .dsl_state_to_name(dslStateNames)
+    if (anyDuplicated(outputStateNames)) {
+        stop("Output state names are not unique after sanitizing DSL state names.")
+    }
+    y0 <- setNames(unlist(y0_dsl), outputStateNames)
 
     # Different names for constructing the ODEs
     compNames <- names(model$compartments)
-    stateNames <- names(y0) |>
-        gsub(pattern = "\\[|, |\\]", replacement = "_") # remove brackets for easier parsing in expressions
+    stateNames <- dslStateNames
     eqNames <- names(model$equations)
     name2idx <- setNames(seq_along(stateNames), stateNames)
 
@@ -615,7 +621,8 @@ to_ode <- function(
             rhs[[idx]] <- c(rhs[[idx]], paste0("-(", expr_str, ")"))
         }
         if (!is.na(to)) {
-            idx <- name2idx[[to]]
+            state_to <- .dsl_make_state(molec = molec, cmt = to, prefix = "a")
+            idx <- name2idx[[state_to]]
             rhs[[idx]] <- c(rhs[[idx]], paste0("+(", expr_str, ")"))
         }
     }
@@ -654,14 +661,21 @@ to_ode <- function(
     events <- .dosing_to_events(model)
     events$data$value <- .to_dimensions_vec(events$data$value, dimensions)
     events$data$time <- .to_dimensions_vec(events$data$time, dimensions)
+    if (nrow(events$data) > 0) {
+        events$data$var <- outputStateNames[match(events$data$var, dslStateNames)]
+        if (any(is.na(events$data$var))) {
+            stop("Some dosing events do not map to generated ODE state names.")
+        }
+    }
 
     # Output list
     list(
         odefun = odefun,
-        stateNames = names(y0),
+        stateNames = outputStateNames,
+        dslStateNames = dslStateNames,
         obsFuncs = obsFuncs,
         freeParams = sort(unique(freeParams$list)),
-        y0 = unname(y0),
+        y0 = y0,
         events = events
     )
 }
@@ -696,15 +710,12 @@ to_ode <- function(
             stringsAsFactors = FALSE
         )
     } else {
-        events <- rbind(
-            events,
-            data.frame(
-                var = paste0("a[", doses$molec, ",", doses$cmt, "]"),
-                time = doses$time,
-                value = doses$amount,
-                method = "add",
-                stringsAsFactors = FALSE
-            )
+        events <- data.frame(
+            var = .dsl_make_state(doses$molec, doses$cmt, type = "amount"),
+            time = doses$time,
+            value = doses$amount,
+            method = "add",
+            stringsAsFactors = FALSE
         )
     }
 

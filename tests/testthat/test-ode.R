@@ -5,6 +5,12 @@ test_that("ODE generation handles first-order reaction with bolus dosing", {
     M <- compartment_model() |>
         add_compartment("Central", volume = 10) |>
         add_compartment("Peripheral", volume = 5) |>
+        add_molecule(
+            name = c("drug", "drug"),
+            cmt = c("Central", "Peripheral"),
+            initial = c(10, 0),
+            type = "amount"
+        ) |>
         add_transport("Central", "Peripheral", const = "k12") |>
         add_parameter(k12 = 0.1)
 
@@ -12,7 +18,8 @@ test_that("ODE generation handles first-order reaction with bolus dosing", {
 
     # Function generation and correct state names
     expect_true(is.function(odeinfo$odefun))
-    expect_equal(odeinfo$stateNames, c("Central", "Peripheral"))
+    expect_equal(odeinfo$stateNames, c("a_drug_Central", "a_drug_Peripheral"))
+    expect_equal(odeinfo$dslStateNames, c("a[drug, Central]", "a[drug, Peripheral]"))
 
     y0   <- odeinfo$y0
     dydt <- odeinfo$odefun(0, y0, list())
@@ -29,14 +36,16 @@ test_that("ODE generation handles first-order reaction with bolus dosing", {
 test_that("ODE generation handles output dimensions", {
     # PK example with first-order reactions only
     M <- compartment_model() |>
-        add_compartment("Central", 10[mg]) |>
+        add_compartment("Central") |>
+        add_molecule("drug", cmt = "Central", initial = 10[mg], type = "amount") |>
         add_transport(from = "Central", to = "", const = "ke") |>
         add_parameter(ke = 6 [1/h]) |>
         add_dosing(cmt = "Central", amount = 100[mg], time = 1[h])
 
     odeinfo <- to_ode(M, dimensions = list(mass = "g", time = "min"))
 
-    expect_equal(odeinfo$y0, c(Central = 0.01))
+    expect_equal(odeinfo$y0, c(a_drug_Central = 0.01))
+    expect_equal(odeinfo$events$data$var, "a_drug_Central")
     expect_equal(odeinfo$events$data$time, 60)
     expect_equal(odeinfo$events$data$value, 0.1)
 })
@@ -46,7 +55,8 @@ test_that("ODE generation processes equations correctly", {
     # 1-CMT model with redefined elimination rate constant
     M <- compartment_model() |>
         add_compartment("Central") |>
-        add_flow(from = "Central", to = "", const = "ke_eq") |>
+        add_molecule("drug", cmt = "Central", initial = 1, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke_eq") |>
         add_parameter(ke_par = 1) |>
         add_equation(ke_eq = ke_par)
 

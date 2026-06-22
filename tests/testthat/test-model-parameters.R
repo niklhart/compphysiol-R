@@ -3,6 +3,12 @@ test_that("Scalar parameter substitution works in ODE", {
     M <- compartment_model() |>
         add_compartment("Central", 10) |>
         add_compartment("Peripheral", 0) |>
+        add_molecule(
+            name = c("drug", "drug"),
+            cmt = c("Central", "Peripheral"),
+            initial = c(10, 0),
+            type = "amount"
+        ) |>
         add_transport("Central", "Peripheral", const = "k12") |>
         add_parameter(k12 = 0.2)
 
@@ -21,6 +27,12 @@ test_that("Free parameters remain in ODE", {
     M <- compartment_model() |>
         add_compartment("Central", 10) |>
         add_compartment("Peripheral", 0) |>
+        add_molecule(
+            name = c("drug", "drug"),
+            cmt = c("Central", "Peripheral"),
+            initial = c(10, 0),
+            type = "amount"
+        ) |>
         add_transport("Central", "Peripheral", const = "k12")
 
     # Do not provide k12

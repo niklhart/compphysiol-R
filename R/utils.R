@@ -140,6 +140,19 @@
 #'   if they have units, otherwise returned unchanged
 #' @noRd
 .to_dimensions_vec <- function(vars, dimensions) {
+    if (is.list(vars) && !inherits(vars, "units")) {
+        return(
+            vars |>
+                lapply(function(x) do.call(.to_dimensions, c(list(x), dimensions))) |>
+                vapply(
+                    function(x) {
+                        if (inherits(x, "units")) units::set_units(x, NULL) else x
+                    },
+                    numeric(1)
+                )
+        )
+    }
+
     if (!inherits(vars, "units")) return(vars)
     vars |>
         lapply(function(x) do.call(.to_dimensions, c(list(x), dimensions))) |>

@@ -99,6 +99,12 @@
     paste0(prefix, "[", molec, ", ", cmt, "]")
 }
 
+.dsl_state_to_name <- function(x) {
+    x |>
+        gsub(pattern = "[^[:alnum:]_]+", replacement = "_") |>
+        gsub(pattern = "^_+|_+$", replacement = "")
+}
+
 #' Recursively substitute state variable names in an expression according to a mapping
 #' @param expr An R expression
 #' @param state_map A named character vector mapping from old state variable names to new state variable names
