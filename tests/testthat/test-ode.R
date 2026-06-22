@@ -50,11 +50,31 @@ test_that("ODE generation handles output dimensions", {
     expect_equal(odeinfo$events$data$value, 0.1)
 })
 
+test_that("ODE generation shortens auto-placeholder state names", {
+    M <- compartment_model() |>
+        add_compartment(c("Central", "Peripheral"), volume = 0) |>
+        add_transport("Central", "Peripheral", const = "k12") |>
+        add_parameter(k12 = 0.1)
+
+    odeinfo <- to_ode(M)
+
+    expect_equal(odeinfo$stateNames, c("a_Central", "a_Peripheral"))
+    expect_equal(odeinfo$dslStateNames, c("a[molec, Central]", "a[molec, Peripheral]"))
+
+    M <- compartment_model() |>
+        add_molecule("drug", initial = 1, type = "amount")
+
+    odeinfo <- to_ode(M)
+
+    expect_equal(odeinfo$stateNames, "a_drug")
+    expect_equal(odeinfo$dslStateNames, "a[drug, cmt]")
+})
+
 
 test_that("ODE generation processes equations correctly", {
     # 1-CMT model with redefined elimination rate constant
     M <- compartment_model() |>
-        add_compartment("Central") |>
+        add_compartment("Central", volume = NA_real_) |>
         add_molecule("drug", cmt = "Central", initial = 1, type = "amount") |>
         add_transport(from = "Central", to = "", const = "ke_eq") |>
         add_parameter(ke_par = 1) |>

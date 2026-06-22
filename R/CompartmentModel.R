@@ -20,7 +20,13 @@ compartment_model <- function() {
             equations = equations(),
             observables = observables(),
             parameters = parameters(),
-            doses = dosing()
+            doses = dosing(),
+            metadata = list(
+                auto_placeholder = list(
+                    molec = FALSE,
+                    cmt = FALSE
+                )
+            )
         ),
         class = "CompartmentModel"
     )
@@ -83,6 +89,11 @@ print.CompartmentModel <- function(x, ...) {
 #' @export
 wire <- function(model, what = c("molec", "cmt")) {
         .check_class(model, "CompartmentModel")
+
+        if (is.null(model$metadata)) model$metadata <- list()
+        if (is.null(model$metadata$auto_placeholder)) {
+            model$metadata$auto_placeholder <- list(molec = FALSE, cmt = FALSE)
+        }
     
         what <- match.arg(what, several.ok = TRUE)
 
@@ -125,6 +136,7 @@ wire <- function(model, what = c("molec", "cmt")) {
                     "No molecules defined in model: wiring '<all molec>' to a single dummy molecule 'molec'."
                 )
                 model$molecules <- molecules(name = "molec")
+                model$metadata$auto_placeholder$molec <- TRUE
             }
             molec_names <- unique(names(model$molecules))
             nmolec <- length(molec_names)
@@ -160,6 +172,7 @@ wire <- function(model, what = c("molec", "cmt")) {
             if (length(model$compartments) == 0) {
                 message("No compartments defined in model: wiring '<all cmt>' to a single dummy compartment 'cmt'.")
                 model$compartments <- compartments(name = "cmt", volume = NA_real_)
+                model$metadata$auto_placeholder$cmt <- TRUE
             }
             cmt_names <- names(model$compartments)
             ncmt <- length(model$compartments)
@@ -588,7 +601,12 @@ to_ode <- function(
     # and sanitized output names for deSolve-facing vectors/events.
     y0_dsl <- .to_dimensions_vec(initials(model), dimensions)
     dslStateNames <- names(y0_dsl)
-    outputStateNames <- .dsl_state_to_name(dslStateNames)
+    auto_placeholder <- model$metadata$auto_placeholder %||% list()
+    outputStateNames <- .dsl_state_to_name(
+        dslStateNames,
+        omit_molec = isTRUE(auto_placeholder$molec),
+        omit_cmt = isTRUE(auto_placeholder$cmt)
+    )
     if (anyDuplicated(outputStateNames)) {
         stop("Output state names are not unique after sanitizing DSL state names.")
     }

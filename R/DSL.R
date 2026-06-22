@@ -99,10 +99,26 @@
     paste0(prefix, "[", molec, ", ", cmt, "]")
 }
 
-.dsl_state_to_name <- function(x) {
-    x |>
-        gsub(pattern = "[^[:alnum:]_]+", replacement = "_") |>
-        gsub(pattern = "^_+|_+$", replacement = "")
+.dsl_state_to_name <- function(x, omit_molec = FALSE, omit_cmt = FALSE) {
+    state_to_name <- function(state) {
+        state_match <- regexec("^([^\\[]+)\\[(.*), (.*)\\]$", state)
+        parts <- regmatches(state, state_match)[[1]]
+
+        if (length(parts) == 4) {
+            out_parts <- c(
+                parts[[2]],
+                if (!omit_molec) parts[[3]],
+                if (!omit_cmt) parts[[4]]
+            )
+            state <- paste(out_parts, collapse = "_")
+        }
+
+        state |>
+            gsub(pattern = "[^[:alnum:]_]+", replacement = "_") |>
+            gsub(pattern = "^_+|_+$", replacement = "")
+    }
+
+    vapply(x, state_to_name, character(1), USE.NAMES = FALSE)
 }
 
 #' Recursively substitute state variable names in an expression according to a mapping

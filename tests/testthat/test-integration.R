@@ -19,8 +19,8 @@ test_that("Full simulation with bolus dosing works", {
     # Check dimensions
     expect_equal(dim(out)[2], length(y0) + 1) # +1 for time column
     # Check mass balance: Central starts high, decreases; Peripheral increases
-    expect_true(all(out[, "Central"] <= 100))
-    expect_true(all(out[, "Peripheral"] >= 0))
+    expect_true(all(out[, "a_Central"] <= 100))
+    expect_true(all(out[, "a_Peripheral"] >= 0))
 })
 
 test_that("Full simulation with infusion dosing works", {
@@ -42,7 +42,7 @@ test_that("Full simulation with infusion dosing works", {
     )
 
     # Central compartment should increase during infusion and then plateau/decrease
-    central <- out[, "Central"]
+    central <- out[, "a_Central"]
     expect_true(all(diff(central[1:11]) >= 0))    # first 5h, increasing
     expect_true(all(diff(central[11:length(central)]) <= 0 | diff(central[11:length(central)]) >= -0.1)) # after infusion, decreasing slowly
 })
@@ -57,9 +57,10 @@ test_that("One-compartment model with first-order elimination matches analytical
 
     # Build model
     M <- compartment_model() |>
-        add_compartment("Central", A0) |>
+        add_compartment("Central", volume = NA_real_) |>
         add_transport("Central", "", const = "k") |>
-        add_parameter(k = k)
+        add_parameter(k = k) |>
+        add_dosing(cmt = "Central", amount = A0, time = 0)
 
     odeinfo <- to_ode(M)
 
@@ -75,7 +76,7 @@ test_that("One-compartment model with first-order elimination matches analytical
 
     # Compare numerical and analytical solutions
     tol <- 1e-6
-    expect_equal(out[, "Central"], analytic, tolerance = tol)
+    expect_equal(out[, "a_Central"], analytic, tolerance = tol)
 })
 
 test_that("Two-compartment oral absorption model matches Bateman function", {
