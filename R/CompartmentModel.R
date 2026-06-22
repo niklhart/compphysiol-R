@@ -548,6 +548,29 @@ to_ode <- function(
     dimensions = NULL,
     backend = "deSolve"
 ) {
+    .check_class(model, "CompartmentModel")
+
+    if (
+        length(model$compartments) == 0 &&
+        length(model$molecules) == 0 &&
+        length(model$transports) == 0 &&
+        length(model$reactions) == 0 &&
+        length(model$equations) == 0 &&
+        length(model$observables) == 0 &&
+        length(model$parameters) == 0 &&
+        length(model$doses) == 0
+    ) {
+        return(list(
+            odefun = function(t, y, params) list(numeric(0)),
+            stateNames = character(0),
+            dslStateNames = character(0),
+            obsFuncs = list(),
+            freeParams = character(0),
+            y0 = numeric(0),
+            events = .dosing_to_events(model)
+        ))
+    }
+
     # Resolve wildcards, render depot compartments and check unit consistency before ODE generation
     model <- model |> wire() |> make_depot() |> .check_unit_consistency()
 
