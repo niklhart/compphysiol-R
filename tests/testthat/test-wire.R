@@ -15,3 +15,52 @@ test_that("wire correctly adds compartments to molecules/reactions and molecules
     expect_equal(model$reactions, reactions(input = "A", output = "B", const = "k2", cmt = c("cyt", "nuc")))
     
 })
+
+test_that("wire resolves scalar wildcard dosing targets", {
+
+    model <- compartment_model() |>
+        add_compartment("cyt") |>
+        add_molecule("A", cmt = "cyt") |>
+        add_dosing(time = 0, amount = 100) |>
+        wire()
+
+    expect_equal(length(model$doses), 1)
+    expect_equal(model$doses$molec, "A")
+    expect_equal(model$doses$cmt, "cyt")
+})
+
+test_that("wire errors for ambiguous wildcard dosing targets", {
+
+    model_molec <- compartment_model() |>
+        add_compartment("cyt") |>
+        add_molecule(c("A", "B"), cmt = "cyt") |>
+        add_dosing(time = 0, amount = 100, cmt = "cyt")
+
+    expect_error(
+        wire(model_molec),
+        "Please specify dosing molec explicitly"
+    )
+
+    model_cmt <- compartment_model() |>
+        add_compartment(c("cyt", "nuc")) |>
+        add_molecule("A") |>
+        add_dosing(time = 0, amount = 100, molec = "A")
+
+    expect_error(
+        wire(model_cmt),
+        "Please specify dosing cmt explicitly"
+    )
+})
+
+test_that("wire leaves explicit dosing targets intact", {
+
+    model <- compartment_model() |>
+        add_compartment(c("cyt", "nuc")) |>
+        add_molecule(c("A", "B"), cmt = "cyt") |>
+        add_dosing(time = 0, amount = 100, molec = "A", cmt = "cyt") |>
+        wire()
+
+    expect_equal(length(model$doses), 1)
+    expect_equal(model$doses$molec, "A")
+    expect_equal(model$doses$cmt, "cyt")
+})

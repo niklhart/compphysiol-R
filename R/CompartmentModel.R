@@ -88,6 +88,35 @@ wire <- function(model, what = c("molec", "cmt")) {
 
         if (length(what) == 0) return(model)
 
+        expand_dosing_target <- function(dose, field, values) {
+            if (length(dose) == 0) return(dose)
+
+            dose_df <- as.data.frame(dose)
+            unresolved <- is.na(dose_df[[field]])
+            if (any(unresolved) && length(values) != 1) {
+                stop(
+                    "Cannot wire dosing target: dosing field '",
+                    field,
+                    "' is unspecified, but the model has ",
+                    length(values),
+                    " possible ",
+                    field,
+                    " values. Please specify dosing ",
+                    field,
+                    " explicitly.",
+                    call. = FALSE
+                )
+            }
+
+            expanded <- lapply(seq_len(length(dose)), function(i) {
+                row <- dose[i]
+                if (is.na(dose_df[[field]][i])) row[[field]] <- values
+                row
+            })
+
+            do.call(what = "c", args = expanded) %||% dosing()
+        }
+
         if ("molec" %in% what) {
 
             # if no molecules defined, wire to a single dummy molecule "molec" and print message
@@ -116,6 +145,13 @@ wire <- function(model, what = c("molec", "cmt")) {
                 lapply(do.call, what = "data.frame") |>
                 lapply(structure, class = "Transports") |>
                 do.call(what = "c")  %||% transports()
+
+            # process all dosing targets
+            model$doses <- expand_dosing_target(
+                dose = model$doses,
+                field = "molec",
+                values = molec_names
+            )
         }
     
         if ("cmt" %in% what) {
@@ -159,6 +195,13 @@ wire <- function(model, what = c("molec", "cmt")) {
                 lapply(do.call, what = "data.frame") |>
                 lapply(structure, class = "Reactions") |>
                 do.call(what = "c") %||% reactions()
+
+            # process all dosing targets
+            model$doses <- expand_dosing_target(
+                dose = model$doses,
+                field = "cmt",
+                values = cmt_names
+            )
         }
     
         model
