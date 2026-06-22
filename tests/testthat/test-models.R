@@ -16,7 +16,6 @@ test_that("multiCompModel micro/macro parametrization flows are correct", {
 })
 
 test_that("12-CMT well-stirred PBPK model behaves as expected under long-term infusion", {
-
     dur <- 1000
     paramValues <- list(
         BP = 1,
@@ -54,9 +53,9 @@ test_that("12-CMT well-stirred PBPK model behaves as expected under long-term in
         Vven = 1
     )
     M <- sMD_PBPK_12CMT_wellstirred() |>
-        add_dosing(cmt = "ven", time = 0, amount = 1, duration = dur) |>   # long-term infusion to test steady-state behaviour
+        add_dosing(cmt = "ven", time = 0, amount = 1, duration = dur) |> # long-term infusion to test steady-state behaviour
         add_parameter(param = do.call(parameters, paramValues))
-    
+
     odeinfo <- to_ode(M)
     times <- c(0, dur)
     out <- deSolve::ode(
@@ -68,10 +67,27 @@ test_that("12-CMT well-stirred PBPK model behaves as expected under long-term in
     out_df <- as.data.frame(out)
 
     # Terminal concentration relationships close to partition coefficients
-    tissues <- paste0("a_drug_", c("adi", "bon", "gut", "hea", "kid", "liv", "lun", "mus", "ski", "spl"))
-    eK_sim <- (out_df[2,tissues]/out_df[2,"a_drug_ven"]) |> 
-        as.numeric()
-    eK_ref <- with(paramValues, c(Kadi, Kbon, Kgut, Khea, Kkid, Kliv*Qliv/(CL+Qliv), Klun, Kmus, Kski, Kspl))
+    tis <- paste0("C",c("adi", "bon", "gut", "hea", "kid", "liv", "lun", "mus", "ski", "spl"))
+    Ctis <- odeinfo$obsFuncs[tis] |>
+        lapply(FUN = function(f) f(t = dur, y = out)) |>
+        unlist()
+    Cven <- odeinfo$obsFuncs$Cven(t = dur, y = out)
+    eK_sim <- unname(Ctis / Cven)
+    eK_ref <- with(
+        paramValues,
+        c(
+            Kadi,
+            Kbon,
+            Kgut,
+            Khea,
+            Kkid,
+            Kliv * Qliv / (CL + Qliv),
+            Klun,
+            Kmus,
+            Kski,
+            Kspl
+        )
+    )
     expect_equal(eK_sim, eK_ref, tolerance = 0.001)
 })
 
