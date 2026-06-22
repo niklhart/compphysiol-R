@@ -91,7 +91,7 @@ test_that("Two-compartment oral absorption model matches Bateman function", {
     M <- compartment_model() |>
         add_compartment("Gut", volume = NA_real_) |>
         add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = c("Gut","Central"), initial = c(A0, 0), type = "amount") |>
+        add_molecule("drug", cmt = c("Gut","Central"), initial = c(D, 0), type = "amount") |>
         add_transport("Gut", "Central", const = "ka") |>
         add_transport("Central", "", const = "ke") |>
         add_parameter(ka = ka, ke = ke)

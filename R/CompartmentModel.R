@@ -99,6 +99,53 @@ wire <- function(model, what = c("molec", "cmt")) {
 
         if (length(what) == 0) return(model)
 
+        has_one_index_dsl <- function(expr, index_names = NULL) {
+            if (is.call(expr)) {
+                if (.dsl_is_special(expr) && length(expr) == 3) {
+                    index <- as.character(expr[[3]])
+                    return(is.null(index_names) || index %in% index_names)
+                }
+                return(any(vapply(
+                    as.list(expr),
+                    has_one_index_dsl,
+                    logical(1),
+                    index_names = index_names
+                )))
+            }
+            FALSE
+        }
+
+        expand_observable_states <- function(obs, field, values, pos, index_names = NULL) {
+            if (length(obs) == 0) return(obs)
+            needs_wiring <- vapply(
+                obs,
+                has_one_index_dsl,
+                logical(1),
+                index_names = index_names
+            )
+            if (any(needs_wiring) && length(values) != 1) {
+                stop(
+                    "Cannot wire observable state references: ",
+                    field,
+                    " is omitted in one-index DSL state reference(s), but the model has ",
+                    length(values),
+                    " possible ",
+                    field,
+                    " values. Please specify observable ",
+                    field,
+                    " explicitly.",
+                    call. = FALSE
+                )
+            }
+            obs[needs_wiring] <- lapply(
+                obs[needs_wiring],
+                .add_expr_index,
+                pos = pos,
+                val = values
+            )
+            obs
+        }
+
         expand_dosing_target <- function(dose, field, values) {
             if (length(dose) == 0) return(dose)
 
@@ -164,6 +211,15 @@ wire <- function(model, what = c("molec", "cmt")) {
                 field = "molec",
                 values = molec_names
             )
+
+            # process observable state references like a[Central] / c[Central]
+            model$observables <- expand_observable_states(
+                obs = model$observables,
+                field = "molec",
+                values = molec_names,
+                pos = 1,
+                index_names = names(model$compartments)
+            )
         }
     
         if ("cmt" %in% what) {
@@ -214,6 +270,15 @@ wire <- function(model, what = c("molec", "cmt")) {
                 dose = model$doses,
                 field = "cmt",
                 values = cmt_names
+            )
+
+            # process observable state references like a[drug] / c[drug]
+            model$observables <- expand_observable_states(
+                obs = model$observables,
+                field = "cmt",
+                values = cmt_names,
+                pos = 2,
+                index_names = names(model$molecules)
             )
         }
     

@@ -64,3 +64,34 @@ test_that("wire leaves explicit dosing targets intact", {
     expect_equal(model$doses$molec, "A")
     expect_equal(model$doses$cmt, "cyt")
 })
+
+test_that("wire resolves scalar observable state shorthand", {
+
+    model <- compartment_model() |>
+        add_compartment("Central") |>
+        add_molecule("drug", cmt = "Central") |>
+        add_observable(C = a[Central] / V) |>
+        wire()
+
+    expect_equal(deparse1(model$observables$C), "a[drug, Central]/V")
+
+    model <- compartment_model() |>
+        add_molecule("drug") |>
+        add_observable(A = a[drug]) |>
+        wire()
+
+    expect_equal(deparse1(model$observables$A), "a[drug, cmt]")
+})
+
+test_that("wire errors for ambiguous observable state shorthand", {
+
+    model <- compartment_model() |>
+        add_compartment("Central") |>
+        add_molecule(c("parent", "metabolite"), cmt = "Central") |>
+        add_observable(C = a[Central] / V)
+
+    expect_error(
+        wire(model),
+        "Please specify observable molec explicitly"
+    )
+})
