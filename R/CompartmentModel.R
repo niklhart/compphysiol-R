@@ -741,6 +741,36 @@ to_ode <- function(
         unclass(model$parameters)
     ) |> list2env()
     varnames <- names(varenv)
+    eqnames <- names(model$equations)
+
+    # Make equation-defined auxiliary variables available to downstream unit checks.
+    # Resolve in dependency order where possible; unresolved equations are warned
+    # about in the dedicated equation check below.
+    pending_eq <- seq_along(model$equations)
+    while (length(pending_eq) > 0) {
+        resolved <- logical(length(pending_eq))
+        for (k in seq_along(pending_eq)) {
+            i <- pending_eq[[k]]
+            eq_expr <- model$equations[[i]]
+            if (!all(.dsl_all_vars(eq_expr) %in% varnames)) next
+
+            value <- tryCatch(
+                .dsl_eval(eq_expr, envir = varenv),
+                error = function(e) {
+                    stop(sprintf(
+                        "In equation '%s', unit inconsistency in expression: %s",
+                        eqnames[[i]],
+                        e$message
+                    ))
+                }
+            )
+            assign(eqnames[[i]], value, envir = varenv)
+            varnames <- names(varenv)
+            resolved[[k]] <- TRUE
+        }
+        if (!any(resolved)) break
+        pending_eq <- pending_eq[!resolved]
+    }
 
     # Check dosing units against compartment units
     for (i in seq_along(model$doses)) {
@@ -778,7 +808,6 @@ to_ode <- function(
     }
 
     # Check if transport rates are unit consistent
-    parnames <- names(model$parameters)
     for (i in seq_along(model$transports)) {
         from <- model$transports$from[[i]]
         to <- model$transports$to[[i]]
@@ -819,13 +848,13 @@ to_ode <- function(
         if (type == "linear") {
             # Check that all parameters in the rate constant are defined in the model, warn if not (we cannot check units in this case)
             const <- model$transports$const[[i]]
-            if (!all(all.vars(const) %in% parnames)) {
+            if (!all(all.vars(const) %in% varnames)) {
                 warning("Cannot check units for transport (", i, "): some parameter(s) in the rate constant are not defined in the model.")
                 next
             }
             # Evaluate the rate constant with the parameter values to check that it has units of 1/time (if parameters have units)
             const_val <- tryCatch(
-                eval(const, envir = as.list(model$parameters)),
+                eval(const, envir = varenv),
                 error = function(e) {
                     stop(sprintf(
                         "In transport (%s), unit inconsistency within rate constant expression: %s",
@@ -915,7 +944,6 @@ to_ode <- function(
     }
 
     # Check that equation definitions are valid in terms of compartment and parameter units (if units are involved)
-    eqnames <- names(model$equations)
     for (i in seq_along(model$equations)) {
         eq_expr <- model$equations[[i]]
         if (!all(.dsl_all_vars(eq_expr) %in% varnames)) {
