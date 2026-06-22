@@ -146,6 +146,17 @@ wire <- function(model, what = c("molec", "cmt")) {
             obs
         }
 
+        rebuild_df_like_row <- function(x, class, list_cols) {
+            for (col in intersect(names(x), list_cols)) {
+                if (!is.list(x[[col]])) {
+                    x[[col]] <- list(x[[col]])
+                }
+                x[[col]] <- I(x[[col]])
+            }
+            do.call(data.frame, x) |>
+                structure(class = class)
+        }
+
         expand_dosing_target <- function(dose, field, values) {
             if (length(dose) == 0) return(dose)
 
@@ -201,8 +212,7 @@ wire <- function(model, what = c("molec", "cmt")) {
                     }
                     return(tr)
                 }) |>
-                lapply(do.call, what = "data.frame") |>
-                lapply(structure, class = "Transports") |>
+                lapply(rebuild_df_like_row, class = "Transports", list_cols = c("rate", "const")) |>
                 do.call(what = "c")  %||% transports()
 
             # process all dosing targets
@@ -243,8 +253,7 @@ wire <- function(model, what = c("molec", "cmt")) {
                     }
                     return(m)
                 }) |>
-                lapply(do.call, what = "data.frame") |>
-                lapply(structure, class = "Molecules") |>
+                lapply(rebuild_df_like_row, class = "Molecules", list_cols = "init") |>
                 do.call(what = "c")
 
             # process all reactions
@@ -261,8 +270,7 @@ wire <- function(model, what = c("molec", "cmt")) {
                         m$const <- I(rep(m$const, ncmt))}
                     return(m)
                 }) |>
-                lapply(do.call, what = "data.frame") |>
-                lapply(structure, class = "Reactions") |>
+                lapply(rebuild_df_like_row, class = "Reactions", list_cols = c("input", "output", "rate", "const")) |>
                 do.call(what = "c") %||% reactions()
 
             # process all dosing targets

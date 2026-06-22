@@ -54,7 +54,7 @@ test_that("12-CMT well-stirred PBPK model behaves as expected under long-term in
         Vven = 1
     )
     M <- sMD_PBPK_12CMT_wellstirred() |>
-        add_dosing(time = 0, amount = 1, duration = dur) |>   # long-term infusion to test steady-state behaviour
+        add_dosing(cmt = "ven", time = 0, amount = 1, duration = dur) |>   # long-term infusion to test steady-state behaviour
         add_parameter(param = do.call(parameters, paramValues))
     
     odeinfo <- to_ode(M)
