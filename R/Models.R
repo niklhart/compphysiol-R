@@ -84,7 +84,7 @@
 #' # Evaluate observables at each time point
 #' obs_df <- as.data.frame(sapply(
 #'     odeinfo$obsFuncs,
-#'     function(f) f(out_df$time, as.matrix(out_df[, -1]), paramValues)
+#'     function(f) f(out_df$time, as.matrix(out_df), paramValues)
 #' ))
 #' names(obs_df) <- names(odeinfo$obsFuncs)
 #' obs_df$time <- out_df$time
@@ -240,7 +240,7 @@ sMD_PBPK_12CMT_wellstirred <- function() {
 #' # Evaluate observables at each time point
 #' obs_df <- as.data.frame(sapply(
 #'     odeinfo$obsFuncs,
-#'     function(f) f(out_df$time, as.matrix(out_df[, -1]), paramValues)
+#'     function(f) f(out_df$time, as.matrix(out_df), paramValues)
 #' ))
 #' names(obs_df) <- names(odeinfo$obsFuncs)
 #' obs_df$time <- out_df$time

@@ -16,8 +16,10 @@ substitute_expr <- function(expr, stateNames, eqNames, name2idx,
                             paramValues = list(),
                             freeParamsEnv = NULL,
                             obsFunc = FALSE,
-                            stateVolumes = list()) {
+                            stateVolumes = list(),
+                            obsStateNames = stateNames) {
     expr <- .as_call(expr)
+    obsStateNames <- setNames(obsStateNames, stateNames)
 
     reserved <- c("t", "y", "params", "pi", "Inf", "NaN",
                   "TRUE", "FALSE", "NULL")
@@ -25,7 +27,7 @@ substitute_expr <- function(expr, stateNames, eqNames, name2idx,
     substitute_symbols <- function(e) {
         state_ref <- function(nm) {
             idx <- name2idx[[nm]]
-            if (obsFunc) bquote(y[, .(idx)])
+            if (obsFunc) bquote(y[.obs_idx(t, y), .(obsStateNames[[nm]])])
             else bquote(y[.(idx)])
         }
 

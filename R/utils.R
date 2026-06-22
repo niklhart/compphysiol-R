@@ -50,6 +50,31 @@
     invisible(x)
 }
 
+#' Match requested observable times to rows in model output
+#'
+#' @param t Numeric vector of requested times.
+#' @param y Matrix or data frame with a `time` column.
+#' @returns Integer row indices matching `t` in `y[, "time"]`.
+#' @noRd
+.obs_idx <- function(t, y) {
+    if (is.null(dim(y)) || is.null(colnames(y)) || !("time" %in% colnames(y))) {
+        stop(
+            "Observable functions require model output 'y' with a 'time' column.",
+            call. = FALSE
+        )
+    }
+
+    i <- match(t, y[, "time"])
+    if (anyNA(i)) {
+        stop(
+            "Some requested observable times are not present in model output.",
+            call. = FALSE
+        )
+    }
+
+    i
+}
+
 #' Process a quoted call `expr` of the form `value` or `value[unit]` into a `units` object or numeric value
 #' @param expr Quoted call to process
 #' @returns A `units` object if a unit is specified, otherwise a numeric value

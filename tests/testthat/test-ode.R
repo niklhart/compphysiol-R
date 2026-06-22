@@ -77,7 +77,8 @@ test_that("ODE observables convert between amount and concentration states", {
         add_observable(C = c[drug, Central])
 
     odeinfo <- to_ode(M_amount)
-    expect_equal(odeinfo$obsFuncs$C(0, matrix(100, nrow = 1), list()), 10)
+    y <- cbind(time = 0, a_drug_Central = 100)
+    expect_equal(odeinfo$obsFuncs$C(0, y, list()), 10)
 
     M_conc <- compartment_model() |>
         add_compartment("Central", volume = "V") |>
@@ -86,7 +87,8 @@ test_that("ODE observables convert between amount and concentration states", {
         add_parameter(V = 10)
 
     odeinfo <- to_ode(M_conc)
-    expect_equal(odeinfo$obsFuncs$A(0, matrix(10, nrow = 1), list()), 100)
+    y <- cbind(time = 0, c_drug_Central = 10)
+    expect_equal(odeinfo$obsFuncs$A(0, y, list()), 100)
 })
 
 

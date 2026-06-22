@@ -138,7 +138,7 @@ test_that("One-compartment model with observed concentration matches analytic so
     )
 
     # Compute observable from model
-    conc_pred <- odeinfo$obsFuncs$C(times, out[,-1,drop=FALSE])
+    conc_pred <- odeinfo$obsFuncs$C(times, out)
 
     # Analytical solution
     conc_analytic <- (A0 / V) * exp(-k * times)
@@ -167,7 +167,7 @@ test_that("Observable functions respect requested time points", {
     requested_times <- c(0, 2, 3)
     conc_pred <- odeinfo$obsFuncs$C(
         requested_times,
-        out[, -1, drop = FALSE],
+        out,
         list()
     )
 

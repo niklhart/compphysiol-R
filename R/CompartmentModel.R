@@ -599,7 +599,7 @@ to_analytical <- function(model, paramValues = list()) {
             deparse(expr_lang, width.cutoff = 500),
             collapse = " "
         )
-        eval(parse(text = paste0("function(t,y,params) ", expr_str)))
+        eval(parse(text = paste0("function(t,y,params) unname(", expr_str, ")")))
     })
     names(obsFuncs) <- names(model$observables)
 
@@ -738,7 +738,8 @@ to_ode <- function(
             paramValues = paramValues,
             freeParamsEnv = freeParams,
             obsFunc = obsFunc,
-            stateVolumes = stateVolumes
+            stateVolumes = stateVolumes,
+            obsStateNames = outputStateNames
         )
     }
 
@@ -787,7 +788,7 @@ to_ode <- function(
     # Observables (same substitution logic)
     obsFuncs <- lapply(model$observables, function(o) {
         expr_str <- o |> makeFun(obsFunc = TRUE) |> deparse1()
-        eval(parse(text = paste0("function(t,y,params) ", expr_str)))
+        eval(parse(text = paste0("function(t,y,params) unname(", expr_str, ")")))
     })
     names(obsFuncs) <- names(model$observables)
 

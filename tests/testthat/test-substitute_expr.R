@@ -56,19 +56,18 @@ test_that("substitute_expr handles states, params, operators, functions, and fre
 
 test_that("substitute_expr handles observable-style indexing and params", {
 
-    # 1) observable indexing: Central -> y[,1]
+    # 1) observable indexing: Central -> y[.obs_idx(t, y), "Central"]
     res <- call_sub("Central", obsFunc = TRUE)
-    expect_equal(deparse(res$expr), "y[, 1L]")
+    expect_equal(deparse(res$expr), "y[.obs_idx(t, y), \"Central\"]")
     expect_equal(res$freeParams, character())
 
     # 2) division by supplied V (inlined numeric)
     res2 <- call_sub("Central / V", paramValues = list(V = 10), obsFunc = TRUE)
-    expect_equal(deparse(res2$expr), "y[, 1L]/10")
+    expect_equal(deparse(res2$expr), "y[.obs_idx(t, y), \"Central\"]/10")
     expect_equal(res2$freeParams, character())
 
     # 3) division by free parameter V (keeps params[[...]])
     res3 <- call_sub("Central / V", paramValues = list(), obsFunc = TRUE)
-    expect_equal(deparse(res3$expr), "y[, 1L]/params[[\"V\"]]")
+    expect_equal(deparse(res3$expr), "y[.obs_idx(t, y), \"Central\"]/params[[\"V\"]]")
     expect_equal(res3$freeParams, "V")
 })
-
