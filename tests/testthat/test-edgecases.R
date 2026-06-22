@@ -13,20 +13,17 @@ test_that("Simulation fails if target compartment missing", {
         add_compartment("Central", 10)
 
     # Dose references a compartment that will not exist
-    M <- add_dosing(M, target = "Peripheral", amount = 10, time = 0)
+    M <- add_dosing(M, cmt = "Peripheral", amount = 10, time = 0)
 
-    # Expected deSolve error
-    expect_error({
-        odeinfo <- to_ode(M, paramValues = list())
-        deSolve::ode(y = odeinfo$y0, times = 0:10, func = odeinfo$odefun, parms = list(), events = odeinfo$events)
-    })
+    # Expected to_ode error
+    expect_error(to_ode(M))
 })
 
 test_that("Missing parameters are listed as free", {
     M <- compartment_model() |>
          add_compartment("Central", 10) |>
          add_compartment("Peripheral", 0) |>
-         add_flow("Central", "Peripheral", const = "k12")
+         add_transport("Central", "Peripheral", const = "k12")
 
     # Do not provide k12
     odeinfo <- to_ode(M)
