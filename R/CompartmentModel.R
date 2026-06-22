@@ -325,10 +325,20 @@ make_depot <- function(model) {
     model |>
         add_compartment(new_bag_cmt_names, volume = NA_real_) |>
         add_compartment(new_rate_cmt_names, volume = NA_real_) |>
+        add_molecule(
+            name = rep(infus$molec[!duplicates], times = 2),
+            cmt = c(bag_names[!duplicates], rate_names[!duplicates]),
+            initial = 0,
+            type = "amount"
+        ) |>
         add_transport(
             from = bag_names[!duplicates],
             to = infus$cmt[!duplicates],
-            rate = paste0("a[", rate_names[!duplicates], "]"),
+            rate = .dsl_make_state(
+                molec = infus$molec[!duplicates],
+                cmt = rate_names[!duplicates],
+                type = "amount"
+            ),
             molec = infus$molec[!duplicates]
         ) |>
         add_dosing(

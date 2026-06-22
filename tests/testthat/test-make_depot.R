@@ -11,7 +11,16 @@ test_that("make_depot correctly creates depot/rate compartments and adds them to
         make_depot()
     
     expect_equal(model$compartments[3:4], compartments(c("Depot_A_cyt", "ReleaseRate_A_cyt"), volume = NA_real_))
-    expect_equal(model$transports, transports(from = "Depot_A_cyt", to = "cyt", rate = "a[ReleaseRate_A_cyt]", molec = "A"))
+    expect_equal(
+        model$molecules[5:6],
+        molecules(
+            name = c("A", "A"),
+            cmt = c("Depot_A_cyt", "ReleaseRate_A_cyt"),
+            initial = 0,
+            type = "amount"
+        )
+    )
+    expect_equal(model$transports, transports(from = "Depot_A_cyt", to = "cyt", rate = "a[A, ReleaseRate_A_cyt]", molec = "A"))
     expect_equal(
         model$doses, 
         c(

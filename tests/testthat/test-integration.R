@@ -3,8 +3,8 @@ library(deSolve)
 test_that("Full simulation with bolus dosing works", {
     M <- compartment_model() |>
          add_compartment(c("Central","Peripheral"), 0) |>
-         add_flow("Central", "Peripheral", const = "k12") |>
-         add_dosing("Central", amount = 100, time = 0) |>
+         add_transport("Central", "Peripheral", const = "k12") |>
+         add_dosing(cmt = "Central", amount = 100, time = 0) |>
          add_parameter(k12 = 0.1)
 
     odeinfo <- to_ode(M)
@@ -26,8 +26,8 @@ test_that("Full simulation with bolus dosing works", {
 test_that("Full simulation with infusion dosing works", {
     M <- compartment_model() |>
         add_compartment(c("Central", "Peripheral"), 0) |>
-        add_flow("Central", "Peripheral", const = "k12") |>
-        add_dosing(target = "Central", rate = 10, duration = 5, time = 0) |> 
+        add_transport("Central", "Peripheral", const = "k12") |>
+        add_dosing(cmt = "Central", rate = 10, duration = 5, time = 0) |> 
         add_parameter(k12 = 0.1)
     
     odeinfo <- to_ode(M)
@@ -58,7 +58,7 @@ test_that("One-compartment model with first-order elimination matches analytical
     # Build model
     M <- compartment_model() |>
         add_compartment("Central", A0) |>
-        add_flow("Central", "", const = "k") |>
+        add_transport("Central", "", const = "k") |>
         add_parameter(k = k)
 
     odeinfo <- to_ode(M)
