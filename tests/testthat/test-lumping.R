@@ -1,7 +1,7 @@
 test_that("lumping is exact in a 3-CMT model with identical peripherals", {
 
     M <- multiCompModel(ncomp = 3, type = "micro") |>
-        add_dosing(target = "cen", time = 0, amount = 10) |>
+        add_dosing(cmt = "cen", time = 0, amount = 10) |>
         add_parameter(kc0 = 5, Vc = 1, kcp1 = 5, kcp2 = 10, kp1c = 3, kp2c = 3)
 
     L <- lump_model(M,
@@ -28,10 +28,11 @@ test_that("lumping is exact in a 3-CMT model with identical peripherals", {
 test_that("lumping works for 2-CMT blood/tissue model with CL", {
 
     M <- compartment_model() |>
-        add_compartment(c("blo","tis"), c(10,0)) |>
-        add_flow("blo", "tis", const = "Q/Vblo") |>
-        add_flow("tis", "blo", const = "Q/(Vtis*Ktis)") |>
-        add_flow("tis", "", const = "CL/(Vtis*Ktis)") |>
+        add_compartment(c("blo","tis")) |>
+        add_molecule(name = "drug", cmt = c("blo","tis"), initial = c(10,0), type = "amount") |>
+        add_transport("blo", "tis", const = "Q/Vblo") |>
+        add_transport("tis", "blo", const = "Q/(Vtis*Ktis)") |>
+        add_transport("tis", "", const = "CL/(Vtis*Ktis)") |>
         add_parameter(Q = 1, Vblo = 1, Vtis = 3, Ktis = 10, CL = 2)
 
     L <- lump_model(M,
@@ -43,7 +44,17 @@ test_that("lumping works for 2-CMT blood/tissue model with CL", {
 
     Lref <- compartment_model() |>
         add_compartment("blo_tis", 10) |>
-        add_flow("blo_tis", "", const = "CL*Q/(Vblo*(Q+CL)+Vtis*Ktis*Q)") |> 
+        add_molecule(
+            name = "drug",
+            cmt = c("blo_tis"),
+            initial = 10,
+            type = "amount"
+        ) |>
+        add_transport(
+            "blo_tis",
+            "",
+            const = "CL*Q/(Vblo*(Q+CL)+Vtis*Ktis*Q)"
+        ) |>
         add_parameter(Q = 1, Vblo = 1, Vtis = 3, Ktis = 10, CL = 2)
 
     times <- 0:6
