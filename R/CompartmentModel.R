@@ -213,7 +213,7 @@ initials <- function(model, type = c("a[] or c[]", "c[] or a[]", "a[] only", "c[
             to_convert <- out_amount & !in_amount
             init <- Map(function(conv, x, v) if (conv) x * v else x, conv = to_convert, x = init, v = vol)
             prefix <- ifelse(out_amount, "a", "c")
-            name <- .make_state(molec = molec_nm, cmt = molec_cmt, prefix = prefix)
+            name <- .dsl_make_state(molec = molec_nm, cmt = molec_cmt, prefix = prefix)
         },
         "c[] or a[]" = {
             in_conc <- molec_type == "concentration"
@@ -221,21 +221,21 @@ initials <- function(model, type = c("a[] or c[]", "c[] or a[]", "a[] only", "c[
             to_convert <- out_conc & !in_conc
             init <- Map(function(conv, x, v) if (conv) x / v else x, conv = to_convert, x = init, v = vol)
             prefix <- ifelse(out_conc, "c", "a")
-            name <- .make_state(molec = molec_nm, cmt = molec_cmt, prefix = prefix)
+            name <- .dsl_make_state(molec = molec_nm, cmt = molec_cmt, prefix = prefix)
         },
         "a[] only" = {
             needs_convert <- molec_type == "concentration"
             cannot_convert <- is.na(vol) & needs_convert
             if (any(cannot_convert)) stop("Cannot extract amount initials for molecules #", paste(which(cannot_convert), collapse = ", "),".")
             init <- Map(function(conv, x, v) if (conv) x * v else x, conv = needs_convert, x = init, v = vol)
-            name <- .make_state(molec = molec_nm, cmt = molec_cmt, prefix = "a")
+            name <- .dsl_make_state(molec = molec_nm, cmt = molec_cmt, prefix = "a")
         },
         "c[] only" = {
             needs_convert <- molec_type == "amount"
             cannot_convert <- is.na(vol) & needs_convert
             if (any(cannot_convert)) stop("Cannot extract concentration initials for molecules #", paste(which(cannot_convert), collapse = ", "),".")
             init <- Map(function(conv, x, v) if (conv) x / v else x, conv = needs_convert, x = init, v = vol)
-            name <- .make_state(molec = molec_nm, cmt = molec_cmt, prefix = "c")
+            name <- .dsl_make_state(molec = molec_nm, cmt = molec_cmt, prefix = "c")
         }
     )
 
@@ -514,7 +514,7 @@ to_ode <- function(
     # Different names for constructing the ODEs
     compNames <- names(model$compartments)
     stateNames <- names(y0) |>
-        gsub(pattern = "\\[|,|\\]", replacement = "_") # remove brackets for easier parsing in expressions
+        gsub(pattern = "\\[|, |\\]", replacement = "_") # remove brackets for easier parsing in expressions
     eqNames <- names(model$equations)
     name2idx <- setNames(seq_along(stateNames), stateNames)
 
@@ -565,8 +565,10 @@ to_ode <- function(
         expr_str <- model$transports$rate[[j]] |> makeFun() |> deparse1()
         from <- model$transports$from[[j]]
         to <- model$transports$to[[j]]
+        molec <- model$transports$molec[[j]]
         if (!is.na(from)) {
-            idx <- name2idx[[from]]
+            state_from <- .dsl_make_state(molec = molec, cmt = from, prefix = "a")
+            idx <- name2idx[[state_from]]
             rhs[[idx]] <- c(rhs[[idx]], paste0("-(", expr_str, ")"))
         }
         if (!is.na(to)) {
@@ -689,7 +691,7 @@ to_ode <- function(
     # Check dosing units against compartment units
     for (i in seq_along(model$doses)) {
         amt <- model$doses$amount[[i]]
-        tar <- .make_state(
+        tar <- .dsl_make_state(
             model$doses$molec[[i]],
             model$doses$cmt[[i]],
             type = "amount"
@@ -729,8 +731,8 @@ to_ode <- function(
         type <- model$transports$type[[i]]
         molec <- model$transports$molec[[i]]
 
-        state_from <- if (!is.na(from)) .make_state(molec, from, type = "amount") else NULL
-        state_to <- if (!is.na(to)) .make_state(molec, to, type = "amount") else NULL
+        state_from <- if (!is.na(from)) .dsl_make_state(molec, from, type = "amount") else NULL
+        state_to <- if (!is.na(to)) .dsl_make_state(molec, to, type = "amount") else NULL
         
         # Check that 'state_from' and 'state_to' compartments have compatible units (if both are defined)
         from_val <- if (!is.null(state_from)) inits[[state_from]] else NULL

@@ -1,5 +1,9 @@
 # Functions defining the domain-specific language (DSL) used in parameter and rate expressions
-
+# This includes:
+# - Subsetting with `a[molec,cmt]` and `c[molec,cmt]` to refer to amounts and concentrations in specific compartments
+# - Evaluation of expressions in a wrapper environment that understands the special syntax
+# - Collection of variables from expressions, counting the special syntax as variables
+# - Utility functions for creating state variable names and substituting them in expressions
 
 #' Subsetting expressions of the form `a[molec,cmt]` and `c[molec,cmt]`
 #' 
@@ -14,7 +18,7 @@
     molec <- as.character(substitute(molec))
     cmt <- as.character(substitute(cmt))
 
-    key <- .make_state(molec = molec, cmt = cmt, prefix = x$type)
+    key <- .dsl_make_state(molec = molec, cmt = cmt, prefix = x$type)
 
     get(key, envir = x$env, inherits = TRUE)
 }
@@ -42,24 +46,30 @@
     eval(expr, envir = dsl_env)
 }
 
+#' Check if an expression is of the form `a[molec,cmt]` or `c[molec,cmt]`
+#' @param expr An expression
+#' @returns `TRUE` if the expression is a call to `[` with first argument `a` or `c`, 
+#'   and has at least 3 arguments; `FALSE` otherwise.
+#' @noRd
+.dsl_is_special <- function(expr) {
+    is.call(expr) &&
+        expr[[1]] == quote(`[`) &&
+        length(expr) > 2 &&
+        (expr[[2]] == as.name("a") || expr[[2]] == as.name("c"))
+}
+
 #' Variant of `all_vars()` that counts `a[molec,cmt]` and `c[molec,cmt]` as variables named `a[molec,cmt]` and `c[molec,cmt]`.
 #' @param expr An expression
 #' @returns A character vector of variables in the input, counting `a[molec,cmt]` and `c[molec,cmt]` as variables.
 #' @noRd
 .dsl_all_vars <- function(expr) {
 
-    is_special <- function(e) {
-        is.call(e) &&
-            e[[1]] == quote(`[`) &&
-            length(e) > 2 &&
-            (e[[2]] == as.name("a") || e[[2]] == as.name("c"))
-    }
     env <- new.env(parent = emptyenv())
     env$list <- character()
 
     collect_vars_and_specials <- function(e) {
         if (is.call(e)) {
-            if (is_special(e)) {
+            if (.dsl_is_special(e)) {
                 env$list <- c(env$list, deparse1(e))
             } else {
                 lapply(as.list(e)[-1], collect_vars_and_specials)
@@ -84,7 +94,29 @@
 #' @returns A string representing the state variable name, in the format `"a[molec, cmt]"` for amount 
 #'   or `"c[molec, cmt]"` for concentration
 #' @noRd
-.make_state <- function(molec, cmt, type = c("amount","concentration"), prefix = NULL) {
+.dsl_make_state <- function(molec, cmt, type = c("amount","concentration"), prefix = NULL) {
     prefix <- prefix %||% switch(match.arg(type), amount = "a", concentration = "c")
     paste0(prefix, "[", molec, ", ", cmt, "]")
+}
+
+#' Recursively substitute state variable names in an expression according to a mapping
+#' @param expr An R expression
+#' @param state_map A named character vector mapping from old state variable names to new state variable names
+#' @returns An R expression with state variable names substituted according to `state_map`
+#' @noRd
+.dsl_substitute_states <- function(expr, state_map) {
+
+
+}
+
+.dsl_namify_rule <- function() {
+
+}
+
+.dsl_namify <- function(expr) {
+
+}
+
+.dsl_is_conc <- function(x) {
+    startsWith(x, "c[") && endsWith(x, "]")
 }

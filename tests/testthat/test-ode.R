@@ -3,11 +3,11 @@ test_that("ODE generation handles first-order reaction with bolus dosing", {
 
     # PK example with first-order reactions only
     M <- compartment_model() |>
-        add_compartment("Central", 10) |>
-        add_compartment("Peripheral", 0) |>
+        add_compartment("Central", volume = 10) |>
+        add_compartment("Peripheral", volume = 5) |>
         add_transport("Central", "Peripheral", const = "k12") |>
         add_parameter(k12 = 0.1)
-  
+
     odeinfo <- to_ode(M)
 
     # Function generation and correct state names
