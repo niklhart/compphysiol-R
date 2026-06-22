@@ -3,7 +3,6 @@
 #'
 #' This model implements a 12-compartment PBPK model with well-stirred tissue distribution.
 #'
-#' @param unit Units for compartment amounts (character scalar or `NULL`, the default).
 #' @return An object of class `CompartmentModel`
 #' @export
 #' @examples
@@ -102,11 +101,11 @@
 #'     main = "Plasma Concentration"
 #' )
 #' }
-sMD_PBPK_12CMT_wellstirred <- function(unit = NULL) {
+sMD_PBPK_12CMT_wellstirred <- function() {
 
     compartment_model() |>
-        add_compartment(name = c("ven", "art", "adi", "bon", "gut", "hea", "mus", "kid", "liv", "lun", "ski", "spl"), unit = unit) |>
-        add_molecule(name = "drug", unit = unit) |>
+        add_compartment(name = c("ven", "art", "adi", "bon", "gut", "hea", "mus", "kid", "liv", "lun", "ski", "spl")) |>
+        add_molecule(name = "drug", type = "amount") |>
         add_transport(from = "art", to = c("adi", "bon", "gut", "hea", "mus", "kid", "ski", "spl"), const = "Q{to} / Vart") |>
         add_transport(from = "art", to = "liv", const = "(Qliv-Qgut-Qspl) / Vart") |> 
         add_transport(from = c("gut","spl"), to = "liv", const = "Q{from} / (V{from} * K{from})") |>
