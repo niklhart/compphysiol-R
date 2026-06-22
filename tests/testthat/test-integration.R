@@ -58,9 +58,9 @@ test_that("One-compartment model with first-order elimination matches analytical
     # Build model
     M <- compartment_model() |>
         add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = A0, type = "amount") |>
         add_transport("Central", "", const = "k") |>
-        add_parameter(k = k) |>
-        add_dosing(cmt = "Central", amount = A0, time = 0)
+        add_parameter(k = k)
 
     odeinfo <- to_ode(M)
 
@@ -76,7 +76,7 @@ test_that("One-compartment model with first-order elimination matches analytical
 
     # Compare numerical and analytical solutions
     tol <- 1e-6
-    expect_equal(out[, "a_Central"], analytic, tolerance = tol)
+    expect_equal(out[, "a_drug_Central"], analytic, tolerance = tol)
 })
 
 test_that("Two-compartment oral absorption model matches Bateman function", {
