@@ -89,8 +89,9 @@ test_that("Two-compartment oral absorption model matches Bateman function", {
 
     # Build model
     M <- compartment_model() |>
-        add_compartment("Gut", D) |>
-        add_compartment("Central", 0) |>
+        add_compartment("Gut", volume = NA_real_) |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = c("Gut","Central"), initial = c(A0, 0), type = "amount") |>
         add_transport("Gut", "Central", const = "ka") |>
         add_transport("Central", "", const = "ke") |>
         add_parameter(ka = ka, ke = ke)
@@ -108,7 +109,7 @@ test_that("Two-compartment oral absorption model matches Bateman function", {
     A_central <- (D * ka / (ka - ke)) * (exp(-ke * times) - exp(-ka * times))
 
     tol <- 1e-6
-    expect_equal(out[, "Central"], A_central, tolerance = tol)
+    expect_equal(out[, "a_drug_Central"], A_central, tolerance = tol)
 })
 
 test_that("One-compartment model with observed concentration matches analytic solution", {
@@ -121,9 +122,10 @@ test_that("One-compartment model with observed concentration matches analytic so
 
     # Build model
     M <- compartment_model() |>
-        add_compartment("Central", A0) |>
+        add_compartment("Central", volume = "V") |>
+        add_molecule("drug", cmt = "Central", initial = A0, type = "amount") |>
         add_transport("Central", "", const = "k") |>
-        add_observable(C = Central / V) |>
+        add_observable(C = a[Central] / V) |>
         add_parameter(k = k, V = V)
 
     odeinfo <- to_ode(M)
