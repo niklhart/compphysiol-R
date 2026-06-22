@@ -93,7 +93,7 @@ test_that("12-CMT well-stirred PBPK model behaves as expected under long-term in
 
 
 test_that("Permeation-based model reduces to well-stirred in the fast permeability limit", {
-    dose <- dosing(target = "ven", amount = 1, time = 0)
+    dose <- dosing(cmt = "ven", amount = 1, time = 0)
     times <- 0:24
 
     paramValues_ws <- list(
@@ -239,15 +239,15 @@ test_that("Permeation-based model reduces to well-stirred in the fast permeabili
         "spl"
     )
     for (tissue in tissue_comps) {
-        comp_pb <- paste0(tissue, c("_exc", "_cel"))
+        comp_pb <- paste0("a_drug_", tissue, c("_exc", "_cel"))
         expect_equal(
-            out_ws[, tissue],
+            out_ws[, paste0("a_drug_", tissue)],
             rowSums(out_pb[, comp_pb]),
             tolerance = 0.0001
         )
     }
 
     # Compare amounts in blood compartments
-    expect_equal(out_ws[, "ven"], out_pb[, "ven"], tolerance = 0.0001)
-    expect_equal(out_ws[, "art"], out_pb[, "art"], tolerance = 0.0001)
+    expect_equal(out_ws[, "a_drug_ven"], out_pb[, "a_drug_ven"], tolerance = 0.0001)
+    expect_equal(out_ws[, "a_drug_art"], out_pb[, "a_drug_art"], tolerance = 0.0001)
 })
