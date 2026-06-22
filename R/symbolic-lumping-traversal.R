@@ -67,6 +67,31 @@
 #' @returns The expression with substitutions applied
 #' @noRd
 .substitute_expr <- function(expr, values) {
-    if (length(values) == 0) return(expr)
-    do.call(substitute, list(expr, values))
+    substitute_symbols <- function(e) {
+        if (is.call(e)) {
+            if (.dsl_is_special(e)) {
+                cmt <- if (length(e) == 3) {
+                    as.character(e[[3]])
+                } else {
+                    as.character(e[[4]])
+                }
+
+                if (cmt %in% names(values)) {
+                    return(values[[cmt]])
+                }
+                return(as.symbol(cmt))
+            }
+
+            return(as.call(lapply(as.list(e), substitute_symbols)))
+        }
+
+        if (is.symbol(e)) {
+            nm <- as.character(e)
+            if (nm %in% names(values)) return(values[[nm]])
+        }
+
+        e
+    }
+
+    substitute_symbols(expr)
 }

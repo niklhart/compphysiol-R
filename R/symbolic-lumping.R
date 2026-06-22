@@ -81,6 +81,8 @@ symbolic_lumping <- function(M, partitioning = list(), refstate = .get_default_r
 #' @export
 get_lumping_conditions <- function(M, refstate, maxdegree = 2, simplify = c("none", "Ryacas")) {
 
+    M <- wire(M)
+
     # graph-theoretical part
     cond <- .make_condensation_graph(M, refstate = refstate)
 

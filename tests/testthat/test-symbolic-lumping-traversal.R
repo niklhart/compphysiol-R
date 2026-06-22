@@ -19,7 +19,7 @@ test_that("reference state is preserved and downstream states are expressed w.r.
     expect_true(is.language(res$B))
 
     ## --- numerical correctness ---
-    f <- function(A, kAB, kB0) eval(res$B)       # TODO: replace `a[A]` by `A` to avoid this error
+    f <- function(A, kAB, kB0) eval(res$B)
     expect_equal(f(2, 4, 8), 1)
 })
 
