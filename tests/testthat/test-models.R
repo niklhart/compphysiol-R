@@ -44,7 +44,7 @@ test_that("12-CMT well-stirred PBPK model behaves as expected under long-term in
         Vart = 1,
         Vbon = 1,
         Vgut = 1,
-        Vhea = 1,
+        Vhea = 2,
         Vkid = 1,
         Vliv = 1,
         Vlun = 1,
@@ -68,8 +68,8 @@ test_that("12-CMT well-stirred PBPK model behaves as expected under long-term in
     out_df <- as.data.frame(out)
 
     # Terminal concentration relationships close to partition coefficients
-    tissues <- c("adi", "bon", "gut", "hea", "kid", "liv", "lun", "mus", "ski", "spl")
-    eK_sim <- (out_df[2,tissues]/out_df[2,"ven"]) |> 
+    tissues <- paste0("a_drug_", c("adi", "bon", "gut", "hea", "kid", "liv", "lun", "mus", "ski", "spl"))
+    eK_sim <- (out_df[2,tissues]/out_df[2,"a_drug_ven"]) |> 
         as.numeric()
     eK_ref <- with(paramValues, c(Kadi, Kbon, Kgut, Khea, Kkid, Kliv*Qliv/(CL+Qliv), Klun, Kmus, Kski, Kspl))
     expect_equal(eK_sim, eK_ref, tolerance = 0.001)

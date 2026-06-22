@@ -70,6 +70,25 @@ test_that("ODE generation shortens auto-placeholder state names", {
     expect_equal(odeinfo$dslStateNames, "a[drug, cmt]")
 })
 
+test_that("ODE observables convert between amount and concentration states", {
+    M_amount <- compartment_model() |>
+        add_compartment("Central", volume = 10) |>
+        add_molecule("drug", cmt = "Central", initial = 100, type = "amount") |>
+        add_observable(C = c[drug, Central])
+
+    odeinfo <- to_ode(M_amount)
+    expect_equal(odeinfo$obsFuncs$C(0, matrix(100, nrow = 1), list()), 10)
+
+    M_conc <- compartment_model() |>
+        add_compartment("Central", volume = "V") |>
+        add_molecule("drug", cmt = "Central", initial = 10, type = "concentration") |>
+        add_observable(A = a[drug, Central]) |>
+        add_parameter(V = 10)
+
+    odeinfo <- to_ode(M_conc)
+    expect_equal(odeinfo$obsFuncs$A(0, matrix(10, nrow = 1), list()), 100)
+})
+
 
 test_that("ODE generation processes equations correctly", {
     # 1-CMT model with redefined elimination rate constant

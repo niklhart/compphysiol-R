@@ -690,6 +690,15 @@ to_ode <- function(
     stateNames <- dslStateNames
     eqNames <- names(model$equations)
     name2idx <- setNames(seq_along(stateNames), stateNames)
+    volume_by_cmt <- setNames(model$compartments$volume, names(model$compartments))
+    stateVolumes <- list()
+    for (i in seq_along(model$molecules)) {
+        molec <- model$molecules$name[[i]]
+        cmt <- model$molecules$cmt[[i]]
+        vol <- volume_by_cmt[[cmt]]
+        stateVolumes[[.dsl_make_state(molec = molec, cmt = cmt, prefix = "a")]] <- vol
+        stateVolumes[[.dsl_make_state(molec = molec, cmt = cmt, prefix = "c")]] <- vol
+    }
 
     # TODO: look up dimensions in global dimensions list instead of passing as argument (also see y0 pipeline)?
     paramValues <- .to_dimensions_vec(model$parameters, dimensions)
@@ -728,7 +737,8 @@ to_ode <- function(
             name2idx,
             paramValues = paramValues,
             freeParamsEnv = freeParams,
-            obsFunc = obsFunc
+            obsFunc = obsFunc,
+            stateVolumes = stateVolumes
         )
     }
 
@@ -867,6 +877,53 @@ to_ode <- function(
     varnames <- names(varenv)
     eqnames <- names(model$equations)
 
+    add_derived_amount_concentration_states <- function() {
+        volume_by_cmt <- setNames(
+            model$compartments$volume,
+            names(model$compartments)
+        )
+        eval_volume <- function(vol) {
+            if (is.null(vol)) return(NULL)
+            if (length(vol) == 1 && is.atomic(vol) && is.na(vol)) return(NULL)
+
+            tryCatch(
+                .dsl_eval(.as_call(vol), envir = varenv),
+                error = function(e) NULL
+            )
+        }
+
+        for (i in seq_along(model$molecules)) {
+            molec <- model$molecules$name[[i]]
+            cmt <- model$molecules$cmt[[i]]
+            vol <- eval_volume(volume_by_cmt[[cmt]])
+            if (is.null(vol)) next
+
+            amount_nm <- .dsl_make_state(molec, cmt, prefix = "a")
+            conc_nm <- .dsl_make_state(molec, cmt, prefix = "c")
+
+            if (exists(amount_nm, envir = varenv, inherits = FALSE) &&
+                !exists(conc_nm, envir = varenv, inherits = FALSE)) {
+                assign(
+                    conc_nm,
+                    get(amount_nm, envir = varenv, inherits = FALSE) / vol,
+                    envir = varenv
+                )
+            }
+
+            if (exists(conc_nm, envir = varenv, inherits = FALSE) &&
+                !exists(amount_nm, envir = varenv, inherits = FALSE)) {
+                assign(
+                    amount_nm,
+                    get(conc_nm, envir = varenv, inherits = FALSE) * vol,
+                    envir = varenv
+                )
+            }
+        }
+        varnames <<- names(varenv)
+    }
+
+    add_derived_amount_concentration_states()
+
     # Make equation-defined auxiliary variables available to downstream unit checks.
     # Resolve in dependency order where possible; unresolved equations are warned
     # about in the dedicated equation check below.
@@ -890,6 +947,7 @@ to_ode <- function(
             )
             assign(eqnames[[i]], value, envir = varenv)
             varnames <- names(varenv)
+            add_derived_amount_concentration_states()
             resolved[[k]] <- TRUE
         }
         if (!any(resolved)) break

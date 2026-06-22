@@ -15,21 +15,26 @@
 substitute_expr <- function(expr, stateNames, eqNames, name2idx,
                             paramValues = list(),
                             freeParamsEnv = NULL,
-                            obsFunc = FALSE) {
+                            obsFunc = FALSE,
+                            stateVolumes = list()) {
     expr <- .as_call(expr)
 
     reserved <- c("t", "y", "params", "pi", "Inf", "NaN",
                   "TRUE", "FALSE", "NULL")
 
     substitute_symbols <- function(e) {
+        state_ref <- function(nm) {
+            idx <- name2idx[[nm]]
+            if (obsFunc) bquote(y[, .(idx)])
+            else bquote(y[.(idx)])
+        }
+
         if (is.symbol(e)) {
             nm <- as.character(e)
 
             # 1) state variable
             if (nm %in% stateNames) {
-                idx <- name2idx[[nm]]
-                if (obsFunc) return(bquote(y[, .(idx)]))
-                else return(bquote(y[.(idx)]))
+                return(state_ref(nm))
             }
 
             # 2) equation name (don't treat as parameter)
@@ -63,15 +68,34 @@ substitute_expr <- function(expr, stateNames, eqNames, name2idx,
         # recursive substitution for calls
         if (is.call(e)) {
             if (.dsl_is_special(e) && length(e) >= 4) {
+                prefix <- as.character(e[[2]])
+                molec <- as.character(e[[3]])
+                cmt <- as.character(e[[4]])
                 nm <- .dsl_make_state(
-                    molec = as.character(e[[3]]),
-                    cmt = as.character(e[[4]]),
-                    prefix = as.character(e[[2]])
+                    molec = molec,
+                    cmt = cmt,
+                    prefix = prefix
                 )
                 if (nm %in% stateNames) {
-                    idx <- name2idx[[nm]]
-                    if (obsFunc) return(bquote(y[, .(idx)]))
-                    else return(bquote(y[.(idx)]))
+                    return(state_ref(nm))
+                }
+
+                if (prefix == "c") {
+                    amount_nm <- .dsl_make_state(molec = molec, cmt = cmt, prefix = "a")
+                    if (amount_nm %in% stateNames && !is.null(stateVolumes[[amount_nm]])) {
+                        amount_ref <- state_ref(amount_nm)
+                        volume_ref <- substitute_symbols(stateVolumes[[amount_nm]])
+                        return(bquote(.(amount_ref) / .(volume_ref)))
+                    }
+                }
+
+                if (prefix == "a") {
+                    conc_nm <- .dsl_make_state(molec = molec, cmt = cmt, prefix = "c")
+                    if (conc_nm %in% stateNames && !is.null(stateVolumes[[conc_nm]])) {
+                        conc_ref <- state_ref(conc_nm)
+                        volume_ref <- substitute_symbols(stateVolumes[[conc_nm]])
+                        return(bquote(.(conc_ref) * .(volume_ref)))
+                    }
                 }
             }
 

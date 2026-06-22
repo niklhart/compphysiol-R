@@ -147,6 +147,37 @@ test_that("One-compartment model with observed concentration matches analytic so
     expect_equal(conc_pred, conc_analytic, tolerance = tol)
 })
 
+test_that("Observable functions respect requested time points", {
+    M <- compartment_model() |>
+        add_compartment("Central", volume = "V") |>
+        add_molecule("drug", cmt = "Central", initial = 100, type = "amount") |>
+        add_transport("Central", "", const = "k") |>
+        add_observable(C = a[Central] / V) |>
+        add_parameter(k = 0.1, V = 10)
+
+    odeinfo <- to_ode(M)
+
+    out <- ode(
+        y = odeinfo$y0,
+        times = 0:3,
+        func = odeinfo$odefun,
+        parms = list()
+    )
+
+    requested_times <- c(0, 2, 3)
+    conc_pred <- odeinfo$obsFuncs$C(
+        requested_times,
+        out[, -1, drop = FALSE],
+        list()
+    )
+
+    expect_length(conc_pred, length(requested_times))
+    expect_equal(
+        conc_pred,
+        out[match(requested_times, out[, "time"]), "a_drug_Central"] / 10
+    )
+})
+
 
 test_that("to_ode flags transports pointing to unknown compartments", {
     # Simple one-compartment model with a transport to a non-existent compartment
