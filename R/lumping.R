@@ -11,7 +11,14 @@ lump_model <- function(M, partitioning = list(), normalize = list()) {
 
     # --- validate model ------------------------------------------------------
     .check_class(M, "CompartmentModel")
+    M <- wire(M)
     if (!.is_linear(M)) stop("Lumping is only supported for linear models.")
+    if (length(M$reactions) > 0) {
+        stop("Lumping reactions is not supported yet.")
+    }
+    if (any(M$molecules$type != "amount")) {
+        stop("Lumping currently supports amount states only.")
+    }
 
     # --- validate partitioning ------------------------------------------------
     cmt <- names(M$compartments)
@@ -61,11 +68,18 @@ lump_model <- function(M, partitioning = list(), normalize = list()) {
     )
 
     # --- lump initial conditions & VK ----------------------------------------
-    X0orig <- initials(M$compartments, named = TRUE)
+    molecule_df <- as.data.frame(M$molecules)
+    molecule_df$lump_cmt <- unname(grp[molecule_df$cmt])
+    state_init <- setNames(
+        unlist(molecule_df$init),
+        paste(molecule_df$name, molecule_df$lump_cmt, sep = "\r")
+    )
 
-    # simple summation by lump
-    lump <- function(x) tapply(x, grp[names(x)], sum)
-    X0lump <- lump(X0orig)
+    # simple summation by molecule and lumped compartment
+    X0lump <- tapply(state_init, names(state_init), sum)
+    X0_parts <- strsplit(names(X0lump), "\r", fixed = TRUE)
+    X0_molec <- vapply(X0_parts, `[[`, character(1), 1)
+    X0_cmt <- vapply(X0_parts, `[[`, character(1), 2)
 
     # for completeness, lumped normalizing factors (symbolic sum)
     .sum_exprs <- function(expr_list) {
@@ -79,36 +93,52 @@ lump_model <- function(M, partitioning = list(), normalize = list()) {
     }, simplify = FALSE)
 
     # --- build new model ------------------------------------------------------
-    L <- compartment_model()
+    L <- compartment_model() |>
+        add_compartment(new_names) |>
+        add_molecule(
+            name = X0_molec,
+            cmt = X0_cmt,
+            initial = unname(X0lump),
+            type = "amount"
+        )
 
-    L$compartments <- compartments(
-        name = names(X0lump),
-        initial = unname(X0lump)
+    new_from <- grp[M$transports$from] |> unname()
+    new_to <- ifelse(
+        is.na(M$transports$to),
+        NA_character_,
+        unname(grp[M$transports$to])
     )
-
-    new_from    <- grp[M$flows$from] |> unname()                 # guaranteed to be non-NA due to linearity requirement
-    new_to      <- ifelse(is.na(M$flows$to), NA_character_, grp[M$flows$to]) |> unname()
     within_lump <- new_from == new_to & !is.na(new_to)
 
-    # remove flows that are now within lumped compartments
+    # remove transports that are now within lumped compartments
     new_from <- new_from[!within_lump]
     new_to   <- new_to[!within_lump]
+    new_molec <- M$transports$molec[!within_lump]
 
-    # rewrite flow rate constants by AST substitution
-    # new_rate   <- lapply(M$flows$rate, function(x) .rewrite_const(expr = x, grp = grp, VKorig = VKorig))
+    # rewrite transport rate constants by AST substitution
     new_const <- Map(
         f = function(fr, cst) {
             .rewrite_const(expr = cst, cmt = fr, grp = grp, VKorig = VKorig)
         },
-        fr = M$flows$from[!within_lump],
-        cst = M$flows$const[!within_lump]
+        fr = M$transports$from[!within_lump],
+        cst = M$transports$const[!within_lump]
     )
 
-    L <- add_flow(L, from = new_from, to = new_to, const = new_const)
+    if (length(new_from) > 0) {
+        L <- add_transport(
+            L,
+            from = new_from,
+            to = new_to,
+            molec = new_molec,
+            const = new_const
+        )
+    }
 
     d <- M$doses
-    d$target <- grp[d$target]
-    L <- add_dosing(L, dose = d)
+    if (length(d) > 0) {
+        d$cmt <- unname(grp[d$cmt])
+        L <- add_dosing(L, dose = d)
+    }
 
     L <- add_parameter(L, param = M$parameters)
     L
@@ -217,6 +247,4 @@ lump_model <- function(M, partitioning = list(), normalize = list()) {
 
     substitute_symbols(expr)
 }
-
-
 

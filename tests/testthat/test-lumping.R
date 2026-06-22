@@ -2,7 +2,7 @@ test_that("lumping is exact in a 3-CMT model with identical peripherals", {
 
     M <- multiCompModel(ncomp = 3, type = "micro") |>
         add_dosing(cmt = "cen", time = 0, amount = 10) |>
-        add_parameter(kc0 = 5, Vc = 1, kcp1 = 5, kcp2 = 10, kp1c = 3, kp2c = 3)
+        add_parameter(kc0 = 5, Vcen = 1, kcp1 = 5, kcp2 = 10, kp1c = 3, kp2c = 3)
 
     L <- lump_model(M,
                     partitioning = list(c("per1","per2")),
@@ -46,7 +46,7 @@ test_that("lumping works for 2-CMT blood/tissue model with CL", {
         add_compartment("blo_tis", 10) |>
         add_molecule(
             name = "drug",
-            cmt = c("blo_tis"),
+            cmt = "blo_tis",
             initial = 10,
             type = "amount"
         ) |>
@@ -105,4 +105,3 @@ test_that("lumping handles first-pass effect correctly", {
     )
 
 })
-

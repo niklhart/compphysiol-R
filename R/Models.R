@@ -493,7 +493,7 @@ multiCompModel <- function(ncomp = 1, type = c("micro", "macro"), unit = NULL) {
     # Model construction
     compartment_model() |>
         add_compartment(compNames) |>
-        add_molecule("drug", unit = unit) |>
+        add_molecule("drug", unit = unit, type = "amount") |>
         add_transport("cen", "", const = k10, molec = "drug") |>
         add_transport("cen", compNames[-1], const = k1i, molec = "drug") |>
         add_transport(compNames[-1], "cen", const = ki1, molec = "drug") |>
