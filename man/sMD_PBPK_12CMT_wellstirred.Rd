@@ -4,10 +4,7 @@
 \alias{sMD_PBPK_12CMT_wellstirred}
 \title{12-CMT PBPK model with well-stirred tissue distribution}
 \usage{
-sMD_PBPK_12CMT_wellstirred(unit = NULL)
-}
-\arguments{
-\item{unit}{Units for compartment amounts (character scalar or \code{NULL}, the default).}
+sMD_PBPK_12CMT_wellstirred()
 }
 \value{
 An object of class \code{CompartmentModel}
@@ -94,7 +91,7 @@ legend(
 # Evaluate observables at each time point
 obs_df <- as.data.frame(sapply(
     odeinfo$obsFuncs,
-    function(f) f(out_df$time, as.matrix(out_df[, -1]), paramValues)
+    function(f) f(out_df$time, as.matrix(out_df), paramValues)
 ))
 names(obs_df) <- names(odeinfo$obsFuncs)
 obs_df$time <- out_df$time

@@ -73,6 +73,7 @@ out_df <- as.data.frame(out)
 ```
 
 Plot compartment amounts
+
 ```{r}
 matplot(
     out_df$time,

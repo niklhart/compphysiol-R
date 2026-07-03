@@ -2,14 +2,12 @@
 % Please edit documentation in R/CompartmentModel.R
 \name{to_analytical}
 \alias{to_analytical}
-\title{Generate analytical solution function from a linear \code{CompartmentModel} object, possibly with a single bolus dose at time 0.}
+\title{Generate analytical solution function from a linear \code{CompartmentModel} object.}
 \usage{
-to_analytical(model, paramValues = list())
+to_analytical(model)
 }
 \arguments{
 \item{model}{A \code{CompartmentModel} object.}
-
-\item{paramValues}{Named list of parameter values to inline in ODEs.}
 }
 \value{
 A length 2 list named \code{state} (a function) and \code{observable}
@@ -22,8 +20,9 @@ For linear compartment models, the system of ODEs can be solved analytically usi
 This function generates a state function that evaluates this analytical solution at given time points and parameter values.
 }
 \examples{
-M <- multiCompModel(ncomp = 2, type = "micro")
-sol <- to_analytical(M, paramValues = list(kc0 = 0.05))  # fix one param
+M <- multiCompModel(ncomp = 2, type = "micro") |>
+    add_parameter(kc0 = 0.05)
+sol <- to_analytical(M)
 
 # Evaluate ODE state at t = 5 with free params
 sol$statefun(5, params = list(kcp = 0.2, kpc = 0.1))
