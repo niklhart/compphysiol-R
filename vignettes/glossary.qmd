@@ -1,0 +1,240 @@
+---
+title: "Glossary of modelling concepts"
+description: "Conceptual terminology used by compphysiol"
+format:
+  html:
+    toc: true
+    number-sections: false
+vignette: >
+  %\VignetteIndexEntry{Glossary of modelling concepts}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+---
+
+This vignette explains the modelling vocabulary used by `compphysiol`.
+It is conceptual rather than a complete function reference. For argument
+details and examples, see the individual help pages.
+
+The aim is to make explicit where common PK/PD terminology, systems biology
+terminology, and the package implementation use similar words in slightly
+different ways.
+
+## Compartment model
+
+A compartment model describes a system by splitting it into connected parts
+and writing equations for how material changes over time. In PK/PD modelling,
+the word "compartment" is often used very broadly: a central compartment or
+peripheral compartment can mean an ODE state, a physical space, an amount of
+drug in that space, or a mathematical abstraction that combines these ideas.
+
+In `compphysiol`, these concepts are separated more explicitly. A
+`CompartmentModel` is a container for model components such as compartments,
+molecules, transports, reactions, equations, observables, parameters, and
+dosing events. The dynamic ODE states are usually formed later from
+molecule-in-compartment combinations.
+
+This separation is closer to systems biology modelling, where the state is
+often a species in a location rather than the location alone.
+
+## Compartment
+
+A compartment is a space, location, tissue, organ, subcellular region, or
+abstract model location. It has a name and usually a volume. Examples include
+`ven`, `art`, `liv`, `gut`, `cytoplasm`, and `nucleus`.
+
+In `compphysiol`, a compartment is not itself the amount of a molecule. For
+example, `liv` is the liver compartment, not "the amount of drug in the
+liver". The amount of a drug in the liver is represented by the combination of
+a molecule and a compartment.
+
+Implementation anchor: compartments are represented by `Compartments` objects
+created with `compartments()` or added with `add_compartment()`.
+
+## Molecule
+
+A molecule is the entity whose amount or concentration can vary across
+compartments. It may be a drug, metabolite, protein, receptor, complex,
+biomarker, or other modelled substance.
+
+Molecules can be defined for specific compartments or, when the compartment is
+omitted, for all compartments. This wildcard behavior is resolved by
+`wire()` before ODE generation.
+
+Implementation anchor: molecules are represented by `Molecules` objects
+created with `molecules()` or added with `add_molecule()`.
+
+## State
+
+A state is a dynamic variable in the ODE system. In `compphysiol`, a state
+usually corresponds to a molecule-in-compartment pair, such as drug in venous
+blood or receptor in cytoplasm.
+
+This is an important distinction from common empirical PK language, where
+"compartment" often refers directly to an ODE state. In `compphysiol`, the
+compartment is the location, the molecule is the entity, and the state is their
+combination.
+
+State references in expressions use DSL forms such as `a[molecule, compartment]`
+for amounts and `c[molecule, compartment]` for concentrations. When the model
+contains only one molecule or one compartment, shorter forms may be wired to
+the full state reference.
+
+## Transport
+
+A transport moves the same molecule from one compartment to another. It changes
+location but preserves molecular identity.
+
+In PBPK models, many physiological "flows" are represented as transports:
+blood flow from arterial blood to an organ, venous return from tissue to blood,
+or clearance from a compartment to a sink. A transport can be linear, through a
+first-order rate constant, or nonlinear, through an explicit rate expression.
+
+Implementation anchor: transports are represented by `Transports` objects
+created with `transports()` or added with `add_transport()`.
+
+## Flow
+
+"Flow" is common PBPK jargon for movement between compartments, especially
+perfusion-mediated movement. Older parts of the package and some unfinished
+refactor areas may still use "flow" informally or in comments.
+
+The current implementation direction is to use "transport" for this concept.
+When reading old code or tests, interpret most compartment-to-compartment
+flows as transports unless the code is explicitly discussing a physiological
+flow parameter such as `Qliv`.
+
+## Reaction
+
+A reaction changes molecular identity or stoichiometry within a compartment.
+For example, a reaction may convert drug to metabolite, bind ligand and
+receptor into a complex, synthesize a molecule, or degrade a molecule.
+
+This differs from a transport: a transport moves a molecule between
+compartments, while a reaction transforms molecules in place. Reactions may
+have multiple inputs and outputs, and their vector arguments describe
+stoichiometric participants rather than vectorized creation of many unrelated
+reactions.
+
+Implementation anchor: reactions are represented by `Reactions` objects
+created with `reactions()` or added with `add_reaction()`.
+
+## Equation
+
+An equation defines an auxiliary expression that can be reused in rates,
+constants, or other model expressions. Equations are not ODE states and are
+not observables by themselves.
+
+Equations are useful for derived quantities such as physiological sums,
+partitioning terms, or reusable rate expressions. They help keep generated ODEs
+readable while preserving the symbolic structure of the model.
+
+Implementation anchor: equations are represented by `Equations` objects
+created with `equations()` or added with `add_equation()`.
+
+## Observable
+
+An observable is a quantity calculated from states, parameters, and equations
+after or during simulation. It is meant to represent something that can be
+reported, compared to data, or plotted, such as plasma concentration or total
+amount in a tissue group.
+
+An observable is not part of the ODE state vector. It is derived from the model
+state rather than integrated as an independent dynamic variable.
+
+Implementation anchor: observables are represented by `Observables` objects
+created with `observables()` or added with `add_observable()`.
+
+## Parameter
+
+A parameter is a named value used in the model. Parameters may represent
+physiology, compound properties, kinetic constants, partition coefficients, or
+other fixed inputs to simulation and analysis.
+
+Units are part of the intended semantics. Many constructors accept unit-aware
+syntax such as `100 [mg]`, and ODE export can check that model expressions are
+dimensionally consistent.
+
+Implementation anchor: parameters are represented by `Parameters` objects
+created with `parameters()` or added with `add_parameter()`.
+
+## Dosing
+
+Dosing describes external input into the model, such as a bolus dose or an
+infusion. Doses target a molecule and compartment, either explicitly or through
+wildcards that can be resolved during wiring.
+
+Infusion dosing may create additional depot or release-rate structures during
+ODE export. These are implementation devices for representing the dosing
+schedule, not necessarily physiological compartments.
+
+Implementation anchor: dosing events are represented by `Dosing` objects
+created with `dosing()` or added with `add_dosing()`.
+
+## Source and sink
+
+A source represents material entering the model from outside the explicit
+compartment set. A sink represents material leaving the model. User-facing
+interfaces may accept `NULL` or `""` for these cases.
+
+Internally, source and sink compartments are represented as `NA_character_`.
+This convention matters when reading or changing transport and reaction code.
+
+## Wildcard
+
+Some model components can omit a molecule or compartment to mean "all relevant
+molecules" or "all relevant compartments". For example, a transport without a
+specific molecule can apply to all molecules, and a molecule without a specific
+compartment can be present in all compartments.
+
+Wildcards make compact model definitions possible, but they also mean that the
+model is not fully explicit until it has been wired.
+
+## Wiring
+
+Wiring resolves wildcard molecules and compartments into explicit model
+components. It also expands short state references in expressions when the
+model contains enough information to do so unambiguously.
+
+`wire()` is called before ODE generation. It can also be called directly when a
+fully explicit model is useful for inspection or for avoiding later changes in
+interpretation as new components are added.
+
+Implementation anchor: wiring is handled by `wire()` in the `CompartmentModel`
+code.
+
+## ODE export
+
+ODE export turns a `CompartmentModel` into objects that can be used by an ODE
+solver. This step wires the model, prepares initial conditions, substitutes
+equations and parameters where needed, checks units, handles dosing events, and
+builds the generated derivative function.
+
+Conceptually, this is the point where the modular model description becomes a
+concrete dynamical system.
+
+Implementation anchor: ODE export is handled by `to_ode()`.
+
+## Lumping
+
+Lumping reduces a model by aggregating compartments or states while preserving
+selected behaviour of the original model. In PBPK modelling, this is often used
+to simplify a detailed model into a smaller model while retaining relevant
+kinetic properties.
+
+In `compphysiol`, lumping is more than renaming compartments. It changes the
+state structure, combines initial conditions, removes transports that become
+internal to a lumped group, and rewrites transport constants with appropriate
+normalizing terms. Current lumping support is focused on linear models and
+amount states.
+
+Implementation anchor: lumping is handled by `lump_model()` and related
+symbolic lumping helpers.
+
+## Analytical representation
+
+Some linear models can be converted to analytical representations rather than
+being simulated only through numerical ODE integration. This is useful for
+closed-form reasoning, model reduction, and comparison with classical PK
+solutions.
+
+Implementation anchor: analytical export is handled by `to_analytical()`.
