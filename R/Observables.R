@@ -7,7 +7,7 @@
 #' Observables and equations are very similar, but there are two key differences:
 #' 
 #' 1. For each observable (but not for equations), `to_ode()` returns a function to calculate it based on the ODE output.
-#' 2. Equations can be used in the definitions of flows, while observables cannot.
+#' 2. Equations can be used in the definitions of transports, while observables cannot.
 #' 
 #' The `cmt` and `molec` arguments allow for convenient generation of common observables like concentrations and amounts.
 #' They substitute `{cmt}` and `{molec}` in the names and expressions of the observables with the provided values.

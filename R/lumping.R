@@ -144,10 +144,10 @@ lump_model <- function(M, partitioning = list(), normalize = list()) {
     L
 }
 
-#' Helper function to replace flow rate constants during (un-)lumping
+#' Helper function to replace transport rate constants during (un-)lumping
 #'
 #' @param expr A quoted expression
-#' @param cmt The original compartment associated with the flow (used for looking up the correct normalizing factor)
+#' @param cmt The original compartment associated with the transport (used for looking up the correct normalizing factor)
 #' @param grp A named vector mapping original compartments -> lumped compartments
 #' @param VKorig A named list of quoted calls (normalizing terms, e.g. quote(Vtis * Ktis))
 #' @returns A modified rate constant epressed with respect to the lumped compartment
@@ -188,12 +188,12 @@ lump_model <- function(M, partitioning = list(), normalize = list()) {
 }
 
 
-#' Helper function to replace flow rates during (un-)lumping by AST traversal
+#' Helper function to replace transport rates during (un-)lumping by AST traversal
 #'
-#' This function works for linear and nonlinear flows, but it is currently unused:
-#' - linear flows only need rewritten rate constants, which is handled by `.rewrite_const()`
-#' - nonlinear flows are currently not handled by `lump_model()`, but if we wanted to support them in the future, 
-#'   we would need to rewrite the entire flow rate expression, which is what this function does.
+#' This function works for linear and nonlinear transports, but it is currently unused:
+#' - linear transports only need rewritten rate constants, which is handled by `.rewrite_const()`
+#' - nonlinear transports are currently not handled by `lump_model()`, but if we wanted to support them in the future, 
+#'   we would need to rewrite the entire transport rate expression, which is what this function does.
 #' 
 #' @param expr A quoted expression (AST)
 #' @param grp A named vector mapping original compartments -> lumped compartments
@@ -247,4 +247,3 @@ lump_model <- function(M, partitioning = list(), normalize = list()) {
 
     substitute_symbols(expr)
 }
-

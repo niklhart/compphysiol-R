@@ -1,14 +1,14 @@
 #' Create an `Equations` object
 #' 
 #' Equations allow to define algebraic relationships between model variables,
-#' which can be used in flows and observables. The main purpose of equations is to 
+#' which can be used in transports and observables. The main purpose of equations is to 
 #' define physiologically meaningful aggregate parameters (such as cardiac output) 
 #' that are composed of more basic parameters (such as blood flows to individual organs).
 #' 
 #' Observables and equations are very similar, but there are two key differences:
 #' 
 #' 1. For each observable (but not for equations), `to_ode()` returns a function to calculate it based on the ODE output.
-#' 2. Equations can be used in the definitions of flows, while observables cannot.
+#' 2. Equations can be used in the definitions of transports, while observables cannot.
 #' 
 #' @param ... Name-expression pairs defining the equations. The expressions can be provided as character strings or as R calls. 
 #' @param name Name of the equation(s), character scalar or vector

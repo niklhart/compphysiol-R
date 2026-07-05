@@ -3,11 +3,11 @@
 
 #' Solve the symbolic linear system for the given condensation
 #' @param cond A condensation graph
-#' @param flows A `Flows` object
+#' @param trans A `Transports` object
 #' @param simplify Method for simplifying the resulting expressions.
 #' @returns A named list of solution expressions
 #' @noRd
-.solve_model_symbolic <- function(cond, flows, simplify) {
+.solve_model_symbolic <- function(cond, trans, simplify) {
 
     adj <- .adjacency_list(cond$nodes, cond$edges)
     order <- .topo_order(cond$nodes, adj$incoming)
@@ -30,7 +30,7 @@
         if (length(scc) == 1 && scc == refstate) next
 
         ## assemble linear system for current SCC
-        sys <- .assemble_linear_expr(scc, flows)
+        sys <- .assemble_linear_expr(scc, trans)
 
         ## substitute already-known states (incl. refstate)
         A_sub <- sys$A

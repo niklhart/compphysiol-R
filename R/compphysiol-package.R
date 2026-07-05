@@ -9,9 +9,9 @@
 #' @details
 #' Key classes include:
 #' - `CompartmentModel`: Encapsulates the structure of a compartmental model,
-#'   including compartments, reactions, observables, and dosing events.
-#' - `Compartments`: Represents model compartments with names and initial amounts.
-#' - `Flows`: Defines flows between compartments with specified rates.
+#'   including compartments, molecules, transports, reactions, observables, and dosing events.
+#' - `Compartments`: Represents model compartments with names and volumes.
+#' - `Transports`: Defines movement of molecules between compartments with specified rates.
 #' - `Observables`: Represents measurable outputs derived from compartment states.
 #' - `Equations`: Represents mathematical relationships between model parameters and/or states.
 #' - `Dosing`: Represents dosing events, including bolus and infusion doses.

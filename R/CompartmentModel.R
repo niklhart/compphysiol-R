@@ -1,6 +1,7 @@
 #' Create a new `CompartmentModel` object.
 #' 
-#' A compartment model consists of compartments, flows between compartments, equations defining auxiliary variables, 
+#' A compartment model consists of compartments, molecules, transports between compartments, 
+#' reactions between molecules, equations defining auxiliary variables, 
 #' observables defined as functions of the states and parameters, parameters, and dosing events. 
 #' This function initializes an empty model that can then be built up by adding these components using the `add_*` functions.
 #' 
@@ -393,7 +394,7 @@ make_depot <- function(model) {
 
     # --------------------------------------------------------------------------------------------------
     # Infusion dosing requires more complex handling: we need to add infusion bag and rate compartments,
-    # convert the infusion dosing into bolus-to-bag + infusion rate events, and add flows from the bag
+    # convert the infusion dosing into bolus-to-bag + infusion rate events, and add transports from the bag
     # to the target compartment with rate equal to the infusion rate.
     # --------------------------------------------------------------------------------------------------
 
@@ -874,7 +875,7 @@ to_ode <- function(
 
 #' Unit consistency check for CompartmentModel object.
 #'
-#' Checks that all flows, observables, and equations in the model are dimensionally consistent with respect to the units of the compartments, parameters and dosing.
+#' Checks that all transports, observables, and equations in the model are dimensionally consistent with respect to the units of the compartments, parameters and dosing.
 #'
 #' @param model A `CompartmentModel` object.
 #' @return The model (invisibly) if all units are consistent, otherwise an error is raised.
@@ -1025,7 +1026,7 @@ to_ode <- function(
             if (isunit_from != isunit_to) {
                 stop(
                     sprintf(
-                        "In flow (%d), inconsistent units for 'from' and 'to' compartments: one has units while the other does not.",
+                        "In transport (%d), inconsistent units for 'from' and 'to' compartments: one has units while the other does not.",
                         i
                     )
                 )
@@ -1033,7 +1034,7 @@ to_ode <- function(
             units::ud_are_convertible(units(from_val), units(to_val)) ||
                 stop(
                     sprintf(
-                        "In flow (%d), inconsistent units for 'from' and 'to' compartments: %s vs. %s",
+                        "In transport (%d), inconsistent units for 'from' and 'to' compartments: %s vs. %s",
                         i,
                         units(from_val),
                         units(to_val)

@@ -4,7 +4,7 @@ test_that("multiCompModel creates correct number of compartments", {
     expect_true(names(M$observables) == "Ccen")
 })
 
-test_that("multiCompModel micro/macro parametrization flows are correct", {
+test_that("multiCompModel micro/macro parametrization transports are correct", {
     M1 <- multiCompModel(2, "micro")
     M2 <- multiCompModel(2, "macro")
 

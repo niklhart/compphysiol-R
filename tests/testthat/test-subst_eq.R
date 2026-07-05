@@ -1,7 +1,7 @@
 # unit test for .subst_eq() helper function
 
 test_that(".subst_eq() correctly substitutes equations into transports", {
-    # Define test flows and equations
+    # Define test transports and equations
     transp <- c(
         transports(
             from = "A",

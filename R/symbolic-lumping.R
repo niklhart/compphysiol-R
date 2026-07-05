@@ -2,7 +2,7 @@
 #' 
 #' @param M A CompartmentModel object
 #' @param partitioning A list of character vectors (each a group of compartments)
-#' @param refstate A string specifying a reference state (defaults to the one with most inflows)
+#' @param refstate A string specifying a reference state (defaults to the one with most incoming transports)
 #' @returns A CompartmentModel object representing the lumped model
 #' @export
 symbolic_lumping <- function(M, partitioning = list(), refstate = .get_default_refstate(M)) {
@@ -51,7 +51,7 @@ symbolic_lumping <- function(M, partitioning = list(), refstate = .get_default_r
 #' Determine a default reference state if unspecified
 #'
 #' @param model A `CompartmentModel` object
-#' @returns A string containing the compartment name with the most incoming flows
+#' @returns A string containing the compartment name with the most incoming transports
 #' @noRd
 .get_default_refstate <- function(model) {
     refstate <- model$reactions |> 
@@ -92,7 +92,7 @@ get_lumping_conditions <- function(M, refstate, maxdegree = 2, simplify = c("non
     }
 
     # algebraic part
-    fl <- .subst_eq(trans = M$transports, eqs = M$equations)
-    .solve_model_symbolic(cond, fl, simplify = match.arg(simplify))
+    trans <- .subst_eq(trans = M$transports, eqs = M$equations)
+    .solve_model_symbolic(cond, trans, simplify = match.arg(simplify))
 
 }

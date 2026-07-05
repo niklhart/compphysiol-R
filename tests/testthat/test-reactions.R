@@ -63,7 +63,7 @@ test_that("Reaction printing works correctly", {
     r1 <- reactions(input = c("A", "B"), output = "C", const = "k")
     expect_snapshot(print(r1))
 
-    # input -> sink, 1 nonlinear flow, no cmt specified
+    # input -> sink, 1 nonlinear reaction, no cmt specified
     r2 <- reactions(input = "A", output = NULL, rate = "k1 * c[A] / (c[A] + K)")
     expect_snapshot(print(r2))
 })

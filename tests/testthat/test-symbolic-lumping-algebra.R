@@ -1,6 +1,6 @@
 # Testing the linear algebra part of symbolic lumping
 
-test_that("classification of flows works", {
+test_that("classification of transports works", {
     # Model definition
     trans <- c(
         transports(from = c("A","B","C","B"), to = c("B","C","B","D"), const = "k{from}{to}"),

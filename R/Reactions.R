@@ -2,7 +2,7 @@
 #'
 #' The `Reactions` class can hold several reactions, each with an input, output, rate/constant, and compartment.
 #' However, each reaction needs to be defined separately, i.e., vectorized definitions are not supported for reactions 
-#' as they can be for flows and molecules -- vector arguments are instead used for defining multiple reacting species within a single reaction.
+#' as they can be for transports and molecules -- vector arguments are instead used for defining multiple reacting species within a single reaction.
 #' 
 #' The special expression `{cmt}` can be used in `rate` or `const` to automatically substitute the compartment name, 
 #' e.g., `k_{cmt}` will become `k_cytoplasm` for reactions in the cytoplasm and `k_nucleus` for reactions in the nucleus.
