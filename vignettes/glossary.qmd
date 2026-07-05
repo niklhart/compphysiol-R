@@ -79,6 +79,20 @@ for amounts and `c[molecule, compartment]` for concentrations. When the model
 contains only one molecule or one compartment, shorter forms may be wired to
 the full state reference.
 
+During ODE export, the integrated state representation is chosen by an export
+policy rather than by the molecule-compartment identity alone. The default
+policy prefers amount states when they are given directly or can be obtained
+from concentration initials using a fixed compartment volume. If no usable
+volume is available and the molecule is defined by concentration initials, the
+ODE state remains a concentration state. This supports pure reaction systems
+without physical compartment volumes, while transports and dosing require
+amount states or a volume-based conversion.
+
+The `initials()` helper exposes this representation choice more flexibly. It
+can request amount initials, concentration initials, or fallback behavior in
+either direction. ODE export currently uses the amount-preferred fallback as
+its public default.
+
 ## Transport
 
 A transport moves the same molecule from one compartment to another. It changes
@@ -258,7 +272,9 @@ equations and parameters where needed, checks units, handles dosing events, and
 builds the generated derivative function.
 
 Conceptually, this is the point where the modular model description becomes a
-concrete dynamical system.
+concrete dynamical system. It is also the point where the amount-preferred
+state representation policy described under State is applied to the generated
+ODE state vector.
 
 Implementation anchor: ODE export is handled by `to_ode()`.
 
