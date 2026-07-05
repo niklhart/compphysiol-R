@@ -208,13 +208,22 @@ Model merging combines two `CompartmentModel` objects into one model. In the
 limited overlay mode, matching names are interpreted as the same modelling
 entity: a compartment with the same name is the same location, a molecule with
 the same name is the same substance, and a matching molecule-in-compartment
-combination is the same state.
+combination is the same state. If both models define the same compartment, the
+compartment volume must also be the same; otherwise the two definitions do not
+describe the same location and cannot be overlaid without an explicit modelling
+decision.
 
 Overlay merging is intended for combining subsystems that describe different
 parts of the same model, such as an oral absorption subsystem and a systemic PK
 subsystem for the same molecule. It appends model processes such as transports,
 reactions, observables, parameters, and dosing events while sharing the common
 state space identified by molecule and compartment names.
+
+Overlay merging does not resolve wildcards. Wildcard molecules or compartments
+remain compact, unresolved component definitions in the merged model, and their
+interpretation can still change when additional molecules or compartments are
+added later. Call `wire()` before or after merging when a fully explicit state
+space is needed.
 
 Overlay merging is not a renaming or copying operation. Building independent
 copies of a model for multiple compounds requires explicit renaming before
