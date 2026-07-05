@@ -108,6 +108,88 @@ test_that("ODE generation processes equations correctly", {
 
 })
 
+test_that("ODE generation includes elementary reactions", {
+    skip("Reaction contributions to ODE generation are not implemented yet.")
+
+    M <- compartment_model() |>
+        add_compartment("cyt", volume = 1) |>
+        add_molecule(c("A", "B"), cmt = "cyt", initial = c(10, 0), type = "amount") |>
+        add_reaction(input = "A", output = "B", cmt = "cyt", const = "kAB") |>
+        add_parameter(kAB = 2)
+
+    odeinfo <- to_ode(M)
+    dydt <- odeinfo$odefun(0, odeinfo$y0, list())[[1]]
+
+    expect_equal(
+        setNames(dydt, odeinfo$stateNames),
+        c(a_A_cyt = -20, a_B_cyt = 20)
+    )
+})
+
+test_that("ODE generation includes complex reaction rates", {
+    skip("Reaction contributions to ODE generation are not implemented yet.")
+
+    M <- compartment_model() |>
+        add_compartment("cyt", volume = 1) |>
+        add_molecule(
+            c("A", "B", "C"),
+            cmt = "cyt",
+            initial = c(10, 5, 0),
+            type = "amount"
+        ) |>
+        add_reaction(
+            input = c("A", "B"),
+            output = "C",
+            cmt = "cyt",
+            rate = "vmax * c[A, cyt] * c[B, cyt] / (Km + c[A, cyt])"
+        ) |>
+        add_parameter(vmax = 2, Km = 10)
+
+    odeinfo <- to_ode(M)
+    dydt <- odeinfo$odefun(0, odeinfo$y0, list())[[1]]
+
+    expect_equal(
+        setNames(dydt, odeinfo$stateNames),
+        c(a_A_cyt = -5, a_B_cyt = -5, a_C_cyt = 5)
+    )
+})
+
+test_that("ODE generation includes reaction synthesis and degradation", {
+    skip("Reaction contributions to ODE generation are not implemented yet.")
+
+    M <- compartment_model() |>
+        add_compartment("cyt", volume = 1) |>
+        add_molecule("A", cmt = "cyt", initial = 10, type = "amount") |>
+        add_reaction(input = NULL, output = "A", cmt = "cyt", const = "ksyn") |>
+        add_reaction(input = "A", output = NULL, cmt = "cyt", const = "kdeg") |>
+        add_parameter(ksyn = 3, kdeg = 0.5)
+
+    odeinfo <- to_ode(M)
+    dydt <- odeinfo$odefun(0, odeinfo$y0, list())[[1]]
+
+    expect_equal(setNames(dydt, odeinfo$stateNames), c(a_A_cyt = -2))
+})
+
+test_that("reaction rates can use equations in ODE export", {
+    skip("Reaction contributions to ODE generation are not implemented yet.")
+
+    M <- compartment_model() |>
+        add_compartment("cyt", volume = 1) |>
+        add_molecule(c("A", "B"), cmt = "cyt", initial = c(10, 0), type = "amount") |>
+        add_reaction(input = "A", output = "B", cmt = "cyt", const = "k_eq") |>
+        add_equation(k_eq = k1 + k2) |>
+        add_parameter(k1 = 1, k2 = 2)
+
+    odeinfo <- to_ode(M)
+    dydt <- odeinfo$odefun(0, odeinfo$y0, list())[[1]]
+
+    expect_equal(odeinfo$freeParams, character(0))
+    expect_equal(
+        setNames(dydt, odeinfo$stateNames),
+        c(a_A_cyt = -30, a_B_cyt = 30)
+    )
+})
+
 test_that("ODE generation handles various reaction orders", {
 
     skip("This test does not work anymore because add_flow vectorization is used differently now. Needs to be adapted.")

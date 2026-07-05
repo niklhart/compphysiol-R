@@ -53,6 +53,18 @@ test_that("2-CMT analytical solution matches numerical ODE solution", {
     expect_equal(y_aly, y_num, tolerance = 1e-4)
 })
 
+test_that("analytical export rejects models with reactions", {
+    M <- compartment_model() |>
+        add_compartment("cyt", volume = 1) |>
+        add_molecule(c("A", "B"), cmt = "cyt", initial = c(10, 0), type = "amount") |>
+        add_reaction(input = "A", output = "B", cmt = "cyt", const = "kAB")
+
+    expect_error(
+        to_analytical(M),
+        "Analytical solutions with reactions are not implemented yet."
+    )
+})
+
 test_that("1-CMT analytical observables follow ODE observable contract", {
     params <- list(kc0 = 1, Vcen = 2)
     times <- 0:3
