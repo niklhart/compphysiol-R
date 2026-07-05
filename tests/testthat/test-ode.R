@@ -193,3 +193,43 @@ test_that("reaction rates can use equations in ODE export", {
         c(a_A_cyt = -30, a_B_cyt = 30)
     )
 })
+
+test_that("reaction ODEs conserve mass for reversible reactions", {
+    times <- seq(0, 10, by = 1)
+
+    M1 <- compartment_model() |>
+        add_compartment(c("cyt", "nuc"), volume = 1) |>
+        add_molecule("A", cmt = c("cyt", "nuc"), initial = c(10, 5), type = "amount") |>
+        add_molecule("B", cmt = c("cyt", "nuc"), initial = c(0, 2), type = "amount") |>
+        add_reaction(input = "A", output = "B", cmt = c("cyt", "nuc"), const = "kAB") |>
+        add_reaction(input = "B", output = "A", cmt = c("cyt", "nuc"), const = "kBA") |>
+        add_parameter(kAB = 0.2, kBA = 0.1)
+
+    expect_warning(
+        odeinfo1 <- to_ode(M1),
+        "Unit consistency check for reactions is not implemented yet"
+    )
+    out1 <- deSolve::ode(y = odeinfo1$y0, times = times, func = odeinfo1$odefun)
+    total1 <- rowSums(out1[, c("a_A_cyt", "a_A_nuc", "a_B_cyt", "a_B_nuc")])
+
+    expect_equal(total1, rep(total1[[1]], length(total1)), tolerance = 1e-8)
+
+    M2 <- compartment_model() |>
+        add_compartment(c("cyt", "nuc"), volume = 1) |>
+        add_molecule("A", cmt = c("cyt", "nuc"), initial = c(10, 5), type = "amount") |>
+        add_molecule("B", cmt = c("cyt", "nuc"), initial = c(0, 2), type = "amount") |>
+        add_reaction(input = c("A", "A"), output = "B", cmt = c("cyt", "nuc"), const = "kAB") |>
+        add_reaction(input = "B", output = c("A", "A"), cmt = c("cyt", "nuc"), const = "kBA") |>
+        add_parameter(kAB = 0.02, kBA = 0.1)
+
+    expect_warning(
+        odeinfo2 <- to_ode(M2),
+        "Unit consistency check for reactions is not implemented yet"
+    )
+    out2 <- deSolve::ode(y = odeinfo2$y0, times = times, func = odeinfo2$odefun)
+    total_A <- rowSums(out2[, c("a_A_cyt", "a_A_nuc")])
+    total_B <- rowSums(out2[, c("a_B_cyt", "a_B_nuc")])
+    total2 <- total_A + 2 * total_B
+
+    expect_equal(total2, rep(total2[[1]], length(total2)), tolerance = 1e-8)
+})
