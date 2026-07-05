@@ -1,126 +1,110 @@
 
 #' Merge two `CompartmentModel` objects into one.
 #'
-#' This function allows to combine two `CompartmentModel` objects into a single model, 
-#' with options for handling name collisions and shared parameters/compartments.
+#' This function combines two `CompartmentModel` objects into a single model.
+#' In overlay mode, matching names are interpreted as the same modelling entity:
+#' compartments with the same name are the same location, molecules with the same
+#' name are the same substance, and matching molecule-in-compartment combinations
+#' are the same state.
 #' 
 #' @param M1,M2 `CompartmentModel` objects
-#' @param suffix1,suffix2 Optional character suffixes for compartment names in `M1`/`M2`.
-#'        Use `NULL` to leave names unchanged.
-#' @param collision What to do in case of name collisions:
-#'        "error" (default), "auto" (rename with suffixes 1/2), or "merge"
-#'        (merge compartments, adding initial amounts).
-#'        Since suffixing is done before checking for collisions, the
-#'        `collisions` argument has no effect if distinct non-`NULL` suffixes are used.
-#' @param shared An optional character vector or parameter or compartment names
-#'        that should be shared, i.e. they are not suffixed.
+#' @param mode Merge mode. Currently only `"overlay"` is implemented.
 #' @returns A new `CompartmentModel` containing both.
 #' @examples
-#' # Example 1: Merging oral absorption and one-compartment PK
 #' abs <- compartment_model() |>
-#'     add_compartment("Gut", 100) |>
-#'     add_flow("Gut", "Central", const = "ka")
+#'     add_compartment(c("Gut", "Central")) |>
+#'     add_molecule("drug", cmt = c("Gut", "Central"), initial = c(100, 0), type = "amount") |>
+#'     add_transport("Gut", "Central", const = "ka", molec = "drug")
 #' pk <- compartment_model() |>
-#'     add_compartment("Central", 0) |>
-#'     add_flow("Central", "", const = "k10")
-#' mergeModels(abs, pk, collision = "merge")
-#'
-#' # Example 2: Two-drug PK model with drug-drug interaction
-#' drugA <- multiCompModel(ncomp = 1)
-#' drugB <- multiCompModel(ncomp = 2)
-#' mergeModels(drugA, drugB, suffix1 = "A", suffix2 = "B") |>
-#'     add_flow(from = "C1_B", to = "C1_A", rate = "-(C1_B / (IC50 + C1_B)) * k10_A * C1_A")
+#'     add_compartment(c("Central", "Peripheral")) |>
+#'     add_molecule("drug", cmt = c("Central", "Peripheral"), type = "amount") |>
+#'     add_transport("Central", "Peripheral", const = "k12", molec = "drug")
+#' mergeModels(abs, pk, mode = "overlay")
 #' @export
 mergeModels <- function(
     M1,
     M2,
-    suffix1 = NULL,
-    suffix2 = NULL,
-    collision = c("error", "auto", "merge"),
-    shared = character()
+    mode = "overlay"
 ) {
-    collision <- match.arg(collision)
+    .check_class(M1, "CompartmentModel")
+    .check_class(M2, "CompartmentModel")
+    mode <- match.arg(mode, "overlay")
 
-    renameCompartments <- function(model, suffix) {
-        if (is.null(suffix)) {
-            return(model)
+    same_or_error <- function(x, y, what) {
+        if (!identical(x, y)) {
+            stop("Cannot overlay models with conflicting ", what, ".", call. = FALSE)
         }
+        invisible(TRUE)
+    }
 
-        # TODO: this is a bit hacky, we should ideally use a more direct way to rename 
-        # compartments, flows, observables, and dosing targets in a model without having 
-        # to reconstruct it from scratch. But for now this works.
-
-        compartment_model() |>
-            add_compartment(
-                name = paste0(names(model$compartments), suffix),
-                initial = model$compartments$initial
-            ) |>
-            add_flow(
-                from = ifelse(is.na(model$flows$from), NA_character_, paste0(model$flows$from, suffix)),
-                to = ifelse(is.na(model$flows$to), NA_character_, paste0(model$flows$to, suffix)),
-                rate = lapply(model$flows$rate, .suffix_symbols, suffix = suffix, skip = shared)
-            ) |>
-            add_observable(
-                obs = observables(
-                    name = paste0(names(model$observables), suffix),
-                    expr = lapply(model$observables, .suffix_symbols, suffix = suffix, skip = shared)
+    merge_named_list <- function(x, y, what) {
+        merged <- x
+        for (nm in names(y)) {
+            idx <- match(nm, names(merged))
+            if (is.na(idx)) {
+                merged <- c(merged, y[nm])
+            } else {
+                same_or_error(
+                    unclass(merged)[[idx]],
+                    unclass(y)[[nm]],
+                    paste0(what, " '", nm, "'")
                 )
-            ) |>
-            add_dosing(
-                target = paste0(model$doses$target, suffix),
-                amount = model$doses$amount,
-                time = model$doses$time,
-                rate = model$doses$rate,
-                duration = model$doses$duration
-            )
-    }
-
-    # renaming logic (with or without leading "_")
-    with_underscore <- function(sfx) {
-        if (!is.null(sfx) && !startsWith(sfx, "_")) paste0("_", sfx) else sfx
-    }
-    M1r <- renameCompartments(M1, suffix = with_underscore(suffix1))
-    M2r <- renameCompartments(M2, suffix = with_underscore(suffix2))
-
-    # collision handling ("error" or "auto")
-    n1 <- c(names(M1r$compartments), names(M1r$observables))
-    n2 <- c(names(M2r$compartments), names(M2r$observables))
-    if (length(intersect(n1, n2)) > 0) {
-        switch(
-            collision,
-            error = stop(
-                "Name collision in merged models: ",
-                paste(intersect(n1, n2), collapse = ", ")
-            ),
-            auto = {
-                M1r <- renameCompartments(M1r, suffix = "_1")
-                M2r <- renameCompartments(M2r, suffix = "_2")
             }
-        )
+        }
+        merged
     }
 
-    # Handle "merge" collision by summing initial amounts of colliding compartments
-    merged_comps <- M1r$compartments
-    for (i in seq_along(M2r$compartments)) {
-        if (
-            collision == "merge" &&
-                !is.na(idx <- match(M2r$compartments$name[[i]], n1))
-        ) {
-            merged_comps$initial[[idx]] <- merged_comps$initial[[idx]] +
-                M2r$compartments$initial[[i]]
+    merged_compartments <- M1$compartments
+    for (i in seq_along(M2$compartments)) {
+        name <- M2$compartments$name[[i]]
+        idx <- match(name, merged_compartments$name)
+        if (is.na(idx)) {
+            merged_compartments <- c(merged_compartments, M2$compartments[i])
         } else {
-            merged_comps <- c(merged_comps, M2r$compartments[i])
+            same_or_error(
+                merged_compartments$volume[[idx]],
+                M2$compartments$volume[[i]],
+                paste0("compartment '", name, "'")
+            )
         }
     }
-    
-    # construct merged model
-    compartment_model() |>
-        add_compartment(comp = merged_comps) |>
-        add_flow(flow = M1r$flows) |>
-        add_flow(flow = M2r$flows) |>
-        add_observable(obs = M1r$observables) |>
-        add_observable(obs = M2r$observables) |>
-        add_dosing(dose = M1r$doses) |>
-        add_dosing(dose = M2r$doses)
 
+    state_key <- function(molec) {
+        paste(molec$name, ifelse(is.na(molec$cmt), "<all cmt>", molec$cmt), sep = "\r")
+    }
+
+    merged_molecules <- M1$molecules
+    merged_keys <- state_key(merged_molecules)
+    for (i in seq_along(M2$molecules)) {
+        key <- state_key(M2$molecules[i])
+        idx <- match(key, merged_keys)
+        if (is.na(idx)) {
+            merged_molecules <- c(merged_molecules, M2$molecules[i])
+            merged_keys <- c(merged_keys, key)
+        } else {
+            name <- paste0(M2$molecules$name[[i]], " in ", M2$molecules$cmt[[i]])
+            same_or_error(
+                merged_molecules$type[[idx]],
+                M2$molecules$type[[i]],
+                paste0("state type for molecule '", name, "'")
+            )
+            merged_molecules$init[[idx]] <- merged_molecules$init[[idx]] +
+                M2$molecules$init[[i]]
+        }
+    }
+
+    structure(
+        list(
+            compartments = merged_compartments,
+            molecules = merged_molecules,
+            transports = c(M1$transports, M2$transports),
+            reactions = c(M1$reactions, M2$reactions),
+            equations = merge_named_list(M1$equations, M2$equations, "equation"),
+            observables = merge_named_list(M1$observables, M2$observables, "observable"),
+            parameters = merge_named_list(M1$parameters, M2$parameters, "parameter"),
+            doses = c(M1$doses, M2$doses),
+            metadata = M1$metadata
+        ),
+        class = "CompartmentModel"
+    )
 }

@@ -4,50 +4,31 @@
 \alias{mergeModels}
 \title{Merge two \code{CompartmentModel} objects into one.}
 \usage{
-mergeModels(
-  M1,
-  M2,
-  suffix1 = NULL,
-  suffix2 = NULL,
-  collision = c("error", "auto", "merge"),
-  shared = character()
-)
+mergeModels(M1, M2, mode = "overlay")
 }
 \arguments{
 \item{M1, M2}{\code{CompartmentModel} objects}
 
-\item{suffix1, suffix2}{Optional character suffixes for compartment names in \code{M1}/\code{M2}.
-Use \code{NULL} to leave names unchanged.}
-
-\item{collision}{What to do in case of name collisions:
-"error" (default), "auto" (rename with suffixes 1/2), or "merge"
-(merge compartments, adding initial amounts).
-Since suffixing is done before checking for collisions, the
-\code{collisions} argument has no effect if distinct non-\code{NULL} suffixes are used.}
-
-\item{shared}{An optional character vector or parameter or compartment names
-that should be shared, i.e. they are not suffixed.}
+\item{mode}{Merge mode. Currently only \code{"overlay"} is implemented.}
 }
 \value{
 A new \code{CompartmentModel} containing both.
 }
 \description{
-This function allows to combine two \code{CompartmentModel} objects into a single model,
-with options for handling name collisions and shared parameters/compartments.
+This function combines two \code{CompartmentModel} objects into a single model.
+In overlay mode, matching names are interpreted as the same modelling entity:
+compartments with the same name are the same location, molecules with the same
+name are the same substance, and matching molecule-in-compartment combinations
+are the same state.
 }
 \examples{
-# Example 1: Merging oral absorption and one-compartment PK
 abs <- compartment_model() |>
-    add_compartment("Gut", 100) |>
-    add_flow("Gut", "Central", const = "ka")
+    add_compartment(c("Gut", "Central")) |>
+    add_molecule("drug", cmt = c("Gut", "Central"), initial = c(100, 0), type = "amount") |>
+    add_transport("Gut", "Central", const = "ka", molec = "drug")
 pk <- compartment_model() |>
-    add_compartment("Central", 0) |>
-    add_flow("Central", "", const = "k10")
-mergeModels(abs, pk, collision = "merge")
-
-# Example 2: Two-drug PK model with drug-drug interaction
-drugA <- multiCompModel(ncomp = 1)
-drugB <- multiCompModel(ncomp = 2)
-mergeModels(drugA, drugB, suffix1 = "A", suffix2 = "B") |>
-    add_flow(from = "C1_B", to = "C1_A", rate = "-(C1_B / (IC50 + C1_B)) * k10_A * C1_A")
+    add_compartment(c("Central", "Peripheral")) |>
+    add_molecule("drug", cmt = c("Central", "Peripheral"), type = "amount") |>
+    add_transport("Central", "Peripheral", const = "k12", molec = "drug")
+mergeModels(abs, pk, mode = "overlay")
 }
