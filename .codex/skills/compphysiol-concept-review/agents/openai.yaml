@@ -1,0 +1,4 @@
+interface:
+  display_name: "compphysiol Concept Review"
+  short_description: "Clarify compphysiol modelling concepts"
+  default_prompt: "Use $compphysiol-concept-review to help operationalize this compphysiol feature before coding."
