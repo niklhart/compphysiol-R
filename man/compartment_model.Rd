@@ -10,7 +10,8 @@ compartment_model()
 A new \code{CompartmentModel} object.
 }
 \description{
-A compartment model consists of compartments, flows between compartments, equations defining auxiliary variables,
+A compartment model consists of compartments, molecules, transports between compartments,
+reactions between molecules, equations defining auxiliary variables,
 observables defined as functions of the states and parameters, parameters, and dosing events.
 This function initializes an empty model that can then be built up by adding these components using the \verb{add_*} functions.
 }

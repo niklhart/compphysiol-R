@@ -23,7 +23,7 @@ The modified \code{CompartmentModel} object.
 }
 \description{
 Equations allow to define algebraic relationships between model variables,
-which can be used in flows and observables. The main purpose of equations is to
+which can be used in transports and observables. The main purpose of equations is to
 define physiologically meaningful aggregate parameters (such as cardiac output)
 that are composed of more basic parameters (such as blood flows to individual organs).
 }
@@ -31,7 +31,7 @@ that are composed of more basic parameters (such as blood flows to individual or
 Observables and equations are very similar, but there are two key differences:
 \enumerate{
 \item For each observable (but not for equations), \code{to_ode()} returns a function to calculate it based on the ODE output.
-\item Equations can be used in the definitions of flows, while observables cannot.
+\item Equations can be used in the definitions of transports, while observables cannot.
 }
 }
 \examples{

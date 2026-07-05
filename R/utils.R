@@ -26,6 +26,14 @@
     is.null(x) || length(x) == 0L || (length(x) == 1 && x == "")
 }
 
+#' Helper function to check whether a compartment volume is unavailable
+#' @param x Input to check
+#' @returns `TRUE` if `x` is `NULL` or a scalar missing atomic value
+#' @noRd
+.is_missing_volume <- function(x) {
+    is.null(x) || (length(x) == 1L && is.atomic(x) && is.na(x))
+}
+
 #' Helper function to wrap objects into a list if they are not already lists
 #' @param x Input object
 #' @returns A list containing `x` if `x` is not already a list

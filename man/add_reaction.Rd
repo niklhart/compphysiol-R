@@ -30,7 +30,7 @@ For degradation reactions, use an empty character vector or \code{NULL}.}
 
 \item{...}{Errors if used, enforces \code{rate} and \code{const} to be specified as named arguments only, not positional.}
 
-\item{rate}{Character string representing the reaction rate (for nonlinear reactions).
+\item{rate}{Character string representing the concentration-change reaction rate (for nonlinear reactions).
 Use \code{c[A]} to refer to the concentration of molecule A, and \code{a[A]} to refer to its amount.}
 
 \item{const}{Character string representing the reaction constant (for mass-action reactions).
@@ -46,9 +46,14 @@ The modified \code{CompartmentModel} object.
 \description{
 The \code{Reactions} class can hold several reactions, each with an input, output, rate/constant, and compartment.
 However, each reaction needs to be defined separately, i.e., vectorized definitions are not supported for reactions
-as they can be for flows and molecules -- vector arguments are instead used for defining multiple reacting species within a single reaction.
+as they can be for transports and molecules -- vector arguments are instead used for defining multiple reacting species within a single reaction.
 }
 \details{
+Reaction rates are concentration-change rates. For ODE export, reaction rates are multiplied by the reaction
+compartment volume to obtain amount-change rates for the ODE states. This follows the usual mass-action
+convention: zero-order reaction constants have units amount/volume/time, first-order constants have units
+1/time, and second-order constants have units volume/amount/time.
+
 The special expression \code{{cmt}} can be used in \code{rate} or \code{const} to automatically substitute the compartment name,
 e.g., \verb{k_\{cmt\}} will become \code{k_cytoplasm} for reactions in the cytoplasm and \code{k_nucleus} for reactions in the nucleus.
 Replacement is only applied if the \code{cmt} argument is provided (otherwise, parameter names would change dynamically as compartments change).

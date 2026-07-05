@@ -757,53 +757,91 @@ to_ode <- function(
         )
     }
 
+    amount_state_for_transport <- function(molec, cmt) {
+        state <- .dsl_make_state(molec = molec, cmt = cmt, prefix = "a")
+        idx <- if (state %in% names(name2idx)) name2idx[[state]] else NULL
+        if (!is.null(idx)) return(idx)
+
+        conc_state <- .dsl_make_state(molec = molec, cmt = cmt, prefix = "c")
+        if (conc_state %in% names(name2idx)) {
+            stop(
+                "Transports require amount states or a compartment volume; ",
+                "state '",
+                conc_state,
+                "' is a concentration state and cannot be used for transport.",
+                call. = FALSE
+            )
+        }
+
+        stop(
+            "Transport references unknown state: ",
+            state,
+            ". Did you define the corresponding molecule in this compartment?",
+            call. = FALSE
+        )
+    }
+
+    reaction_state <- function(molec, cmt) {
+        amount_state <- .dsl_make_state(molec = molec, cmt = cmt, prefix = "a")
+        amount_idx <- if (amount_state %in% names(name2idx)) name2idx[[amount_state]] else NULL
+        if (!is.null(amount_idx)) {
+            return(list(name = amount_state, idx = amount_idx, type = "amount"))
+        }
+
+        conc_state <- .dsl_make_state(molec = molec, cmt = cmt, prefix = "c")
+        conc_idx <- if (conc_state %in% names(name2idx)) name2idx[[conc_state]] else NULL
+        if (!is.null(conc_idx)) {
+            return(list(name = conc_state, idx = conc_idx, type = "concentration"))
+        }
+
+        stop(
+            "Reaction references unknown state: ",
+            amount_state,
+            ". Did you define the corresponding molecule in this compartment?",
+            call. = FALSE
+        )
+    }
+
     # Collect RHS terms for ODEs
     rhs <- vector("list", length(stateNames))
     for (j in seq_along(model$transports)) {
-        expr_str <- model$transports$rate[[j]] |> makeFun() |> deparse1()
         from <- model$transports$from[[j]]
         to <- model$transports$to[[j]]
         molec <- model$transports$molec[[j]]
+        from_idx <- if (!is.na(from)) amount_state_for_transport(molec, from) else NULL
+        to_idx <- if (!is.na(to)) amount_state_for_transport(molec, to) else NULL
+        expr_str <- model$transports$rate[[j]] |> makeFun() |> deparse1()
         if (!is.na(from)) {
-            state_from <- .dsl_make_state(molec = molec, cmt = from, prefix = "a")
-            idx <- name2idx[[state_from]]
-            rhs[[idx]] <- c(rhs[[idx]], paste0("-(", expr_str, ")"))
+            rhs[[from_idx]] <- c(rhs[[from_idx]], paste0("-(", expr_str, ")"))
         }
         if (!is.na(to)) {
-            state_to <- .dsl_make_state(molec = molec, cmt = to, prefix = "a")
-            idx <- name2idx[[state_to]]
-            rhs[[idx]] <- c(rhs[[idx]], paste0("+(", expr_str, ")"))
+            rhs[[to_idx]] <- c(rhs[[to_idx]], paste0("+(", expr_str, ")"))
         }
     }
 
     for (j in seq_along(model$reactions)) {
         cmt <- model$reactions$cmt[[j]]
         vol <- volume_by_cmt[[cmt]]
-        if (is.null(vol) || (length(vol) == 1 && is.atomic(vol) && is.na(vol))) {
-            stop(
-                "Cannot export reaction in compartment '",
-                cmt,
-                "' to ODEs: reaction rates are concentration-change rates ",
-                "and require a compartment volume to convert them to amount/time.",
-                call. = FALSE
-            )
-        }
-        expr_str <- .mul(model$reactions$rate[[j]], .as_call(vol)) |>
-            makeFun() |>
-            deparse1()
+        rate_expr <- model$reactions$rate[[j]]
 
         add_reaction_term <- function(molec, sign) {
-            state <- .dsl_make_state(molec = molec, cmt = cmt, prefix = "a")
-            idx <- name2idx[[state]]
-            if (is.null(idx)) {
-                stop(
-                    "Reaction references unknown state: ",
-                    state,
-                    ". Did you define the corresponding molecule in this compartment?",
-                    call. = FALSE
-                )
+            target <- reaction_state(molec, cmt)
+            term_expr <- rate_expr
+            if (identical(target$type, "amount")) {
+                if (.is_missing_volume(vol)) {
+                    stop(
+                        "Cannot export reaction in compartment '",
+                        cmt,
+                        "' to amount-state ODEs: reaction rates are ",
+                        "concentration-change rates and require a compartment ",
+                        "volume to convert them to amount/time.",
+                        call. = FALSE
+                    )
+                }
+                term_expr <- .mul(term_expr, .as_call(vol))
             }
-            rhs[[idx]] <<- c(rhs[[idx]], paste0(sign, "(", expr_str, ")"))
+            expr_str <- term_expr |> makeFun() |> deparse1()
+            rhs[[target$idx]] <<- c(rhs[[target$idx]], paste0(sign, "(", expr_str, ")"))
         }
 
         for (molec in model$reactions$input[[j]]) {

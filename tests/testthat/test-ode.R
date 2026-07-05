@@ -128,8 +128,6 @@ test_that("ODE generation includes elementary reactions", {
 })
 
 test_that("ODE generation supports concentration states for reaction-only models", {
-    skip("Concentration-state reaction ODE export is not implemented yet.")
-
     M <- compartment_model() |>
         add_compartment("cyt", volume = NA_real_) |>
         add_molecule(
@@ -263,8 +261,6 @@ test_that("reaction ODEs conserve mass for reversible reactions", {
 })
 
 test_that("ODE export rejects concentration-only transports without a volume", {
-    skip("Concentration-only transport state validation is not implemented yet.")
-
     M <- compartment_model() |>
         add_compartment("cyt", volume = NA_real_) |>
         add_molecule("A", cmt = "cyt", initial = 10, type = "concentration") |>
@@ -278,18 +274,13 @@ test_that("ODE export rejects concentration-only transports without a volume", {
 })
 
 test_that("ODE observables reject amount conversion from concentration states without a volume", {
-    skip("Missing-volume observable conversion validation is not implemented yet.")
-
     M <- compartment_model() |>
         add_compartment("cyt", volume = NA_real_) |>
         add_molecule("A", cmt = "cyt", initial = 10, type = "concentration") |>
         add_observable(A_amount = a[A, cyt])
 
-    odeinfo <- to_ode(M)
-    y <- cbind(time = 0, c_A_cyt = 10)
-
     expect_error(
-        odeinfo$obsFuncs$A_amount(0, y, list()),
-        "Cannot convert concentration state 'c[A, cyt]' to amount without a compartment volume"
+        suppressWarnings(to_ode(M)),
+        "Cannot convert concentration state .* to amount without a compartment volume"
     )
 })

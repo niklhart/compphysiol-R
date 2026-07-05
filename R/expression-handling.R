@@ -84,7 +84,15 @@ substitute_expr <- function(expr, stateNames, eqNames, name2idx,
 
                 if (prefix == "c") {
                     amount_nm <- .dsl_make_state(molec = molec, cmt = cmt, prefix = "a")
-                    if (amount_nm %in% stateNames && !is.null(stateVolumes[[amount_nm]])) {
+                    if (amount_nm %in% stateNames) {
+                        if (.is_missing_volume(stateVolumes[[amount_nm]])) {
+                            stop(
+                                "Cannot convert amount state '",
+                                amount_nm,
+                                "' to concentration without a compartment volume.",
+                                call. = FALSE
+                            )
+                        }
                         amount_ref <- state_ref(amount_nm)
                         volume_ref <- substitute_symbols(stateVolumes[[amount_nm]])
                         return(bquote(.(amount_ref) / .(volume_ref)))
@@ -93,7 +101,15 @@ substitute_expr <- function(expr, stateNames, eqNames, name2idx,
 
                 if (prefix == "a") {
                     conc_nm <- .dsl_make_state(molec = molec, cmt = cmt, prefix = "c")
-                    if (conc_nm %in% stateNames && !is.null(stateVolumes[[conc_nm]])) {
+                    if (conc_nm %in% stateNames) {
+                        if (.is_missing_volume(stateVolumes[[conc_nm]])) {
+                            stop(
+                                "Cannot convert concentration state '",
+                                conc_nm,
+                                "' to amount without a compartment volume.",
+                                call. = FALSE
+                            )
+                        }
                         conc_ref <- state_ref(conc_nm)
                         volume_ref <- substitute_symbols(stateVolumes[[conc_nm]])
                         return(bquote(.(conc_ref) * .(volume_ref)))
