@@ -109,15 +109,16 @@ test_that("ODE generation processes equations correctly", {
 })
 
 test_that("ODE generation includes elementary reactions", {
-    skip("Reaction contributions to ODE generation are not implemented yet.")
-
     M <- compartment_model() |>
         add_compartment("cyt", volume = 1) |>
         add_molecule(c("A", "B"), cmt = "cyt", initial = c(10, 0), type = "amount") |>
         add_reaction(input = "A", output = "B", cmt = "cyt", const = "kAB") |>
         add_parameter(kAB = 2)
 
-    odeinfo <- to_ode(M)
+    expect_warning(
+        odeinfo <- to_ode(M),
+        "Unit consistency check for reactions is not implemented yet"
+    )
     dydt <- odeinfo$odefun(0, odeinfo$y0, list())[[1]]
 
     expect_equal(
@@ -127,8 +128,6 @@ test_that("ODE generation includes elementary reactions", {
 })
 
 test_that("ODE generation includes complex reaction rates", {
-    skip("Reaction contributions to ODE generation are not implemented yet.")
-
     M <- compartment_model() |>
         add_compartment("cyt", volume = 1) |>
         add_molecule(
@@ -145,7 +144,10 @@ test_that("ODE generation includes complex reaction rates", {
         ) |>
         add_parameter(vmax = 2, Km = 10)
 
-    odeinfo <- to_ode(M)
+    expect_warning(
+        odeinfo <- to_ode(M),
+        "Unit consistency check for reactions is not implemented yet"
+    )
     dydt <- odeinfo$odefun(0, odeinfo$y0, list())[[1]]
 
     expect_equal(
@@ -155,8 +157,6 @@ test_that("ODE generation includes complex reaction rates", {
 })
 
 test_that("ODE generation includes reaction synthesis and degradation", {
-    skip("Reaction contributions to ODE generation are not implemented yet.")
-
     M <- compartment_model() |>
         add_compartment("cyt", volume = 1) |>
         add_molecule("A", cmt = "cyt", initial = 10, type = "amount") |>
@@ -164,15 +164,16 @@ test_that("ODE generation includes reaction synthesis and degradation", {
         add_reaction(input = "A", output = NULL, cmt = "cyt", const = "kdeg") |>
         add_parameter(ksyn = 3, kdeg = 0.5)
 
-    odeinfo <- to_ode(M)
+    expect_warning(
+        odeinfo <- to_ode(M),
+        "Unit consistency check for reactions is not implemented yet"
+    )
     dydt <- odeinfo$odefun(0, odeinfo$y0, list())[[1]]
 
     expect_equal(setNames(dydt, odeinfo$stateNames), c(a_A_cyt = -2))
 })
 
 test_that("reaction rates can use equations in ODE export", {
-    skip("Reaction contributions to ODE generation are not implemented yet.")
-
     M <- compartment_model() |>
         add_compartment("cyt", volume = 1) |>
         add_molecule(c("A", "B"), cmt = "cyt", initial = c(10, 0), type = "amount") |>
@@ -180,7 +181,10 @@ test_that("reaction rates can use equations in ODE export", {
         add_equation(k_eq = k1 + k2) |>
         add_parameter(k1 = 1, k2 = 2)
 
-    odeinfo <- to_ode(M)
+    expect_warning(
+        odeinfo <- to_ode(M),
+        "Unit consistency check for reactions is not implemented yet"
+    )
     dydt <- odeinfo$odefun(0, odeinfo$y0, list())[[1]]
 
     expect_equal(odeinfo$freeParams, character(0))
@@ -188,32 +192,4 @@ test_that("reaction rates can use equations in ODE export", {
         setNames(dydt, odeinfo$stateNames),
         c(a_A_cyt = -30, a_B_cyt = 30)
     )
-})
-
-test_that("ODE generation handles various reaction orders", {
-
-    skip("This test does not work anymore because add_flow vectorization is used differently now. Needs to be adapted.")
-
-    # TODO: To make this work, extend the allowed types of from/to in flows() from character to expression.
-    #       Then, quote(2*S) can be used for mass-balance, and parameters could be used as well.
-
-    # Systems biology example with zero- and second-order reactions
-    M <- compartment_model() |>
-            add_compartment("S", 0) |>
-            add_compartment("S2", 1) |>
-            add_flow("", "S", rate = "ksyn") |>              # zero-order synthesis
-            add_flow("S", "", rate = "kdeg*S") |>            # first-order elimination
-            add_flow(c("S","S"), "S2", rate = "kass*S^2") |> # second-order association
-            add_flow("S2", c("S","S"), rate = "kdis*S2")     # first-order dissociation
-
-    odeinfo <- to_ode(M, paramValues = list(ksyn = 1, kdeg = 2, kass = 0.1, kdis = 0.5))
-    expect_true(is.function(odeinfo$odefun))
-    expect_equal(odeinfo$stateNames, c("S", "S2"))
-
-    y0   <- odeinfo$y0
-    expect_equal(y0, c(S=0, S2=1))
-  
-    dydt <- odeinfo$odefun(0, y0, list())
-    expect_equal(dydt[[1]], c(2,-0.5))              # FAILS
-
 })

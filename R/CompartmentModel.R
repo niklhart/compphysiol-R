@@ -776,6 +776,32 @@ to_ode <- function(
         }
     }
 
+    for (j in seq_along(model$reactions)) {
+        expr_str <- model$reactions$rate[[j]] |> makeFun() |> deparse1()
+        cmt <- model$reactions$cmt[[j]]
+
+        add_reaction_term <- function(molec, sign) {
+            state <- .dsl_make_state(molec = molec, cmt = cmt, prefix = "a")
+            idx <- name2idx[[state]]
+            if (is.null(idx)) {
+                stop(
+                    "Reaction references unknown state: ",
+                    state,
+                    ". Did you define the corresponding molecule in this compartment?",
+                    call. = FALSE
+                )
+            }
+            rhs[[idx]] <<- c(rhs[[idx]], paste0(sign, "(", expr_str, ")"))
+        }
+
+        for (molec in model$reactions$input[[j]]) {
+            add_reaction_term(molec, "-")
+        }
+        for (molec in model$reactions$output[[j]]) {
+            add_reaction_term(molec, "+")
+        }
+    }
+
     # Build ODE function body (explicit, human-readable)
     lines <- "function(t,y,params) {"
     for (i in seq_along(model$equations)) {

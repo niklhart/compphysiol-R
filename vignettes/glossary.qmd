@@ -119,12 +119,9 @@ reactions.
 
 Implementation anchor: reactions are represented by `Reactions` objects
 created with `reactions()` or added with `add_reaction()`. Current reaction
-support covers construction, storage, printing, and wildcard wiring. Reactions
-are part of the intended modelling vocabulary, but they do not yet contribute
-to generated ODE systems, analytical export, or unit checking. Future reaction
-support is expected to make reaction rates usable in ODE export in the same
-broad sense as transport rates, including reuse of equations where
-appropriate.
+support covers construction, storage, printing, wildcard wiring, and numerical
+ODE export. Analytical export and unit checking for reactions are not
+implemented yet.
 
 ## Equation
 
@@ -133,10 +130,9 @@ are not observables by themselves.
 
 Equations are useful for derived quantities such as physiological sums,
 partitioning terms, or reusable rate expressions. In the current ODE export,
-equations can be reused in transport constants and transport rate expressions.
-Reaction rates are intended to support equations in the future, once reactions
-contribute to ODE generation. Equations help keep generated ODEs readable while
-preserving the symbolic structure of the model.
+equations can be reused in transport and reaction constants and rate
+expressions. Equations help keep generated ODEs readable while preserving the
+symbolic structure of the model.
 
 Implementation anchor: equations are represented by `Equations` objects
 created with `equations()` or added with `add_equation()`.
