@@ -110,7 +110,7 @@ test_that("ODE generation processes equations correctly", {
 
 test_that("ODE generation includes elementary reactions", {
     M <- compartment_model() |>
-        add_compartment("cyt", volume = 1) |>
+        add_compartment("cyt", volume = 2) |>
         add_molecule(c("A", "B"), cmt = "cyt", initial = c(10, 0), type = "amount") |>
         add_reaction(input = "A", output = "B", cmt = "cyt", const = "kAB") |>
         add_parameter(kAB = 2)

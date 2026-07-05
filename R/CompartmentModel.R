@@ -777,8 +777,20 @@ to_ode <- function(
     }
 
     for (j in seq_along(model$reactions)) {
-        expr_str <- model$reactions$rate[[j]] |> makeFun() |> deparse1()
         cmt <- model$reactions$cmt[[j]]
+        vol <- volume_by_cmt[[cmt]]
+        if (is.null(vol) || (length(vol) == 1 && is.atomic(vol) && is.na(vol))) {
+            stop(
+                "Cannot export reaction in compartment '",
+                cmt,
+                "' to ODEs: reaction rates are concentration-change rates ",
+                "and require a compartment volume to convert them to amount/time.",
+                call. = FALSE
+            )
+        }
+        expr_str <- .mul(model$reactions$rate[[j]], .as_call(vol)) |>
+            makeFun() |>
+            deparse1()
 
         add_reaction_term <- function(molec, sign) {
             state <- .dsl_make_state(molec = molec, cmt = cmt, prefix = "a")

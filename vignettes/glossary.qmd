@@ -117,6 +117,13 @@ have multiple inputs and outputs, and their vector arguments describe
 stoichiometric participants rather than vectorized creation of many unrelated
 reactions.
 
+Reaction rates are expressed as concentration-change rates within the reaction
+compartment. During ODE export, these rates are multiplied by the compartment
+volume to obtain amount-change rates for the ODE states. This keeps the public
+reaction syntax close to mass-action conventions: zero-order reaction constants
+have units amount/volume/time, first-order constants have units 1/time, and
+second-order constants have units volume/amount/time.
+
 Implementation anchor: reactions are represented by `Reactions` objects
 created with `reactions()` or added with `add_reaction()`. Current reaction
 support covers construction, storage, printing, wildcard wiring, and numerical

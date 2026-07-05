@@ -72,6 +72,84 @@ test_that("unit mismatch in equation definition errors", {
     expect_error(compphysiol:::.check_unit_consistency(M), "unit inconsistency in expression")
 })
 
-test_that("unit mismatch in reaction definition errors", {
+test_that("zero-order reaction constants have concentration/time units", {
     skip("Reaction definitions are currently not checked for unit consistency, but should be in the future.")
+
+    M_valid <- compartment_model() |>
+        add_compartment(name = "cyt", volume = 1 [L]) |>
+        add_molecule(name = "A", cmt = "cyt", unit = "mol", type = "amount") |>
+        add_reaction(input = NULL, output = "A", cmt = "cyt", const = "ksyn") |>
+        add_parameter(ksyn = 1 [mol/L/h])
+    expect_silent(compphysiol:::.check_unit_consistency(M_valid))
+
+    M_invalid <- compartment_model() |>
+        add_compartment(name = "cyt", volume = 1 [L]) |>
+        add_molecule(name = "A", cmt = "cyt", unit = "mol", type = "amount") |>
+        add_reaction(input = NULL, output = "A", cmt = "cyt", const = "ksyn") |>
+        add_parameter(ksyn = 1 [mol/h])
+    expect_error(compphysiol:::.check_unit_consistency(M_invalid), "reaction")
+})
+
+test_that("first-order reaction constants have inverse-time units", {
+    skip("Reaction definitions are currently not checked for unit consistency, but should be in the future.")
+
+    M_valid <- compartment_model() |>
+        add_compartment(name = "cyt", volume = 1 [L]) |>
+        add_molecule(name = c("A", "B"), cmt = "cyt", unit = "mol", type = "amount") |>
+        add_reaction(input = "A", output = "B", cmt = "cyt", const = "kAB") |>
+        add_parameter(kAB = 1 [1/h])
+    expect_silent(compphysiol:::.check_unit_consistency(M_valid))
+
+    M_invalid <- compartment_model() |>
+        add_compartment(name = "cyt", volume = 1 [L]) |>
+        add_molecule(name = c("A", "B"), cmt = "cyt", unit = "mol", type = "amount") |>
+        add_reaction(input = "A", output = "B", cmt = "cyt", const = "kAB") |>
+        add_parameter(kAB = 1 [L/h])
+    expect_error(compphysiol:::.check_unit_consistency(M_invalid), "reaction")
+})
+
+test_that("second-order reaction constants convert concentration products to concentration/time", {
+    skip("Reaction definitions are currently not checked for unit consistency, but should be in the future.")
+
+    M_valid <- compartment_model() |>
+        add_compartment(name = "cyt", volume = 1 [L]) |>
+        add_molecule(name = c("A", "B", "C"), cmt = "cyt", unit = "mol", type = "amount") |>
+        add_reaction(input = c("A", "B"), output = "C", cmt = "cyt", const = "kABC") |>
+        add_parameter(kABC = 1 [L/mol/h])
+    expect_silent(compphysiol:::.check_unit_consistency(M_valid))
+
+    M_invalid <- compartment_model() |>
+        add_compartment(name = "cyt", volume = 1 [L]) |>
+        add_molecule(name = c("A", "B", "C"), cmt = "cyt", unit = "mol", type = "amount") |>
+        add_reaction(input = c("A", "B"), output = "C", cmt = "cyt", const = "kABC") |>
+        add_parameter(kABC = 1 [L^2/mol/h])
+    expect_error(compphysiol:::.check_unit_consistency(M_invalid), "reaction")
+})
+
+test_that("complex reaction rates have concentration/time units", {
+    skip("Reaction definitions are currently not checked for unit consistency, but should be in the future.")
+
+    M_valid <- compartment_model() |>
+        add_compartment(name = "cyt", volume = 1 [L]) |>
+        add_molecule(name = c("A", "B"), cmt = "cyt", unit = "mol", type = "amount") |>
+        add_reaction(
+            input = "A",
+            output = "B",
+            cmt = "cyt",
+            rate = "vmax * c[A, cyt] / (Km + c[A, cyt])"
+        ) |>
+        add_parameter(vmax = 1 [mol/L/h], Km = 1 [mol/L])
+    expect_silent(compphysiol:::.check_unit_consistency(M_valid))
+
+    M_invalid <- compartment_model() |>
+        add_compartment(name = "cyt", volume = 1 [L]) |>
+        add_molecule(name = c("A", "B"), cmt = "cyt", unit = "mol", type = "amount") |>
+        add_reaction(
+            input = "A",
+            output = "B",
+            cmt = "cyt",
+            rate = "vmax * c[A, cyt] / (Km + c[A, cyt])"
+        ) |>
+        add_parameter(vmax = 1 [mol/h], Km = 1 [mol/L])
+    expect_error(compphysiol:::.check_unit_consistency(M_invalid), "reaction")
 })

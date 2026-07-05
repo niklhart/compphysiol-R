@@ -3,6 +3,11 @@
 #' The `Reactions` class can hold several reactions, each with an input, output, rate/constant, and compartment.
 #' However, each reaction needs to be defined separately, i.e., vectorized definitions are not supported for reactions 
 #' as they can be for transports and molecules -- vector arguments are instead used for defining multiple reacting species within a single reaction.
+#'
+#' Reaction rates are concentration-change rates. For ODE export, reaction rates are multiplied by the reaction
+#' compartment volume to obtain amount-change rates for the ODE states. This follows the usual mass-action
+#' convention: zero-order reaction constants have units amount/volume/time, first-order constants have units
+#' 1/time, and second-order constants have units volume/amount/time.
 #' 
 #' The special expression `{cmt}` can be used in `rate` or `const` to automatically substitute the compartment name, 
 #' e.g., `k_{cmt}` will become `k_cytoplasm` for reactions in the cytoplasm and `k_nucleus` for reactions in the nucleus.
@@ -16,7 +21,7 @@
 #'   For degradation reactions, use an empty character vector or `NULL`.
 #' @param cmt Character vector of compartment names where the reaction(s) occur (optional, default: all compartments)
 #' @param ... Errors if used, enforces `rate` and `const` to be specified as named arguments only, not positional.
-#' @param rate Character string representing the reaction rate (for nonlinear reactions).
+#' @param rate Character string representing the concentration-change reaction rate (for nonlinear reactions).
 #'   Use `c[A]` to refer to the concentration of molecule A, and `a[A]` to refer to its amount.
 #' @param const Character string representing the reaction constant (for mass-action reactions).
 #'   Formally, this corresponds to `rate = const * c[input[1]] * c[input[2]] * ...`. 
