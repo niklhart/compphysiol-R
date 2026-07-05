@@ -115,10 +115,7 @@ test_that("ODE generation includes elementary reactions", {
         add_reaction(input = "A", output = "B", cmt = "cyt", const = "kAB") |>
         add_parameter(kAB = 2)
 
-    expect_warning(
-        odeinfo <- to_ode(M),
-        "Unit consistency check for reactions is not implemented yet"
-    )
+    odeinfo <- to_ode(M)
     dydt <- odeinfo$odefun(0, odeinfo$y0, list())[[1]]
 
     expect_equal(
@@ -139,10 +136,7 @@ test_that("ODE generation supports concentration states for reaction-only models
         add_reaction(input = "A", output = "B", cmt = "cyt", const = "kAB") |>
         add_parameter(kAB = 2)
 
-    expect_warning(
-        odeinfo <- to_ode(M),
-        "Unit consistency check for reactions is not implemented yet"
-    )
+    odeinfo <- to_ode(M)
     dydt <- odeinfo$odefun(0, odeinfo$y0, list())[[1]]
 
     expect_equal(odeinfo$dslStateNames, c("c[A, cyt]", "c[B, cyt]"))
@@ -170,10 +164,7 @@ test_that("ODE generation includes complex reaction rates", {
         ) |>
         add_parameter(vmax = 2, Km = 10)
 
-    expect_warning(
-        odeinfo <- to_ode(M),
-        "Unit consistency check for reactions is not implemented yet"
-    )
+    odeinfo <- to_ode(M)
     dydt <- odeinfo$odefun(0, odeinfo$y0, list())[[1]]
 
     expect_equal(
@@ -190,10 +181,7 @@ test_that("ODE generation includes reaction synthesis and degradation", {
         add_reaction(input = "A", output = NULL, cmt = "cyt", const = "kdeg") |>
         add_parameter(ksyn = 3, kdeg = 0.5)
 
-    expect_warning(
-        odeinfo <- to_ode(M),
-        "Unit consistency check for reactions is not implemented yet"
-    )
+    odeinfo <- to_ode(M)
     dydt <- odeinfo$odefun(0, odeinfo$y0, list())[[1]]
 
     expect_equal(setNames(dydt, odeinfo$stateNames), c(a_A_cyt = -2))
@@ -207,10 +195,7 @@ test_that("reaction rates can use equations in ODE export", {
         add_equation(k_eq = k1 + k2) |>
         add_parameter(k1 = 1, k2 = 2)
 
-    expect_warning(
-        odeinfo <- to_ode(M),
-        "Unit consistency check for reactions is not implemented yet"
-    )
+    odeinfo <- to_ode(M)
     dydt <- odeinfo$odefun(0, odeinfo$y0, list())[[1]]
 
     expect_equal(odeinfo$freeParams, character(0))
@@ -231,10 +216,7 @@ test_that("reaction ODEs conserve mass for reversible reactions", {
         add_reaction(input = "B", output = "A", cmt = c("cyt", "nuc"), const = "kBA") |>
         add_parameter(kAB = 0.2, kBA = 0.1)
 
-    expect_warning(
-        odeinfo1 <- to_ode(M1),
-        "Unit consistency check for reactions is not implemented yet"
-    )
+    odeinfo1 <- to_ode(M1)
     out1 <- deSolve::ode(y = odeinfo1$y0, times = times, func = odeinfo1$odefun)
     total1 <- rowSums(out1[, c("a_A_cyt", "a_A_nuc", "a_B_cyt", "a_B_nuc")])
 
@@ -248,10 +230,7 @@ test_that("reaction ODEs conserve mass for reversible reactions", {
         add_reaction(input = "B", output = c("A", "A"), cmt = c("cyt", "nuc"), const = "kBA") |>
         add_parameter(kAB = 0.02, kBA = 0.1)
 
-    expect_warning(
-        odeinfo2 <- to_ode(M2),
-        "Unit consistency check for reactions is not implemented yet"
-    )
+    odeinfo2 <- to_ode(M2)
     out2 <- deSolve::ode(y = odeinfo2$y0, times = times, func = odeinfo2$odefun)
     total_A <- rowSums(out2[, c("a_A_cyt", "a_A_nuc")])
     total_B <- rowSums(out2[, c("a_B_cyt", "a_B_nuc")])

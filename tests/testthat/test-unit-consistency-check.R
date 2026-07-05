@@ -73,8 +73,6 @@ test_that("unit mismatch in equation definition errors", {
 })
 
 test_that("zero-order reaction constants have concentration/time units", {
-    skip("Reaction definitions are currently not checked for unit consistency, but should be in the future.")
-
     M_valid <- compartment_model() |>
         add_compartment(name = "cyt", volume = 1 [L]) |>
         add_molecule(name = "A", cmt = "cyt", unit = "mol", type = "amount") |>
@@ -91,8 +89,6 @@ test_that("zero-order reaction constants have concentration/time units", {
 })
 
 test_that("first-order reaction constants have inverse-time units", {
-    skip("Reaction definitions are currently not checked for unit consistency, but should be in the future.")
-
     M_valid <- compartment_model() |>
         add_compartment(name = "cyt", volume = 1 [L]) |>
         add_molecule(name = c("A", "B"), cmt = "cyt", unit = "mol", type = "amount") |>
@@ -109,8 +105,6 @@ test_that("first-order reaction constants have inverse-time units", {
 })
 
 test_that("first-order reactions support concentration states without compartment volumes", {
-    skip("Reaction definitions are currently not checked for unit consistency, but should be in the future.")
-
     M_valid <- compartment_model() |>
         add_compartment(name = "cyt", volume = NA_real_) |>
         add_molecule(
@@ -137,8 +131,6 @@ test_that("first-order reactions support concentration states without compartmen
 })
 
 test_that("second-order reaction constants convert concentration products to concentration/time", {
-    skip("Reaction definitions are currently not checked for unit consistency, but should be in the future.")
-
     M_valid <- compartment_model() |>
         add_compartment(name = "cyt", volume = 1 [L]) |>
         add_molecule(name = c("A", "B", "C"), cmt = "cyt", unit = "mol", type = "amount") |>
@@ -155,8 +147,6 @@ test_that("second-order reaction constants convert concentration products to con
 })
 
 test_that("complex reaction rates have concentration/time units", {
-    skip("Reaction definitions are currently not checked for unit consistency, but should be in the future.")
-
     M_valid <- compartment_model() |>
         add_compartment(name = "cyt", volume = 1 [L]) |>
         add_molecule(name = c("A", "B"), cmt = "cyt", unit = "mol", type = "amount") |>

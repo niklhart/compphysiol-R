@@ -1188,8 +1188,93 @@ to_ode <- function(
         }
     }
 
-    # Check that reaction definitions are valid in terms of compartment and parameter units (if units are involved)
-    if (length(model$reactions) > 0) warning("Unit consistency check for reactions is not implemented yet: skipping unit checks for reaction definitions.")
+    # Check reaction rates against the public concentration-change rate convention.
+    for (i in seq_along(model$reactions)) {
+        react <- model$reactions[i]
+        rate <- react$rate[[1]]
+        rate_vars <- .dsl_all_vars(rate)
+        if (!all(rate_vars %in% varnames)) {
+            warning(
+                "Cannot check units for reaction (",
+                i,
+                "): some parameter(s) or state(s) in the rate expression are not defined in the model."
+            )
+            next
+        }
+
+        participants <- unique(c(react$input[[1]], react$output[[1]]))
+        cmt <- react$cmt[[1]]
+        conc_names <- .dsl_make_state(participants, cmt, prefix = "c")
+        missing_conc <- conc_names[!vapply(
+            conc_names,
+            exists,
+            logical(1),
+            envir = varenv,
+            inherits = FALSE
+        )]
+        if (length(missing_conc) > 0) {
+            warning(
+                "Cannot check units for reaction (",
+                i,
+                "): concentration state(s) ",
+                paste(missing_conc, collapse = ", "),
+                " are not defined in the model."
+            )
+            next
+        }
+
+        conc_vals <- lapply(conc_names, get, envir = varenv, inherits = FALSE)
+        unit_flags <- vapply(conc_vals, inherits, logical(1), what = "units")
+        if (any(unit_flags) && !all(unit_flags)) {
+            stop(
+                sprintf(
+                    "In reaction (%d), inconsistent concentration units for participants: one has units while another does not.",
+                    i
+                )
+            )
+        }
+
+        if (all(unit_flags) && length(conc_vals) > 1) {
+            ref_units <- units(conc_vals[[1]])
+            for (j in seq_along(conc_vals)[-1]) {
+                units::ud_are_convertible(units(conc_vals[[j]]), ref_units) ||
+                    stop(
+                        sprintf(
+                            "In reaction (%d), inconsistent concentration units for participants: %s vs. %s",
+                            i,
+                            units(conc_vals[[j]]),
+                            ref_units
+                        )
+                    )
+            }
+        }
+
+        rate_val <- tryCatch(
+            .dsl_eval(rate, envir = varenv),
+            error = function(e) {
+                stop(sprintf(
+                    "In reaction (%s), unit inconsistency in rate expression: %s",
+                    i,
+                    e$message
+                ))
+            }
+        )
+        if (!inherits(rate_val, "units") || !all(unit_flags)) {
+            next
+        }
+
+        one_h <- units::set_units(1, "h")
+        expected <- conc_vals[[1]] / one_h
+        units::ud_are_convertible(units(rate_val), units(expected)) ||
+            stop(
+                sprintf(
+                    "In reaction (%d), unit of reaction rate (%s) must be compatible with concentration/time (%s).",
+                    i,
+                    units(rate_val),
+                    units(expected)
+                )
+            )
+    }
         
     # Check that observable definitions are valid in terms of compartment and parameter units (if units are involved)
     obsnames <- names(model$observables)
