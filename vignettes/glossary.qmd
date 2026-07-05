@@ -90,7 +90,9 @@ or clearance from a compartment to a sink. A transport can be linear, through a
 first-order rate constant, or nonlinear, through an explicit rate expression.
 
 Implementation anchor: transports are represented by `Transports` objects
-created with `transports()` or added with `add_transport()`.
+created with `transports()` or added with `add_transport()`. Transport rates
+may use parameters, states, and equations; during ODE export, equations can be
+used to define reusable transport rate constants or rate expressions.
 
 ## Flow
 
@@ -116,30 +118,44 @@ stoichiometric participants rather than vectorized creation of many unrelated
 reactions.
 
 Implementation anchor: reactions are represented by `Reactions` objects
-created with `reactions()` or added with `add_reaction()`.
+created with `reactions()` or added with `add_reaction()`. Current reaction
+support covers construction, storage, printing, and wildcard wiring. Reactions
+are part of the intended modelling vocabulary, but they do not yet contribute
+to generated ODE systems, analytical export, or unit checking. Future reaction
+support is expected to make reaction rates usable in ODE export in the same
+broad sense as transport rates, including reuse of equations where
+appropriate.
 
 ## Equation
 
-An equation defines an auxiliary expression that can be reused in rates,
-constants, or other model expressions. Equations are not ODE states and are
-not observables by themselves.
+An equation defines an auxiliary expression. Equations are not ODE states and
+are not observables by themselves.
 
 Equations are useful for derived quantities such as physiological sums,
-partitioning terms, or reusable rate expressions. They help keep generated ODEs
-readable while preserving the symbolic structure of the model.
+partitioning terms, or reusable rate expressions. In the current ODE export,
+equations can be reused in transport constants and transport rate expressions.
+Reaction rates are intended to support equations in the future, once reactions
+contribute to ODE generation. Equations help keep generated ODEs readable while
+preserving the symbolic structure of the model.
 
 Implementation anchor: equations are represented by `Equations` objects
 created with `equations()` or added with `add_equation()`.
 
 ## Observable
 
-An observable is a quantity calculated from states, parameters, and equations
-after or during simulation. It is meant to represent something that can be
+An observable is a quantity calculated from states and parameters after or
+during simulation. It is meant to represent something that can be
 reported, compared to data, or plotted, such as plasma concentration or total
 amount in a tissue group.
 
 An observable is not part of the ODE state vector. It is derived from the model
 state rather than integrated as an independent dynamic variable.
+
+Current observable export does not define equation helper variables inside
+observable functions. Observable expressions should therefore be written
+directly in terms of states and parameters for now. Reuse of equations in
+observables is a natural future extension, but is not part of the current
+export contract.
 
 Implementation anchor: observables are represented by `Observables` objects
 created with `observables()` or added with `add_observable()`.
