@@ -127,6 +127,34 @@ test_that("ODE generation includes elementary reactions", {
     )
 })
 
+test_that("ODE generation supports concentration states for reaction-only models", {
+    skip("Concentration-state reaction ODE export is not implemented yet.")
+
+    M <- compartment_model() |>
+        add_compartment("cyt", volume = NA_real_) |>
+        add_molecule(
+            c("A", "B"),
+            cmt = "cyt",
+            initial = c(10, 0),
+            type = "concentration"
+        ) |>
+        add_reaction(input = "A", output = "B", cmt = "cyt", const = "kAB") |>
+        add_parameter(kAB = 2)
+
+    expect_warning(
+        odeinfo <- to_ode(M),
+        "Unit consistency check for reactions is not implemented yet"
+    )
+    dydt <- odeinfo$odefun(0, odeinfo$y0, list())[[1]]
+
+    expect_equal(odeinfo$dslStateNames, c("c[A, cyt]", "c[B, cyt]"))
+    expect_equal(odeinfo$stateNames, c("c_A_cyt", "c_B_cyt"))
+    expect_equal(
+        setNames(dydt, odeinfo$stateNames),
+        c(c_A_cyt = -20, c_B_cyt = 20)
+    )
+})
+
 test_that("ODE generation includes complex reaction rates", {
     M <- compartment_model() |>
         add_compartment("cyt", volume = 1) |>
@@ -232,4 +260,36 @@ test_that("reaction ODEs conserve mass for reversible reactions", {
     total2 <- total_A + 2 * total_B
 
     expect_equal(total2, rep(total2[[1]], length(total2)), tolerance = 1e-8)
+})
+
+test_that("ODE export rejects concentration-only transports without a volume", {
+    skip("Concentration-only transport state validation is not implemented yet.")
+
+    M <- compartment_model() |>
+        add_compartment("cyt", volume = NA_real_) |>
+        add_molecule("A", cmt = "cyt", initial = 10, type = "concentration") |>
+        add_transport(from = "cyt", to = "", molec = "A", const = "k") |>
+        add_parameter(k = 1)
+
+    expect_error(
+        to_ode(M),
+        "Transports require amount states or a compartment volume"
+    )
+})
+
+test_that("ODE observables reject amount conversion from concentration states without a volume", {
+    skip("Missing-volume observable conversion validation is not implemented yet.")
+
+    M <- compartment_model() |>
+        add_compartment("cyt", volume = NA_real_) |>
+        add_molecule("A", cmt = "cyt", initial = 10, type = "concentration") |>
+        add_observable(A_amount = a[A, cyt])
+
+    odeinfo <- to_ode(M)
+    y <- cbind(time = 0, c_A_cyt = 10)
+
+    expect_error(
+        odeinfo$obsFuncs$A_amount(0, y, list()),
+        "Cannot convert concentration state 'c[A, cyt]' to amount without a compartment volume"
+    )
 })

@@ -108,6 +108,34 @@ test_that("first-order reaction constants have inverse-time units", {
     expect_error(compphysiol:::.check_unit_consistency(M_invalid), "reaction")
 })
 
+test_that("first-order reactions support concentration states without compartment volumes", {
+    skip("Reaction definitions are currently not checked for unit consistency, but should be in the future.")
+
+    M_valid <- compartment_model() |>
+        add_compartment(name = "cyt", volume = NA_real_) |>
+        add_molecule(
+            name = c("A", "B"),
+            cmt = "cyt",
+            unit = "mol/L",
+            type = "concentration"
+        ) |>
+        add_reaction(input = "A", output = "B", cmt = "cyt", const = "kAB") |>
+        add_parameter(kAB = 1 [1/h])
+    expect_silent(compphysiol:::.check_unit_consistency(M_valid))
+
+    M_invalid <- compartment_model() |>
+        add_compartment(name = "cyt", volume = NA_real_) |>
+        add_molecule(
+            name = c("A", "B"),
+            cmt = "cyt",
+            unit = "mol/L",
+            type = "concentration"
+        ) |>
+        add_reaction(input = "A", output = "B", cmt = "cyt", const = "kAB") |>
+        add_parameter(kAB = 1 [L/h])
+    expect_error(compphysiol:::.check_unit_consistency(M_invalid), "reaction")
+})
+
 test_that("second-order reaction constants convert concentration products to concentration/time", {
     skip("Reaction definitions are currently not checked for unit consistency, but should be in the future.")
 
