@@ -9,3 +9,5 @@
 ^README.qmd$
 ^Makefile$
 ^\.codex$
+^doc$
+^Meta$
