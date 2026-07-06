@@ -1,3 +1,7 @@
+# compphysiol 0.3.1
+
+* Updated authoring information and documentation.
+
 # compphysiol 0.3.0
 
 ## Major refactor
