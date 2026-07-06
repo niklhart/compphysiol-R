@@ -7,3 +7,5 @@
 ^\.positron$
 ^\.vscode$
 ^README.qmd$
+^Makefile$
+^\.codex$
