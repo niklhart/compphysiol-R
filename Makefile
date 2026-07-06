@@ -43,8 +43,8 @@ release-dev: check-release-branch
 
 finish-release: check-main
 	Rscript -e 'desc::desc_set("Date", format(Sys.Date()))'
-	git diff
-	@VERSION=$$(Rscript -e 'cat(as.character(desc::desc_get_version()))'); \
+	git --no-pager diff
+	@VERSION=$$(Rscript -e 'cat(as.character(desc::desc_get_version()))' | tail -n 1); \
 	TAG="v$$VERSION"; \
 	if git rev-parse "$$TAG" >/dev/null 2>&1; then \
 		echo "Tag $$TAG already exists."; \
