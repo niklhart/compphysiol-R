@@ -6,8 +6,15 @@ Authors@R: c(
     person(
       "Niklas", "Hartung",
       email = "niklas.hartung@uni-potsdam.de",
-      role = c("aut", "cre")
-    )
+      role = c("aut", "cre"),
+      comment = c(ORCID = "0000-0002-4000-6525")
+    ),
+    person(
+      "Wilhelm", "Huisinga",
+      role = "aut",
+      comment = c(ORCID = "0000-0002-5249-3914")
+    ),
+    person("University of Potsdam, Germany", role = "fnd")
   )
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
@@ -27,3 +34,4 @@ Config/testthat/edition: 3
 VignetteBuilder: quarto
 Depends: 
     R (>= 4.1.0)
+Date: 2026-07-06
