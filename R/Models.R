@@ -505,7 +505,7 @@ multiCompModel <- function(ncomp = 1, type = c("micro", "macro"), unit = NULL) {
 }
 
 
-# Old (R6) models to be refactored or removed
+# Archived inactive R6 model sketches
 
 # #' Cell-level PK/PD model
 # celllevel_pkpd <- function() {

@@ -111,13 +111,11 @@ used to define reusable transport rate constants or rate expressions.
 ## Flow
 
 "Flow" is common PBPK jargon for movement between compartments, especially
-perfusion-mediated movement. Older parts of the package and some unfinished
-refactor areas may still use "flow" informally or in comments.
+perfusion-mediated movement.
 
-The current implementation direction is to use "transport" for this concept.
-When reading old code or tests, interpret most compartment-to-compartment
-flows as transports unless the code is explicitly discussing a physiological
-flow parameter such as `Qliv`.
+In `compphysiol`, use "transport" for compartment-to-compartment movement
+unless the code is explicitly discussing a physiological flow parameter such
+as `Qliv`.
 
 ## Reaction
 

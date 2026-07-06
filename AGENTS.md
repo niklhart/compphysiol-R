@@ -7,7 +7,7 @@ Guidance for AI coding agents working on `compphysiol`, an R package for computa
 - This is an R package. Core code lives in `R/`, tests in `tests/testthat/`, generated Rd files in `man/`, raw data/build scripts in `data-raw/`, and package metadata in `DESCRIPTION`/`NAMESPACE`.
 - The package uses S3 classes rather than R6/reference classes. Most model components are lightweight data-frame-like objects with custom constructors, `c()`, `[`, `[[`, `names()`, `length()`, `print()`, and `as.*()` methods.
 - The central user object is `CompartmentModel`, currently a list with `compartments`, `molecules`, `transports`, `reactions`, `equations`, `observables`, `parameters`, and `doses`.
-- The package is in a major refactor. Prefer preserving current public behavior unless the task explicitly asks for a breaking API change.
+- Prefer preserving current public behavior unless the task explicitly asks for a breaking API change.
 
 ## Development Workflow
 
@@ -38,7 +38,7 @@ Guidance for AI coding agents working on `compphysiol`, an R package for computa
 
 - Use `testthat` edition 3 expectations. Add regression tests near the behavior being changed.
 - Snapshot tests exist under `tests/testthat/_snaps/`; update snapshots only when output changes are intentional.
-- Some tests are intentionally skipped for unfinished refactor areas. Do not unskip or rewrite them unless the task targets that area.
+- Some tests are intentionally skipped for known modelling limitations or future work. Do not unskip or rewrite them unless the task targets that area.
 
 ## Domain And API Invariants
 
@@ -53,9 +53,9 @@ Guidance for AI coding agents working on `compphysiol`, an R package for computa
 - Preserve class attributes and list-columns when manipulating data-frame-like classes. Use existing helpers such as `.combine_df_like()`, `.subset_df_like()`, `.extract_df_like()`, and `.listify_df_like()`.
 - Direct `[[` extraction is intentionally blocked for several data-frame-like classes. Do not re-enable it casually.
 
-## Refactor Notes
+## High-Risk Areas
 
-- `Transports` appear to be the current direction for what older code/tests may still call flows. If touching flow/transport code, inspect all of `R/Transports.R`, `R/CompartmentModel.R`, `R/lumping.R`, `R/mergeModels.R`, and affected tests before choosing names or compatibility behavior.
+- Transports are the package concept for movement between compartments. If touching transport code or physiological flow-parameter handling, inspect all of `R/Transports.R`, `R/CompartmentModel.R`, `R/lumping.R`, `R/mergeModels.R`, and affected tests before choosing names or compatibility behavior.
 - `to_ode()` currently wires the model, creates depot structures for infusions, checks units, substitutes equations/parameters, builds an ODE function for `deSolve`, and returns events/observables/free parameters. Changes here have wide blast radius.
 - Reactions and transports differ intentionally:
   - transports move amount between compartments and can vectorize over `from`, `to`, and `molec`;

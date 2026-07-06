@@ -75,10 +75,10 @@ test_that("lumping handles first-pass effect correctly", {
 
     M <- compartment_model() |>
         add_compartment(c("gut","liv","blo"), c(10, 0, 0)) |>
-        add_flow("gut", "liv", const = "ka") |>
-        add_flow("liv", "blo", const = "Q/(Vliv*Kliv)") |>
-        add_flow("blo", "liv", const = "Q/Vblo") |>
-        add_flow("liv", "", const = "CL/(Vliv*Kliv)") |>
+        add_transport("gut", "liv", const = "ka") |>
+        add_transport("liv", "blo", const = "Q/(Vliv*Kliv)") |>
+        add_transport("blo", "liv", const = "Q/Vblo") |>
+        add_transport("liv", "", const = "CL/(Vliv*Kliv)") |>
         add_parameter(ka = 1, Q = 1, Vliv = 1, Kliv = 10, Vblo = 10, CL = 10)
 
     L <- lump_model(M,
