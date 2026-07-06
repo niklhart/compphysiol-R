@@ -457,7 +457,11 @@ sMD_PBPK_12CMT_permbased <- function() {
         ) |>
         # liver metabolism
         add_transport("liv_cel", "", const = "CL * fuCliv / Vliv_cel") |>
-        add_equation(name = "co", expr = "Qadi+Qbon+Qhea+Qliv+Qmus+Qkid+Qski") |>
+        add_equation(
+            name = "co",
+            expr = "Qadi+Qbon+Qhea+Qliv+Qmus+Qkid+Qski"
+        ) |>
+        add_observable(name = "Cpla", expr = "c[drug,ven] / BP") |>
         wire(what = "molec")
 }
 

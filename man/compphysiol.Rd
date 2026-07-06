@@ -24,7 +24,17 @@ including compartments, molecules, transports, reactions, observables, and dosin
 }
 }
 \author{
-\strong{Maintainer}: Niklas Hartung \email{niklas.hartung@uni-potsdam.de}
+\strong{Maintainer}: Niklas Hartung \email{niklas.hartung@uni-potsdam.de} (\href{https://orcid.org/0000-0002-4000-6525}{ORCID})
+
+Authors:
+\itemize{
+  \item Wilhelm Huisinga (\href{https://orcid.org/0000-0002-5249-3914}{ORCID})
+}
+
+Other contributors:
+\itemize{
+  \item University of Potsdam, Germany [funder]
+}
 
 }
 \keyword{internal}
