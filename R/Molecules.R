@@ -1,13 +1,24 @@
 #' `Molecules` class
-#' Represents the molecules in a PBPK model.
+#'
+#' Molecules represent the modelled substances whose amounts or concentrations
+#' can vary across compartments. A molecule may be a drug, metabolite, protein,
+#' receptor, complex, biomarker, or other substance in the model.
+#'
+#' A molecule can be defined for a specific compartment through `cmt`, or for
+#' all compartments by leaving `cmt` unspecified. The latter creates a compact
+#' wildcard definition that is resolved by [wire()] before ODE generation.
 #'
 #' @param name Molecule name(s), character scalar or vector
-#' @param cmt Compartment name(s), character scalar or vector
-#' @param initial Initial concentration(s)/amount(s) of the molecule (numeric, possibly as `values[unit]`). The dimension of the 
-#' `initial` argument needs to be compatible with the `molec` and `cmt` arguments (to be clarified).
+#' @param cmt Compartment name(s), character scalar or vector. If omitted,
+#'   the molecule is assumed to be present in all compartments.
+#' @param initial Initial concentration(s) or amount(s) of the molecule
+#'   (numeric, possibly as `values[unit]`). Scalar values are recycled across
+#'   the generated molecule definitions; otherwise the length must be compatible
+#'   with `name`, `cmt`, and `unit`.
 #' @param unit Unit for the initial conditions (character scalar or `NULL`, the default), to be used if units are not specified via `initial`. 
 #' @param type Type of initial condition, either `"concentration"` (the default) or `"amount"`.
-#' @return A `Molecules` object containing the compartment and initial conditioninformation for each molecule.
+#' @return A `Molecules` object containing the compartment and initial condition
+#'   information for each molecule.
 #' @examples 
 #' # No compartment specified: molecules are assumed to be present in all compartments
 #' molecules(name = c("NFkB", "IkB"), unit = "mol/L")

@@ -457,6 +457,10 @@ make_depot <- function(model) {
 #' 
 #' For linear compartment models, the system of ODEs can be solved analytically using matrix exponentials. 
 #' This function generates a state function that evaluates this analytical solution at given time points and parameter values.
+#'
+#' Analytical export currently supports wired models with linear transports and
+#' no dosing events, reactions, or nonlinear transports. Use [to_ode()] for the
+#' more general numerical export path.
 #' 
 #' @param model A `CompartmentModel` object.
 #' @returns A length 2 list named `state` (a function) and `observable`
@@ -631,6 +635,12 @@ to_analytical <- function(model) {
 #'
 #' This function converts a `CompartmentModel` object into a format suitable for numerical ODE solvers,
 #' such as those in the `deSolve` package.
+#'
+#' ODE export is the step where the modular model description is made explicit.
+#' The model is wired, infusion dosing structures are prepared, unit consistency
+#' is checked, equations and fixed parameters are substituted where needed, and
+#' transports, reactions, observables, parameters, and dosing events are rendered
+#' into solver-facing functions and event data.
 #'
 #' If the model specification uses units, the `dimensions` argument can be used to specify the unit dimensions
 #' for time, mass, length, amount, etc., which will be used to inline the parameters in the ODEs with consistent units.

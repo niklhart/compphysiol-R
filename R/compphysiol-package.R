@@ -4,17 +4,27 @@
 #' @docType package
 #' @description
 #' The `compphysiol` package provides tools for building and simulating compartment
-#' models in R. It includes classes for defining compartments, reactions, observables,
-#' dosing events, and physiological parameters.
+#' models in R. It separates model locations, modelled substances, processes,
+#' auxiliary expressions, outputs, parameter values, and external inputs into
+#' explicit model components.
 #' @details
-#' Key classes include:
+#' Core modelling concepts include:
 #' - `CompartmentModel`: Encapsulates the structure of a compartmental model,
-#'   including compartments, molecules, transports, reactions, observables, and dosing events.
-#' - `Compartments`: Represents model compartments with names and volumes.
-#' - `Transports`: Defines movement of molecules between compartments with specified rates.
-#' - `Observables`: Represents measurable outputs derived from compartment states.
-#' - `Equations`: Represents mathematical relationships between model parameters and/or states.
+#'   including compartments, molecules, transports, reactions, equations,
+#'   observables, parameters, and dosing events.
+#' - `Compartments`: Represent model spaces, tissues, organs, or abstract
+#'   locations with names and volumes.
+#' - `Molecules`: Represent modelled substances whose amounts or concentrations
+#'   can vary across compartments.
+#' - `Transports`: Define movement of the same molecule between compartments.
+#' - `Reactions`: Define molecular transformations or stoichiometric changes
+#'   within compartments.
+#' - `Equations`: Define auxiliary expressions that can be reused in model
+#'   processes.
+#' - `Observables`: Represent derived outputs calculated from states and
+#'   parameters.
+#' - `Parameters`: Represent named inputs used in the definition of compartments, 
+#'   transports, reactions, equations and observables.
 #' - `Dosing`: Represents dosing events, including bolus and infusion doses.
-#' - `Physiology`: Manages physiological parameters for the model.
 #' @keywords internal
 "_PACKAGE"
