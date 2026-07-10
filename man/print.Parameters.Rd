@@ -2,7 +2,7 @@
 % Please edit documentation in R/Parameters.R
 \name{print.Parameters}
 \alias{print.Parameters}
-\title{Print method for \code{Parameters} objects}
+\title{Print a \code{Parameters} object}
 \usage{
 \method{print}{Parameters}(x, ...)
 }
@@ -15,5 +15,5 @@
 The \code{Parameters} object (invisible)
 }
 \description{
-Print method for \code{Parameters} objects
+Print a \code{Parameters} object
 }

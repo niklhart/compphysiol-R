@@ -2,7 +2,7 @@
 % Please edit documentation in R/Transports.R
 \name{transports}
 \alias{transports}
-\title{Transports class}
+\title{Create a \code{Transports} object}
 \usage{
 transports(from, to, molec = NA_character_, ..., rate = NULL, const = NULL)
 }

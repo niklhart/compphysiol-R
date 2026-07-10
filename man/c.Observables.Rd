@@ -2,7 +2,7 @@
 % Please edit documentation in R/Observables.R
 \name{c.Observables}
 \alias{c.Observables}
-\title{Combine multiple \code{Observables} objects}
+\title{Combine multiple \code{Observables} objects into one}
 \usage{
 \method{c}{Observables}(...)
 }
@@ -13,5 +13,5 @@
 A combined \code{Observables} object
 }
 \description{
-Combine multiple \code{Observables} objects
+Combine multiple \code{Observables} objects into one
 }

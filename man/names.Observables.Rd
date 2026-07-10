@@ -2,7 +2,7 @@
 % Please edit documentation in R/Observables.R
 \name{names.Observables}
 \alias{names.Observables}
-\title{Names method for \code{Observables} objects}
+\title{Names of observables in an \code{Observables} object}
 \usage{
 \method{names}{Observables}(x)
 }
@@ -13,5 +13,5 @@
 The names of the observables
 }
 \description{
-Names method for \code{Observables} objects
+Names of observables in an \code{Observables} object
 }

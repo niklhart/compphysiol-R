@@ -2,7 +2,7 @@
 % Please edit documentation in R/Transports.R
 \name{[[.Transports}
 \alias{[[.Transports}
-\title{Accessing an element in a \code{Transports} object}
+\title{Access an element in a \code{Transports} object}
 \usage{
 \method{[[}{Transports}(x, i)
 }
@@ -15,5 +15,5 @@
 A \code{Transport} object, which is a list with entries \code{from}, \code{to}, \code{molec}, \code{rate}, \code{const}, and \code{type}.
 }
 \description{
-Accessing an element in a \code{Transports} object
+Access an element in a \code{Transports} object
 }

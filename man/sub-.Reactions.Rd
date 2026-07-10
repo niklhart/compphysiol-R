@@ -2,7 +2,7 @@
 % Please edit documentation in R/Reactions.R
 \name{[.Reactions}
 \alias{[.Reactions}
-\title{Subset method for \code{Reactions} class}
+\title{Subset a \code{Reactions} object}
 \usage{
 \method{[}{Reactions}(x, i, ...)
 }

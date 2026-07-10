@@ -2,7 +2,7 @@
 % Please edit documentation in R/Observables.R
 \name{add_observable}
 \alias{add_observable}
-\title{Add an observable to a \code{CompartmentModel} object.}
+\title{Add one or several observables to a \code{CompartmentModel} object.}
 \usage{
 add_observable(
   model,

@@ -2,7 +2,7 @@
 % Please edit documentation in R/Compartments.R
 \name{length.Compartments}
 \alias{length.Compartments}
-\title{Length method for \code{Compartments} class}
+\title{Length of a \code{Compartments} object}
 \usage{
 \method{length}{Compartments}(x)
 }

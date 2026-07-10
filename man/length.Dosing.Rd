@@ -2,7 +2,7 @@
 % Please edit documentation in R/Dosing.R
 \name{length.Dosing}
 \alias{length.Dosing}
-\title{Length method for Dosing class}
+\title{Length of a \code{Dosing} object}
 \usage{
 \method{length}{Dosing}(x)
 }

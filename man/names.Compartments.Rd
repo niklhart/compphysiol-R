@@ -2,7 +2,7 @@
 % Please edit documentation in R/Compartments.R
 \name{names.Compartments}
 \alias{names.Compartments}
-\title{Names method for \code{Compartments} class}
+\title{Names of compartments in a \code{Compartments} object}
 \usage{
 \method{names}{Compartments}(x)
 }

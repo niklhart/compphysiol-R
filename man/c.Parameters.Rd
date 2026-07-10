@@ -2,7 +2,7 @@
 % Please edit documentation in R/Parameters.R
 \name{c.Parameters}
 \alias{c.Parameters}
-\title{Combine multiple \code{Parameters} objects}
+\title{Combine multiple \code{Parameters} objects into one}
 \usage{
 \method{c}{Parameters}(...)
 }
@@ -13,5 +13,5 @@
 A combined \code{Parameters} object
 }
 \description{
-Combine multiple \code{Parameters} objects
+Combine multiple \code{Parameters} objects into one
 }

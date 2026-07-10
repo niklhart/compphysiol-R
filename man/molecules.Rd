@@ -2,7 +2,7 @@
 % Please edit documentation in R/Molecules.R
 \name{molecules}
 \alias{molecules}
-\title{\code{Molecules} class}
+\title{Create a \code{Molecules} object}
 \usage{
 molecules(
   name = character(0),

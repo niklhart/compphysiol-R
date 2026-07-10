@@ -2,7 +2,7 @@
 % Please edit documentation in R/equations.R
 \name{print.Equations}
 \alias{print.Equations}
-\title{Print method for \code{Equations} objects}
+\title{Print an \code{Equations} object}
 \usage{
 \method{print}{Equations}(x, ...)
 }
@@ -15,5 +15,5 @@
 The \code{Equations} object (invisible)
 }
 \description{
-Print method for \code{Equations} objects
+Print an \code{Equations} object
 }

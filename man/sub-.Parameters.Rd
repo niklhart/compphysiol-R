@@ -2,7 +2,7 @@
 % Please edit documentation in R/Parameters.R
 \name{[.Parameters}
 \alias{[.Parameters}
-\title{Subsetting method for \code{Parameters} objects}
+\title{Subset a \code{Parameters} object}
 \usage{
 \method{[}{Parameters}(x, i, ...)
 }
@@ -17,5 +17,5 @@
 A subset of the \code{Parameters} object
 }
 \description{
-Subsetting method for \code{Parameters} objects
+Subset a \code{Parameters} object
 }

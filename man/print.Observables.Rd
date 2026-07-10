@@ -2,7 +2,7 @@
 % Please edit documentation in R/Observables.R
 \name{print.Observables}
 \alias{print.Observables}
-\title{Print method for \code{Observables} objects}
+\title{Print an \code{Observables} object}
 \usage{
 \method{print}{Observables}(x, ...)
 }
@@ -15,5 +15,5 @@
 The \code{Observables} object (invisible)
 }
 \description{
-Print method for \code{Observables} objects
+Print an \code{Observables} object
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/Dosing.R
 \name{print.Dosing}
 \alias{print.Dosing}
-\title{Print method for Dosing class}
+\title{Print a \code{Dosing} object}
 \usage{
 \method{print}{Dosing}(x, ...)
 }

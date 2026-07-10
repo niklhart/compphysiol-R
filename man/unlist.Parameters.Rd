@@ -2,7 +2,7 @@
 % Please edit documentation in R/Parameters.R
 \name{unlist.Parameters}
 \alias{unlist.Parameters}
-\title{Unlist method for \code{Parameters} objects (experimental).}
+\title{Unlist a \code{Parameters} object (experimental).}
 \usage{
 unlist.Parameters(x, ...)
 }

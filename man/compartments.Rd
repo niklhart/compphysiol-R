@@ -2,7 +2,7 @@
 % Please edit documentation in R/Compartments.R
 \name{compartments}
 \alias{compartments}
-\title{\code{Compartments} Class}
+\title{Create a \code{Compartments} object}
 \usage{
 compartments(name = character(0), volume = "V{name}", unit = NULL)
 }

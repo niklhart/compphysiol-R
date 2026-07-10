@@ -2,7 +2,7 @@
 % Please edit documentation in R/Dosing.R
 \name{add_dosing}
 \alias{add_dosing}
-\title{Add one or several dosing events (bolus or infusion).}
+\title{Add one or several dosing events (bolus or infusion) to a \code{CompartmentModel} object.}
 \usage{
 add_dosing(
   model,

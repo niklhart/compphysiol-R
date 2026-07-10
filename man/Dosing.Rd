@@ -2,7 +2,7 @@
 % Please edit documentation in R/Dosing.R
 \name{dosing}
 \alias{dosing}
-\title{Dosing specification}
+\title{Create a \code{Dosing} object}
 \usage{
 dosing(
   time = numeric(0),

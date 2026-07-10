@@ -2,7 +2,7 @@
 % Please edit documentation in R/Parameters.R
 \name{names.Parameters}
 \alias{names.Parameters}
-\title{Names method for \code{Parameters} objects}
+\title{Names of parameters in a \code{Parameters} object}
 \usage{
 \method{names}{Parameters}(x)
 }
@@ -13,5 +13,5 @@
 The names of the parameters
 }
 \description{
-Names method for \code{Parameters} objects
+Names of parameters in a \code{Parameters} object
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/Compartments.R
 \name{print.Compartments}
 \alias{print.Compartments}
-\title{Print method for \code{Compartments} class}
+\title{Print a \code{Compartments} object}
 \usage{
 \method{print}{Compartments}(x, ...)
 }

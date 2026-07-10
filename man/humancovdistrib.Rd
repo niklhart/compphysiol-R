@@ -2,7 +2,7 @@
 % Please edit documentation in R/humancovdistrib.R
 \name{humancovdistrib}
 \alias{humancovdistrib}
-\title{Simulate a covariate distribution in adult humans}
+\title{Simulate a covariate distribution in human adults}
 \usage{
 humancovdistrib(N, sex)
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/CompartmentModel.R
 \name{compartment_model}
 \alias{compartment_model}
-\title{Create a new \code{CompartmentModel} object.}
+\title{Create a \code{CompartmentModel} object}
 \usage{
 compartment_model()
 }

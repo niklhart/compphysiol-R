@@ -2,7 +2,7 @@
 % Please edit documentation in R/equations.R
 \name{names.Equations}
 \alias{names.Equations}
-\title{Names method for \code{Equations} objects}
+\title{Names of equations in an \code{Equations} object}
 \usage{
 \method{names}{Equations}(x)
 }
@@ -13,5 +13,5 @@
 The names of the equations
 }
 \description{
-Names method for \code{Equations} objects
+Names of equations in an \code{Equations} object
 }

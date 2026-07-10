@@ -2,7 +2,7 @@
 % Please edit documentation in R/Dosing.R
 \name{[.Dosing}
 \alias{[.Dosing}
-\title{Subset method for \code{Dosing} class}
+\title{Subset a \code{Dosing} object}
 \usage{
 \method{[}{Dosing}(x, i, ...)
 }

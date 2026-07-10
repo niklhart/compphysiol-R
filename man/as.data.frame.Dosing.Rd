@@ -2,7 +2,7 @@
 % Please edit documentation in R/Dosing.R
 \name{as.data.frame.Dosing}
 \alias{as.data.frame.Dosing}
-\title{Convert a Dosing object to a data frame}
+\title{Convert a \code{Dosing} object to a data frame}
 \usage{
 \method{as.data.frame}{Dosing}(x, ...)
 }

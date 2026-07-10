@@ -2,7 +2,7 @@
 % Please edit documentation in R/Reactions.R
 \name{reactions}
 \alias{reactions}
-\title{\code{Reactions} class and methods}
+\title{Create a \code{Reactions} object}
 \usage{
 reactions(
   input = character(0),

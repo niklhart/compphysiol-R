@@ -2,7 +2,7 @@
 % Please edit documentation in R/equations.R
 \name{[.Equations}
 \alias{[.Equations}
-\title{Subsetting method for \code{Equations} objects}
+\title{Subset an \code{Equations} object}
 \usage{
 \method{[}{Equations}(x, i, ...)
 }
@@ -17,5 +17,5 @@
 A subset of the \code{Equations} object
 }
 \description{
-Subsetting method for \code{Equations} objects
+Subset an \code{Equations} object
 }

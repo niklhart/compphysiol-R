@@ -2,7 +2,7 @@
 % Please edit documentation in R/Observables.R
 \name{[.Observables}
 \alias{[.Observables}
-\title{Subsetting method for \code{Observables} objects}
+\title{Subset an \code{Observables} object}
 \usage{
 \method{[}{Observables}(x, i, ...)
 }
@@ -17,5 +17,5 @@
 A subset of the \code{Observables} object
 }
 \description{
-Subsetting method for \code{Observables} objects
+Subset an \code{Observables} object
 }
