@@ -1,10 +1,14 @@
 
 #' Create an `Observables` object
 #' 
-#' Observables are quantities of interest that are calculated from model states
-#' and parameters, but are not integrated as part of the ODE system. In
-#' `compphysiol`, states represent molecule-in-compartment pairs such
-#' as `a[drug, ven]` or `c[drug, ven]`, not compartments alone.
+#' Observables are quantities of interest that are computed from parameters
+#' and/or concentrations or amounts of molecule-in-compartment pairs. They are
+#' not integrated as independent variables in the ODE system.
+#'
+#' In the DSL, `a[molecule, compartment]` and `c[molecule, compartment]`
+#' refer to the amount or concentration of a molecule in a compartment. This
+#' semantic reference is independent of whether the corresponding ODE state is
+#' represented internally as an amount or as a concentration.
 #' 
 #' Observables and equations are very similar, but there are two key differences:
 #' 
@@ -19,7 +23,7 @@
 #' @param ... Name-expression pairs defining the observables. The expressions can be provided as character strings or as R calls. 
 #' @param name Name of the observable(s), character scalar or vector
 #' @param expr Expression(s) for the observable(s), as character scalar/vector or as R call / lists of R calls.
-#'   Expressions may contain parameters that are added to the model's parameters list, as well as state references (not compartment names alone).
+#'   Expressions may contain parameters that are added to the model's parameters list, as well as amount or concentration references to molecule-in-compartment pairs.
 #' @param cmt Optional character vector specifying the compartment(s) associated with the observable(s). 
 #'  Used for automatic generation of common observables like concentrations and amounts.
 #' @param molec Optional character vector specifying the molecule(s) associated with the observable(s). 
