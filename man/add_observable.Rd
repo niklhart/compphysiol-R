@@ -22,7 +22,7 @@ add_observable(
 \item{name}{Name of the observable(s), character scalar or vector}
 
 \item{expr}{Expression(s) for the observable(s), as character scalar/vector or as R call / lists of R calls.
-Expressions may contain parameters that are added to the model's parameters list, as well as compartment states (not compartment names!)}
+Expressions may contain parameters that are added to the model's parameters list, as well as amount or concentration references to molecule-in-compartment pairs.}
 
 \item{cmt}{Optional character vector specifying the compartment(s) associated with the observable(s).
 Used for automatic generation of common observables like concentrations and amounts.}
@@ -36,10 +36,16 @@ Used for automatic generation of common observables like concentrations and amou
 The modified \code{CompartmentModel} object.
 }
 \description{
-Observables are quantities of interest that are calculated from the state variables
-(compartments) and parameters, but are not part of the ODE system.
+Observables are quantities of interest that are computed from parameters
+and/or concentrations or amounts of molecule-in-compartment pairs. They are
+not integrated as independent variables in the ODE system.
 }
 \details{
+In the DSL, \code{a[molecule, compartment]} and \code{c[molecule, compartment]}
+refer to the amount or concentration of a molecule in a compartment. This
+semantic reference is independent of whether the corresponding ODE state is
+represented internally as an amount or as a concentration.
+
 Observables and equations are very similar, but there are two key differences:
 \enumerate{
 \item For each observable (but not for equations), \code{to_ode()} returns a function to calculate it based on the ODE output.

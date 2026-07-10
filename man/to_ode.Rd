@@ -23,6 +23,12 @@ This function converts a \code{CompartmentModel} object into a format suitable f
 such as those in the \code{deSolve} package.
 }
 \details{
+ODE export is the step where the modular model description is made explicit.
+The model is wired, infusion dosing structures are prepared, unit consistency
+is checked, equations and fixed parameters are substituted where needed, and
+transports, reactions, observables, parameters, and dosing events are rendered
+into solver-facing functions and event data.
+
 If the model specification uses units, the \code{dimensions} argument can be used to specify the unit dimensions
 for time, mass, length, amount, etc., which will be used to inline the parameters in the ODEs with consistent units.
 The dimensions default to SI base units and will be appended to the output list for reference,

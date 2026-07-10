@@ -19,6 +19,11 @@ calculates the \code{i}-th observable defined in the CompartmentModel.
 For linear compartment models, the system of ODEs can be solved analytically using matrix exponentials.
 This function generates a state function that evaluates this analytical solution at given time points and parameter values.
 }
+\details{
+Analytical export currently supports wired models with linear transports and
+no dosing events, reactions, or nonlinear transports. Use \code{\link[=to_ode]{to_ode()}} for the
+more general numerical export path.
+}
 \examples{
 M <- multiCompModel(ncomp = 2, type = "micro") |>
     add_parameter(kc0 = 0.05)

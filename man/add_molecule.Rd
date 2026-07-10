@@ -19,10 +19,13 @@ add_molecule(
 
 \item{name}{Molecule name(s), character scalar or vector}
 
-\item{cmt}{Compartment name(s), character scalar or vector}
+\item{cmt}{Compartment name(s), character scalar or vector. If omitted,
+the molecule is assumed to be present in all compartments.}
 
-\item{initial}{Initial concentration(s)/amount(s) of the molecule (numeric, possibly as \code{values[unit]}). The dimension of the
-\code{initial} argument needs to be compatible with the \code{molec} and \code{cmt} arguments (to be clarified).}
+\item{initial}{Initial concentration(s) or amount(s) of the molecule
+(numeric, possibly as \code{values[unit]}). Scalar values are recycled across
+the generated molecule definitions; otherwise the length must be compatible
+with \code{name}, \code{cmt}, and \code{unit}.}
 
 \item{unit}{Unit for the initial conditions (character scalar or \code{NULL}, the default), to be used if units are not specified via \code{initial}.}
 
@@ -34,7 +37,14 @@ add_molecule(
 The modified \code{CompartmentModel} object.
 }
 \description{
-Add one or several molecules to a \code{CompartmentModel} object.
+Molecules represent the modelled substances whose amounts or concentrations
+can vary across compartments. A molecule may be a drug, metabolite, protein,
+receptor, complex, biomarker, or other substance in the model.
+}
+\details{
+A molecule can be defined for a specific compartment through \code{cmt}, or for
+all compartments by leaving \code{cmt} unspecified. The latter creates a compact
+wildcard definition that is resolved by \code{\link[=wire]{wire()}} before ODE generation.
 }
 \seealso{
 \code{\link[=molecules]{molecules()}}
