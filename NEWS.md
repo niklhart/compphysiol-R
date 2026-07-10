@@ -1,3 +1,8 @@
+# compphysiol 0.3.2
+
+* documentation update, including a glossary
+* unexported development features relating to physiology and drug data concepts
+
 # compphysiol 0.3.1
 
 * Updated authoring information and documentation.
