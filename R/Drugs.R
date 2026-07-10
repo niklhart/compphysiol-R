@@ -8,6 +8,7 @@
 #' @param ... Named arguments representing drug parameters (possibly with units).
 #' @param data A data frame with the following columns: "Parameter", "Species", "Value", "Unit", "Reference", "Assumption". 
 #'   This can be used as an alternative to specifying parameters via `...`.
+#' @noRd
 drug <- function(..., data = NULL) {
 
     args <- eval(substitute(alist(...)))
@@ -37,6 +38,7 @@ drug <- function(..., data = NULL) {
 
 #' Create an empty Drugs object
 #' @returns An empty `Drugs` object.
+#' @noRd
 drugs <- function() structure(
     data.frame(
         Drug = character(0), 
@@ -54,6 +56,7 @@ drugs <- function() structure(
 #' @param x An object of class `Drug`.
 #' @param meta Logical indicating whether to print parameter metadata as well (default: `FALSE`).
 #' @param string Logical indicating whether to return a short string representation instead of printing (default: `FALSE`).
+#' @noRd
 print.Drug <- function(x, meta = FALSE, string = FALSE) {
     if (string) {
         sprintf("%s = %s", names(x$param), vapply(x$param, format, character(1))) |>
@@ -118,6 +121,7 @@ print.Drug <- function(x, meta = FALSE, string = FALSE) {
 #' @param x An object of class `Drugs`.
 #' @param i Index(es) or name(s) of drug(s) to select
 #' @returns A subsetted `Drugs` object.
+#' @noRd
 `[.Drugs` <- function(x, i) {
     class(x) <- "data.frame"
     x[x$Drug %in% i, c("Drug", "Parameter", "Species", "Value"), drop = FALSE] |>
@@ -146,15 +150,18 @@ print.Drug <- function(x, meta = FALSE, string = FALSE) {
 #'
 #' @param ... `Drug` or `Drugs` objects to combine
 #' @returns A `Drugs` object containing the combined drugs.
+#' @noRd
 c.Drug <- .c_drug_drugs
 
 #' @rdname c.Drug
+#' @noRd
 c.Drugs <- .c_drug_drugs
 
 #' Print method for Drugs objects
 #'
 #' @param x An object of class `Drugs`.
 #' @param meta Logical indicating whether to print parameter metadata as well (default: `FALSE`).
+#' @noRd
 print.Drugs <- function(x, meta = FALSE) {
     if (length(x) > 0) {
         cat("Drugs object\n")
@@ -206,6 +213,7 @@ param.Drugs <- function(x, drug, species, name = NULL) {
 #' @param x An object of class `Drugs`.
 #' @param i The name of the drug to extract.
 #' @returns A `Drug` object containing the parameters for the specified drug.
+#' @noRd
 `[[.Drugs` <- function(x, i) {
     class(x) <- "data.frame"
     x[x$Drug == i, c("Parameter", "Species", "Value"), drop = FALSE] |>
@@ -215,6 +223,7 @@ param.Drugs <- function(x, drug, species, name = NULL) {
 #' @param name The name of the drug to load.
 #' @param species Character string, for which species to load species-specific parameters (default: all species).
 #' @returns A `Drug` object containing all parameters for the specified drug and species.
+#' @noRd
 loaddrugdata <- function(name = "", species = NULL) {
 
     name <- match.arg(name, choices = unique(.drugdb$Drug))

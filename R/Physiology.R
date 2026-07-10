@@ -1,9 +1,12 @@
 #' Create a new `Physiology` object
 #' 
+#' Physiology support is experimental and under active development. The object
+#' structure and helper API may change in future versions.
+#'
 #' @param params A data frame with physiology parameters
 #' @param meta A list of metadata (e.g. species, sex)
 #' @returns A new `Physiology` object
-#' @export
+#' @noRd
 physiology <- function(params = NULL, meta = NULL) {
 
     param_default <- data.frame(
@@ -28,6 +31,9 @@ physiology <- function(params = NULL, meta = NULL) {
 
 #' Add a scalar parameter to a `Physiology` object
 #' 
+#' Physiology support is experimental and under active development. The object
+#' structure and helper API may change in future versions.
+#'
 #' @param phys A `Physiology` object
 #' @param name Name of the parameter
 #' @param value Numeric value
@@ -38,7 +44,7 @@ physiology <- function(params = NULL, meta = NULL) {
 #' @examples
 #' physiology() |>
 #'     add_scalar(name = "BW", value = 250)
-#' @export
+#' @noRd
 add_scalar <- function(phys, name, value, unit = "", reference = "", assumption = "") {
     phys$param_table <- rbind(
         phys$param_table,
@@ -58,6 +64,9 @@ add_scalar <- function(phys, name, value, unit = "", reference = "", assumption 
 
 #' Add a tissue parameter (e.g. volume, flow) to a `Physiology` object
 #' 
+#' Physiology support is experimental and under active development. The object
+#' structure and helper API may change in future versions.
+#'
 #' @param phys A `Physiology` object
 #' @param tissue Tissue name (e.g. "Liver")
 #' @param name Parameter name (e.g. "V" or "Q")
@@ -66,7 +75,7 @@ add_scalar <- function(phys, name, value, unit = "", reference = "", assumption 
 #' @param reference Source reference
 #' @param assumption Assumptions made
 #' @returns The updated `Physiology` object
-#' @export
+#' @noRd
 add_tissue_param <- function(phys, tissue, name, value, unit = "", reference = "", assumption = "") {
     phys$param_table <- rbind(
         phys$param_table,
@@ -86,13 +95,16 @@ add_tissue_param <- function(phys, tissue, name, value, unit = "", reference = "
 
 #' Add metadata (categorical attributes) to a `Physiology` object as name-value pairs.
 #' 
+#' Physiology support is experimental and under active development. The object
+#' structure and helper API may change in future versions.
+#'
 #' @param phys A `Physiology` object
 #' @param ... Name-value pairs.
 #' @examples
 #' physiology() |>
 #'     add_meta(species = "rat", strain = "Wistar", sex = "male")
 #' @returns The updated `Physiology` object
-#' @export
+#' @noRd
 add_meta <- function(phys, ...) {
     dots <- list(...)
     if (length(dots) == 0) {
@@ -107,7 +119,7 @@ add_meta <- function(phys, ...) {
 #' @param x A `Physiology` object
 #' @param ... Additional arguments (not used)
 #' @return The `Physiology` object (invisible)
-#' @export
+#' @noRd
 print.Physiology <- function(x, ...) {
     # ---- 1. Header with metadata ----
     meta_str <- ""
@@ -155,13 +167,17 @@ print.Physiology <- function(x, ...) {
  #' @param object A `Physiology` object
  #' @param ... Additional arguments (not used)
  #' @return A summary string
- #' @export
+ #' @noRd
 summary.Physiology <- function(object, ...) {
     paste0("Physiology: ", nrow(object$param_table), " parameters")
 }
 
 
 #' Get numeric parameter or metadata from a `Physiology` object by name (and optionally context)
+#'
+#' Physiology support is experimental and under active development. The object
+#' structure and helper API may change in future versions.
+#'
 #' @param phys A `Physiology` object
 #' @param name Name of the parameter or metadata entry to be queried
 #' @param context A string, defaulting to `"scalar"`
@@ -170,7 +186,7 @@ summary.Physiology <- function(object, ...) {
 #' P <- physiology() |>
 #'     add_scalar(name = "BW", value = 250)
 #' parameter(P, "BW") # 250
-#' @export
+#' @noRd
 parameter <- function(phys, name, context = "scalar") {
     # First check metadata
     if (name %in% names(phys$meta)) {
@@ -184,12 +200,15 @@ parameter <- function(phys, name, context = "scalar") {
 
 #' Export parameters as a named list
 #' 
+#' Physiology support is experimental and under active development. The object
+#' structure and helper API may change in future versions.
+#'
 #' This function converts the parameters in the `param_table` of a `Physiology` object into a named list, 
 #' where the names are either the parameter name (for scalars) or `parameter[context]` (for tissue parameters).
 #' 
 #' @param phys A `Physiology` object
 #' @returns A named list of parameters and metadata
-#' @export
+#' @noRd
 to_param_list <- function(phys) {
     out <- list()
     for (i in seq_len(nrow(phys$param_table))) {
@@ -208,9 +227,14 @@ to_param_list <- function(phys) {
 
 # ------------ physiology database and methods ------------
 #' Load a physiology from the physiology database
+#'
+#' Physiology support is experimental and under active development. The bundled
+#' database interface and returned object structure may change in future
+#' versions.
+#'
 #' @param name The name of the physiology to load (e.g. "rat250" or "human35m")
 #' @returns A `Physiology` object containing the parameters and metadata for the specified physiology.
-#' @export
+#' @noRd
 loadphysiology <- function(name) {
     .physiologydb[[name]]
 }
