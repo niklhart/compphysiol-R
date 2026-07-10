@@ -932,6 +932,7 @@ to_ode <- function(
 #' the `toODE` method to generate the final events list for `deSolve`.
 #' @param model A `CompartmentModel` object.
 #' @returns A list with a single element `data`, which is a data.frame with columns `var`, `time`, `value`, and `method` (add or replace).
+#' @noRd
 .dosing_to_events <- function(model) {
     .check_class(model, "CompartmentModel")
     doses <- model$doses

@@ -1,5 +1,5 @@
 ---
-title: "compphysiol: Computational Physiology toolbox"
+title: "compphysiol: Computational physiology toolbox"
 format: gfm
 editor: visual
 ---
@@ -10,7 +10,7 @@ editor: visual
 
 <!-- badges: end -->
 
-The Computational Physiology Toolbox is an R package for computations with physiology-based models, in particular physiologically-based pharmacokinetic (PBPK) models. It features a modular object-oriented design and an intuitive scripting language.
+`compphysiol` is an R package for computations with physiology-based models, in particular physiologically-based pharmacokinetic (PBPK) models. It features a modular object-oriented design and an intuitive scripting language.
 
 ## Installation
 

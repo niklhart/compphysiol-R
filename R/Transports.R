@@ -1,4 +1,4 @@
-#' Transports Class
+#' Transports class
 #'
 #' Transports represent mass/amount-preserving transports of molecules between two compartments in a compartment model.
 #' 
