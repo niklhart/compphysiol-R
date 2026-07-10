@@ -86,13 +86,13 @@ add_parameter <- function(
 }
 
 
-#' Names method for `Parameters` objects
+#' Names of parameters in a `Parameters` object
 #' @param x A `Parameters` object
 #' @returns The names of the parameters
 #' @export
 names.Parameters <- function(x) names(unclass(x))
 
-#' Subsetting method for `Parameters` objects
+#' Subset a `Parameters` object
 #' @param x A `Parameters` object
 #' @param i Indices or names of the parameters to subset
 #' @param ... Additional arguments (not used)
@@ -122,7 +122,7 @@ names.Parameters <- function(x) names(unclass(x))
     )
 }
 
-#' Combine multiple `Parameters` objects
+#' Combine multiple `Parameters` objects into one
 #' @param ... `Parameters` objects to combine
 #' @returns A combined `Parameters` object
 #' @export
@@ -137,7 +137,7 @@ c.Parameters <- function(...) {
         structure(class = c("Parameters", "list"))
 }
 
-#' Print method for `Parameters` objects
+#' Print a `Parameters` object
 #' @param x An `Parameters` object
 #' @param ... Additional arguments (not used)
 #' @returns The `Parameters` object (invisible)
@@ -160,7 +160,7 @@ print.Parameters <- function(x, ...) {
     invisible(x)
 }
 
-#' Unlist method for `Parameters` objects (experimental).
+#' Unlist a `Parameters` object (experimental).
 #' 
 #' Parameters may be scalars or vectors, but for some purposes it may be desirable to unlist them into a flat `Parameters` object.
 #' 

@@ -1,4 +1,4 @@
-#' `Compartments` Class
+#' Create a `Compartments` object
 #'
 #' Compartments represent model compartments with names and fixed or parametrized volumes.
 #'
@@ -129,7 +129,7 @@ as.data.frame.Compartments <- function(x, ...) {
     x
 }
 
-#' Length method for `Compartments` class
+#' Length of a `Compartments` object
 #' 
 #' Returns the number of compartments in a `Compartments` object.
 #' @param x A `Compartments` object
@@ -139,7 +139,7 @@ length.Compartments <- function(x) {
     nrow(as.data.frame(x))
 }
 
-#' Names method for `Compartments` class
+#' Names of compartments in a `Compartments` object
 #' 
 #' Returns the names of compartments in a `Compartments` object.
 #' @param x A `Compartments` object
@@ -148,7 +148,7 @@ length.Compartments <- function(x) {
 names.Compartments <- function(x) x$name
 
 
-#' Print method for `Compartments` class
+#' Print a `Compartments` object
 #' 
 #' Pretty-prints a `Compartments` object.
 #' 

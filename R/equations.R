@@ -83,13 +83,13 @@ add_equation <- function(model, ..., name = character(0), expr = character(0), e
     return(model)
 }
 
-#' Names method for `Equations` objects
+#' Names of equations in an `Equations` object
 #' @param x An `Equations` object
 #' @returns The names of the equations
 #' @export
 names.Equations <- function(x) names(unclass(x))
 
-#' Print method for `Equations` objects
+#' Print an `Equations` object
 #' @param x An `Equations` object
 #' @param ... Additional arguments (not used)
 #' @returns The `Equations` object (invisible)
@@ -112,7 +112,7 @@ print.Equations <- function(x, ...) {
     invisible(x)
 }
 
-#' Subsetting method for `Equations` objects
+#' Subset an `Equations` object
 #' @param x An `Equations` object
 #' @param i Indices or names of the equations to subset
 #' @param ... Additional arguments (not used)

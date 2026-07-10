@@ -1,4 +1,4 @@
-#' `Reactions` class and methods
+#' Create a `Reactions` object
 #'
 #' The `Reactions` class can hold several reactions, each with an input, output, rate/constant, and compartment.
 #' However, each reaction needs to be defined separately, i.e., vectorized definitions are not supported for reactions 
@@ -222,7 +222,7 @@ length.Reactions <- function(x) {
 #' @export
 c.Reactions <- function(...) .combine_df_like(...)
 
-#' Subset method for `Reactions` class
+#' Subset a `Reactions` object
 #' 
 #' Allows subsetting a `Reactions` object while preserving its class.
 #' @param x A `Reactions` object

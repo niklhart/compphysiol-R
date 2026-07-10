@@ -1,4 +1,4 @@
-#' Transports class
+#' Create a `Transports` object
 #'
 #' Transports represent mass/amount-preserving transports of molecules between two compartments in a compartment model.
 #' 
@@ -296,7 +296,7 @@ as.list.Transports <- function(x, ...) {
 #' @export
 c.Transports <- function(...) .combine_df_like(...)
 
-#' Accessing an element in a `Transports` object
+#' Access an element in a `Transports` object
 #' 
 #' @param x A `Transports` object
 #' @param i Row index to access

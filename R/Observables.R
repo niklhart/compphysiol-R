@@ -105,7 +105,7 @@ observables <- function(..., name = character(0), expr = character(0), cmt = NUL
     )
 }
 
-#' Add an observable to a `CompartmentModel` object.
+#' Add one or several observables to a `CompartmentModel` object.
 #'
 #' @inherit observables description details
 #' @param model A `CompartmentModel` object.
@@ -154,13 +154,13 @@ add_observable <- function(
 }
 
 
-#' Names method for `Observables` objects
+#' Names of observables in an `Observables` object
 #' @param x An `Observables` object
 #' @returns The names of the observables
 #' @export
 names.Observables <- function(x) names(unclass(x))
 
-#' Print method for `Observables` objects
+#' Print an `Observables` object
 #' @param x An `Observables` object
 #' @param ... Additional arguments (not used)
 #' @returns The `Observables` object (invisible)
@@ -183,7 +183,7 @@ print.Observables <- function(x, ...) {
     invisible(x)
 }
 
-#' Subsetting method for `Observables` objects
+#' Subset an `Observables` object
 #' @param x An `Observables` object
 #' @param i Indices or names of the observables to subset
 #' @param ... Additional arguments (not used)
@@ -196,7 +196,7 @@ print.Observables <- function(x, ...) {
     )
 }
 
-#' Combine multiple `Observables` objects
+#' Combine multiple `Observables` objects into one
 #' @param ... `Observables` objects to combine
 #' @returns A combined `Observables` object
 #' @export

@@ -1,4 +1,4 @@
-#' `Molecules` class
+#' Create a `Molecules` object
 #'
 #' Molecules represent the modelled substances whose amounts or concentrations
 #' can vary across compartments. A molecule may be a drug, metabolite, protein,

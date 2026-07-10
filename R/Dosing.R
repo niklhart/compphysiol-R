@@ -1,4 +1,4 @@
-#' Dosing specification
+#' Create a `Dosing` object
 #'
 #' Represents a dosing event for a `CompartmentModel`. A dose can be specified either as a bolus (instantaneous input) 
 #' or as an infusion (continuous input over time).
@@ -139,7 +139,7 @@ dosing <- function(
     )
 }
 
-#' Add one or several dosing events (bolus or infusion).
+#' Add one or several dosing events (bolus or infusion) to a `CompartmentModel` object.
 #'
 #' This function allows the user to add dosing events to a compartment model.
 #' Dosing events can be either bolus (instantaneous) or infusion (continuous over time).
@@ -205,7 +205,7 @@ is_infusion <- function(dose) {
     !is_bolus(dose)
 }
 
-#' Length method for Dosing class
+#' Length of a `Dosing` object
 #' 
 #' Returns the number of dosing events in a `Dosing` object.
 #' 
@@ -216,7 +216,7 @@ length.Dosing <- function(x) {
     length(x$time)
 }
 
-#' Print method for Dosing class
+#' Print a `Dosing` object
 #' 
 #' Pretty-prints a `Dosing` object.
 #' 
@@ -281,7 +281,7 @@ print.Dosing <- function(x, ...) {
     invisible(x)
 }
 
-#' Subset method for `Dosing` class
+#' Subset a `Dosing` object
 #' 
 #' Allows subsetting a `Dosing` object while preserving its class.
 #' 
@@ -319,7 +319,7 @@ c.Dosing <- function(...) {
     structure(combined_df, class = "Dosing")
 }
 
-#' Convert a Dosing object to a data frame
+#' Convert a `Dosing` object to a data frame
 #' 
 #' This method allows a `Dosing` object to be treated as a data frame for operations 
 #' like subsetting and combining, while preserving the `Dosing` class.

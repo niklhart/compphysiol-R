@@ -1,5 +1,5 @@
 
-#' Simulate a covariate distribution in adult humans
+#' Simulate a covariate distribution in human adults
 #'
 #' Generate pairs of body height (BH) and body weight (BW) values for a specified number of individuals.
 #' 

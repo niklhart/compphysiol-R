@@ -3,5 +3,5 @@
 #' @param name The name of the parameter to access
 #' @param ... Additional arguments to be passed to specific methods
 #' @returns A `Parameters` object containing the queried data.
-#' @export
+#' @noRd
 param <- function(x, name, ...) UseMethod("param")

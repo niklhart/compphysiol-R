@@ -21,6 +21,11 @@ You can download the development version of the package on GitHub:
 devtools::install_github("niklhart/compphysiol-R")
 ```
 
+## Citation
+
+See `citation("compphysiol")` for how to cite this package in scientific work.
+
+
 ## Usage - PBPK modeling workflow
 
 ```{r}

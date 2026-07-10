@@ -1,4 +1,4 @@
-#' Create a new `CompartmentModel` object.
+#' Create a `CompartmentModel` object
 #' 
 #' A compartment model consists of compartments, molecules, transports between compartments, 
 #' reactions between molecules, equations defining auxiliary variables, 
