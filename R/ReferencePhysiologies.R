@@ -9,7 +9,7 @@
 #' phys$param_table
 #'
 #' # Export for model
-#' param_list <- to_param_list(phys)
+#' param_list <- compphysiol:::to_param_list(phys)
 #' print(param_list)
 human35m <- function() {
 
