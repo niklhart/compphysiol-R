@@ -22,3 +22,8 @@ devtools::install_github("niklhart/compphysiol-R")
 ## Citation
 
 See `citation("compphysiol")` for how to cite this package in scientific work.
+
+## AI Agent Guidance
+
+This repository intentionally includes an AI-agent guidance file `AGENTS.md` and project-specific Codex skills. 
+These files document repository conventions, modeling vocabulary, testing expectations, and review workflows for AI-assisted development.
