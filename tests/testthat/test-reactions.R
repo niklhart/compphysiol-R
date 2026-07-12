@@ -20,6 +20,155 @@ test_that("Reactions are created correctly", {
     expect_equal(r2$type, "complex")
 })
 
+test_that("Reaction state participants require explicit molecule and compartment names", {
+    s <- state(molec = "R", cmt = "membrane")
+
+    expect_s3_class(s, "ReactionStates")
+    expect_equal(
+        as.data.frame(s),
+        data.frame(
+            molec = "R",
+            cmt = "membrane",
+            stoich = 1,
+            stringsAsFactors = FALSE
+        )
+    )
+
+    expect_error(state("R", "membrane"), "molec.*cmt|named")
+    expect_error(state(molec = "R"), "cmt")
+    expect_error(state(cmt = "membrane"), "molec")
+})
+
+test_that("Reaction state participants support vectorization and stoichiometry", {
+    s <- state(
+        molec = c("R", "L"),
+        cmt = c("membrane", "plasma"),
+        stoich = c(2, 1)
+    )
+
+    expect_s3_class(s, "ReactionStates")
+    expect_equal(length(s), 2)
+    expect_equal(
+        as.data.frame(s),
+        data.frame(
+            molec = c("R", "L"),
+            cmt = c("membrane", "plasma"),
+            stoich = c(2, 1),
+            stringsAsFactors = FALSE
+        )
+    )
+})
+
+test_that("Programmatic cross-compartment reactions store localized participants", {
+    r <- reactions(
+        input = state(
+            molec = c("R", "L"),
+            cmt = c("membrane", "plasma")
+        ),
+        output = state(molec = "LR", cmt = "membrane"),
+        scale_cmt = "membrane",
+        const = "kon"
+    )
+
+    expect_equal(length(r), 1)
+    expect_s3_class(r$input[[1]], "ReactionStates")
+    expect_s3_class(r$output[[1]], "ReactionStates")
+    expect_equal(
+        as.data.frame(r$input[[1]]),
+        data.frame(
+            molec = c("R", "L"),
+            cmt = c("membrane", "plasma"),
+            stoich = c(1, 1),
+            stringsAsFactors = FALSE
+        )
+    )
+    expect_equal(
+        as.data.frame(r$output[[1]]),
+        data.frame(
+            molec = "LR",
+            cmt = "membrane",
+            stoich = 1,
+            stringsAsFactors = FALSE
+        )
+    )
+    expect_equal(r$scale_cmt, "membrane")
+    expect_equal(r$const[[1]], quote(kon))
+    expect_equal(r$rate[[1]], quote(kon * c[R, membrane] * c[L, plasma]))
+    expect_equal(r$type, "elementary")
+})
+
+test_that("Programmatic reactions normalize repeated participants", {
+    r <- reactions(
+        input = c(
+            state(molec = "A", cmt = "cyt"),
+            state(molec = "A", cmt = "cyt")
+        ),
+        output = state(molec = "B", cmt = "cyt"),
+        const = "k"
+    )
+
+    expect_equal(
+        as.data.frame(r$input[[1]]),
+        data.frame(
+            molec = "A",
+            cmt = "cyt",
+            stoich = 2,
+            stringsAsFactors = FALSE
+        )
+    )
+    expect_equal(r$scale_cmt, "cyt")
+})
+
+test_that("Cross-compartment reactions require an explicit involved scale compartment", {
+    expect_error(
+        reactions(
+            input = state(
+                molec = c("R", "L"),
+                cmt = c("membrane", "plasma")
+            ),
+            output = state(molec = "LR", cmt = "membrane"),
+            const = "kon"
+        ),
+        "scale_cmt"
+    )
+
+    expect_error(
+        reactions(
+            input = state(
+                molec = c("R", "L"),
+                cmt = c("membrane", "plasma")
+            ),
+            output = state(molec = "LR", cmt = "membrane"),
+            scale_cmt = "interstitium",
+            const = "kon"
+        ),
+        "scale_cmt.*involved|involved.*scale_cmt"
+    )
+})
+
+test_that("Same-compartment state reactions infer scale compartment", {
+    r <- reactions(
+        input = state(molec = "A", cmt = "cyt"),
+        output = state(molec = "B", cmt = "cyt"),
+        const = "kAB"
+    )
+
+    expect_equal(r$scale_cmt, "cyt")
+    expect_equal(r$rate[[1]], quote(kAB * c[A, cyt]))
+})
+
+test_that("Character reactions remain same-compartment shorthand", {
+    r <- reactions(input = c("A", "B"), output = "C", cmt = "cyt", const = "k")
+
+    expect_equal(r$input, I(list(c("A", "B"))))
+    expect_equal(r$output, I(list("C")))
+    expect_equal(r$cmt, "cyt")
+    expect_equal(r$scale_cmt, "cyt")
+    expect_equal(r$const[[1]], quote(k))
+    expect_equal(r$rate[[1]], quote(k * c[A, cyt] * c[B, cyt]))
+    expect_equal(r$type, "elementary")
+})
+
 test_that("Empty reactions are handled correctly", {
     r1 <- reactions()
     r2 <- reactions(input = "A", output = "B", const = "k")
