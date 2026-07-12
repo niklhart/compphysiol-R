@@ -1,13 +1,12 @@
 # Test for reaction-related functions
 
-expect_reaction_states <- function(x, molec, cmt, stoich = rep(1, length(molec))) {
-    expect_s3_class(x, "ReactionStates")
+expect_states <- function(x, molec, cmt) {
+    expect_s3_class(x, "States")
     expect_equal(
         as.data.frame(x),
         data.frame(
             molec = molec,
             cmt = cmt,
-            stoich = stoich,
             stringsAsFactors = FALSE
         )
     )
@@ -17,11 +16,6 @@ expect_reaction_participants <- function(reaction, role, molec, cmt, stoich = re
     has_participants <- "participants" %in% names(reaction)
     expect_true(has_participants)
     if (!has_participants) return(invisible(NULL))
-
-    expect_s3_class(reaction$participants[[1]], "ReactionParticipants")
-    if (!inherits(reaction$participants[[1]], "ReactionParticipants")) {
-        return(invisible(NULL))
-    }
 
     participants <- as.data.frame(reaction$participants[[1]])
     has_columns <- all(c("role", "molec", "cmt", "stoich") %in% names(participants))
@@ -64,25 +58,25 @@ test_that("Reactions are created correctly", {
     expect_equal(r2$type, "complex")
 })
 
-test_that("Reaction state participants require explicit molecule and compartment names", {
+test_that("States require explicit molecule and compartment names", {
     s <- state(molec = "R", cmt = "membrane")
 
-    expect_reaction_states(s, "R", "membrane")
+    expect_states(s, "R", "membrane")
 
     expect_error(state("R", "membrane"), "molec.*cmt|named")
     expect_error(state(molec = "R"), "cmt")
     expect_error(state(cmt = "membrane"), "molec")
+    expect_error(state(molec = "R", cmt = "membrane", stoich = 2), "stoich|unused|named")
 })
 
-test_that("Reaction state participants support vectorization and stoichiometry", {
+test_that("States support vectorized molecule-compartment pairs", {
     s <- state(
         molec = c("R", "L"),
-        cmt = c("membrane", "plasma"),
-        stoich = c(2, 1)
+        cmt = c("membrane", "plasma")
     )
 
     expect_equal(length(s), 2)
-    expect_reaction_states(s, c("R", "L"), c("membrane", "plasma"), c(2, 1))
+    expect_states(s, c("R", "L"), c("membrane", "plasma"))
 })
 
 test_that("Programmatic cross-compartment reactions store localized participants", {

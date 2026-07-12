@@ -135,8 +135,8 @@ a membrane-localized complex.
 
 Reactions may have multiple inputs and outputs. Their vector arguments describe
 stoichiometric participants rather than vectorized creation of many unrelated
-reactions. Repeated participants and explicit stoichiometric coefficients both
-represent stoichiometry, for example two copies of the same input molecule.
+reactions. Repeated participants represent stoichiometry, for example two
+copies of the same input molecule.
 
 Reaction rates are expressed as concentration-change rates with respect to a
 reaction scaling compartment. During ODE export, these rates are multiplied by
