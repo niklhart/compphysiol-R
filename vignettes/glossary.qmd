@@ -119,22 +119,42 @@ as `Qliv`.
 
 ## Reaction
 
-A reaction changes molecular identity or stoichiometry within a compartment.
-For example, a reaction may convert drug to metabolite, bind ligand and
-receptor into a complex, synthesize a molecule, or degrade a molecule.
+A reaction changes molecular identity or stoichiometry. For example, a reaction
+may convert drug to metabolite, bind ligand and receptor into a complex,
+synthesize a molecule, or degrade a molecule.
 
 This differs from a transport: a transport moves a molecule between
-compartments, while a reaction transforms molecules in place. Reactions may
-have multiple inputs and outputs, and their vector arguments describe
-stoichiometric participants rather than vectorized creation of many unrelated
-reactions.
+compartments while preserving molecular identity, while a reaction transforms
+one set of localized state participants into another. A participant is a
+molecule in a compartment, such as ligand in plasma or receptor on a membrane.
+The common same-compartment reaction is the shorthand case where all
+participants are localized in one compartment. Cross-compartment reactions are
+used when the reacting participants are localized in different compartments,
+such as ligand in plasma binding to receptor in a membrane compartment to form
+a membrane-localized complex.
 
-Reaction rates are expressed as concentration-change rates within the reaction
-compartment. During ODE export, these rates are multiplied by the compartment
-volume to obtain amount-change rates for the ODE states. This keeps the public
-reaction syntax close to mass-action conventions: zero-order reaction constants
-have units amount/volume/time, first-order constants have units 1/time, and
-second-order constants have units volume/amount/time.
+Reactions may have multiple inputs and outputs. Their vector arguments describe
+stoichiometric participants rather than vectorized creation of many unrelated
+reactions. Repeated participants and explicit stoichiometric coefficients both
+represent stoichiometry, for example two copies of the same input molecule.
+
+Reaction rates are expressed as concentration-change rates with respect to a
+reaction scaling compartment. During ODE export, these rates are multiplied by
+the size represented by that compartment to obtain amount-change rates for the
+affected ODE states. For same-compartment reactions, the scaling compartment is
+the shared participant compartment. For cross-compartment reactions, the scaling
+compartment must be specified explicitly, for example with `scale_cmt`, and must
+be one of the compartments involved in the reaction. This keeps the public
+reaction syntax close to mass-action conventions while making interface
+reactions, such as membrane receptor binding, explicit about the compartment
+whose concentration scale defines the reaction rate.
+
+The `c[]` and `a[]` state-reference forms keep their usual meaning in reaction
+rates. The unit of `c[molecule, compartment]` depends on the size assigned to
+that compartment: for ordinary volumetric compartments it is an amount per
+volume, while for surface-like compartments it may be an amount per area. ODE
+export still chooses amount states when possible and concentration states when
+amount conversion is not available.
 
 Implementation anchor: reactions are represented by `Reactions` objects
 created with `reactions()` or added with `add_reaction()`. Current reaction
