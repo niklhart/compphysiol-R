@@ -171,7 +171,8 @@ print.States <- function(x, ...) {
 #'   For degradation reactions, use an empty character vector or `NULL`.
 #' @param cmt Character vector of compartment names where the reaction(s) occur (optional, default: all compartments)
 #' @param scale_cmt Compartment whose size scales concentration-change reaction rates to amount-change rates.
-#'   Required for cross-compartment reactions and inferred for same-compartment reactions.
+#'   Inferred for same-compartment reactions and elementary reactions with a single input compartment.
+#'   Required for other cross-compartment reactions.
 #' @param ... Errors if used, enforces `rate` and `const` to be specified as named arguments only, not positional.
 #' @param rate Character string representing the concentration-change reaction rate (for nonlinear reactions).
 #'   Use `c[A]` to refer to the concentration of molecule A, and `a[A]` to refer to its amount.
@@ -278,11 +279,21 @@ reactions <- function(
     if (length(scale_cmt) == 1) scale_cmt <- rep(scale_cmt, nReact)
     infer_scale <- is.na(scale_cmt)
     for (i in seq_len(nReact)) {
+        input_cmt <- unique(reaction_participants[[i]]$cmt[
+            reaction_participants[[i]]$role == "input" &
+                !is.na(reaction_participants[[i]]$cmt)
+        ])
         if (infer_scale[[i]] && length(involved_cmt[[i]]) == 1) {
             scale_cmt[[i]] <- involved_cmt[[i]]
         }
+        if (infer_scale[[i]] &&
+            identical(type, "elementary") &&
+            length(involved_cmt[[i]]) > 1 &&
+            length(input_cmt) == 1) {
+            scale_cmt[[i]] <- input_cmt
+        }
         if (length(involved_cmt[[i]]) > 1 && is.na(scale_cmt[[i]])) {
-            stop("Argument 'scale_cmt' is required for cross-compartment reactions.", call. = FALSE)
+            stop("Argument 'scale_cmt' is required for cross-compartment reactions with no unique input compartment.", call. = FALSE)
         }
         if (!is.na(scale_cmt[[i]]) && !(scale_cmt[[i]] %in% involved_cmt[[i]])) {
             stop("Argument 'scale_cmt' must name a compartment involved in the reaction.", call. = FALSE)
@@ -449,16 +460,31 @@ print.Reactions = function(x, ...) {
 
         in_str <- vapply(x$participants, format_side, character(1), role = "input")
         out_str <- vapply(x$participants, format_side, character(1), role = "output")
-        scale_str <- ifelse(is.na(x$scale_cmt), "<all cmt>", x$scale_cmt)
         rate_str <- vapply(x$rate, function(r) paste(deparse(r), collapse = ""), character(1))
+        location_str <- vapply(x$participants, function(participants) {
+            cmt <- unique(participants$cmt[!is.na(participants$cmt)])
+            if (length(cmt) == 0) " (<all cmt>)" else ""
+        }, character(1))
+        show_scale <- vapply(seq_along(x$participants), function(i) {
+            participants <- x$participants[[i]]
+            involved_cmt <- unique(participants$cmt[!is.na(participants$cmt)])
+            input_cmt <- unique(participants$cmt[
+                participants$role == "input" & !is.na(participants$cmt)
+            ])
+
+            length(involved_cmt) > 1 &&
+                !(identical(x$type[[i]], "elementary") && length(input_cmt) == 1)
+        }, logical(1))
+        scale_str <- ifelse(show_scale, paste0(", scale = ", x$scale_cmt), "")
 
         cat(" Reactions:\n")
         cat(
             sprintf(
-                "  (%i) %s \u2192 %s, scale = %s, rate = %s\n",
+                "  (%i) %s \u2192 %s%s%s, rate = %s\n",
                 seq_along(x),
                 in_str,
                 out_str,
+                location_str,
                 scale_str,
                 rate_str
             ),

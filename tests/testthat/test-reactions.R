@@ -144,6 +144,28 @@ test_that("Cross-compartment reactions require an explicit involved scale compar
     )
 })
 
+test_that("Elementary cross-compartment reactions infer scale from unique input compartment", {
+    r <- reactions(
+        input = state(molec = "A", cmt = "plasma"),
+        output = state(molec = "B", cmt = "membrane"),
+        const = "kAB"
+    )
+
+    expect_equal(r$scale_cmt, "plasma")
+    expect_equal(r$rate[[1]], quote(kAB * c[A, plasma]))
+})
+
+test_that("Complex cross-compartment reactions require explicit scale compartment", {
+    expect_error(
+        reactions(
+            input = state(molec = "A", cmt = "plasma"),
+            output = state(molec = "B", cmt = "membrane"),
+            rate = "kAB * c[A, plasma]"
+        ),
+        "scale_cmt"
+    )
+})
+
 test_that("Same-compartment state reactions infer scale compartment", {
     r <- reactions(
         input = state(molec = "A", cmt = "cyt"),
@@ -219,13 +241,33 @@ test_that("Vectorized reaction creation with compartment substitution works corr
 })
 
 test_that("Reaction printing works correctly", {
-    # 1 input -> 1 output, no cmt specified
-    r1 <- reactions(input = c("A", "B"), output = "C", const = "k")
+    # same-compartment reaction
+    r1 <- reactions(input = c("A", "B"), output = "C", cmt = "cyt", const = "k")
     expect_snapshot(print(r1))
 
-    # input -> sink, 1 nonlinear reaction, no cmt specified
-    r2 <- reactions(input = "A", output = NULL, rate = "k1 * c[A] / (c[A] + K)")
+    # wildcard compartment reaction
+    r2 <- reactions(input = "A", output = "B", const = "kAB")
     expect_snapshot(print(r2))
+
+    # cross-compartment reaction with inferred scale
+    r3 <- reactions(
+        input = state(molec = "A", cmt = "plasma"),
+        output = state(molec = "B", cmt = "membrane"),
+        const = "kAB"
+    )
+    expect_snapshot(print(r3))
+
+    # cross-compartment reaction with explicit scale
+    r4 <- reactions(
+        input = state(
+            molec = c("L", "R"),
+            cmt = c("plasma", "membrane")
+        ),
+        output = state(molec = "LR", cmt = "membrane"),
+        scale_cmt = "membrane",
+        const = "kon"
+    )
+    expect_snapshot(print(r4))
 })
 
 test_that("Reactions can be added to compartment models", {

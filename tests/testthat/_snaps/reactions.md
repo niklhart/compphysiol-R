@@ -21,7 +21,7 @@
       print(r1)
     Output
        Reactions:
-        (1) A+B → C, scale = <all cmt>, rate = k * c[A] * c[B]
+        (1) A[cyt]+B[cyt] → C[cyt], rate = k * c[A, cyt] * c[B, cyt]
 
 ---
 
@@ -29,5 +29,21 @@
       print(r2)
     Output
        Reactions:
-        (1) A → ∅, scale = <all cmt>, rate = k1 * c[A]/(c[A] + K)
+        (1) A → B (<all cmt>), rate = kAB * c[A]
+
+---
+
+    Code
+      print(r3)
+    Output
+       Reactions:
+        (1) A[plasma] → B[membrane], rate = kAB * c[A, plasma]
+
+---
+
+    Code
+      print(r4)
+    Output
+       Reactions:
+        (1) L[plasma]+R[membrane] → LR[membrane], scale = membrane, rate = kon * c[L, plasma] * c[R, membrane]
 

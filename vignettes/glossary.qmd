@@ -143,11 +143,13 @@ reaction scaling compartment. During ODE export, these rates are multiplied by
 the size represented by that compartment to obtain amount-change rates for the
 affected ODE states. For same-compartment reactions, the scaling compartment is
 the shared participant compartment. For cross-compartment reactions, the scaling
-compartment must be specified explicitly, for example with `scale_cmt`, and must
-be one of the compartments involved in the reaction. This keeps the public
-reaction syntax close to mass-action conventions while making interface
-reactions, such as membrane receptor binding, explicit about the compartment
-whose concentration scale defines the reaction rate.
+compartment can be inferred for elementary reactions with a single input
+compartment. In other cross-compartment reactions it must be specified
+explicitly, for example with `scale_cmt`, and must be one of the compartments
+involved in the reaction. This keeps the public reaction syntax close to
+mass-action conventions while making interface reactions, such as membrane
+receptor binding, explicit about the compartment whose concentration scale
+defines the reaction rate.
 
 The `c[]` and `a[]` state-reference forms keep their usual meaning in reaction
 rates. The unit of `c[molecule, compartment]` depends on the size assigned to

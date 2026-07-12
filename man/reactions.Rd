@@ -26,7 +26,8 @@ For degradation reactions, use an empty character vector or \code{NULL}.}
 \item{cmt}{Character vector of compartment names where the reaction(s) occur (optional, default: all compartments)}
 
 \item{scale_cmt}{Compartment whose size scales concentration-change reaction rates to amount-change rates.
-Required for cross-compartment reactions and inferred for same-compartment reactions.}
+Inferred for same-compartment reactions and elementary reactions with a single input compartment.
+Required for other cross-compartment reactions.}
 
 \item{...}{Errors if used, enforces \code{rate} and \code{const} to be specified as named arguments only, not positional.}
 
