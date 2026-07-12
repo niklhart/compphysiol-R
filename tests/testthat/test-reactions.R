@@ -40,6 +40,7 @@ test_that("Reactions are created correctly", {
     # Elementary reaction
     r1 <- reactions(input = c("A","B"), output = "C", const = "k1")
     expect_equal(length(r1), 1)
+    expect_false(any(c("input", "output", "cmt") %in% names(r1)))
     expect_reaction_participants(r1, "input", c("A", "B"), c(NA_character_, NA_character_))
     expect_reaction_participants(r1, "output", "C", NA_character_)
     expect_equal(r1$scale_cmt, NA_character_)
@@ -62,6 +63,7 @@ test_that("States require explicit molecule and compartment names", {
     s <- state(molec = "R", cmt = "membrane")
 
     expect_states(s, "R", "membrane")
+    expect_snapshot(print(s))
 
     expect_error(state("R", "membrane"), "molec.*cmt|named")
     expect_error(state(molec = "R"), "cmt")
@@ -77,6 +79,7 @@ test_that("States support vectorized molecule-compartment pairs", {
 
     expect_equal(length(s), 2)
     expect_states(s, c("R", "L"), c("membrane", "plasma"))
+    expect_snapshot(print(s))
 })
 
 test_that("Programmatic cross-compartment reactions store localized participants", {

@@ -263,19 +263,29 @@ wire <- function(model, what = c("molec", "cmt")) {
                 lapply(function(m) {
                     participants <- as.data.frame(m$participants[[1]])
                     unresolved_participant_cmt <- all(is.na(participants$cmt))
-                    if (is.na(m$cmt) && unresolved_participant_cmt) {
+                    if (unresolved_participant_cmt) {
+                        input <- .participants_to_molecules(
+                            participants,
+                            role = "input",
+                            repeat_stoich = TRUE
+                        )
+                        output <- .participants_to_molecules(
+                            participants,
+                            role = "output",
+                            repeat_stoich = TRUE
+                        )
                         if (identical(m$type, "elementary")) {
                             return(reactions(
-                                input = m$input[[1]],
-                                output = m$output[[1]],
+                                input = input,
+                                output = output,
                                 cmt = cmt_names,
                                 const = m$const[[1]]
                             ))
                         }
 
                         return(reactions(
-                            input = m$input[[1]],
-                            output = m$output[[1]],
+                            input = input,
+                            output = output,
                             cmt = cmt_names,
                             rate = m$rate[[1]]
                         ))
@@ -287,7 +297,7 @@ wire <- function(model, what = c("molec", "cmt")) {
                     rebuild_df_like_row(
                         m,
                         class = "Reactions",
-                        list_cols = c("input", "output", "rate", "const", "participants")
+                        list_cols = c("rate", "const", "participants")
                     )
                 }) |>
                 do.call(what = "c") %||% reactions()

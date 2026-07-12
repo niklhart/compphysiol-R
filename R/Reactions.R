@@ -63,6 +63,21 @@ c.States <- function(...) {
 #' @export
 `[[.States` <- function(x, i, ...) .extract_df_like(x, i)
 
+#' @export
+print.States <- function(x, ...) {
+    if (length(x) > 0) {
+        state_str <- paste0(x$molec, "[", x$cmt, "]")
+        cat(" States:\n")
+        cat(
+            sprintf("  (%s) %s\n", seq_along(x), state_str),
+            sep = ""
+        )
+    } else {
+        cat(" States: (none)\n")
+    }
+    invisible(x)
+}
+
 .empty_reaction_participants <- function() {
     data.frame(
         role = character(),
@@ -109,8 +124,11 @@ c.States <- function(...) {
     )
 }
 
-.participants_to_molecules <- function(participants, role) {
-    participants$molec[participants$role == role]
+.participants_to_molecules <- function(participants, role, repeat_stoich = FALSE) {
+    role_participants <- participants[participants$role == role, , drop = FALSE]
+    if (!repeat_stoich) return(role_participants$molec)
+
+    rep(role_participants$molec, role_participants$stoich)
 }
 
 .participants_to_rate_terms <- function(participants) {
@@ -199,12 +217,9 @@ reactions <- function(
         return(
             structure(
                 data.frame(
-                    input = I(list()),
-                    output = I(list()),
                     rate = I(list()),
                     const = I(list()),
                     type = character(),
-                    cmt = character(),
                     scale_cmt = character(),
                     participants = I(list()),
                     stringsAsFactors = FALSE
@@ -307,20 +322,13 @@ reactions <- function(
 
     )
 
-    # Replicate input/output to length of cmt
-    input <- lapply(reaction_participants, .participants_to_molecules, role = "input")
-    output <- lapply(reaction_participants, .participants_to_molecules, role = "output")
-
     # Construct the Reactions object as a data frame with class "Reactions"
     return(
         structure(
             data.frame(
-                input = I(input),
-                output = I(output),
                 rate = I(rate),
                 const = I(const),
                 type = type,
-                cmt = cmt,
                 scale_cmt = scale_cmt,
                 participants = I(reaction_participants),
                 stringsAsFactors = FALSE
@@ -426,23 +434,32 @@ print.Reactions = function(x, ...) {
 
     if (length(x) > 0) {
 
-        empty_or_collapse <- function(x) {
-            if (length(x) > 0) paste0(x, collapse = "+") else "\u2205" # empty set symbol for source/sink compartments
+        format_side <- function(participants, role) {
+            side <- participants[participants$role == role, , drop = FALSE]
+            if (nrow(side) == 0) return("\u2205")
+
+            state_str <- ifelse(
+                is.na(side$cmt),
+                side$molec,
+                paste0(side$molec, "[", side$cmt, "]")
+            )
+            ifelse(side$stoich == 1, state_str, paste0(side$stoich, "*", state_str)) |>
+                paste0(collapse = "+")
         }
 
-        in_str <- vapply(x$input, empty_or_collapse, character(1))
-        out_str <- vapply(x$output, empty_or_collapse, character(1))
-        cmt_str <- ifelse(is.na(x$cmt), "<all cmt>", x$cmt)
+        in_str <- vapply(x$participants, format_side, character(1), role = "input")
+        out_str <- vapply(x$participants, format_side, character(1), role = "output")
+        scale_str <- ifelse(is.na(x$scale_cmt), "<all cmt>", x$scale_cmt)
         rate_str <- vapply(x$rate, function(r) paste(deparse(r), collapse = ""), character(1))
 
         cat(" Reactions:\n")
         cat(
             sprintf(
-                "  (%i) %s \u2192 %s in %s, rate = %s\n",
+                "  (%i) %s \u2192 %s, scale = %s, rate = %s\n",
                 seq_along(x),
                 in_str,
                 out_str,
-                cmt_str,
+                scale_str,
                 rate_str
             ),
             sep = ""
