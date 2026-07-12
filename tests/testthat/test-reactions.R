@@ -1,11 +1,54 @@
 # Test for reaction-related functions
 
+expect_reaction_states <- function(x, molec, cmt, stoich = rep(1, length(molec))) {
+    expect_s3_class(x, "ReactionStates")
+    expect_equal(
+        as.data.frame(x),
+        data.frame(
+            molec = molec,
+            cmt = cmt,
+            stoich = stoich,
+            stringsAsFactors = FALSE
+        )
+    )
+}
+
+expect_reaction_participants <- function(reaction, role, molec, cmt, stoich = rep(1, length(molec))) {
+    has_participants <- "participants" %in% names(reaction)
+    expect_true(has_participants)
+    if (!has_participants) return(invisible(NULL))
+
+    expect_s3_class(reaction$participants[[1]], "ReactionParticipants")
+    if (!inherits(reaction$participants[[1]], "ReactionParticipants")) {
+        return(invisible(NULL))
+    }
+
+    participants <- as.data.frame(reaction$participants[[1]])
+    has_columns <- all(c("role", "molec", "cmt", "stoich") %in% names(participants))
+    expect_true(has_columns)
+    if (!has_columns) return(invisible(NULL))
+
+    participants <- participants[participants$role == role, c("molec", "cmt", "stoich")]
+    rownames(participants) <- NULL
+
+    expect_equal(
+        participants,
+        data.frame(
+            molec = molec,
+            cmt = cmt,
+            stoich = stoich,
+            stringsAsFactors = FALSE
+        )
+    )
+}
+
 test_that("Reactions are created correctly", {
     # Elementary reaction
     r1 <- reactions(input = c("A","B"), output = "C", const = "k1")
     expect_equal(length(r1), 1)
-    expect_equal(r1$input, I(list(c("A","B"))))
-    expect_equal(r1$output, I(list("C")))
+    expect_reaction_participants(r1, "input", c("A", "B"), c(NA_character_, NA_character_))
+    expect_reaction_participants(r1, "output", "C", NA_character_)
+    expect_equal(r1$scale_cmt, NA_character_)
     expect_equal(r1$const[[1]], quote(k1))
     expect_equal(r1$rate[[1]], quote(k1 * c[A] * c[B]))
     expect_equal(r1$type, "elementary")
@@ -13,8 +56,9 @@ test_that("Reactions are created correctly", {
     # Complex reaction
     r2 <- reactions(input = "A", output = "B", rate = "k1 * c[A]*c[B]/(c[B]+K)")
     expect_equal(length(r2), 1)
-    expect_equal(r2$input, I(list("A")))
-    expect_equal(r2$output, I(list("B")))
+    expect_reaction_participants(r2, "input", "A", NA_character_)
+    expect_reaction_participants(r2, "output", "B", NA_character_)
+    expect_equal(r2$scale_cmt, NA_character_)
     expect_equal(r2$rate[[1]], quote(k1 * c[A] * c[B] / (c[B] + K)))
     expect_equal(r2$const[[1]], NULL)
     expect_equal(r2$type, "complex")
@@ -23,16 +67,7 @@ test_that("Reactions are created correctly", {
 test_that("Reaction state participants require explicit molecule and compartment names", {
     s <- state(molec = "R", cmt = "membrane")
 
-    expect_s3_class(s, "ReactionStates")
-    expect_equal(
-        as.data.frame(s),
-        data.frame(
-            molec = "R",
-            cmt = "membrane",
-            stoich = 1,
-            stringsAsFactors = FALSE
-        )
-    )
+    expect_reaction_states(s, "R", "membrane")
 
     expect_error(state("R", "membrane"), "molec.*cmt|named")
     expect_error(state(molec = "R"), "cmt")
@@ -46,17 +81,8 @@ test_that("Reaction state participants support vectorization and stoichiometry",
         stoich = c(2, 1)
     )
 
-    expect_s3_class(s, "ReactionStates")
     expect_equal(length(s), 2)
-    expect_equal(
-        as.data.frame(s),
-        data.frame(
-            molec = c("R", "L"),
-            cmt = c("membrane", "plasma"),
-            stoich = c(2, 1),
-            stringsAsFactors = FALSE
-        )
-    )
+    expect_reaction_states(s, c("R", "L"), c("membrane", "plasma"), c(2, 1))
 })
 
 test_that("Programmatic cross-compartment reactions store localized participants", {
@@ -71,26 +97,8 @@ test_that("Programmatic cross-compartment reactions store localized participants
     )
 
     expect_equal(length(r), 1)
-    expect_s3_class(r$input[[1]], "ReactionStates")
-    expect_s3_class(r$output[[1]], "ReactionStates")
-    expect_equal(
-        as.data.frame(r$input[[1]]),
-        data.frame(
-            molec = c("R", "L"),
-            cmt = c("membrane", "plasma"),
-            stoich = c(1, 1),
-            stringsAsFactors = FALSE
-        )
-    )
-    expect_equal(
-        as.data.frame(r$output[[1]]),
-        data.frame(
-            molec = "LR",
-            cmt = "membrane",
-            stoich = 1,
-            stringsAsFactors = FALSE
-        )
-    )
+    expect_reaction_participants(r, "input", c("R", "L"), c("membrane", "plasma"))
+    expect_reaction_participants(r, "output", "LR", "membrane")
     expect_equal(r$scale_cmt, "membrane")
     expect_equal(r$const[[1]], quote(kon))
     expect_equal(r$rate[[1]], quote(kon * c[R, membrane] * c[L, plasma]))
@@ -107,15 +115,8 @@ test_that("Programmatic reactions normalize repeated participants", {
         const = "k"
     )
 
-    expect_equal(
-        as.data.frame(r$input[[1]]),
-        data.frame(
-            molec = "A",
-            cmt = "cyt",
-            stoich = 2,
-            stringsAsFactors = FALSE
-        )
-    )
+    expect_reaction_participants(r, "input", "A", "cyt", 2)
+    expect_reaction_participants(r, "output", "B", "cyt")
     expect_equal(r$scale_cmt, "cyt")
 })
 
@@ -160,9 +161,8 @@ test_that("Same-compartment state reactions infer scale compartment", {
 test_that("Character reactions remain same-compartment shorthand", {
     r <- reactions(input = c("A", "B"), output = "C", cmt = "cyt", const = "k")
 
-    expect_equal(r$input, I(list(c("A", "B"))))
-    expect_equal(r$output, I(list("C")))
-    expect_equal(r$cmt, "cyt")
+    expect_reaction_participants(r, "input", c("A", "B"), c("cyt", "cyt"))
+    expect_reaction_participants(r, "output", "C", "cyt")
     expect_equal(r$scale_cmt, "cyt")
     expect_equal(r$const[[1]], quote(k))
     expect_equal(r$rate[[1]], quote(k * c[A, cyt] * c[B, cyt]))
@@ -185,8 +185,10 @@ test_that("Multiple reactions can be combined and subsetted", {
     r1s <- r12[1]
 
     expect_equal(length(r12), 2)
-    expect_equal(r12$input, I(list("A", "B")))
-    expect_equal(r12$output, I(list("B", "A")))
+    expect_reaction_participants(r12[1], "input", "A", NA_character_)
+    expect_reaction_participants(r12[1], "output", "B", NA_character_)
+    expect_reaction_participants(r12[2], "input", "B", NA_character_)
+    expect_reaction_participants(r12[2], "output", "A", NA_character_)
     expect_equal(r1s,r1)
 })
 
@@ -196,15 +198,27 @@ test_that("Vectorized reaction creation with compartment substitution works corr
     r1 <- reactions(input = "A", output = "B", cmt = c("a","b"), const = "k{cmt}")
 
     expect_equal(length(r1), 2)
+    expect_reaction_participants(r1[1], "input", "A", "a")
+    expect_reaction_participants(r1[1], "output", "B", "a")
+    expect_reaction_participants(r1[2], "input", "A", "b")
+    expect_reaction_participants(r1[2], "output", "B", "b")
+    expect_equal(r1$scale_cmt, c("a", "b"))
     expect_equal(r1$const[[1]], quote(ka))
     expect_equal(r1$const[[2]], quote(kb))
+    expect_equal(r1$rate[[1]], quote(ka * c[A, a]))
+    expect_equal(r1$rate[[2]], quote(kb * c[A, b]))
 
     # Complex reaction with substitution
     r2 <- reactions(input = "A", output = "B", cmt = c("a","b"), rate = "k{cmt}*c[A]")
 
     expect_equal(length(r2), 2)
-    expect_equal(r2$rate[[1]], quote(ka * c[A]))
-    expect_equal(r2$rate[[2]], quote(kb * c[A]))
+    expect_reaction_participants(r2[1], "input", "A", "a")
+    expect_reaction_participants(r2[1], "output", "B", "a")
+    expect_reaction_participants(r2[2], "input", "A", "b")
+    expect_reaction_participants(r2[2], "output", "B", "b")
+    expect_equal(r2$scale_cmt, c("a", "b"))
+    expect_equal(r2$rate[[1]], quote(ka * c[A, a]))
+    expect_equal(r2$rate[[2]], quote(kb * c[A, b]))
 })
 
 test_that("Reaction printing works correctly", {
@@ -223,8 +237,10 @@ test_that("Reactions can be added to compartment models", {
         add_reaction(input = "B", output = "C", rate = "k2 * c[B]")
 
     expect_equal(length(model$reactions), 2)
-    expect_equal(model$reactions$input, I(list("A", "B")))
-    expect_equal(model$reactions$output, I(list("B", "C")))
+    expect_reaction_participants(model$reactions[1], "input", "A", NA_character_)
+    expect_reaction_participants(model$reactions[1], "output", "B", NA_character_)
+    expect_reaction_participants(model$reactions[2], "input", "B", NA_character_)
+    expect_reaction_participants(model$reactions[2], "output", "C", NA_character_)
     expect_equal(model$reactions$const[[1]], quote(k1))
     expect_equal(model$reactions$const[[2]], NULL)
     expect_equal(model$reactions$rate[[1]], quote(k1 * c[A]))
