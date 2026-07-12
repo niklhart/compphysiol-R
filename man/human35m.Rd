@@ -6,6 +6,9 @@
 \usage{
 human35m()
 }
+\value{
+A \code{Physiology} object
+}
 \description{
 Reference physiology of a male adult human
 }
@@ -17,6 +20,6 @@ phys <- human35m()
 phys$param_table
 
 # Export for model
-param_list <- to_param_list(phys)
+param_list <- compphysiol:::to_param_list(phys)
 print(param_list)
 }

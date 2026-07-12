@@ -1,5 +1,6 @@
 #' Reference physiology of a male adult human
 #'
+#' @returns A `Physiology` object
 #' @export
 #' @examples
 #' # Load reference physiology
