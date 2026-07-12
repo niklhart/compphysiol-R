@@ -239,6 +239,33 @@ test_that("reaction ODEs conserve mass for reversible reactions", {
     expect_equal(total2, rep(total2[[1]], length(total2)), tolerance = 1e-8)
 })
 
+test_that("ODE generation supports cross-compartment reaction participants", {
+    M <- compartment_model() |>
+        add_compartment(c("plasma", "membrane"), volume = c(10, 2)) |>
+        add_molecule("L", cmt = "plasma", initial = 100, type = "amount") |>
+        add_molecule("R", cmt = "membrane", initial = 20, type = "amount") |>
+        add_molecule("LR", cmt = "membrane", initial = 0, type = "amount") |>
+        add_reaction(
+            input = state(
+                molec = c("L", "R"),
+                cmt = c("plasma", "membrane")
+            ),
+            output = state(molec = "LR", cmt = "membrane"),
+            scale_cmt = "membrane",
+            const = "kon"
+        ) |>
+        add_parameter(kon = 1)
+
+    expect_silent(odeinfo <- to_ode(M))
+    dydt <- odeinfo$odefun(0, odeinfo$y0, list())[[1]]
+
+    expect_equal(odeinfo$stateNames, c("a_L_plasma", "a_R_membrane", "a_LR_membrane"))
+    expect_equal(
+        setNames(dydt, odeinfo$stateNames),
+        c(a_L_plasma = -200, a_R_membrane = -200, a_LR_membrane = 200)
+    )
+})
+
 test_that("ODE export rejects concentration-only transports without a volume", {
     M <- compartment_model() |>
         add_compartment("cyt", volume = NA_real_) |>

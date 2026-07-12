@@ -1,3 +1,135 @@
+#' Create a `States` object
+#'
+#' `States` represent molecule-compartment pairs. In reactions, repeated states
+#' are interpreted as stoichiometric multiplicity during reaction construction.
+#'
+#' @param ... Unused. `molec` and `cmt` must be named explicitly.
+#' @param molec Character vector of molecule names.
+#' @param cmt Character vector of compartment names.
+#' @return A `States` object.
+#' @export
+state <- function(..., molec, cmt) {
+    if (length(list(...)) > 0) {
+        stop("Arguments 'molec' and 'cmt' must be named explicitly.", call. = FALSE)
+    }
+
+    if (missing(molec)) stop("Argument 'molec' is required.", call. = FALSE)
+    if (missing(cmt)) stop("Argument 'cmt' is required.", call. = FALSE)
+
+    n <- max(length(molec), length(cmt))
+    if (!all(c(length(molec), length(cmt)) %in% c(1, n))) {
+        stop("Arguments 'molec' and 'cmt' must be scalar or have the same length.", call. = FALSE)
+    }
+
+    if (length(molec) == 1) molec <- rep(molec, n)
+    if (length(cmt) == 1) cmt <- rep(cmt, n)
+
+    structure(
+        data.frame(
+            molec = molec,
+            cmt = cmt,
+            stringsAsFactors = FALSE
+        ),
+        class = c("States", "data.frame")
+    )
+}
+
+#' @export
+as.data.frame.States <- function(x, ...) {
+    class(x) <- "data.frame"
+    x
+}
+
+#' @export
+length.States <- function(x) {
+    nrow(as.data.frame(x))
+}
+
+#' @export
+c.States <- function(...) {
+    objs <- list(...)
+    if (!all(vapply(objs, inherits, logical(1), what = "States"))) {
+        stop("All inputs must be of class 'States'.", call. = FALSE)
+    }
+    structure(
+        do.call(rbind, lapply(objs, as.data.frame)),
+        class = c("States", "data.frame")
+    )
+}
+
+#' @export
+`[.States` <- function(x, i, ...) .subset_df_like(x, i, byname = FALSE)
+
+#' @export
+`[[.States` <- function(x, i, ...) .extract_df_like(x, i)
+
+.empty_reaction_participants <- function() {
+    data.frame(
+        role = character(),
+        molec = character(),
+        cmt = character(),
+        stoich = numeric(),
+        stringsAsFactors = FALSE
+    )
+}
+
+.normalize_reaction_participants <- function(participants) {
+    if (nrow(participants) == 0) return(participants)
+
+    key <- paste(participants$role, participants$molec, participants$cmt, sep = "\r")
+    idx <- !duplicated(key)
+    out <- participants[idx, c("role", "molec", "cmt", "stoich")]
+    out$stoich <- as.numeric(rowsum(participants$stoich, key, reorder = FALSE)[key[idx], 1])
+    rownames(out) <- NULL
+    out
+}
+
+.states_to_reaction_participants <- function(x, role) {
+    if (inherits(x, "States")) {
+        states <- as.data.frame(x)
+        return(data.frame(
+            role = role,
+            molec = states$molec,
+            cmt = states$cmt,
+            stoich = rep(1, nrow(states)),
+            stringsAsFactors = FALSE
+        ))
+    }
+
+    if (is.null(x) || all(x == "") || length(x) == 0) {
+        return(.empty_reaction_participants())
+    }
+
+    data.frame(
+        role = role,
+        molec = x,
+        cmt = NA_character_,
+        stoich = rep(1, length(x)),
+        stringsAsFactors = FALSE
+    )
+}
+
+.participants_to_molecules <- function(participants, role) {
+    participants$molec[participants$role == role]
+}
+
+.participants_to_rate_terms <- function(participants) {
+    input <- participants[participants$role == "input", , drop = FALSE]
+    if (nrow(input) == 0) return(list())
+
+    unlist(
+        lapply(seq_len(nrow(input)), function(i) {
+            term <- if (is.na(input$cmt[[i]])) {
+                paste0("c[", input$molec[[i]], "]")
+            } else {
+                paste0("c[", input$molec[[i]], ",", input$cmt[[i]], "]")
+            }
+            rep(list(.as_call(term)), input$stoich[[i]])
+        }),
+        recursive = FALSE
+    )
+}
+
 #' Create a `Reactions` object
 #'
 #' The `Reactions` class can hold several reactions, each with an input, output, rate/constant, and compartment.
@@ -13,13 +145,15 @@
 #' e.g., `k_{cmt}` will become `k_cytoplasm` for reactions in the cytoplasm and `k_nucleus` for reactions in the nucleus.
 #' Replacement is only applied if the `cmt` argument is provided (otherwise, parameter names would change dynamically as compartments change).  
 #' 
-#' @param input Character vector representing the input of the reaction, e.g. `c("A", "B")` 
+#' @param input Character vector or `States` object representing the input of the reaction, e.g. `c("A", "B")` 
 #'   for a reaction where one molecule of `A` and one molecule of `B` are consumed. 
 #'   For synthesis reactions, use an empty character vector or `NULL`.
-#' @param output Character string representing the output of the reaction, e.g. `"C"` 
+#' @param output Character vector or `States` object representing the output of the reaction, e.g. `"C"` 
 #'   for a reaction where one molecule of `C` is produced. 
 #'   For degradation reactions, use an empty character vector or `NULL`.
 #' @param cmt Character vector of compartment names where the reaction(s) occur (optional, default: all compartments)
+#' @param scale_cmt Compartment whose size scales concentration-change reaction rates to amount-change rates.
+#'   Required for cross-compartment reactions and inferred for same-compartment reactions.
 #' @param ... Errors if used, enforces `rate` and `const` to be specified as named arguments only, not positional.
 #' @param rate Character string representing the concentration-change reaction rate (for nonlinear reactions).
 #'   Use `c[A]` to refer to the concentration of molecule A, and `a[A]` to refer to its amount.
@@ -47,6 +181,7 @@ reactions <- function(
     input = character(0),
     output = character(0),
     cmt = NA_character_,
+    scale_cmt = NA_character_,
     ...,
     rate = NULL,
     const = NULL
@@ -70,6 +205,8 @@ reactions <- function(
                     const = I(list()),
                     type = character(),
                     cmt = character(),
+                    scale_cmt = character(),
+                    participants = I(list()),
                     stringsAsFactors = FALSE
                 ),
                 class = "Reactions"
@@ -77,17 +214,22 @@ reactions <- function(
         )
     }
 
-    # Convert NULL / "" input/output to empty character vectors for easier handling of source/sink compartments
-    if (is.null(input) || all(input == "")) input <- character(0)
-    if (is.null(output) || all(output == "")) output <- character(0)
+    uses_states <- inherits(input, "States") || inherits(output, "States")
+    if (uses_states && !all(is.na(cmt))) {
+        stop("Argument 'cmt' cannot be used with state() reaction participants.", call. = FALSE)
+    }
+
+    input_participants <- .states_to_reaction_participants(input, "input")
+    output_participants <- .states_to_reaction_participants(output, "output")
+    base_participants <- rbind(input_participants, output_participants)
 
     # Input lengths
     nRate <- length(rate)
     nConst <- length(const)
-    nReact <- length(cmt)
+    nReact <- if (uses_states) 1 else length(cmt)
 
     # Check that all inputs are either NULL, scalar or vector of the same length
-    if (!all(c(nRate, nConst) %in% c(0, 1, nReact))) {
+    if (!all(c(nRate, nConst, length(scale_cmt)) %in% c(0, 1, nReact))) {
         stop("All inputs must be either NULL, scalar, or vector of the same length.")
     }
 
@@ -101,11 +243,35 @@ reactions <- function(
 
     # Reaction type and order
     type <- if (is.null(rate)) "elementary" else "complex"
-    order <- length(input)
+    order <- sum(input_participants$stoich)
 
     # If rate/const is scalar and cmt is provided, apply special substitution rule
     replace_pattern <- function(x) {
         lapply(cmt, function(y) if (is.na(y)) x else gsub(pattern = "{cmt}", replacement = y, x = x, fixed = TRUE))
+    }
+
+    reaction_participants <- lapply(seq_len(nReact), function(i) {
+        participants <- base_participants
+        if (!uses_states && nrow(participants) > 0 && !is.na(cmt[[i]])) {
+            participants$cmt <- ifelse(is.na(participants$cmt), cmt[[i]], participants$cmt)
+        }
+        .normalize_reaction_participants(participants)
+    })
+
+    involved_cmt <- lapply(reaction_participants, function(p) unique(p$cmt[!is.na(p$cmt)]))
+    if (length(scale_cmt) == 0) scale_cmt <- NA_character_
+    if (length(scale_cmt) == 1) scale_cmt <- rep(scale_cmt, nReact)
+    infer_scale <- is.na(scale_cmt)
+    for (i in seq_len(nReact)) {
+        if (infer_scale[[i]] && length(involved_cmt[[i]]) == 1) {
+            scale_cmt[[i]] <- involved_cmt[[i]]
+        }
+        if (length(involved_cmt[[i]]) > 1 && is.na(scale_cmt[[i]])) {
+            stop("Argument 'scale_cmt' is required for cross-compartment reactions.", call. = FALSE)
+        }
+        if (!is.na(scale_cmt[[i]]) && !(scale_cmt[[i]] %in% involved_cmt[[i]])) {
+            stop("Argument 'scale_cmt' must name a compartment involved in the reaction.", call. = FALSE)
+        }
     }
 
     # Construction of rate/const lists
@@ -118,6 +284,10 @@ reactions <- function(
                 rate
             }
             rate <- lapply(rate, .as_call)
+            if (length(rate) == 1 && nReact > 1) rate <- rep(rate, nReact)
+            if (!uses_states && !all(is.na(cmt))) {
+                rate <- Map(f = .add_expr_index, expr = rate, pos = 2, val = cmt)
+            }
             const <- rep(list(NULL), nReact)
         },
         elementary = {
@@ -125,23 +295,21 @@ reactions <- function(
                 const <- replace_pattern(const)
             }
             const <- lapply(const, .as_call)
+            if (length(const) == 1 && nReact > 1) const <- rep(const, nReact)
 
-            # indexing by molec only (no cmt)
-            input_cl <- input |>
-                lapply(function(x) paste0("c[", x, "]")) |>
-                lapply(.as_call)
-            rate <- lapply(const, function(k) Reduce(.mul, c(list(k), input_cl)))
-            if (!all(is.na(cmt))) {
-                rate <- Map(f = .add_expr_index, expr = rate, pos = 2, val = cmt)
-            }
+            rate <- Map(
+                function(k, p) Reduce(.mul, c(list(k), .participants_to_rate_terms(p))),
+                const,
+                reaction_participants
+            )
 
         }
 
     )
 
     # Replicate input/output to length of cmt
-    input <- rep(list(input), nReact)
-    output <- rep(list(output), nReact)
+    input <- lapply(reaction_participants, .participants_to_molecules, role = "input")
+    output <- lapply(reaction_participants, .participants_to_molecules, role = "output")
 
     # Construct the Reactions object as a data frame with class "Reactions"
     return(
@@ -153,6 +321,8 @@ reactions <- function(
                 const = I(const),
                 type = type,
                 cmt = cmt,
+                scale_cmt = scale_cmt,
+                participants = I(reaction_participants),
                 stringsAsFactors = FALSE
             ),
             class = "Reactions"
@@ -174,6 +344,7 @@ add_reaction <- function(
     input = character(0),
     output = character(0),
     cmt = NA_character_,
+    scale_cmt = NA_character_,
     ...,
     rate = NULL,
     const = NULL,

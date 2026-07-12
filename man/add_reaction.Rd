@@ -9,6 +9,7 @@ add_reaction(
   input = character(0),
   output = character(0),
   cmt = NA_character_,
+  scale_cmt = NA_character_,
   ...,
   rate = NULL,
   const = NULL,
@@ -18,15 +19,18 @@ add_reaction(
 \arguments{
 \item{model}{A \code{CompartmentModel} object.}
 
-\item{input}{Character vector representing the input of the reaction, e.g. \code{c("A", "B")}
+\item{input}{Character vector or \code{States} object representing the input of the reaction, e.g. \code{c("A", "B")}
 for a reaction where one molecule of \code{A} and one molecule of \code{B} are consumed.
 For synthesis reactions, use an empty character vector or \code{NULL}.}
 
-\item{output}{Character string representing the output of the reaction, e.g. \code{"C"}
+\item{output}{Character vector or \code{States} object representing the output of the reaction, e.g. \code{"C"}
 for a reaction where one molecule of \code{C} is produced.
 For degradation reactions, use an empty character vector or \code{NULL}.}
 
 \item{cmt}{Character vector of compartment names where the reaction(s) occur (optional, default: all compartments)}
+
+\item{scale_cmt}{Compartment whose size scales concentration-change reaction rates to amount-change rates.
+Required for cross-compartment reactions and inferred for same-compartment reactions.}
 
 \item{...}{Errors if used, enforces \code{rate} and \code{const} to be specified as named arguments only, not positional.}
 

@@ -261,17 +261,35 @@ wire <- function(model, what = c("molec", "cmt")) {
             model$reactions <- model$reactions |>
                 as.list() |>
                 lapply(function(m) {
-                    if (is.na(m$cmt)) {
-                        m$cmt <- cmt_names
-                        m$input <- I(rep(m$input, ncmt))
-                        m$output <- I(rep(m$output, ncmt))
-                        m$rate <- I(lapply(cmt_names, function(cmt) {
-                            .add_expr_index(m$rate[[1]], pos = 2, val = cmt)
-                        }))
-                        m$const <- I(rep(m$const, ncmt))}
+                    participants <- as.data.frame(m$participants[[1]])
+                    unresolved_participant_cmt <- all(is.na(participants$cmt))
+                    if (is.na(m$cmt) && unresolved_participant_cmt) {
+                        if (identical(m$type, "elementary")) {
+                            return(reactions(
+                                input = m$input[[1]],
+                                output = m$output[[1]],
+                                cmt = cmt_names,
+                                const = m$const[[1]]
+                            ))
+                        }
+
+                        return(reactions(
+                            input = m$input[[1]],
+                            output = m$output[[1]],
+                            cmt = cmt_names,
+                            rate = m$rate[[1]]
+                        ))
+                    }
                     return(m)
                 }) |>
-                lapply(rebuild_df_like_row, class = "Reactions", list_cols = c("input", "output", "rate", "const")) |>
+                lapply(function(m) {
+                    if (inherits(m, "Reactions")) return(m)
+                    rebuild_df_like_row(
+                        m,
+                        class = "Reactions",
+                        list_cols = c("input", "output", "rate", "const", "participants")
+                    )
+                }) |>
                 do.call(what = "c") %||% reactions()
 
             # process all dosing targets
@@ -830,18 +848,21 @@ to_ode <- function(
     }
 
     for (j in seq_along(model$reactions)) {
-        cmt <- model$reactions$cmt[[j]]
-        vol <- volume_by_cmt[[cmt]]
+        scale_cmt <- model$reactions$scale_cmt[[j]]
+        vol <- volume_by_cmt[[scale_cmt]]
         rate_expr <- model$reactions$rate[[j]]
 
-        add_reaction_term <- function(molec, sign) {
+        add_reaction_term <- function(molec, cmt, stoich, sign) {
             target <- reaction_state(molec, cmt)
             term_expr <- rate_expr
+            if (!identical(stoich, 1) && !identical(stoich, 1L)) {
+                term_expr <- .mul(term_expr, stoich)
+            }
             if (identical(target$type, "amount")) {
                 if (.is_missing_volume(vol)) {
                     stop(
                         "Cannot export reaction in compartment '",
-                        cmt,
+                        scale_cmt,
                         "' to amount-state ODEs: reaction rates are ",
                         "concentration-change rates and require a compartment ",
                         "volume to convert them to amount/time.",
@@ -854,11 +875,15 @@ to_ode <- function(
             rhs[[target$idx]] <<- c(rhs[[target$idx]], paste0(sign, "(", expr_str, ")"))
         }
 
-        for (molec in model$reactions$input[[j]]) {
-            add_reaction_term(molec, "-")
-        }
-        for (molec in model$reactions$output[[j]]) {
-            add_reaction_term(molec, "+")
+        participants <- as.data.frame(model$reactions$participants[[j]])
+        for (i in seq_len(nrow(participants))) {
+            sign <- if (identical(participants$role[[i]], "input")) "-" else "+"
+            add_reaction_term(
+                molec = participants$molec[[i]],
+                cmt = participants$cmt[[i]],
+                stoich = participants$stoich[[i]],
+                sign = sign
+            )
         }
     }
 
@@ -1213,9 +1238,8 @@ to_ode <- function(
             next
         }
 
-        participants <- unique(c(react$input[[1]], react$output[[1]]))
-        cmt <- react$cmt[[1]]
-        conc_names <- .dsl_make_state(participants, cmt, prefix = "c")
+        participants <- as.data.frame(react$participants[[1]])
+        conc_names <- .dsl_make_state(participants$molec, participants$cmt, prefix = "c")
         missing_conc <- conc_names[!vapply(
             conc_names,
             exists,
@@ -1235,30 +1259,6 @@ to_ode <- function(
         }
 
         conc_vals <- lapply(conc_names, get, envir = varenv, inherits = FALSE)
-        unit_flags <- vapply(conc_vals, inherits, logical(1), what = "units")
-        if (any(unit_flags) && !all(unit_flags)) {
-            stop(
-                sprintf(
-                    "In reaction (%d), inconsistent concentration units for participants: one has units while another does not.",
-                    i
-                )
-            )
-        }
-
-        if (all(unit_flags) && length(conc_vals) > 1) {
-            ref_units <- units(conc_vals[[1]])
-            for (j in seq_along(conc_vals)[-1]) {
-                units::ud_are_convertible(units(conc_vals[[j]]), ref_units) ||
-                    stop(
-                        sprintf(
-                            "In reaction (%d), inconsistent concentration units for participants: %s vs. %s",
-                            i,
-                            units(conc_vals[[j]]),
-                            ref_units
-                        )
-                    )
-            }
-        }
 
         rate_val <- tryCatch(
             .dsl_eval(rate, envir = varenv),
@@ -1270,12 +1270,20 @@ to_ode <- function(
                 ))
             }
         )
-        if (!inherits(rate_val, "units") || !all(unit_flags)) {
+        if (!inherits(rate_val, "units")) {
+            next
+        }
+
+        scale_cmt <- react$scale_cmt[[1]]
+        scale_idx <- match(scale_cmt, participants$cmt)
+        if (is.na(scale_idx)) scale_idx <- 1
+        expected_conc <- conc_vals[[scale_idx]]
+        if (!inherits(expected_conc, "units")) {
             next
         }
 
         one_h <- units::set_units(1, "h")
-        expected <- conc_vals[[1]] / one_h
+        expected <- expected_conc / one_h
         units::ud_are_convertible(units(rate_val), units(expected)) ||
             stop(
                 sprintf(
