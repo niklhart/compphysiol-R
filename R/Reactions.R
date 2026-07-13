@@ -162,6 +162,125 @@ print.States <- function(x, ...) {
     )
 }
 
+.is_syntactic_model_name <- function(x) {
+    is.character(x) &&
+        length(x) == 1 &&
+        !is.na(x) &&
+        nzchar(x) &&
+        identical(make.names(x), x)
+}
+
+.parse_reaction_formula_side <- function(x, cmt = NA_character_) {
+    x <- trimws(x)
+    if (identical(x, "") || identical(x, "NULL")) {
+        return(list(
+            value = character(0),
+            has_localization = FALSE
+        ))
+    }
+
+    tokens <- trimws(strsplit(x, "+", fixed = TRUE)[[1]])
+    if (grepl("^\\s*\\+|\\+\\s*$|\\+\\s*\\+", x) || any(!nzchar(tokens))) {
+        stop("Reaction formula contains an empty participant.", call. = FALSE)
+    }
+    if (any(tokens == "NULL")) {
+        stop("'NULL' can only be used as an empty reaction side.", call. = FALSE)
+    }
+
+    parsed <- lapply(tokens, function(token) {
+        count_fixed <- function(pattern) {
+            matches <- gregexpr(pattern, token, fixed = TRUE)[[1]]
+            if (identical(matches[[1]], -1L)) 0L else length(matches)
+        }
+        n_open <- count_fixed("[")
+        n_close <- count_fixed("]")
+        if (n_open != n_close || n_open > 1) {
+            stop("Reaction formula participants must be of the form 'molec' or 'molec[cmt]'.", call. = FALSE)
+        }
+
+        if (n_open == 1) {
+            open <- regexpr("[", token, fixed = TRUE)[[1]]
+            close <- regexpr("]", token, fixed = TRUE)[[1]]
+            if (close != nchar(token)) {
+                stop("Reaction formula participants must be of the form 'molec' or 'molec[cmt]'.", call. = FALSE)
+            }
+            molec <- trimws(substr(token, 1, open - 1))
+            cmt_i <- trimws(substr(token, open + 1, close - 1))
+        } else {
+            molec <- trimws(token)
+            cmt_i <- NA_character_
+        }
+
+        if (!.is_syntactic_model_name(molec)) {
+            stop("Reaction formula molecule names must be syntactic R names.", call. = FALSE)
+        }
+        if (!is.na(cmt_i) && !.is_syntactic_model_name(cmt_i)) {
+            stop("Reaction formula compartment names must be syntactic R names.", call. = FALSE)
+        }
+
+        list(molec = molec, cmt = cmt_i)
+    })
+
+    molec <- vapply(parsed, `[[`, character(1), "molec")
+    cmt_parsed <- vapply(parsed, `[[`, character(1), "cmt")
+    has_localization <- any(!is.na(cmt_parsed))
+
+    if (has_localization) {
+        if (length(cmt) > 1 && any(!is.na(cmt))) {
+            stop("Argument 'cmt' must be scalar when used to fill localized reaction formulas.", call. = FALSE)
+        }
+        if (length(cmt) == 1 && !is.na(cmt)) {
+            cmt_parsed[is.na(cmt_parsed)] <- cmt
+        }
+        return(list(
+            value = state(molec = molec, cmt = cmt_parsed),
+            has_localization = TRUE
+        ))
+    }
+
+    list(
+        value = molec,
+        has_localization = FALSE
+    )
+}
+
+.parse_reaction_formula <- function(formula, cmt = NA_character_) {
+    if (!is.character(formula) || length(formula) != 1) {
+        stop("Reaction formula must be a character scalar.", call. = FALSE)
+    }
+
+    parts <- strsplit(formula, "->", fixed = TRUE)[[1]]
+    if (length(parts) != 2) {
+        stop("Reaction formula must contain exactly one '->'.", call. = FALSE)
+    }
+
+    input <- .parse_reaction_formula_side(parts[[1]], cmt = cmt)
+    output <- .parse_reaction_formula_side(parts[[2]], cmt = cmt)
+    uses_states <- input$has_localization || output$has_localization
+
+    if (uses_states) {
+        if (!inherits(input$value, "States") && length(input$value) > 0) {
+            input$value <- state(molec = input$value, cmt = cmt)
+        }
+        if (!inherits(output$value, "States") && length(output$value) > 0) {
+            output$value <- state(molec = output$value, cmt = cmt)
+        }
+    }
+
+    list(
+        input = input$value,
+        output = output$value,
+        cmt = if (uses_states) NA_character_ else cmt
+    )
+}
+
+.reaction_formula_arg <- function(x, i) {
+    if (is.null(x)) return(NULL)
+    if (length(x) == 0) return(x)
+    if (length(x) == 1) return(x)
+    x[[i]]
+}
+
 #' Create a `Reactions` object
 #'
 #' The `Reactions` class can hold several reactions, each with an input, output, rate/constant, and compartment.
@@ -187,6 +306,9 @@ print.States <- function(x, ...) {
 #' @param scale_cmt Compartment whose size scales concentration-change reaction rates to amount-change rates.
 #'   Inferred for same-compartment reactions and elementary reactions with a single input compartment.
 #'   Required for other cross-compartment reactions.
+#' @param formula Character scalar or vector with reaction formulas such as `"A + B -> C"` or
+#'   `"L[plasma] + R[membrane] -> LR[membrane]"`. If `output` is missing and `input`
+#'   contains `->`, `input` is interpreted as `formula`.
 #' @param ... Errors if used, enforces `rate` and `const` to be specified as named arguments only, not positional.
 #' @param rate Character string representing the concentration-change reaction rate (for nonlinear reactions).
 #'   Use `c[A]` to refer to the concentration of molecule A, and `a[A]` to refer to its amount.
@@ -215,10 +337,21 @@ reactions <- function(
     output = character(0),
     cmt = NA_character_,
     scale_cmt = NA_character_,
+    formula = NULL,
     ...,
     rate = NULL,
     const = NULL
 ) {
+
+    output_missing <- missing(output)
+    formula_missing <- missing(formula)
+    if (formula_missing &&
+        output_missing &&
+        is.character(input) &&
+        any(grepl("->", input, fixed = TRUE))) {
+        formula <- input
+    }
+    formula_active <- !is.null(formula)
 
     # Error if any additional positional arguments are provided (enforces named arguments for rate and const)
     if (length(list(...)) > 0) {
@@ -227,6 +360,45 @@ reactions <- function(
             call. = FALSE
         )
     }
+
+    if (formula_active) {
+        if (!output_missing) {
+            stop("Arguments 'formula' and 'output' cannot be used together.", call. = FALSE)
+        }
+        if (!is.character(formula)) {
+            stop("Reaction formula must be provided as a character string.", call. = FALSE)
+        }
+
+        if (length(formula) > 1) {
+            nFormula <- length(formula)
+            lengths <- c(length(cmt), length(scale_cmt), length(rate), length(const))
+            if (!all(lengths %in% c(0, 1, nFormula))) {
+                stop("Formula, cmt, scale_cmt, rate, and const must be scalar or have the same length.", call. = FALSE)
+            }
+
+            out <- lapply(seq_len(nFormula), function(i) {
+                reactions(
+                    formula = formula[[i]],
+                    cmt = .reaction_formula_arg(cmt, i),
+                    scale_cmt = .reaction_formula_arg(scale_cmt, i),
+                    rate = .reaction_formula_arg(rate, i),
+                    const = .reaction_formula_arg(const, i)
+                )
+            })
+            return(do.call(what = "c", args = out) %||% reactions())
+        }
+
+        parsed <- .parse_reaction_formula(formula, cmt = cmt)
+        return(reactions(
+            input = parsed$input,
+            output = parsed$output,
+            cmt = parsed$cmt,
+            scale_cmt = scale_cmt,
+            rate = rate,
+            const = const
+        ))
+    }
+
     # Early return for empty reactions
     if ((length(input) == 0 && length(output) == 0) || length(cmt) == 0) {
         return(
@@ -378,6 +550,7 @@ add_reaction <- function(
     output = character(0),
     cmt = NA_character_,
     scale_cmt = NA_character_,
+    formula = NULL,
     ...,
     rate = NULL,
     const = NULL,

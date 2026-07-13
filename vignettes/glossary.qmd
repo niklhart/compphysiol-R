@@ -143,6 +143,11 @@ stoichiometric participants rather than vectorized creation of many unrelated
 reactions. Repeated participants represent stoichiometry, for example two
 copies of the same input molecule.
 
+Reaction formulas provide a compact character-string syntax for the same
+participant structure, for example `A + B -> C` or
+`L[plasma] + R[membrane] -> LR[membrane]`. Unlocalized participants in a
+formula have the same wildcard or `cmt`-filled meaning as the older shorthand.
+
 Reaction rates are expressed as concentration-change rates with respect to a
 reaction scaling compartment. During ODE export, these rates are multiplied by
 the size represented by that compartment to obtain amount-change rates for the

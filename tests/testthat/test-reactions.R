@@ -199,6 +199,204 @@ test_that("Character reactions remain same-compartment shorthand", {
     expect_equal(r$type, "elementary")
 })
 
+test_that("Character reaction formulas support positional input and cmt localization", {
+    r <- reactions("A + B -> C", cmt = "cyt", const = "k")
+
+    expect_reaction_participants(r, "input", c("A", "B"), c("cyt", "cyt"))
+    expect_reaction_participants(r, "output", "C", "cyt")
+    expect_equal(r$scale_cmt, "cyt")
+    expect_equal(r$const[[1]], quote(k))
+    expect_equal(r$rate[[1]], quote(k * c[A, cyt] * c[B, cyt]))
+})
+
+test_that("Character reaction formulas support localized cross-compartment participants", {
+    r <- reactions(
+        "L[plasma] + R[membrane] -> LR[membrane]",
+        scale_cmt = "membrane",
+        const = "kon"
+    )
+
+    expect_reaction_participants(
+        r,
+        "input",
+        c("L", "R"),
+        c("plasma", "membrane")
+    )
+    expect_reaction_participants(r, "output", "LR", "membrane")
+    expect_equal(r$scale_cmt, "membrane")
+    expect_equal(r$rate[[1]], quote(kon * c[L, plasma] * c[R, membrane]))
+})
+
+test_that("Character reaction formulas fill unlocalized participants from cmt", {
+    r <- reactions("A + B[membrane] -> C", cmt = "cyt", scale_cmt = "cyt", const = "k")
+
+    expect_reaction_participants(r, "input", c("A", "B"), c("cyt", "membrane"))
+    expect_reaction_participants(r, "output", "C", "cyt")
+    expect_equal(r$scale_cmt, "cyt")
+    expect_equal(r$rate[[1]], quote(k * c[A, cyt] * c[B, membrane]))
+})
+
+test_that("Character reaction formulas can be vectorized over formulas", {
+    r <- reactions(c("A -> B", "B -> C"), const = c("k1", "k2"))
+
+    expect_equal(length(r), 2)
+    expect_reaction_participants(r[1], "input", "A", NA_character_)
+    expect_reaction_participants(r[1], "output", "B", NA_character_)
+    expect_reaction_participants(r[2], "input", "B", NA_character_)
+    expect_reaction_participants(r[2], "output", "C", NA_character_)
+    expect_equal(r$rate[[1]], quote(k1 * c[A]))
+    expect_equal(r$rate[[2]], quote(k2 * c[B]))
+})
+
+test_that("Character reaction formulas can be vectorized over cmt", {
+    r <- reactions("A -> B", cmt = c("cyt", "nuc"), const = "k{cmt}")
+
+    expect_equal(length(r), 2)
+    expect_reaction_participants(r[1], "input", "A", "cyt")
+    expect_reaction_participants(r[1], "output", "B", "cyt")
+    expect_reaction_participants(r[2], "input", "A", "nuc")
+    expect_reaction_participants(r[2], "output", "B", "nuc")
+    expect_equal(r$rate[[1]], quote(kcyt * c[A, cyt]))
+    expect_equal(r$rate[[2]], quote(knuc * c[A, nuc]))
+})
+
+test_that("Character reaction formulas normalize repeated participants", {
+    r <- reactions("A[cyt] + A[cyt] -> B[cyt]", const = "k")
+
+    expect_reaction_participants(r, "input", "A", "cyt", stoich = 2)
+    expect_reaction_participants(r, "output", "B", "cyt")
+    expect_equal(r$rate[[1]], quote(k * c[A, cyt] * c[A, cyt]))
+})
+
+test_that("Character reaction formulas support source and sink reactions", {
+    synth <- reactions("NULL -> A[cyt]", const = "ksyn")
+    deg <- reactions("A[cyt] -> NULL", const = "kdeg")
+
+    expect_reaction_participants(synth, "input", character(), character())
+    expect_reaction_participants(synth, "output", "A", "cyt")
+    expect_equal(synth$rate[[1]], quote(ksyn))
+
+    expect_reaction_participants(deg, "input", "A", "cyt")
+    expect_reaction_participants(deg, "output", character(), character())
+    expect_equal(deg$rate[[1]], quote(kdeg * c[A, cyt]))
+})
+
+test_that("Character reaction formulas reject malformed formulas", {
+    expect_error(
+        reactions("A + -> C", const = "k"),
+        "empty participant"
+    )
+    expect_error(
+        reactions(formula = "A => C", const = "k"),
+        "->"
+    )
+    expect_error(
+        reactions("IL-6[plasma] -> IL6[plasma]", const = "k"),
+        "syntactic"
+    )
+})
+
+test_that("NSE reaction formulas are captured without assignment side effects", {
+    skip("NSE reaction formulas are not implemented yet.")
+
+    B <- 3
+
+    r <- reactions(A -> B, const = "k")
+
+    expect_equal(B, 3)
+    expect_reaction_participants(r, "input", "A", NA_character_)
+    expect_reaction_participants(r, "output", "B", NA_character_)
+    expect_equal(r$rate[[1]], quote(k * c[A]))
+})
+
+test_that("NSE reaction formulas support compartment-localized participants", {
+    skip("NSE reaction formulas are not implemented yet.")
+
+    r <- reactions(
+        L[plasma] + R[membrane] -> LR[membrane],
+        scale_cmt = "membrane",
+        const = "kon"
+    )
+
+    expect_reaction_participants(
+        r,
+        "input",
+        c("L", "R"),
+        c("plasma", "membrane")
+    )
+    expect_reaction_participants(r, "output", "LR", "membrane")
+    expect_equal(r$scale_cmt, "membrane")
+    expect_equal(r$rate[[1]], quote(kon * c[L, plasma] * c[R, membrane]))
+})
+
+test_that("NSE reaction formulas use cmt to localize unqualified participants", {
+    skip("NSE reaction formulas are not implemented yet.")
+
+    r <- reactions(A + B -> C, cmt = "cyt", const = "k")
+
+    expect_reaction_participants(r, "input", c("A", "B"), c("cyt", "cyt"))
+    expect_reaction_participants(r, "output", "C", "cyt")
+    expect_equal(r$scale_cmt, "cyt")
+    expect_equal(r$rate[[1]], quote(k * c[A, cyt] * c[B, cyt]))
+})
+
+test_that("NSE reaction formulas can be vectorized over cmt", {
+    skip("NSE reaction formulas are not implemented yet.")
+
+    r <- reactions(A -> B, cmt = c("cyt", "nuc"), const = "k{cmt}")
+
+    expect_equal(length(r), 2)
+    expect_reaction_participants(r[1], "input", "A", "cyt")
+    expect_reaction_participants(r[1], "output", "B", "cyt")
+    expect_reaction_participants(r[2], "input", "A", "nuc")
+    expect_reaction_participants(r[2], "output", "B", "nuc")
+    expect_equal(r$rate[[1]], quote(kcyt * c[A, cyt]))
+    expect_equal(r$rate[[2]], quote(knuc * c[A, nuc]))
+})
+
+test_that("NSE reaction formulas normalize repeated participants", {
+    skip("NSE reaction formulas are not implemented yet.")
+
+    r <- reactions(A[cyt] + A[cyt] -> B[cyt], const = "k")
+
+    expect_reaction_participants(r, "input", "A", "cyt", stoich = 2)
+    expect_reaction_participants(r, "output", "B", "cyt")
+    expect_equal(r$rate[[1]], quote(k * c[A, cyt] * c[A, cyt]))
+})
+
+test_that("NSE reaction formulas support source and sink reactions", {
+    skip("NSE reaction formulas are not implemented yet.")
+
+    synth <- reactions(NULL -> A[cyt], const = "ksyn")
+    deg <- reactions(A[cyt] -> NULL, const = "kdeg")
+
+    expect_reaction_participants(synth, "input", character(), character())
+    expect_reaction_participants(synth, "output", "A", "cyt")
+    expect_equal(synth$rate[[1]], quote(ksyn))
+
+    expect_reaction_participants(deg, "input", "A", "cyt")
+    expect_reaction_participants(deg, "output", character(), character())
+    expect_equal(deg$rate[[1]], quote(kdeg * c[A, cyt]))
+})
+
+test_that("NSE reaction formulas reject multiple formulas in one call", {
+    skip("NSE reaction formulas are not implemented yet.")
+
+    expect_error(
+        reactions(c(A -> B, B -> C), const = c("k1", "k2")),
+        "single reaction|vectorized"
+    )
+})
+
+test_that("NSE reaction formulas reject non-syntactic participant names", {
+    skip("NSE reaction formulas are not implemented yet.")
+
+    expect_error(
+        reactions(`IL-6`[plasma] -> IL6[plasma], const = "k"),
+        "syntactic|name"
+    )
+})
+
 test_that("Empty reactions are handled correctly", {
     r1 <- reactions()
     r2 <- reactions(input = "A", output = "B", const = "k")
@@ -284,15 +482,20 @@ test_that("Reaction printing works correctly", {
 test_that("Reactions can be added to compartment models", {
     model <- compartment_model() |>
         add_reaction(input = "A", output = "B", const = "k1") |>
-        add_reaction(input = "B", output = "C", rate = "k2 * c[B]")
+        add_reaction(input = "B", output = "C", rate = "k2 * c[B]") |>
+        add_reaction("C -> D", const = "k3")
 
-    expect_equal(length(model$reactions), 2)
+    expect_equal(length(model$reactions), 3)
     expect_reaction_participants(model$reactions[1], "input", "A", NA_character_)
     expect_reaction_participants(model$reactions[1], "output", "B", NA_character_)
     expect_reaction_participants(model$reactions[2], "input", "B", NA_character_)
     expect_reaction_participants(model$reactions[2], "output", "C", NA_character_)
+    expect_reaction_participants(model$reactions[3], "input", "C", NA_character_)
+    expect_reaction_participants(model$reactions[3], "output", "D", NA_character_)
     expect_equal(model$reactions$const[[1]], quote(k1))
     expect_equal(model$reactions$const[[2]], NULL)
+    expect_equal(model$reactions$const[[3]], quote(k3))
     expect_equal(model$reactions$rate[[1]], quote(k1 * c[A]))
     expect_equal(model$reactions$rate[[2]], quote(k2 * c[B]))
+    expect_equal(model$reactions$rate[[3]], quote(k3 * c[C]))
 })

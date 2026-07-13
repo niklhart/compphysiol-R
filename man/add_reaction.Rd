@@ -10,6 +10,7 @@ add_reaction(
   output = character(0),
   cmt = NA_character_,
   scale_cmt = NA_character_,
+  formula = NULL,
   ...,
   rate = NULL,
   const = NULL,
@@ -32,6 +33,10 @@ For degradation reactions, use an empty character vector or \code{NULL}.}
 \item{scale_cmt}{Compartment whose size scales concentration-change reaction rates to amount-change rates.
 Inferred for same-compartment reactions and elementary reactions with a single input compartment.
 Required for other cross-compartment reactions.}
+
+\item{formula}{Character scalar or vector with reaction formulas such as \code{"A + B -> C"} or
+\code{"L[plasma] + R[membrane] -> LR[membrane]"}. If \code{output} is missing and \code{input}
+contains \verb{->}, \code{input} is interpreted as \code{formula}.}
 
 \item{...}{Errors if used, enforces \code{rate} and \code{const} to be specified as named arguments only, not positional.}
 
