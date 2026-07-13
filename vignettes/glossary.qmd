@@ -79,8 +79,8 @@ for amounts and `c[molecule, compartment]` for concentrations. When the model
 contains only one molecule or one compartment, shorter forms may be wired to
 the full state reference.
 
-Programmatic state objects can also carry the same wildcard meaning used by
-the older shorthand syntax. An unspecified molecule or compartment is stored as
+Programmatic state objects can also carry wildcard molecule or compartment
+references. An unspecified molecule or compartment is stored as
 `NA` internally and is resolved by `wire()` to the corresponding molecule or
 compartment names before ODE generation.
 
@@ -146,7 +146,8 @@ copies of the same input molecule.
 Reaction formulas provide a compact character-string syntax for the same
 participant structure, for example `A + B -> C` or
 `L[plasma] + R[membrane] -> LR[membrane]`. Unlocalized participants in a
-formula have the same wildcard or `cmt`-filled meaning as the older shorthand.
+formula have the same wildcard or `cmt`-filled meaning as separate `input` and
+`output` character arguments.
 
 Reaction rates are expressed as concentration-change rates with respect to a
 reaction scaling compartment. During ODE export, these rates are multiplied by

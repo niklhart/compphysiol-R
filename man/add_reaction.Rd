@@ -67,6 +67,29 @@ convention: zero-order reaction constants have units amount/volume/time, first-o
 The special expression \code{{cmt}} can be used in \code{rate} or \code{const} to automatically substitute the compartment name,
 e.g., \verb{k_\{cmt\}} will become \code{k_cytoplasm} for reactions in the cytoplasm and \code{k_nucleus} for reactions in the nucleus.
 Replacement is only applied if the \code{cmt} argument is provided (otherwise, parameter names would change dynamically as compartments change).
+
+Reactions can be specified either by separate \code{input} and \code{output}
+arguments or by a character reaction formula. The formula form is an
+interactive shorthand for the same participant representation, for example
+\code{reactions("A + B -> C", cmt = "cyt", const = "k")}. Participants may be
+localized directly in the formula with \code{molec[cmt]}, as in
+\code{reactions("L[plasma] + R[membrane] -> LR[membrane]", scale_cmt = "membrane", const = "kon")}.
+If a formula participant has no compartment, \code{cmt} fills it when supplied;
+otherwise the participant keeps the same wildcard compartment meaning as the
+separate \code{input} and \code{output} character shorthand.
+
+Cross-compartment reactions are reactions whose participants are localized
+in more than one compartment. Reaction rates are always interpreted as
+concentration-change rates with respect to one reaction scaling compartment.
+During ODE export, the rate is multiplied by the size of \code{scale_cmt} to
+obtain amount-change rates. For ordinary same-compartment reactions,
+\code{scale_cmt} is inferred as the shared compartment. For elementary
+cross-compartment reactions with a single input compartment, it is inferred
+as that input compartment. Other cross-compartment reactions require an
+explicit \code{scale_cmt}, which must name one of the compartments involved in the
+reaction. In membrane binding models, for example, choosing the membrane as
+\code{scale_cmt} means that the reaction rate has membrane concentration units
+such as amount per area per time.
 }
 \seealso{
 \code{\link[=reactions]{reactions()}}

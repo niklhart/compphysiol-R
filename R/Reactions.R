@@ -316,6 +316,29 @@ print.States <- function(x, ...) {
 #'   Formally, this corresponds to `rate = const * c[input[1]] * c[input[2]] * ...`. 
 #'   In addition, the information that the reaction is elementary is encoded in the `type` 
 #'   column of the resulting `Reactions` object.
+#' @details
+#' Reactions can be specified either by separate `input` and `output`
+#' arguments or by a character reaction formula. The formula form is an
+#' interactive shorthand for the same participant representation, for example
+#' `reactions("A + B -> C", cmt = "cyt", const = "k")`. Participants may be
+#' localized directly in the formula with `molec[cmt]`, as in
+#' `reactions("L[plasma] + R[membrane] -> LR[membrane]", scale_cmt = "membrane", const = "kon")`.
+#' If a formula participant has no compartment, `cmt` fills it when supplied;
+#' otherwise the participant keeps the same wildcard compartment meaning as the
+#' separate `input` and `output` character shorthand.
+#'
+#' Cross-compartment reactions are reactions whose participants are localized
+#' in more than one compartment. Reaction rates are always interpreted as
+#' concentration-change rates with respect to one reaction scaling compartment.
+#' During ODE export, the rate is multiplied by the size of `scale_cmt` to
+#' obtain amount-change rates. For ordinary same-compartment reactions,
+#' `scale_cmt` is inferred as the shared compartment. For elementary
+#' cross-compartment reactions with a single input compartment, it is inferred
+#' as that input compartment. Other cross-compartment reactions require an
+#' explicit `scale_cmt`, which must name one of the compartments involved in the
+#' reaction. In membrane binding models, for example, choosing the membrane as
+#' `scale_cmt` means that the reaction rate has membrane concentration units
+#' such as amount per area per time.
 #' @return A `Reactions` object containing the reaction information.
 #' @examples
 #' # empty `Reactions` object
@@ -330,6 +353,17 @@ print.States <- function(x, ...) {
 #' reactions(input = "A", output = "B", cmt = c("cytoplasm", "nucleus"), const = "kAB")
 #' # Reactions in several compartments (different rate constants)
 #' reactions(input = "A", output = "B", cmt = c("cytoplasm", "nucleus"), const = "kAB_{cmt}")
+#' # Interactive character formula shorthand
+#' reactions("A + B -> C", cmt = "cytoplasm", const = "kABC")
+#' # Cross-compartment formula with explicit reaction scaling compartment
+#' reactions(
+#'     "L[plasma] + R[membrane] -> LR[membrane]",
+#'     scale_cmt = "membrane",
+#'     const = "kon"
+#' )
+#' # Source and sink reactions in formula syntax
+#' reactions("NULL -> A[cytoplasm]", const = "ksyn")
+#' reactions("A[cytoplasm] -> NULL", const = "kdeg")
 #' 
 #' @export
 reactions <- function(
