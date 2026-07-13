@@ -1,3 +1,8 @@
+# compphysiol 0.3.3
+
+* added cross-compartment reactions (e.g., receptor-ligand interaction) 
+* introduced a reaction minilanguage (`formula = "A+B -> C"`), complementing the programmatic specification via `input`/`output`.
+
 # compphysiol 0.3.2
 
 * documentation update, including a glossary

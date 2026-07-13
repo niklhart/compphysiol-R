@@ -1,7 +1,7 @@
 Package: compphysiol
 Type: Package
 Title: Computational physiology toolbox
-Version: 0.3.2
+Version: 0.3.3
 Authors@R: c(
     person(
       "Niklas", "Hartung",
@@ -34,4 +34,4 @@ Config/testthat/edition: 3
 VignetteBuilder: quarto
 Depends: 
     R (>= 4.1.0)
-Date: 2026-07-10
+Date: 2026-07-13
