@@ -66,7 +66,9 @@ c.States <- function(...) {
 #' @export
 print.States <- function(x, ...) {
     if (length(x) > 0) {
-        state_str <- paste0(x$molec, "[", x$cmt, "]")
+        molec <- ifelse(is.na(x$molec), "<all molec>", x$molec)
+        cmt <- ifelse(is.na(x$cmt), "<all cmt>", x$cmt)
+        state_str <- paste0(molec, "[", cmt, "]")
         cat(" States:\n")
         cat(
             sprintf("  (%s) %s\n", seq_along(x), state_str),
@@ -129,6 +131,18 @@ print.States <- function(x, ...) {
     if (!repeat_stoich) return(role_participants$molec)
 
     rep(role_participants$molec, role_participants$stoich)
+}
+
+.participants_to_states <- function(participants, role, repeat_stoich = FALSE) {
+    role_participants <- participants[participants$role == role, , drop = FALSE]
+    if (nrow(role_participants) == 0) return(character(0))
+
+    if (repeat_stoich) {
+        idx <- rep(seq_len(nrow(role_participants)), role_participants$stoich)
+        role_participants <- role_participants[idx, , drop = FALSE]
+    }
+
+    state(molec = role_participants$molec, cmt = role_participants$cmt)
 }
 
 .participants_to_rate_terms <- function(participants) {

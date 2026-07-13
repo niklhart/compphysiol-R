@@ -71,6 +71,17 @@ test_that("States require explicit molecule and compartment names", {
     expect_error(state(molec = "R", cmt = "membrane", stoich = 2), "stoich|unused|named")
 })
 
+test_that("States print wildcard molecule-compartment pairs", {
+    s <- state(
+        molec = c("L", NA_character_),
+        cmt = c(NA_character_, "membrane")
+    )
+
+    expect_states(s, c("L", NA_character_), c(NA_character_, "membrane"))
+    expect_output(print(s), "L\\[<all cmt>\\]")
+    expect_output(print(s), "<all molec>\\[membrane\\]")
+})
+
 test_that("States support vectorized molecule-compartment pairs", {
     s <- state(
         molec = c("R", "L"),

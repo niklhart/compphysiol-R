@@ -146,6 +146,42 @@ test_that("second-order reaction constants convert concentration products to con
     expect_error(compphysiol:::.check_unit_consistency(M_invalid), "reaction")
 })
 
+test_that("cross-compartment receptor binding supports volume and surface concentration units", {
+    M_valid <- compartment_model() |>
+        add_compartment(name = "plasma", volume = 1 [L]) |>
+        add_compartment(name = "membrane", volume = 1 [cm^2]) |>
+        add_molecule(name = "L", cmt = "plasma", unit = "mol", type = "amount") |>
+        add_molecule(name = c("R", "LR"), cmt = "membrane", unit = "mol", type = "amount") |>
+        add_reaction(
+            input = state(
+                molec = c("L", "R"),
+                cmt = c("plasma", "membrane")
+            ),
+            output = state(molec = "LR", cmt = "membrane"),
+            scale_cmt = "membrane",
+            const = "kon"
+        ) |>
+        add_parameter(kon = 1 [L/mol/h])
+    expect_silent(compphysiol:::.check_unit_consistency(M_valid))
+
+    M_invalid <- compartment_model() |>
+        add_compartment(name = "plasma", volume = 1 [L]) |>
+        add_compartment(name = "membrane", volume = 1 [cm^2]) |>
+        add_molecule(name = "L", cmt = "plasma", unit = "mol", type = "amount") |>
+        add_molecule(name = c("R", "LR"), cmt = "membrane", unit = "mol", type = "amount") |>
+        add_reaction(
+            input = state(
+                molec = c("L", "R"),
+                cmt = c("plasma", "membrane")
+            ),
+            output = state(molec = "LR", cmt = "membrane"),
+            scale_cmt = "membrane",
+            const = "kon"
+        ) |>
+        add_parameter(kon = 1 [1/h])
+    expect_error(compphysiol:::.check_unit_consistency(M_invalid), "reaction")
+})
+
 test_that("complex reaction rates have concentration/time units", {
     M_valid <- compartment_model() |>
         add_compartment(name = "cyt", volume = 1 [L]) |>

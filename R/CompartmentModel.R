@@ -187,6 +187,87 @@ wire <- function(model, what = c("molec", "cmt")) {
             do.call(what = "c", args = expanded) %||% dosing()
         }
 
+        expand_reaction_participant_field <- function(react, field, values) {
+            if (length(react) == 0) return(react)
+
+            react |>
+                as.list() |>
+                lapply(function(m) {
+                    participants <- as.data.frame(m$participants[[1]])
+                    unresolved <- is.na(participants[[field]])
+                    if (!any(unresolved)) {
+                        return(rebuild_df_like_row(
+                            m,
+                            class = "Reactions",
+                            list_cols = c("rate", "const", "participants")
+                        ))
+                    }
+
+                    if (identical(field, "cmt") && all(unresolved)) {
+                        input <- .participants_to_molecules(
+                            participants,
+                            role = "input",
+                            repeat_stoich = TRUE
+                        )
+                        output <- .participants_to_molecules(
+                            participants,
+                            role = "output",
+                            repeat_stoich = TRUE
+                        )
+                        if (identical(m$type, "elementary")) {
+                            return(reactions(
+                                input = input,
+                                output = output,
+                                cmt = values,
+                                const = m$const[[1]]
+                            ))
+                        }
+
+                        return(reactions(
+                            input = input,
+                            output = output,
+                            cmt = values,
+                            rate = list(m$rate[[1]])
+                        ))
+                    }
+
+                    expanded <- lapply(values, function(value) {
+                        p <- participants
+                        p[[field]][unresolved] <- value
+
+                        input <- .participants_to_states(
+                            p,
+                            role = "input",
+                            repeat_stoich = TRUE
+                        )
+                        output <- .participants_to_states(
+                            p,
+                            role = "output",
+                            repeat_stoich = TRUE
+                        )
+
+                        if (identical(m$type, "elementary")) {
+                            return(reactions(
+                                input = input,
+                                output = output,
+                                scale_cmt = m$scale_cmt[[1]],
+                                const = m$const[[1]]
+                            ))
+                        }
+
+                        reactions(
+                            input = input,
+                            output = output,
+                            scale_cmt = m$scale_cmt[[1]],
+                            rate = list(m$rate[[1]])
+                        )
+                    })
+
+                    do.call(what = "c", args = expanded)
+                }) |>
+                do.call(what = "c") %||% reactions()
+        }
+
         if ("molec" %in% what) {
 
             # if no molecules defined, wire to a single dummy molecule "molec" and print message
@@ -215,6 +296,13 @@ wire <- function(model, what = c("molec", "cmt")) {
                 }) |>
                 lapply(rebuild_df_like_row, class = "Transports", list_cols = c("rate", "const")) |>
                 do.call(what = "c")  %||% transports()
+
+            # process reaction participants with wildcard molecules
+            model$reactions <- expand_reaction_participant_field(
+                react = model$reactions,
+                field = "molec",
+                values = molec_names
+            )
 
             # process all dosing targets
             model$doses <- expand_dosing_target(
@@ -257,50 +345,12 @@ wire <- function(model, what = c("molec", "cmt")) {
                 lapply(rebuild_df_like_row, class = "Molecules", list_cols = "init") |>
                 do.call(what = "c")
 
-            # process all reactions
-            model$reactions <- model$reactions |>
-                as.list() |>
-                lapply(function(m) {
-                    participants <- as.data.frame(m$participants[[1]])
-                    unresolved_participant_cmt <- all(is.na(participants$cmt))
-                    if (unresolved_participant_cmt) {
-                        input <- .participants_to_molecules(
-                            participants,
-                            role = "input",
-                            repeat_stoich = TRUE
-                        )
-                        output <- .participants_to_molecules(
-                            participants,
-                            role = "output",
-                            repeat_stoich = TRUE
-                        )
-                        if (identical(m$type, "elementary")) {
-                            return(reactions(
-                                input = input,
-                                output = output,
-                                cmt = cmt_names,
-                                const = m$const[[1]]
-                            ))
-                        }
-
-                        return(reactions(
-                            input = input,
-                            output = output,
-                            cmt = cmt_names,
-                            rate = m$rate[[1]]
-                        ))
-                    }
-                    return(m)
-                }) |>
-                lapply(function(m) {
-                    if (inherits(m, "Reactions")) return(m)
-                    rebuild_df_like_row(
-                        m,
-                        class = "Reactions",
-                        list_cols = c("rate", "const", "participants")
-                    )
-                }) |>
-                do.call(what = "c") %||% reactions()
+            # process reaction participants with wildcard compartments
+            model$reactions <- expand_reaction_participant_field(
+                react = model$reactions,
+                field = "cmt",
+                values = cmt_names
+            )
 
             # process all dosing targets
             model$doses <- expand_dosing_target(

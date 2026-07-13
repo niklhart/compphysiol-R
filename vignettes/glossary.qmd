@@ -79,6 +79,11 @@ for amounts and `c[molecule, compartment]` for concentrations. When the model
 contains only one molecule or one compartment, shorter forms may be wired to
 the full state reference.
 
+Programmatic state objects can also carry the same wildcard meaning used by
+the older shorthand syntax. An unspecified molecule or compartment is stored as
+`NA` internally and is resolved by `wire()` to the corresponding molecule or
+compartment names before ODE generation.
+
 During ODE export, the integrated state representation is chosen by an export
 policy rather than by the molecule-compartment identity alone. The default
 policy prefers amount states when they are given directly or can be obtained

@@ -16,6 +16,91 @@ test_that("wire correctly adds compartments to molecules/reactions and molecules
     
 })
 
+test_that("wire treats NA compartments in states like old compartment shorthand", {
+
+    model <- compartment_model() |>
+        add_compartment(c("cyt", "nuc")) |>
+        add_molecule(c("A", "B")) |>
+        add_reaction(
+            input = state(molec = "A", cmt = NA_character_),
+            output = state(molec = "B", cmt = NA_character_),
+            const = "k"
+        ) |>
+        wire()
+
+    expect_equal(
+        model$reactions,
+        reactions(input = "A", output = "B", cmt = c("cyt", "nuc"), const = "k")
+    )
+
+    model <- compartment_model() |>
+        add_compartment(c("cyt", "nuc")) |>
+        add_molecule(c("A", "B")) |>
+        add_reaction(
+            input = state(molec = "A", cmt = NA_character_),
+            output = state(molec = "B", cmt = NA_character_),
+            rate = "k * c[A]"
+        ) |>
+        wire()
+
+    expect_equal(
+        vapply(model$reactions$rate, deparse1, character(1)),
+        c("k * c[A, cyt]", "k * c[A, nuc]")
+    )
+})
+
+test_that("wire expands partial NA state compartments in cross-compartment reactions", {
+
+    model <- compartment_model() |>
+        add_compartment(c("plasma", "membrane")) |>
+        add_molecule("L") |>
+        add_molecule(c("R", "LR"), cmt = "membrane") |>
+        add_reaction(
+            input = c(
+                state(molec = "L", cmt = NA_character_),
+                state(molec = "R", cmt = "membrane")
+            ),
+            output = state(molec = "LR", cmt = "membrane"),
+            scale_cmt = "membrane",
+            const = "kon"
+        ) |>
+        wire()
+
+    expect_equal(length(model$reactions), 2)
+    expect_equal(model$reactions$scale_cmt, c("membrane", "membrane"))
+    expect_equal(
+        vapply(model$reactions$rate, deparse1, character(1)),
+        c(
+            "kon * c[L, plasma] * c[R, membrane]",
+            "kon * c[L, membrane] * c[R, membrane]"
+        )
+    )
+
+    first_participants <- as.data.frame(model$reactions$participants[[1]])
+    second_participants <- as.data.frame(model$reactions$participants[[2]])
+
+    expect_equal(
+        first_participants[, c("role", "molec", "cmt", "stoich")],
+        data.frame(
+            role = c("input", "input", "output"),
+            molec = c("L", "R", "LR"),
+            cmt = c("plasma", "membrane", "membrane"),
+            stoich = c(1, 1, 1),
+            stringsAsFactors = FALSE
+        )
+    )
+    expect_equal(
+        second_participants[, c("role", "molec", "cmt", "stoich")],
+        data.frame(
+            role = c("input", "input", "output"),
+            molec = c("L", "R", "LR"),
+            cmt = c("membrane", "membrane", "membrane"),
+            stoich = c(1, 1, 1),
+            stringsAsFactors = FALSE
+        )
+    )
+})
+
 test_that("wire resolves scalar wildcard dosing targets", {
 
     model <- compartment_model() |>
