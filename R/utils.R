@@ -83,6 +83,40 @@
     i
 }
 
+#' Evaluate unit shorthand inside an expression
+#'
+#' `with_units()` evaluates ordinary R arithmetic while interpreting calls of
+#' the form `value[unit]` as `units::set_units(value, unit)`.
+#'
+#' @param expr Expression to evaluate. Single-bracket calls are interpreted as
+#'   unit shorthand.
+#' @returns The evaluated expression, usually a numeric or `units` object.
+#' @examples
+#' with_units(10 [mg] / 200 [g/mol])
+#' with_units(c(1, 2) [h] + 30 [min])
+#' @export
+with_units <- function(expr) {
+    expr <- substitute(expr)
+    eval(.rewrite_unit_shorthand(expr), envir = parent.frame())
+}
+
+.rewrite_unit_shorthand <- function(expr) {
+    if (!is.call(expr)) {
+        return(expr)
+    }
+
+    if (length(expr) == 3 && identical(expr[[1]], quote(`[`))) {
+        val <- .rewrite_unit_shorthand(expr[[2]])
+        unit <- paste(deparse(expr[[3]]), collapse = "")
+        return(substitute(
+            units::set_units(value, unit, mode = "standard"),
+            list(value = val, unit = unit)
+        ))
+    }
+
+    as.call(lapply(as.list(expr), .rewrite_unit_shorthand))
+}
+
 #' Process a quoted call `expr` of the form `value` or `value[unit]` into a `units` object or numeric value
 #' @param expr Quoted call to process
 #' @returns A `units` object if a unit is specified, otherwise a numeric value
