@@ -97,7 +97,11 @@
 #' @export
 with_units <- function(expr) {
     expr <- substitute(expr)
-    eval(.rewrite_unit_shorthand(expr), envir = parent.frame())
+    .eval_unit_expr(expr, envir = parent.frame())
+}
+
+.eval_unit_expr <- function(expr, envir = parent.frame(n = 1)) {
+    eval(.rewrite_unit_shorthand(expr), envir = envir)
 }
 
 .rewrite_unit_shorthand <- function(expr) {
@@ -122,17 +126,7 @@ with_units <- function(expr) {
 #' @returns A `units` object if a unit is specified, otherwise a numeric value
 #' @noRd
 .process_nse_arg <- function(expr, envir = parent.frame(n = 1)) {
-    if (is.call(expr) && length(expr) == 3 && expr[[1]] == quote(`[`)) {
-        val <- eval(expr[[2]], envir = envir)
-        unit <- paste(deparse(expr[[3]]), collapse = "")
-        if (inherits(val, 'units') && !units::ud_are_convertible(units(val), unit)) {
-            stop(sprintf("Value %s cannot be converted to specified unit '%s'.", val, unit))
-        }
-        res <- units::set_units(val, unit, mode = "standard")
-    } else {
-        res <- eval(expr, envir = envir)
-    }
-    res
+    .eval_unit_expr(expr, envir = envir)
 }
 
 

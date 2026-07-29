@@ -218,6 +218,16 @@ Units are part of the intended semantics. Many constructors accept unit-aware
 syntax such as `100 [mg]`, and ODE export can check that model expressions are
 dimensionally consistent.
 
+Unit-aware constructor arguments also support arithmetic over unit expressions,
+for example `10 [mg] / 200 [g/mol]` for deriving an amount from a mass and a
+molar mass, or `30 [min] + 0.5 [h]` for deriving a dosing time. The same
+syntax can be used directly outside constructors with `with_units()`.
+
+The unit syntax follows ordinary R parsing rules. This can be surprising for
+expressions such as `1/2[h]`: R parses this as `1 / (2 [h])`, so it means
+`0.5 [1/h]`, not `0.5 [h]`. Use parentheses when the intended order is
+different, for example `(1/2) [h]`.
+
 Implementation anchor: parameters are represented by `Parameters` objects
 created with `parameters()` or added with `add_parameter()`.
 
