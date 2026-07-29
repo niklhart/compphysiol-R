@@ -7,6 +7,14 @@ test_that("with_units evaluates arithmetic with unit shorthand", {
     expect_equal(units::set_units(amount, "mol", mode = "standard"), units::set_units(5e-05, "mol"))
 })
 
+test_that("with_units resolves unit variables from the caller environment", {
+    MW <- units::set_units(200, "g/mol", mode = "standard")
+
+    amount <- with_units(10 [mg] / MW)
+
+    expect_equal(units::set_units(amount, "mol", mode = "standard"), units::set_units(5e-05, "mol"))
+})
+
 test_that("with_units supports conversion and vector arithmetic", {
     duration <- with_units(c(1, 2) [h] + 30 [min])
     expected <- units::set_units(c(1.5, 2.5), "h", mode = "standard")
@@ -38,12 +46,14 @@ test_that("with_units works when passed to unit-aware constructors", {
 })
 
 test_that("constructors evaluate nested unit arithmetic", {
+    MW <- units::set_units(200, "g/mol", mode = "standard")
+
     cmt <- compartments("Central", volume = 500 [mL] + 0.5 [L])
     molec <- molecules("drug", initial = 10 [mg] / 2 [L])
     dose <- dosing(
         time = 30 [min] + 0.5 [h],
-        amount = 10 [mg] / 200 [g/mol],
-        rate = 5 [mg] / 1 [h] / 200 [g/mol],
+        amount = 10 [mg] / MW,
+        rate = 5 [mg] / 1 [h] / MW,
         cmt = "Central"
     )
     param <- parameters(
