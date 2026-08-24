@@ -317,7 +317,35 @@ concrete dynamical system. It is also the point where the amount-preferred
 state representation policy described under State is applied to the generated
 ODE state vector.
 
+ODE export is a solver-facing boundary. The exported initial values, event
+tables, and derivative functions are numeric objects in the requested output
+dimensions, suitable for tools such as `deSolve`. Unit-aware model values are
+converted and stripped for this purpose; the export result is therefore not the
+preferred object for unit-aware downstream analysis.
+
 Implementation anchor: ODE export is handled by `to_ode()`.
+
+## Simulation
+
+Simulation runs a `CompartmentModel` over requested time points and returns a
+toolbox-level result. Unlike ODE export, simulation owns both sides of the
+solver boundary: it converts unit-aware model quantities to numeric values for
+the solver and attaches units back to the returned trajectories.
+
+Simulation currently returns ODE state trajectories in a `SimulationResult`
+object. Observables are conceptually part of simulation output, but observable
+calculation is not yet included in `SimulationResult`.
+
+Simulation has two working modes with respect to time. In unit-free mode, the
+model has no time units and simulation time is numeric. In unit-aware mode, the
+model contains a time dimension, for example through a rate constant or dosing
+time, and simulation time must carry compatible units, either directly in the
+unit DSL or through the `unit` argument. Mixed time modes are rejected: a model
+with time units cannot be simulated with unit-free time points, and unit-aware
+time points cannot be used with a model that is unit-free in time.
+
+Implementation anchor: simulation is handled by `simulate()` for
+`CompartmentModel` objects.
 
 ## Lumping
 
