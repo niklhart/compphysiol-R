@@ -41,7 +41,7 @@ test_that("with_units works when passed to unit-aware constructors", {
     param <- parameters(CL = with_units(0.5 [L] / 1 [h]))
 
     expect_equal(dose$time, units::set_units(30, "min", mode = "standard"))
-    expect_equal(units::set_units(dose$amount, "mol", mode = "standard"), units::set_units(5e-05, "mol"))
+    expect_equal(units::set_units(dose$amount[[1]], "mol", mode = "standard"), units::set_units(5e-05, "mol"))
     expect_equal(param$CL, units::set_units(0.5, "L/h", mode = "standard"))
 })
 
@@ -64,8 +64,8 @@ test_that("constructors evaluate nested unit arithmetic", {
     expect_equal(units::set_units(cmt$volume[[1]], "L", mode = "standard"), units::set_units(1, "L"))
     expect_equal(molec$init[[1]], units::set_units(5, "mg/L", mode = "standard"))
     expect_equal(units::set_units(dose$time, "h", mode = "standard"), units::set_units(1, "h"))
-    expect_equal(units::set_units(dose$amount, "mol", mode = "standard"), units::set_units(5e-05, "mol"))
-    expect_equal(units::set_units(dose$rate, "mol/h", mode = "standard"), units::set_units(2.5e-05, "mol/h"))
+    expect_equal(units::set_units(dose$amount[[1]], "mol", mode = "standard"), units::set_units(5e-05, "mol"))
+    expect_equal(units::set_units(dose$rate[[1]], "mol/h", mode = "standard"), units::set_units(2.5e-05, "mol/h"))
     expect_equal(units::set_units(param$V, "L", mode = "standard"), units::set_units(1, "L"))
     expect_equal(param$CL, units::set_units(0.5, "L/h", mode = "standard"))
 })

@@ -356,6 +356,8 @@ with_units <- function(expr) {
 #'
 #' @param ... Bare numeric vectors or `units` vectors.
 #' @returns A numeric, `units`, or `mixed_units` vector.
+#' @note This helper is currently unused outside its tests. It is kept in case
+#'   explicit temporary combination of unit values becomes useful.
 #' @noRd
 .c_units <- function(...) {
     args <- list(...)

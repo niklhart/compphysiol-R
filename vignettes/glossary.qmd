@@ -332,9 +332,9 @@ toolbox-level result. Unlike ODE export, simulation owns both sides of the
 solver boundary: it converts unit-aware model quantities to numeric values for
 the solver and attaches units back to the returned trajectories.
 
-Simulation currently returns ODE state trajectories in a `SimulationResult`
-object. Observables are conceptually part of simulation output, but observable
-calculation is not yet included in `SimulationResult`.
+Simulation returns ODE state trajectories in a `SimulationResult` object.
+When observables are defined, their trajectories are included as derived
+simulation output; otherwise the observables component is `NULL`.
 
 Simulation has two working modes with respect to time. In unit-free mode, the
 model has no time units and simulation time is numeric. In unit-aware mode, the

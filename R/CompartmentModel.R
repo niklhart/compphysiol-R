@@ -487,6 +487,8 @@ make_depot <- function(model) {
     unique_bag_names <- bag_names[!duplicates]
     bag_initial <- lapply(infus$amount[!duplicates], function(x) x * 0)
     rate_initial <- lapply(infus$rate[!duplicates], function(x) x * 0)
+    bag_amount <- Map(`*`, infus$rate, as.list(infus$duration))
+    rate_stop_amount <- lapply(infus$rate, `-`)
 
     # Return the updated model
     model |>
@@ -510,7 +512,7 @@ make_depot <- function(model) {
         ) |>
         add_dosing(
             time = infus$time,
-            amount = infus$rate * infus$duration,
+            amount = bag_amount,
             cmt = bag_names,
             molec = infus$molec
         ) |>
@@ -522,7 +524,7 @@ make_depot <- function(model) {
         ) |>
         add_dosing(
             time = infus$time + infus$duration,
-            amount = -infus$rate,
+            amount = rate_stop_amount,
             cmt = rate_names,
             molec = infus$molec
         ) 

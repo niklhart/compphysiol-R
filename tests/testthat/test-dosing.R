@@ -1,21 +1,25 @@
 # Scalar dosing tests
 
+dosing_col_values <- function(x) {
+    do.call(c, unname(x))
+}
+
 test_that("Bolus dosing is created correctly", {
     d <- dosing(time = 0, amount = 100, cmt = "Central", molec = "drug")
     expect_true(is_bolus(d))
     expect_equal(d$time, 0)
-    expect_equal(d$amount, 100)
+    expect_equal(d$amount[[1]], 100)
     expect_equal(d$cmt, "Central")
     expect_equal(d$molec, "drug")
-    expect_true(is.na(d$rate))
+    expect_true(is.na(d$rate[[1]]))
     expect_true(is.na(d$duration))
 })
 
 test_that("Infusion dosing with amount+duration works", {
     d <- dosing(amount = 100, time = 0, duration = 10)
     expect_true(is_infusion(d))
-    expect_equal(d$rate, 10)
-    expect_equal(d$amount, 100)
+    expect_equal(d$rate[[1]], 10)
+    expect_equal(d$amount[[1]], 100)
     expect_equal(d$duration, 10)
 })
 
@@ -23,14 +27,14 @@ test_that("Infusion dosing with amount+rate works", {
     d <- dosing(amount = 100, time = 0, rate = 20)
     expect_true(is_infusion(d))
     expect_equal(d$duration, 5)   # derived
-    expect_equal(d$rate, 20)
+    expect_equal(d$rate[[1]], 20)
 })
 
 test_that("Infusion dosing with rate+duration works", {
     d <- dosing(time = 0, rate = 10, duration = 5)
     expect_true(is_infusion(d))
-    expect_equal(d$amount, 50)    # derived
-    expect_equal(d$rate, 10)
+    expect_equal(d$amount[[1]], 50)    # derived
+    expect_equal(d$rate[[1]], 10)
     expect_equal(d$duration, 5)
 })
 
@@ -59,12 +63,12 @@ test_that("Vectorized dosing times with recycled amounts work", {
 
     expect_s3_class(doses, "Dosing")
     expect_equal(length(doses), 3)
-    expect_equal(doses$amount, rep(100, 3))
+    expect_equal(dosing_col_values(doses$amount), rep(100, 3))
 })
 
 test_that("Vectorized amounts are handled correctly", {
     doses <- dosing(time = c(0, 24, 48), amount = c(100, 200, 300))
-    expect_equal(doses$amount, c(100, 200, 300))
+    expect_equal(dosing_col_values(doses$amount), c(100, 200, 300))
     expect_equal(doses$time, c(0, 24, 48))
 })
 
@@ -77,7 +81,7 @@ test_that("Vectorized infusion dosing with derived duration is handled correctly
 
 test_that("Vectorized infusion dosing with derived rate is handled correctly", {
     doses <- dosing(time = c(0, 24), amount = 100, duration = c(5, 10))
-    expect_equal(doses$rate, c(20, 10))
+    expect_equal(dosing_col_values(doses$rate), c(20, 10))
 })
 
 test_that("Dosing constructor throws error for invalid argument lengths", {
@@ -103,7 +107,7 @@ test_that("Concatenating dosing objects works", {
     expect_s3_class(doses_combined, "Dosing")
     expect_equal(length(doses_combined), 2)
     expect_equal(doses_combined$time, c(0, 24))
-    expect_equal(doses_combined$amount, c(100, 100))
+    expect_equal(dosing_col_values(doses_combined$amount), c(100, 100))
 })
 
 test_that("Concatenating dosing objects preserves incompatible amount units", {
@@ -114,7 +118,7 @@ test_that("Concatenating dosing objects preserves incompatible amount units", {
 
     expect_s3_class(doses_combined, "Dosing")
     expect_equal(length(doses_combined), 2)
-    expect_s3_class(doses_combined$amount, "mixed_units")
+    expect_true(is.list(doses_combined$amount))
     expect_equal(doses_combined$amount[[1]], units::set_units(100, "mg", mode = "standard"))
     expect_equal(doses_combined$amount[[2]], units::set_units(10, "mg/h", mode = "standard"))
 })
@@ -126,7 +130,7 @@ test_that("Subsetting dosing objects works", {
     expect_s3_class(doses_subset, "Dosing")
     expect_equal(length(doses_subset), 2)
     expect_equal(doses_subset$time, c(0, 24))
-    expect_equal(doses_subset$amount, c(100, 200))
+    expect_equal(dosing_col_values(doses_subset$amount), c(100, 200))
 })
 
 # Dosing with units tests
@@ -138,15 +142,15 @@ test_that("Dosing with units is created correctly (single dose)", {
 
     d1 <- dosing(time = 0, amount = 100, time_unit = "h", amount_unit = "mg")
     expect_equal(d1$time, t)
-    expect_equal(d1$amount, amt)
+    expect_equal(d1$amount[[1]], amt)
 
     d2 <- dosing(time = t, amount = amt)
     expect_equal(d2$time, t)
-    expect_equal(d2$amount, amt)
+    expect_equal(d2$amount[[1]], amt)
 
     d3 <- dosing(time = 0 [h], amount = 100 [mg])
     expect_equal(d3$time, t)
-    expect_equal(d3$amount, amt)
+    expect_equal(d3$amount[[1]], amt)
 })
 
 test_that("Dosing with units is created correctly (multiple doses)", {
@@ -158,9 +162,9 @@ test_that("Dosing with units is created correctly (multiple doses)", {
 
     d1 <- dosing(time = t12, amount = amt1)
     expect_equal(d1$time, t12)
-    expect_equal(d1$amount, rep(amt1, 2))
+    expect_equal(dosing_col_values(d1$amount), rep(amt1, 2))
 
     d2 <- dosing(time = t12, amount = amt12)
     expect_equal(d2$time, t12)
-    expect_equal(d2$amount, amt12)
+    expect_equal(dosing_col_values(d2$amount), amt12)
 })
