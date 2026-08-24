@@ -106,6 +106,18 @@ test_that("Concatenating dosing objects works", {
     expect_equal(doses_combined$amount, c(100, 100))
 })
 
+test_that("Concatenating dosing objects preserves incompatible amount units", {
+    d1 <- dosing(time = 0 [h], amount = 100 [mg])
+    d2 <- dosing(time = 1 [h], amount = 10 [mg/h])
+
+    doses_combined <- c(d1, d2)
+
+    expect_s3_class(doses_combined, "Dosing")
+    expect_equal(length(doses_combined), 2)
+    expect_equal(doses_combined$amount[[1]], units::set_units(100, "mg", mode = "standard"))
+    expect_equal(doses_combined$amount[[2]], units::set_units(10, "mg/h", mode = "standard"))
+})
+
 test_that("Subsetting dosing objects works", {
     doses <- dosing(time = c(0, 24, 48), amount = c(100, 200, 300))
     doses_subset <- doses[1:2]

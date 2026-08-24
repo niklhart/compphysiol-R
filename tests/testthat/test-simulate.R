@@ -118,6 +118,80 @@ test_that("simulate can pass unit-aware free parameters as a Parameters object",
     )
 })
 
+test_that("simulate applies bolus dosing events", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = 0, type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_dosing(time = 1, amount = 100, cmt = "Central", molec = "drug") |>
+        add_parameter(ke = 0.2)
+
+    time <- c(0, 1, 1 + 1e-6, 2, 3, 4)
+    out <- simulate(model, time = time)
+
+    expect_equal(out$states$a_drug_Central[[1]], 0, tolerance = 1e-8)
+    expect_equal(out$states$a_drug_Central[[2]], 0, tolerance = 1e-8)
+    expect_equal(
+        out$states$a_drug_Central,
+        c(0, 0, 100 * exp(-0.2 * (time[3:6] - 1))),
+        tolerance = 1e-5
+    )
+})
+
+test_that("simulate preserves state units for bolus dosing", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = 0, unit = "mg", type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_dosing(time = 1 [h], amount = 100 [mg], cmt = "Central", molec = "drug") |>
+        add_parameter(ke = 0.2 [1/h])
+
+    time <- c(0, 1, 1 + 1e-6, 2, 3, 4)
+    out <- simulate(model, time = time [h])
+
+    expect_equal(out$states$time, units::set_units(time, "h", mode = "standard"))
+    expect_equal(
+        out$states$a_drug_Central,
+        units::set_units(c(0, 0, 100 * exp(-0.2 * (time[3:6] - 1))), "mg", mode = "standard"),
+        tolerance = 1e-5
+    )
+})
+
+test_that("simulate applies infusion dosing events", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = 0, type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_dosing(time = 0, rate = 10, duration = 5, cmt = "Central", molec = "drug") |>
+        add_parameter(ke = 0.2)
+
+    out <- simulate(model, time = seq(0, 10, by = 1))
+    central <- out$states$a_drug_Central
+
+    expect_true(all(diff(central[1:6]) > 0))
+    expect_true(all(diff(central[6:11]) < 0))
+})
+
+test_that("simulate preserves state units for infusion dosing", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = 0, unit = "mg", type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_dosing(time = 0 [h], rate = 10 [mg/h], duration = 5 [h], cmt = "Central", molec = "drug") |>
+        add_parameter(ke = 0.2 [1/h])
+
+    out <- simulate(model, time = seq(0, 10, by = 1) [h])
+
+    expect_equal(out$states$time, units::set_units(seq(0, 10, by = 1), "h", mode = "standard"))
+    expect_true(inherits(out$states$a_drug_Central, "units"))
+    expect_equal(
+        units(out$states$a_drug_Central),
+        units(units::set_units(1, "mg", mode = "standard"))
+    )
+    expect_true(all(diff(out$states$a_drug_Central[1:6]) > units::set_units(0, "mg")))
+    expect_true(all(diff(out$states$a_drug_Central[6:11]) < units::set_units(0, "mg")))
+})
+
 test_that("simulate returns observable trajectories", {
     model <- compartment_model() |>
         add_compartment("Central", volume = "V") |>
