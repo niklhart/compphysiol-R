@@ -9,6 +9,13 @@
 #' the `unit` argument. Conversely, unit-aware simulation times require a model
 #' with a time dimension.
 #'
+#' In unit-aware simulations, `dimensions` defines the solver-facing numerical
+#' scale used when unit-bearing model quantities are converted to plain numbers
+#' before calling [deSolve::ode()]. This scale also determines how solver
+#' tolerances such as `atol` are interpreted. For example, if amounts are
+#' converted to kilograms internally, an `atol` value is applied on the kilogram
+#' scale even if results are displayed back in milligrams.
+#'
 #' @param object A `CompartmentModel` object.
 #' @param nsim Ignored; included for compatibility with [stats::simulate()].
 #' @param seed Ignored; included for compatibility with [stats::simulate()].
@@ -17,7 +24,9 @@
 #' @param unit Optional time unit used when `time` is numeric without units.
 #' @param parameters Free parameters passed to the ODE solver, as a named list
 #'   or `Parameters` object.
-#' @param dimensions Named list of unit dimensions passed to [to_ode()].
+#' @param dimensions Named list of unit dimensions defining the numerical scale
+#'   used at the ODE solver boundary. These dimensions are passed to [to_ode()]
+#'   and affect the scale of solver tolerances such as `atol`.
 #' @param ... Additional arguments passed to [deSolve::ode()].
 #' @returns A `SimulationResult` object.
 #' @method simulate CompartmentModel

@@ -336,6 +336,13 @@ Simulation returns ODE state trajectories in a `SimulationResult` object.
 When observables are defined, their trajectories are included as derived
 simulation output; otherwise the observables component is `NULL`.
 
+The `dimensions` argument controls the solver-facing numerical scale in
+unit-aware simulations. Unit-bearing quantities are converted to plain numbers
+in these dimensions before calling the ODE solver. This matters for numerical
+tolerances: an absolute tolerance such as `atol` is interpreted on the internal
+solver scale, which may differ from the units shown again in the returned
+trajectories.
+
 Simulation has two working modes with respect to time. In unit-free mode, the
 model has no time units and simulation time is numeric. In unit-aware mode, the
 model contains a time dimension, for example through a rate constant or dosing

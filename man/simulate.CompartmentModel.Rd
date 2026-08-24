@@ -30,7 +30,9 @@ e.g. \code{seq(0, 24) [h]}.}
 \item{parameters}{Free parameters passed to the ODE solver, as a named list
 or \code{Parameters} object.}
 
-\item{dimensions}{Named list of unit dimensions passed to \code{\link[=to_ode]{to_ode()}}.}
+\item{dimensions}{Named list of unit dimensions defining the numerical scale
+used at the ODE solver boundary. These dimensions are passed to \code{\link[=to_ode]{to_ode()}}
+and affect the scale of solver tolerances such as \code{atol}.}
 
 \item{...}{Additional arguments passed to \code{\link[deSolve:ode]{deSolve::ode()}}.}
 }
@@ -47,4 +49,11 @@ Simulation is either unit-free or unit-aware with respect to time. If the
 model uses a time dimension, \code{time} must carry units through the unit DSL or
 the \code{unit} argument. Conversely, unit-aware simulation times require a model
 with a time dimension.
+
+In unit-aware simulations, \code{dimensions} defines the solver-facing numerical
+scale used when unit-bearing model quantities are converted to plain numbers
+before calling \code{\link[deSolve:ode]{deSolve::ode()}}. This scale also determines how solver
+tolerances such as \code{atol} are interpreted. For example, if amounts are
+converted to kilograms internally, an \code{atol} value is applied on the kilogram
+scale even if results are displayed back in milligrams.
 }
