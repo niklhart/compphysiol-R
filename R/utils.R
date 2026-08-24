@@ -342,7 +342,7 @@ with_units <- function(expr) {
 
 #' Combine numeric or unit-bearing vectors
 #'
-#' `c_mixed()` combines bare numeric vectors and `units` vectors while allowing
+#' `.c_units()` combines bare numeric vectors and `units` vectors while allowing
 #' the `units` package to choose the most specific representation:
 #'
 #' * if all arguments are bare numeric vectors, a numeric vector is returned;
@@ -357,7 +357,7 @@ with_units <- function(expr) {
 #' @param ... Bare numeric vectors or `units` vectors.
 #' @returns A numeric, `units`, or `mixed_units` vector.
 #' @noRd
-c_mixed <- function(...) {
+.c_units <- function(...) {
     args <- list(...)
 
     if (length(args) == 0) return(numeric(0))
