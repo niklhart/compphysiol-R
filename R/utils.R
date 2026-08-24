@@ -340,6 +340,51 @@ with_units <- function(expr) {
     expr
 }
 
+#' Combine numeric or unit-bearing vectors
+#'
+#' `c_mixed()` combines bare numeric vectors and `units` vectors while allowing
+#' the `units` package to choose the most specific representation:
+#'
+#' * if all arguments are bare numeric vectors, a numeric vector is returned;
+#' * if all unit-bearing arguments have consistent units, a `units` vector is
+#'   returned;
+#' * if unit-bearing arguments have mixed units, or bare numeric values are
+#'   combined with unit-bearing values, a `mixed_units` vector is returned.
+#'
+#' Bare numeric values combined with unit-bearing values are treated as
+#' dimensionless values.
+#'
+#' @param ... Bare numeric vectors or `units` vectors.
+#' @returns A numeric, `units`, or `mixed_units` vector.
+#' @noRd
+c_mixed <- function(...) {
+    args <- list(...)
+
+    if (length(args) == 0) return(numeric(0))
+
+    has_units <- vapply(args, inherits, logical(1), "units")
+    is_bare_numeric <- vapply(
+        args,
+        function(x) is.numeric(x) && !inherits(x, "units"),
+        logical(1)
+    )
+
+    if (!all(has_units | is_bare_numeric)) {
+        stop("All arguments must be either numeric or unit-bearing.")
+    }
+
+    if (all(is_bare_numeric)) return(do.call(c, args))
+
+    args[is_bare_numeric] <- lapply(
+        args[is_bare_numeric],
+        function(x) units::set_units(x, 1)
+    )
+
+    oldopt <- units::units_options(allow_mixed = TRUE)
+    on.exit(units::units_options(oldopt), add = TRUE)
+    do.call(what = c, args = args) %||% numeric(0)
+}
+
 
 # #' Evaluate a rate expression, handling `a[molec,cmt]` and `c[molec,cmt]` as variables
 # #'
