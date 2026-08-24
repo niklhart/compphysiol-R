@@ -36,6 +36,21 @@ test_that("Non-standard evaluation captures names, values and units correctly", 
     expect_equal(p_SE_var, p_NSE_var)
 })
 
+test_that("Parameter names must be present and unique", {
+    expect_error(
+        parameters(a = 1, a = 2),
+        "Parameter names must be unique"
+    )
+    expect_error(
+        parameters(a = 1, 2),
+        "All parameters must be named"
+    )
+    expect_error(
+        parameters(name = c("a", "a"), value = c(1, 2)),
+        "Parameter names must be unique"
+    )
+})
+
 test_that("On-the-fly unit conversion works correctly in NSE mode", {
     A_km <- units::set_units(1, "km")
     A_m <- units::set_units(1000, "m")

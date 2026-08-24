@@ -72,6 +72,27 @@ test_that("simulate errors when simulation time has units but model is unit-free
     )
 })
 
+test_that("simulate rejects invalid time inputs with clear errors", {
+    model <- test_model_for_simulation()
+
+    expect_error(
+        simulate(model, time = numeric(0)),
+        "Argument 'time' must contain at least one time point"
+    )
+    expect_error(
+        simulate(model, time = c(0, NA, 1)),
+        "Argument 'time' must not contain missing or non-finite values"
+    )
+    expect_error(
+        simulate(model, time = "1"),
+        "Argument 'time' must be numeric"
+    )
+    expect_error(
+        simulate(model, time = c(0, 2, 1)),
+        "Argument 'time' must be sorted in non-decreasing order"
+    )
+})
+
 test_that("simulate can pass free parameters to the ODE solver", {
     model <- compartment_model() |>
         add_compartment("Central", volume = NA_real_) |>

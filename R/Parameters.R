@@ -32,10 +32,12 @@ parameters <- function(..., name = NULL, value = NULL, unit = NULL) {
         if (!is.null(name) || !is.null(value) || !is.null(unit)) {
             stop("Cannot use both '...' and 'name'/'value/unit' arguments.")
         }
+        .check_parameter_names(names(args))
         value <- lapply(args, .process_nse_arg, envir = parent.frame())
 
     } else if (!is.null(name)) {
         if (length(name) != length(value)) stop("All parameters must be named.")
+        .check_parameter_names(name)
         if (!(length(unit) %in% c(0,1,length(value)))) stop("'unit' must be NULL, scalar or match length of 'value'.")
         if (length(unit) == 1) unit <- rep(unit, length(value))
         value <- if (!is.null(unit)) {
@@ -50,6 +52,17 @@ parameters <- function(..., name = NULL, value = NULL, unit = NULL) {
         value %||% list(),
         class = c("Parameters", "list")
     )
+}
+
+.check_parameter_names <- function(name) {
+    if (is.null(name) || any(name == "")) {
+        stop("All parameters must be named.", call. = FALSE)
+    }
+    if (anyDuplicated(name)) {
+        stop("Parameter names must be unique.", call. = FALSE)
+    }
+
+    invisible(NULL)
 }
 
 #' Add one or several parameters to a `CompartmentModel` object.

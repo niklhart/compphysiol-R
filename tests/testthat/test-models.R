@@ -184,8 +184,6 @@ test_that("Permeation-based model reduces to well-stirred in the fast permeabili
         Vgut_cel = 0.5,
         Vhea_exc = 0.5,
         Vhea_cel = 0.5,
-        Vmus_exc = 0.5,
-        Vmus_cel = 0.5,
         Vkid_exc = 0.5,
         Vkid_cel = 0.5,
         Vliv_exc = 0.5,

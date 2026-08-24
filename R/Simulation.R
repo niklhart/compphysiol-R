@@ -41,6 +41,7 @@ simulate.CompartmentModel <- function(
         }
         time <- units::set_units(time, unit, mode = "standard")
     }
+    .simulation_validate_time(time)
 
     sim_parameters <- .simulation_parameters_object(parameters)
     export_model <- .simulation_model_with_parameters(object, sim_parameters)
@@ -73,6 +74,24 @@ simulate.CompartmentModel <- function(
         ),
         class = "SimulationResult"
     )
+}
+
+.simulation_validate_time <- function(time) {
+    if (!is.numeric(time)) {
+        stop("Argument 'time' must be numeric.", call. = FALSE)
+    }
+    if (length(time) == 0) {
+        stop("Argument 'time' must contain at least one time point.", call. = FALSE)
+    }
+    time_values <- as.numeric(time)
+    if (anyNA(time_values) || any(!is.finite(time_values))) {
+        stop("Argument 'time' must not contain missing or non-finite values.", call. = FALSE)
+    }
+    if (any(diff(time_values) < 0)) {
+        stop("Argument 'time' must be sorted in non-decreasing order.", call. = FALSE)
+    }
+
+    invisible(NULL)
 }
 
 .simulation_dimensions <- function(model, time, dimensions) {
