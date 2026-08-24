@@ -485,15 +485,17 @@ make_depot <- function(model) {
 
     duplicates <- duplicated(bag_names)    # same for bag/rate names since they are generated from the same set of molecule/cmt names
     unique_bag_names <- bag_names[!duplicates]
+    bag_initial <- lapply(infus$amount[!duplicates], function(x) x * 0)
+    rate_initial <- lapply(infus$rate[!duplicates], function(x) x * 0)
 
-    # Return the updated model (TODO: remove infusion dosing events!)
+    # Return the updated model
     model |>
         add_compartment(new_bag_cmt_names, volume = NA_real_) |>
         add_compartment(new_rate_cmt_names, volume = NA_real_) |>
         add_molecule(
             name = rep(infus$molec[!duplicates], times = 2),
             cmt = c(bag_names[!duplicates], rate_names[!duplicates]),
-            initial = 0,
+            initial = c(bag_initial, rate_initial),
             type = "amount"
         ) |>
         add_transport(
@@ -1037,7 +1039,7 @@ to_ode <- function(
         events <- data.frame(
             var = .dsl_make_state(doses$molec, doses$cmt, type = "amount"),
             time = doses$time,
-            value = doses$amount,
+            value = I(unclass(doses)$amount),
             method = "add",
             stringsAsFactors = FALSE
         )

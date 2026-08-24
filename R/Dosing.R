@@ -101,13 +101,14 @@ dosing <- function(
     # Case 1: bolus dosing -- early return
     if (!is.null(amount) && is.null(rate) && is.null(duration)) {
         return(structure(
-            data.frame(
+            .dosing_data_frame(
                 time = time,
                 amount = amount,
-                rate = NA_real_,
-                duration = NA_real_,
+                rate = rep(NA_real_, ndose),
+                duration = rep(NA_real_, ndose),
                 molec = molec,
-                cmt = cmt
+                cmt = cmt,
+                n = ndose
             ),
             class = "Dosing"
         ))
@@ -127,16 +128,44 @@ dosing <- function(
     }
 
     structure(
-        data.frame(
+        .dosing_data_frame(
             time = time,
             amount = amount,
             rate = rate,
             duration = duration,
             molec = molec,
-            cmt = cmt
+            cmt = cmt,
+            n = ndose
         ),
         class = "Dosing"
     )
+}
+
+.dosing_data_frame <- function(time, amount, rate, duration, molec, cmt, n) {
+    data.frame(
+        time = time,
+        amount = I(.dosing_list_col(amount, n)),
+        rate = I(.dosing_list_col(rate, n)),
+        duration = duration,
+        molec = molec,
+        cmt = cmt
+    )
+}
+
+.dosing_list_col <- function(x, n) {
+    if (length(x) == 1) x <- rep(x, length.out = n)
+    lapply(seq_len(n), function(i) x[[i]])
+}
+
+.dosing_unlist_col <- function(x) {
+    if (!is.list(x) || inherits(x, "units")) return(x)
+    if (length(x) == 0) return(x)
+
+    out <- tryCatch(
+        do.call(c, unname(x)),
+        error = function(e) x
+    )
+    out
 }
 
 #' Add one or several dosing events (bolus or infusion) to a `CompartmentModel` object.
@@ -193,7 +222,7 @@ add_dosing <- function(
 #' @export
 is_bolus <- function(dose) {
     .check_class(dose, "Dosing")
-    is.na(dose$rate) & is.na(dose$duration)
+    is.na(.dosing_unlist_col(unclass(dose)$rate)) & is.na(dose$duration)
 }
 
 #' Check which dosing events are infusions.
@@ -213,7 +242,23 @@ is_infusion <- function(dose) {
 #' @return The number of dosing events (number of rows in the data frame)
 #' @export
 length.Dosing <- function(x) {
-    length(x$time)
+    nrow(as.data.frame(x))
+}
+
+#' Extract a column from a `Dosing` object
+#'
+#' Amount and rate columns are returned as vectors when units are compatible and
+#' as lists otherwise.
+#' @param x A `Dosing` object
+#' @param name Column name
+#' @returns The requested column.
+#' @export
+`$.Dosing` <- function(x, name) {
+    value <- unclass(x)[[name]]
+    if (name %in% c("amount", "rate")) {
+        return(.dosing_unlist_col(value))
+    }
+    value
 }
 
 #' Print a `Dosing` object
@@ -311,6 +356,9 @@ c.Dosing <- function(...) {
 
     # Combine the data frames by row-binding
     combined_df <- do.call(rbind, lapply(objs, as.data.frame))
+    for (col in c("amount", "rate")) {
+        combined_df[[col]] <- I(unclass(combined_df[[col]]))
+    }
 
     # sort by time to ensure correct order of dosing events
     combined_df <- combined_df[order(combined_df$time), ]
