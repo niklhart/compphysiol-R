@@ -2,7 +2,7 @@
 #'
 #' `simulate()` solves a `CompartmentModel` and returns toolbox-level output.
 #' The current implementation wraps the `deSolve` ODE export and returns ODE
-#' states only; observables will be added separately.
+#' states and observables.
 #'
 #' Simulation is either unit-free or unit-aware with respect to time. If the
 #' model uses a time dimension, `time` must carry units through the unit DSL or
@@ -64,9 +64,13 @@ simulate.CompartmentModel <- function(
     states <- as.data.frame(out)
     states <- .simulation_attach_state_units(states, export_model, odeinfo, dimensions)
     states$time <- .simulation_attach_time_units(states$time, time, dimensions)
+    observables <- .simulation_observables(out, states$time, export_model, odeinfo, solver_time, dimensions)
 
     structure(
-        list(states = states),
+        list(
+            states = states,
+            observables = observables
+        ),
         class = "SimulationResult"
     )
 }
@@ -129,6 +133,131 @@ simulate.CompartmentModel <- function(
     states
 }
 
+.simulation_observables <- function(solver_output, time, model, odeinfo, solver_time, dimensions) {
+    if (length(odeinfo$obsFuncs) == 0) return(NULL)
+
+    values <- lapply(odeinfo$obsFuncs, function(f) {
+        f(solver_time, solver_output, list())
+    })
+    observables <- as.data.frame(values)
+    names(observables) <- names(odeinfo$obsFuncs)
+    observables <- cbind(data.frame(time = time), observables)
+
+    obs_units <- .simulation_observable_unit_values(model)
+    for (obs_name in intersect(names(obs_units), names(observables))) {
+        unit_value <- obs_units[[obs_name]]
+        if (inherits(unit_value, "units")) {
+            if (inherits(observables[[obs_name]], "units")) {
+                observables[[obs_name]] <- units::set_units(
+                    units::set_units(observables[[obs_name]], NULL),
+                    .unit_label(unit_value),
+                    mode = "standard"
+                )
+            } else {
+                export_unit_value <- do.call(.to_dimensions, c(list(unit_value), dimensions))
+                value_with_export_units <- units::set_units(
+                    observables[[obs_name]],
+                    .unit_label(export_unit_value),
+                    mode = "standard"
+                )
+                observables[[obs_name]] <- units::set_units(
+                    value_with_export_units,
+                    .unit_label(unit_value),
+                    mode = "standard"
+                )
+            }
+        }
+    }
+
+    observables
+}
+
+.simulation_observable_unit_values <- function(model) {
+    if (length(model$observables) == 0) return(list())
+
+    unit_env <- .simulation_unit_env(model)
+    lapply(model$observables, function(obs_expr) {
+        .dsl_eval(obs_expr, envir = unit_env)
+    })
+}
+
+.simulation_unit_env <- function(model) {
+    model <- model |> wire() |> make_depot()
+    values <- c(unclass(initials(model)), unclass(model$parameters))
+    env <- list2env(values)
+
+    .simulation_add_derived_states(env, model)
+    .simulation_add_equations(env, model)
+    .simulation_add_derived_states(env, model)
+
+    env
+}
+
+.simulation_add_derived_states <- function(env, model) {
+    volume_by_cmt <- setNames(model$compartments$volume, names(model$compartments))
+
+    for (i in seq_along(model$molecules)) {
+        molec <- model$molecules$name[[i]]
+        cmt <- model$molecules$cmt[[i]]
+        vol <- .simulation_eval_volume(volume_by_cmt[[cmt]], env)
+        if (is.null(vol)) next
+
+        amount_nm <- .dsl_make_state(molec, cmt, prefix = "a")
+        conc_nm <- .dsl_make_state(molec, cmt, prefix = "c")
+
+        if (exists(amount_nm, envir = env, inherits = FALSE) &&
+            !exists(conc_nm, envir = env, inherits = FALSE)) {
+            assign(
+                conc_nm,
+                get(amount_nm, envir = env, inherits = FALSE) / vol,
+                envir = env
+            )
+        }
+
+        if (exists(conc_nm, envir = env, inherits = FALSE) &&
+            !exists(amount_nm, envir = env, inherits = FALSE)) {
+            assign(
+                amount_nm,
+                get(conc_nm, envir = env, inherits = FALSE) * vol,
+                envir = env
+            )
+        }
+    }
+
+    invisible(env)
+}
+
+.simulation_eval_volume <- function(vol, env) {
+    if (is.null(vol)) return(NULL)
+    if (length(vol) == 1 && is.atomic(vol) && is.na(vol)) return(NULL)
+
+    tryCatch(
+        .dsl_eval(.as_call(vol), envir = env),
+        error = function(e) NULL
+    )
+}
+
+.simulation_add_equations <- function(env, model) {
+    pending_eq <- seq_along(model$equations)
+    while (length(pending_eq) > 0) {
+        resolved <- logical(length(pending_eq))
+        varnames <- names(env)
+        for (k in seq_along(pending_eq)) {
+            i <- pending_eq[[k]]
+            eq_expr <- model$equations[[i]]
+            if (!all(.dsl_all_vars(eq_expr) %in% varnames)) next
+
+            assign(names(model$equations)[[i]], .dsl_eval(eq_expr, envir = env), envir = env)
+            .simulation_add_derived_states(env, model)
+            resolved[[k]] <- TRUE
+        }
+        if (!any(resolved)) break
+        pending_eq <- pending_eq[!resolved]
+    }
+
+    invisible(env)
+}
+
 .simulation_state_unit_values <- function(model) {
     model <- model |> wire() |> make_depot()
     initials(model)
@@ -138,6 +267,7 @@ simulate.CompartmentModel <- function(
     model <- model |> wire() |> make_depot()
     c(
         initials(model),
+        as.list(model$compartments$volume),
         unclass(model$parameters),
         as.list(model$doses$time),
         as.list(model$doses$amount),

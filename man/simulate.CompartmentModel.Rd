@@ -40,7 +40,7 @@ A \code{SimulationResult} object.
 \description{
 \code{simulate()} solves a \code{CompartmentModel} and returns toolbox-level output.
 The current implementation wraps the \code{deSolve} ODE export and returns ODE
-states only; observables will be added separately.
+states and observables.
 }
 \details{
 Simulation is either unit-free or unit-aware with respect to time. If the
