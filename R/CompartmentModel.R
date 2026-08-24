@@ -1039,7 +1039,7 @@ to_ode <- function(
         events <- data.frame(
             var = .dsl_make_state(doses$molec, doses$cmt, type = "amount"),
             time = doses$time,
-            value = I(unclass(doses)$amount),
+            value = I(doses$amount),
             method = "add",
             stringsAsFactors = FALSE
         )

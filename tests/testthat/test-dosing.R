@@ -114,6 +114,7 @@ test_that("Concatenating dosing objects preserves incompatible amount units", {
 
     expect_s3_class(doses_combined, "Dosing")
     expect_equal(length(doses_combined), 2)
+    expect_s3_class(doses_combined$amount, "mixed_units")
     expect_equal(doses_combined$amount[[1]], units::set_units(100, "mg", mode = "standard"))
     expect_equal(doses_combined$amount[[2]], units::set_units(10, "mg/h", mode = "standard"))
 })
