@@ -4,6 +4,11 @@
 #' The current implementation wraps the `deSolve` ODE export and returns ODE
 #' states only; observables will be added separately.
 #'
+#' Simulation is either unit-free or unit-aware with respect to time. If the
+#' model uses a time dimension, `time` must carry units through the unit DSL or
+#' the `unit` argument. Conversely, unit-aware simulation times require a model
+#' with a time dimension.
+#'
 #' @param object A `CompartmentModel` object.
 #' @param nsim Ignored; included for compatibility with [stats::simulate()].
 #' @param seed Ignored; included for compatibility with [stats::simulate()].
@@ -39,6 +44,7 @@ simulate.CompartmentModel <- function(
 
     sim_parameters <- .simulation_parameters_object(parameters)
     export_model <- .simulation_model_with_parameters(object, sim_parameters)
+    .simulation_check_time_mode(export_model, time)
 
     dimensions <- .simulation_dimensions(export_model, time, dimensions)
     odeinfo <- to_ode(export_model, dimensions = dimensions)
@@ -77,6 +83,20 @@ simulate.CompartmentModel <- function(
     }
 
     dimensions
+}
+
+.simulation_check_time_mode <- function(model, time) {
+    model_uses_time <- any(vapply(.simulation_dimension_values(model), .has_time_dimension, logical(1)))
+    time_has_units <- inherits(time, "units")
+
+    if (model_uses_time && !time_has_units) {
+        stop("Cannot simulate: model uses time units but simulation time is unit-free.", call. = FALSE)
+    }
+    if (!model_uses_time && time_has_units) {
+        stop("Cannot simulate: simulation time has units but the model is unit-free in time.", call. = FALSE)
+    }
+
+    invisible(NULL)
 }
 
 .simulation_numeric_time <- function(time, dimensions) {
@@ -200,4 +220,10 @@ simulate.CompartmentModel <- function(
 
 .unit_label <- function(x) {
     as.character(units(x))
+}
+
+.has_time_dimension <- function(x) {
+    if (!inherits(x, "units")) return(FALSE)
+    unit_obj <- units(units::convert_to_base(x))
+    "s" %in% c(unit_obj$numerator, unit_obj$denominator)
 }

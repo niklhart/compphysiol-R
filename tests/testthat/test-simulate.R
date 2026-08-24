@@ -1,9 +1,14 @@
-test_model_for_simulation <- function(unit = NULL) {
-    compartment_model() |>
+test_model_for_simulation <- function(amount_unit = NULL, time_unit = FALSE) {
+    model <- compartment_model() |>
         add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 100, unit = unit, type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
-        add_parameter(ke = 0.2 [1/h])
+        add_molecule("drug", cmt = "Central", initial = 100, unit = amount_unit, type = "amount") |>
+        add_transport("Central", "", const = "ke")
+
+    if (time_unit) {
+        add_parameter(model, ke = 0.2 [1/h])
+    } else {
+        add_parameter(model, ke = 0.2)
+    }
 }
 
 test_that("simulate returns a SimulationResult with ODE states", {
@@ -20,7 +25,7 @@ test_that("simulate returns a SimulationResult with ODE states", {
 })
 
 test_that("simulate accepts time units through the time DSL", {
-    model <- test_model_for_simulation("mg")
+    model <- test_model_for_simulation(amount_unit = "mg", time_unit = TRUE)
 
     out <- simulate(model, time = seq(0, 10, by = 1) [h])
 
@@ -35,7 +40,7 @@ test_that("simulate accepts time units through the time DSL", {
 })
 
 test_that("simulate accepts time units through the unit argument", {
-    model <- test_model_for_simulation("mg")
+    model <- test_model_for_simulation(amount_unit = "mg", time_unit = TRUE)
 
     out <- simulate(model, time = seq(0, 10, by = 1), unit = "h")
 
@@ -48,15 +53,33 @@ test_that("simulate accepts time units through the unit argument", {
     )
 })
 
+test_that("simulate errors when model uses time units but simulation time is unit-free", {
+    model <- test_model_for_simulation(amount_unit = "mg", time_unit = TRUE)
+
+    expect_error(
+        simulate(model, time = seq(0, 10, by = 1)),
+        "model uses time units but simulation time is unit-free"
+    )
+})
+
+test_that("simulate errors when simulation time has units but model is unit-free in time", {
+    model <- test_model_for_simulation()
+
+    expect_error(
+        simulate(model, time = seq(0, 10, by = 1) [h]),
+        "simulation time has units but the model is unit-free in time"
+    )
+})
+
 test_that("simulate can pass free parameters to the ODE solver", {
     model <- compartment_model() |>
         add_compartment("Central", volume = NA_real_) |>
         add_molecule("drug", cmt = "Central", initial = 100, type = "amount") |>
         add_transport("Central", "", const = "ke")
 
-    out <- simulate(model, time = seq(0, 10, by = 1) [h], parameters = list(ke = 0.2))
+    out <- simulate(model, time = seq(0, 10, by = 1), parameters = list(ke = 0.2))
 
-    expect_equal(out$states$a_drug_Central, 100 * exp(-0.2 * as.numeric(out$states$time)), tolerance = 1e-6)
+    expect_equal(out$states$a_drug_Central, 100 * exp(-0.2 * out$states$time), tolerance = 1e-6)
 })
 
 test_that("simulate can pass free parameters as a Parameters object", {
@@ -67,9 +90,9 @@ test_that("simulate can pass free parameters as a Parameters object", {
 
     out <- simulate(
         model,
-        time = seq(0, 10, by = 1) [h],
+        time = seq(0, 10, by = 1),
         parameters = parameters(ke = 0.2)
     )
 
-    expect_equal(out$states$a_drug_Central, 100 * exp(-0.2 * as.numeric(out$states$time)), tolerance = 1e-6)
+    expect_equal(out$states$a_drug_Central, 100 * exp(-0.2 * out$states$time), tolerance = 1e-6)
 })

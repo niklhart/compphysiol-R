@@ -42,3 +42,9 @@ A \code{SimulationResult} object.
 The current implementation wraps the \code{deSolve} ODE export and returns ODE
 states only; observables will be added separately.
 }
+\details{
+Simulation is either unit-free or unit-aware with respect to time. If the
+model uses a time dimension, \code{time} must carry units through the unit DSL or
+the \code{unit} argument. Conversely, unit-aware simulation times require a model
+with a time dimension.
+}
