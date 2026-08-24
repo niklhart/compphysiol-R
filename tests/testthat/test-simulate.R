@@ -17,8 +17,9 @@ test_that("simulate returns a SimulationResult with ODE states", {
     out <- simulate(model, time = seq(0, 10, by = 1))
 
     expect_s3_class(out, "SimulationResult")
-    expect_named(out, c("states"))
+    expect_named(out, c("states", "observables"))
     expect_s3_class(out$states, "data.frame")
+    expect_null(out$observables)
     expect_named(out$states, c("time", "a_drug_Central"))
     expect_equal(out$states$time, seq(0, 10, by = 1))
     expect_equal(out$states$a_drug_Central, 100 * exp(-0.2 * out$states$time), tolerance = 1e-6)
@@ -113,6 +114,63 @@ test_that("simulate can pass unit-aware free parameters as a Parameters object",
     expect_equal(
         out$states$a_drug_Central,
         units::set_units(100 * exp(-0.2 * seq(0, 10, by = 1)), "mg", mode = "standard"),
+        tolerance = 1e-6
+    )
+})
+
+test_that("simulate returns observable trajectories", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = "V") |>
+        add_molecule("drug", cmt = "Central", initial = 100, type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_observable(C = a[drug, Central] / V) |>
+        add_parameter(ke = 0.2, V = 10)
+
+    out <- simulate(model, time = seq(0, 10, by = 1))
+
+    expect_s3_class(out, "SimulationResult")
+    expect_s3_class(out$observables, "data.frame")
+    expect_named(out$observables, c("time", "C"))
+    expect_equal(out$observables$time, out$states$time)
+    expect_equal(out$observables$C, out$states$a_drug_Central / 10, tolerance = 1e-6)
+})
+
+test_that("simulate reattaches units to observable trajectories", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume =  10 [L]) |>
+        add_molecule("drug", cmt = "Central", initial = 100, unit = "mg", type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_observable(C = c[drug, Central]) |>
+        add_parameter(ke = 0.2 [1/h])
+
+    out <- simulate(model, time = seq(0, 10, by = 1) [h])
+
+    expect_s3_class(out$observables, "data.frame")
+    expect_equal(out$observables$time, out$states$time)
+    expect_equal(
+        out$observables$C,
+        units::set_units(100 * exp(-0.2 * seq(0, 10, by = 1)) / 10, "mg/L", mode = "standard"),
+        tolerance = 1e-6
+    )
+})
+
+test_that("simulate uses unit-aware free parameters for observable units", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = "V") |>
+        add_molecule("drug", cmt = "Central", initial = 100, unit = "mg", type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_observable(C = a[drug, Central] / V)
+
+    out <- simulate(
+        model,
+        time = seq(0, 10, by = 1) [h],
+        parameters = parameters(ke = 0.2 [1/h], V = 10 [L])
+    )
+
+    expect_s3_class(out$observables, "data.frame")
+    expect_equal(
+        out$observables$C,
+        units::set_units(100 * exp(-0.2 * seq(0, 10, by = 1)) / 10, "mg/L", mode = "standard"),
         tolerance = 1e-6
     )
 })
