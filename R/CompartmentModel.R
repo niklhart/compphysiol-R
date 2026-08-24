@@ -792,7 +792,10 @@ to_ode <- function(
     stateNames <- dslStateNames
     eqNames <- names(model$equations)
     name2idx <- setNames(seq_along(stateNames), stateNames)
-    volume_by_cmt <- setNames(model$compartments$volume, names(model$compartments))
+    volume_by_cmt <- setNames(
+        lapply(model$compartments$volume, .to_dimensions_value, dimensions = dimensions),
+        names(model$compartments)
+    )
     stateVolumes <- list()
     for (i in seq_along(model$molecules)) {
         molec <- model$molecules$name[[i]]

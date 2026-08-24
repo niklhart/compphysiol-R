@@ -147,25 +147,17 @@ simulate.CompartmentModel <- function(
     for (obs_name in intersect(names(obs_units), names(observables))) {
         unit_value <- obs_units[[obs_name]]
         if (inherits(unit_value, "units")) {
-            if (inherits(observables[[obs_name]], "units")) {
-                observables[[obs_name]] <- units::set_units(
-                    units::set_units(observables[[obs_name]], NULL),
-                    .unit_label(unit_value),
-                    mode = "standard"
-                )
-            } else {
-                export_unit_value <- do.call(.to_dimensions, c(list(unit_value), dimensions))
-                value_with_export_units <- units::set_units(
-                    observables[[obs_name]],
-                    .unit_label(export_unit_value),
-                    mode = "standard"
-                )
-                observables[[obs_name]] <- units::set_units(
-                    value_with_export_units,
-                    .unit_label(unit_value),
-                    mode = "standard"
-                )
-            }
+            export_unit_value <- do.call(.to_dimensions, c(list(unit_value), dimensions))
+            value_with_export_units <- units::set_units(
+                observables[[obs_name]],
+                .unit_label(export_unit_value),
+                mode = "standard"
+            )
+            observables[[obs_name]] <- units::set_units(
+                value_with_export_units,
+                .unit_label(unit_value),
+                mode = "standard"
+            )
         }
     }
 

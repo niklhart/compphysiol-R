@@ -220,6 +220,12 @@ with_units <- function(expr) {
         vapply(function(x) units::set_units(x, NULL), numeric(1))
 }
 
+.to_dimensions_value <- function(var, dimensions) {
+    if (!inherits(var, "units")) return(var)
+    var <- do.call(.to_dimensions, c(list(var), dimensions))
+    units::set_units(var, NULL)
+}
+
 #' Substitute equations in transports
 #' 
 #' This function takes a `Transports` object and an `Equations` object, and substitutes 

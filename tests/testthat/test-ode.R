@@ -91,6 +91,20 @@ test_that("ODE observables convert between amount and concentration states", {
     expect_equal(odeinfo$obsFuncs$A(0, y, list()), 100)
 })
 
+test_that("ODE observable functions are unit-free after export", {
+    M <- compartment_model() |>
+        add_compartment("Central", volume = 10 [L]) |>
+        add_molecule("drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+        add_observable(C = c[drug, Central])
+
+    odeinfo <- to_ode(M, dimensions = list(mass = "mg", length = "m"))
+    y <- cbind(time = 0, a_drug_Central = 100)
+    value <- odeinfo$obsFuncs$C(0, y, list())
+
+    expect_false(inherits(value, "units"))
+    expect_equal(value, 10000)
+})
+
 
 test_that("ODE generation processes equations correctly", {
     # 1-CMT model with redefined elimination rate constant
