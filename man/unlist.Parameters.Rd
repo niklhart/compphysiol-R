@@ -4,7 +4,7 @@
 \alias{unlist.Parameters}
 \title{Unlist a \code{Parameters} object (experimental).}
 \usage{
-unlist.Parameters(x, ...)
+\method{unlist}{Parameters}(x, ...)
 }
 \arguments{
 \item{x}{A \code{Parameters} object}

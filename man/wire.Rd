@@ -35,7 +35,8 @@ M <- compartment_model() |>
   add_transport(from = "per", to = "cen", const = "kpc") |> 
   wire(what = "molec")
 
-# wire "cyt" and "nuc" into molecule definitions and reaction rate expressions, replacing the <all cmt> wildcard
+# wire "cyt" and "nuc" into molecule definitions and reaction rates,
+# replacing the <all cmt> wildcard
 M <- compartment_model() |>
   add_compartment(name = c("cyt", "nuc")) |>
   add_molecule(name = c("A","B")) |>

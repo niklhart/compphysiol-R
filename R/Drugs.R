@@ -54,10 +54,11 @@ drugs <- function() structure(
 #' Print method for Drug objects
 #'
 #' @param x An object of class `Drug`.
+#' @param ... Additional arguments (not used).
 #' @param meta Logical indicating whether to print parameter metadata as well (default: `FALSE`).
 #' @param string Logical indicating whether to return a short string representation instead of printing (default: `FALSE`).
 #' @noRd
-print.Drug <- function(x, meta = FALSE, string = FALSE) {
+print.Drug <- function(x, ..., meta = FALSE, string = FALSE) {
     if (string) {
         sprintf("%s = %s", names(x$param), vapply(x$param, format, character(1))) |>
             paste(collapse = ", ")
@@ -160,9 +161,10 @@ c.Drugs <- .c_drug_drugs
 #' Print method for Drugs objects
 #'
 #' @param x An object of class `Drugs`.
+#' @param ... Additional arguments (not used).
 #' @param meta Logical indicating whether to print parameter metadata as well (default: `FALSE`).
 #' @noRd
-print.Drugs <- function(x, meta = FALSE) {
+print.Drugs <- function(x, ..., meta = FALSE) {
     if (length(x) > 0) {
         cat("Drugs object\n")
         val_str <- vapply(x$Value, format, "")
@@ -179,12 +181,13 @@ print.Drugs <- function(x, meta = FALSE) {
 
 #' Accessor for parameters in a Drugs object (experimental)
 #' @param x An object of class `Drugs`.
+#' @param name The name of the parameter(s) to access (optional). If not provided, all parameters will be returned and a warning will be issued if some are missing.
+#' @param ... Additional arguments (not used).
 #' @param drug Optional name of the drug to access (character scalar or vector). The default `NULL` means that parameters will be returned for all drugs in the database.
 #' @param species Optional species argument for species-specific parameters.
-#' @param name The name of the parameter(s) to access (optional). If not provided, all parameters will be returned and a warning will be issued if some are missing.
 #' @returns The requested parameter(s) in the database for the requested drug and species as a `Parameters` object.
 #' @noRd
-param.Drugs <- function(x, drug, species, name = NULL) {
+param.Drugs <- function(x, name = NULL, ..., drug, species) {
     drug <- match.arg(drug, choices = unique(x$Drug))
     species <- match.arg(species, choices = unique(x$Species))
 

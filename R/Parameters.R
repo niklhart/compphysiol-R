@@ -180,6 +180,7 @@ print.Parameters <- function(x, ...) {
 #' @param x A `Parameters` object
 #' @param ... Additional arguments (not used)
 #' @returns An unlisted `Parameters` object
+#' @method unlist Parameters
 #' @export
 unlist.Parameters <- function(x, ...) {
     unlisted <- unlist(unclass(x), recursive = FALSE, use.names = TRUE)

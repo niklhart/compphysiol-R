@@ -41,6 +41,7 @@
 #' )
 #' out$states
 #' out$observables
+#' @importFrom stats simulate
 #' @method simulate CompartmentModel
 #' @export
 simulate.CompartmentModel <- function(
