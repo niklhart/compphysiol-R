@@ -57,3 +57,16 @@ tolerances such as \code{atol} are interpreted. For example, if amounts are
 converted to kilograms internally, an \code{atol} value is applied on the kilogram
 scale even if results are displayed back in milligrams.
 }
+\examples{
+M <- multiCompModel(ncomp = 1, type = "micro", unit = "mg") |>
+    add_dosing(time = 0 [h], amount = 100 [mg], cmt = "cen") |>
+    wire(what = "molec")
+
+out <- simulate(
+    M,
+    time = seq(0, 24, by = 1) [h],
+    parameters = parameters(kc0 = 0.2 [1/h], Vcen = 10 [L])
+)
+out$states
+out$observables
+}

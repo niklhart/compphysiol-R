@@ -29,6 +29,18 @@
 #'   and affect the scale of solver tolerances such as `atol`.
 #' @param ... Additional arguments passed to [deSolve::ode()].
 #' @returns A `SimulationResult` object.
+#' @examples
+#' M <- multiCompModel(ncomp = 1, type = "micro", unit = "mg") |>
+#'     add_dosing(time = 0 [h], amount = 100 [mg], cmt = "cen") |>
+#'     wire(what = "molec")
+#'
+#' out <- simulate(
+#'     M,
+#'     time = seq(0, 24, by = 1) [h],
+#'     parameters = parameters(kc0 = 0.2 [1/h], Vcen = 10 [L])
+#' )
+#' out$states
+#' out$observables
 #' @method simulate CompartmentModel
 #' @export
 simulate.CompartmentModel <- function(

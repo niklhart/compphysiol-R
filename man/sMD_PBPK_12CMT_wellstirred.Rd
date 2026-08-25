@@ -55,20 +55,10 @@ paramValues <- list(
     Vven = 1
 )
 
-# Generate ODE function and auxiliary structures
-odeinfo <- to_ode(M)
-
 # Run simulation
 times <- seq(0, 24, by = 0.1)
-out <- deSolve::ode(
-    y = odeinfo$y0,
-    times = times,
-    func = odeinfo$odefun,
-    parms = paramValues,
-    events = odeinfo$events
-)
-
-out_df <- as.data.frame(out)
+out <- simulate(M, time = times, parameters = paramValues)
+out_df <- out$states
 
 # Plot compartment amounts
 matplot(
@@ -88,13 +78,7 @@ legend(
     lty = 1
 )
 
-# Evaluate observables at each time point
-obs_df <- as.data.frame(sapply(
-    odeinfo$obsFuncs,
-    function(f) f(out_df$time, as.matrix(out_df), paramValues)
-))
-names(obs_df) <- names(odeinfo$obsFuncs)
-obs_df$time <- out_df$time
+obs_df <- out$observables
 
 # Plot plasma concentration
 plot(
