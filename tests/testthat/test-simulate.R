@@ -25,6 +25,40 @@ test_that("simulate returns a SimulationResult with ODE states", {
     expect_equal(out$states$a_drug_Central, 100 * exp(-0.2 * out$states$time), tolerance = 1e-6)
 })
 
+test_that("SimulationResult can be printed", {
+    model <- test_model_for_simulation()
+
+    out <- simulate(model, time = seq(0, 10, by = 1))
+
+    expect_snapshot(print(out))
+})
+
+test_that("SimulationResult print truncates long state and observable lists", {
+    old_options <- options(width = 50)
+    on.exit(options(old_options), add = TRUE)
+
+    out <- structure(
+        list(
+            states = data.frame(
+                time = 0,
+                very_long_state_name_1 = 1,
+                very_long_state_name_2 = 2,
+                very_long_state_name_3 = 3,
+                check.names = FALSE
+            ),
+            observables = data.frame(
+                time = 0,
+                very_long_observable_name_1 = 1,
+                very_long_observable_name_2 = 2,
+                check.names = FALSE
+            )
+        ),
+        class = "SimulationResult"
+    )
+
+    expect_snapshot(print(out))
+})
+
 test_that("simulate accepts time units through the time DSL", {
     model <- test_model_for_simulation(amount_unit = "mg", time_unit = TRUE)
 
@@ -228,6 +262,7 @@ test_that("simulate returns observable trajectories", {
     expect_named(out$observables, c("time", "C"))
     expect_equal(out$observables$time, out$states$time)
     expect_equal(out$observables$C, out$states$a_drug_Central / 10, tolerance = 1e-6)
+    expect_snapshot(print(out))
 })
 
 test_that("simulate reattaches units to observable trajectories", {

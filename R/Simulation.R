@@ -85,6 +85,72 @@ simulate.CompartmentModel <- function(
     )
 }
 
+#' Print a simulation result
+#'
+#' @param x A `SimulationResult` object.
+#' @param ... Additional arguments, currently ignored.
+#' @returns The `SimulationResult` object, invisibly.
+#' @export
+print.SimulationResult <- function(x, ...) {
+    .check_class(x, "SimulationResult")
+
+    n_time <- nrow(x$states)
+    n_states <- max(ncol(x$states) - 1, 0)
+    n_observables <- if (is.null(x$observables)) 0 else max(ncol(x$observables) - 1, 0)
+    time_span <- if (n_time > 0) {
+        sprintf("%s to %s", format(x$states$time[[1]]), format(x$states$time[[n_time]]))
+    } else {
+        "empty"
+    }
+
+    cat(" SimulationResult:\n")
+    cat(sprintf("  time: %s (%s points)\n", time_span, n_time))
+    cat(sprintf("  states: %s", n_states))
+    if (n_states > 0) {
+        cat(sprintf(" (%s)", .simulation_format_names(setdiff(names(x$states), "time"), prefix = "  states: ")))
+    }
+    cat("\n")
+    cat(sprintf("  observables: %s", n_observables))
+    if (n_observables > 0) {
+        cat(sprintf(" (%s)", .simulation_format_names(setdiff(names(x$observables), "time"), prefix = "  observables: ")))
+    }
+    cat("\n")
+
+    invisible(x)
+}
+
+.simulation_format_names <- function(names, prefix) {
+    width <- getOption("width", 80)
+    max_chars <- max(width - nchar(prefix) - 8, 20)
+    shown <- character(0)
+
+    for (name in names) {
+        candidate <- paste(c(shown, name), collapse = ", ")
+        remaining <- length(names) - length(shown) - 1
+        suffix <- if (remaining > 0) sprintf(", ... +%s more", remaining) else ""
+        if (nchar(candidate) + nchar(suffix) > max_chars) break
+        shown <- c(shown, name)
+    }
+
+    if (length(shown) == 0) {
+        suffix <- if (length(names) > 1) sprintf(", ... +%s more", length(names) - 1) else ""
+        name_width <- max(max_chars - nchar(suffix), 8)
+        return(sprintf("%s%s", .simulation_shorten_name(names[[1]], name_width), suffix))
+    }
+
+    remaining <- length(names) - length(shown)
+    out <- paste(shown, collapse = ", ")
+    if (remaining > 0) {
+        out <- sprintf("%s, ... +%s more", out, remaining)
+    }
+    out
+}
+
+.simulation_shorten_name <- function(name, width) {
+    if (nchar(name) <= width) return(name)
+    paste0(substr(name, 1, max(width - 3, 1)), "...")
+}
+
 .simulation_validate_time <- function(time) {
     if (!is.numeric(time)) {
         stop("Argument 'time' must be numeric.", call. = FALSE)
