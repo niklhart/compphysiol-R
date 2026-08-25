@@ -20,9 +20,8 @@ directly.
 #| label: setup
 library(compphysiol)
 library(units)
-
-has_plotting_packages <- requireNamespace("ggplot2", quietly = TRUE) &&
-    requireNamespace("reshape2", quietly = TRUE)
+library(ggplot2)
+library(reshape2)
 ```
 
 ## Model
@@ -72,8 +71,7 @@ reshape this to long format.
 
 ```{r}
 #| label: reshape
-#| eval: !expr has_plotting_packages
-states_long <- reshape2::melt(
+states_long <- melt(
     sim$states,
     id.vars = "time",
     variable.name = "state",
@@ -90,15 +88,8 @@ captions automatically, and facets work as usual.
 
 ```{r}
 #| label: plot-states
-#| eval: !expr has_plotting_packages
-ggplot2::ggplot(states_long, ggplot2::aes(x = time, y = amount)) +
-    ggplot2::geom_line(linewidth = 0.8) +
-    ggplot2::facet_wrap(ggplot2::vars(state), scales = "free_y") +
-    ggplot2::labs(x = "Time", y = "Amount")
-```
-
-```{r}
-#| label: plotting-packages-missing
-#| eval: !expr "!has_plotting_packages"
-message("Install ggplot2 and reshape2 to run the plotting sections of this vignette.")
+ggplot(states_long, aes(x = time, y = amount)) +
+    geom_line(linewidth = 0.8) +
+    facet_wrap(vars(state), scales = "free_y") +
+    labs(x = "Time", y = "Amount")
 ```
