@@ -1,0 +1,104 @@
+---
+title: "Simulating and plotting unit-aware models"
+description: "A small unit-aware simulation workflow with ggplot2"
+format:
+  html:
+    toc: true
+    number-sections: false
+vignette: >
+  %\VignetteIndexEntry{Simulating and plotting unit-aware models}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+---
+
+This vignette shows a compact workflow from model definition to simulation and
+plotting. The model is specified with units, `simulate()` returns unit-aware
+state and observable trajectories, and `ggplot2` can plot these columns
+directly.
+
+```{r}
+#| label: setup
+library(compphysiol)
+library(units)
+
+has_plotting_packages <- requireNamespace("ggplot2", quietly = TRUE) &&
+    requireNamespace("reshape2", quietly = TRUE)
+```
+
+## Model
+
+We use a two-compartment empirical PK model in micro-parameterization. The
+integrated states are amounts in the central and peripheral compartments. The
+model also defines the central concentration observable `Ccen`.
+
+```{r}
+#| label: model
+model <- multiCompModel(ncomp = 2, type = "micro", unit = "mg") |>
+    add_dosing(time = 0 [h], amount = 100 [mg], cmt = "cen") |>
+    wire(what = "molec")
+
+pars <- parameters(
+    kc0 = 0.15 [1/h],
+    kcp = 0.08 [1/h],
+    kpc = 0.05 [1/h],
+    Vcen = 8 [L],
+    Vper = 20 [L]
+)
+```
+
+## Simulation
+
+`simulate()` owns the solver boundary: it strips units before calling the ODE
+solver and attaches units back to the returned trajectories.
+
+```{r}
+#| label: simulate
+sim <- simulate(
+    model,
+    time = seq(0, 24, by = 0.5) [h],
+    parameters = pars
+)
+
+sim
+head(sim$states)
+head(sim$observables)
+```
+
+## Long Format
+
+The state table returned by `simulate()` is wide: one column for time and one
+column for each ODE state. For facetted plotting, it is often convenient to
+reshape this to long format.
+
+```{r}
+#| label: reshape
+#| eval: !expr has_plotting_packages
+states_long <- reshape2::melt(
+    sim$states,
+    id.vars = "time",
+    variable.name = "state",
+    value.name = "amount"
+)
+
+head(states_long)
+```
+
+## Plotting
+
+`ggplot2` handles `units` columns directly. Unit labels are moved to axis
+captions automatically, and facets work as usual.
+
+```{r}
+#| label: plot-states
+#| eval: !expr has_plotting_packages
+ggplot2::ggplot(states_long, ggplot2::aes(x = time, y = amount)) +
+    ggplot2::geom_line(linewidth = 0.8) +
+    ggplot2::facet_wrap(ggplot2::vars(state), scales = "free_y") +
+    ggplot2::labs(x = "Time", y = "Amount")
+```
+
+```{r}
+#| label: plotting-packages-missing
+#| eval: !expr "!has_plotting_packages"
+message("Install ggplot2 and reshape2 to run the plotting sections of this vignette.")
+```
