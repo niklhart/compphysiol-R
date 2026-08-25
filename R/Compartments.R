@@ -59,13 +59,19 @@ compartments <- function(name = character(0), volume = "V{name}", unit = NULL) {
         if (!is.null(unit)) warning("Argument 'unit' is ignored when 'volume' is not numeric.")
         if (!is.character(volume)) stop("Argument 'volume' must be numeric or character.")
 
-        # If volume is a character string, apply special substitution rule
         if (length(volume) == 1) {
-            volume <- lapply(name, function(nm) .as_call(gsub(pattern = "{name}", replacement = nm, x = volume, fixed = TRUE)))
+            volume <- rep(volume, length(name))
         }
         if (length(name) != length(volume)) {
             stop("Arguments 'name' and 'volume' must have the same length.")
         }
+        volume <- unname(Map(
+            function(vol, nm) {
+                .as_call(gsub(pattern = "{name}", replacement = nm, x = vol, fixed = TRUE))
+            },
+            volume,
+            name
+        ))
 
     }
 
@@ -200,4 +206,3 @@ c.Compartments <- function(...) .combine_df_like(...)
 #' @return Nothing (errors)
 #' @export
 `[[.Compartments` <- function(x, i, ...) .extract_df_like(x, i)
-

@@ -71,5 +71,10 @@ test_that("Parametrized volumes work correctly", {
     cmt <- compartments(c("a", "b"), volume = "V{name}")
     expect_equal(cmt$volume[[1]], as.name("Va"))
     expect_equal(cmt$volume[[2]], as.name("Vb"))
-})
 
+    # Character vectors are stored as expressions
+    cmt <- compartments(c("test", "test2"), volume = c("Vtest", "Vtest2"))
+    expect_null(names(cmt$volume))
+    expect_equal(cmt[1]$volume[[1]], as.name("Vtest"))
+    expect_equal(cmt[2]$volume[[1]], as.name("Vtest2"))
+})
