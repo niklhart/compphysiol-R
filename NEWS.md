@@ -1,3 +1,9 @@
+# compphysiol 0.3.4
+
+* introduced a high-level `simulate()` function, returning a `SimulationOutput` object
+* added a vignette for a model definition-simulate-ggplot workflow with units
+* added a `with_units()` helper supporting the units DSL
+
 # compphysiol 0.3.3
 
 * added cross-compartment reactions (e.g., receptor-ligand interaction) 
