@@ -436,7 +436,8 @@ print.SimulationResult <- function(x, ...) {
 .infer_dimensions_from_unit <- function(x, dimensions) {
     if (!inherits(x, "units")) return(dimensions)
 
-    x_base <- units::convert_to_base(x)
+    x <- .expand_registered_model_units(x)
+    x_base <- .convert_to_si_base_without_custom(x)
     unit_obj <- units(x_base)
     si_units <- c("m", "kg", "s", "mol", "A", "K", "cd")
     dimension_names <- c("length", "mass", "time", "amount", "current", "temperature", "intensity")
@@ -466,6 +467,7 @@ print.SimulationResult <- function(x, ...) {
 
 .has_time_dimension <- function(x) {
     if (!inherits(x, "units")) return(FALSE)
-    unit_obj <- units(units::convert_to_base(x))
+    x <- .expand_registered_model_units(x)
+    unit_obj <- units(.convert_to_si_base_without_custom(x))
     "s" %in% c(unit_obj$numerator, unit_obj$denominator)
 }

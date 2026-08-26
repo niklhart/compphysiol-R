@@ -354,7 +354,6 @@ test_that("simulate uses unit-aware free parameters for observable units", {
 })
 
 test_that("simulate supports amount per custom base unit with volume per custom base unit", {
-    skip("Pending refactor: simulate should support registered custom unit axes.")
     reset_model_unit_registry()
     on.exit(units::remove_unit("modelcell"), add = TRUE)
     install_model_unit("modelcell")
@@ -374,7 +373,6 @@ test_that("simulate supports amount per custom base unit with volume per custom 
 })
 
 test_that("simulate supports registered derived custom units in model inputs", {
-    skip("Pending refactor: simulate should decompose registered derived custom units.")
     reset_model_unit_registry()
     on.exit(units::remove_unit("modelcellperL"), add = TRUE)
     on.exit(units::remove_unit("modelcelltwo"), add = TRUE)
@@ -384,7 +382,8 @@ test_that("simulate supports registered derived custom units in model inputs", {
     model <- compartment_model() |>
         add_compartment("ex", volume = 1 [L]) |>
         add_molecule("N", cmt = "ex", type = "amount", initial = 1 [modelcellperL] * 1 [L]) |>
-        add_observable(Ndensity = a[N, ex] / 1 [L]) |>
+        add_observable(Ndensity = a[N, ex] / Vex) |>
+        add_parameter(Vex = 1 [L]) |>
         wire()
 
     out <- simulate(model, time = c(0, 1) [h])
@@ -397,7 +396,6 @@ test_that("simulate supports registered derived custom units in model inputs", {
 })
 
 test_that("simulate errors informatively for unregistered derived custom units", {
-    skip("Pending refactor: simulate should diagnose unregistered derived custom units.")
     reset_model_unit_registry()
     on.exit(units::remove_unit("unregisteredcellperL"), add = TRUE)
     on.exit(units::remove_unit("unregisteredcell"), add = TRUE)

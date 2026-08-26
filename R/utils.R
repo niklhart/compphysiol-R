@@ -174,7 +174,10 @@ with_units <- function(expr) {
 .to_dimensions <- function(var, length = "m", mass = "kg", time = "s", amount = "mol", current = "A", temperature = "K", intensity = "cd") {
     inherits(var, "units") || return(var)
 
-    var_si <- units::convert_to_base(var)
+    var <- .expand_registered_model_units(var)
+    custom_units <- .custom_unit_axes(units(var))
+    var_si <- .convert_to_si_base_without_custom(var, custom_units)
+    var_si <- .restore_unit_symbols(var_si, custom_units)
 
     si_units <- c("m", "kg", "s", "mol", "A", "K", "cd")
     output_units <- c(length, mass, time, amount, current, temperature, intensity)
@@ -188,9 +191,133 @@ with_units <- function(expr) {
     )
     
     map <- setNames(output_units, nm = si_units)
-    units(var_si)$numerator <- unname(map[units(var_si)$numerator])
-    units(var_si)$denominator <- unname(map[units(var_si)$denominator])
+    unit_obj <- units(var_si)
+    numerator_is_si <- unit_obj$numerator %in% si_units
+    denominator_is_si <- unit_obj$denominator %in% si_units
+    unit_obj$numerator[numerator_is_si] <- unname(map[unit_obj$numerator[numerator_is_si]])
+    unit_obj$denominator[denominator_is_si] <- unname(map[unit_obj$denominator[denominator_is_si]])
+    units(var_si) <- unit_obj
     var_si
+}
+
+.expand_registered_model_units <- function(var) {
+    registry <- model_unit_registry()
+    if (nrow(registry) == 0) return(var)
+
+    derived <- registry[nzchar(registry$def), , drop = FALSE]
+    if (nrow(derived) == 0) return(var)
+
+    for (pass in seq_len(nrow(derived))) {
+        changed <- FALSE
+
+        for (i in seq_len(nrow(derived))) {
+            unit_obj <- units(var)
+            if (!derived$symbol[[i]] %in% c(unit_obj$numerator, unit_obj$denominator)) next
+
+            unit_obj$numerator[unit_obj$numerator == derived$symbol[[i]]] <- paste0("(", derived$def[[i]], ")")
+            unit_obj$denominator[unit_obj$denominator == derived$symbol[[i]]] <- paste0("(", derived$def[[i]], ")")
+            var <- units::set_units(var, .unit_expression(unit_obj), mode = "standard")
+            changed <- TRUE
+        }
+
+        if (!changed) break
+    }
+
+    var
+}
+
+.unit_expression <- function(unit_obj) {
+    numerator <- unit_obj$numerator
+    denominator <- unit_obj$denominator
+
+    if (length(numerator) == 0) {
+        out <- "1"
+    } else {
+        out <- paste(numerator, collapse = "*")
+    }
+    if (length(denominator) > 0) {
+        out <- paste0(out, "/", paste(denominator, collapse = "/"))
+    }
+    out
+}
+
+.custom_unit_axes <- function(unit_obj) {
+    symbols <- c(unit_obj$numerator, unit_obj$denominator)
+    symbols <- unique(symbols[nzchar(symbols)])
+    custom_symbols <- symbols[
+        !vapply(symbols, .can_convert_symbol_to_base, logical(1))
+    ]
+    .check_registered_custom_unit_symbols(custom_symbols)
+    data.frame(
+        symbol = custom_symbols,
+        numerator = vapply(custom_symbols, function(symbol) sum(unit_obj$numerator == symbol), integer(1)),
+        denominator = vapply(custom_symbols, function(symbol) sum(unit_obj$denominator == symbol), integer(1)),
+        stringsAsFactors = FALSE
+    )
+}
+
+.check_registered_custom_unit_symbols <- function(symbols) {
+    if (length(symbols) == 0) return(invisible(TRUE))
+
+    registry <- model_unit_registry()
+    unregistered <- setdiff(symbols, registry$symbol)
+    if (length(unregistered) > 0) {
+        stop(
+            "Custom model unit(s) are not registered with compphysiol: ",
+            paste(unregistered, collapse = ", "),
+            ". Use install_model_unit() or register_model_unit() before simulation.",
+            call. = FALSE
+        )
+    }
+
+    invisible(TRUE)
+}
+
+.can_convert_symbol_to_base <- function(symbol) {
+    unit_value <- try(units::set_units(1, symbol, mode = "standard"), silent = TRUE)
+    if (inherits(unit_value, "try-error")) return(FALSE)
+
+    converted <- try(units::convert_to_base(unit_value), silent = TRUE)
+    !inherits(converted, "try-error")
+}
+
+.cancel_unit_symbols <- function(var, symbols) {
+    if (nrow(symbols) == 0) return(var)
+
+    for (row in seq_len(nrow(symbols))) {
+        symbol <- symbols$symbol[[row]]
+        custom_unit <- units::set_units(1, symbol, mode = "standard")
+
+        for (i in seq_len(symbols$numerator[[row]])) {
+            var <- var / custom_unit
+        }
+        for (i in seq_len(symbols$denominator[[row]])) {
+            var <- var * custom_unit
+        }
+    }
+    var
+}
+
+.convert_to_si_base_without_custom <- function(var, custom_units = .custom_unit_axes(units(var))) {
+    var_without_custom <- .cancel_unit_symbols(var, custom_units)
+    units::convert_to_base(var_without_custom)
+}
+
+.restore_unit_symbols <- function(var, symbols) {
+    if (nrow(symbols) == 0) return(var)
+
+    for (row in seq_len(nrow(symbols))) {
+        symbol <- symbols$symbol[[row]]
+        custom_unit <- units::set_units(1, symbol, mode = "standard")
+
+        for (i in seq_len(symbols$numerator[[row]])) {
+            var <- var * custom_unit
+        }
+        for (i in seq_len(symbols$denominator[[row]])) {
+            var <- var / custom_unit
+        }
+    }
+    var
 }
 
 #' Apply `.to_dimensions()` to a vector of variables (TODO: improve naming and documentation)

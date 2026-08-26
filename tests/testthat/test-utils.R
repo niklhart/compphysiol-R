@@ -11,7 +11,6 @@ test_that("unit conversion via .to_dimensions() works as expected", {
 })
 
 test_that(".to_dimensions preserves custom base units while converting SI parts", {
-    skip("Pending refactor: .to_dimensions should support registered custom unit axes.")
     reset_model_unit_registry()
     on.exit(units::remove_unit("modelcell"), add = TRUE)
     install_model_unit("modelcell")
@@ -23,7 +22,6 @@ test_that(".to_dimensions preserves custom base units while converting SI parts"
 })
 
 test_that(".to_dimensions expands registered derived custom units", {
-    skip("Pending refactor: .to_dimensions should decompose registered derived custom units.")
     reset_model_unit_registry()
     on.exit(units::remove_unit("modelcellperL"), add = TRUE)
     on.exit(units::remove_unit("modelcelltwo"), add = TRUE)
@@ -41,7 +39,6 @@ test_that(".to_dimensions expands registered derived custom units", {
 })
 
 test_that(".to_dimensions treats convertible derived custom units as the same custom axis", {
-    skip("Pending refactor: .to_dimensions should canonicalize registered custom unit axes.")
     reset_model_unit_registry()
     on.exit(units::remove_unit("twomodelcell"), add = TRUE)
     on.exit(units::remove_unit("modelcellthree"), add = TRUE)
