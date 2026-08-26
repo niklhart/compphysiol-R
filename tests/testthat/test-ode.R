@@ -105,6 +105,45 @@ test_that("ODE observable functions are unit-free after export", {
     expect_equal(value, 10000)
 })
 
+test_that("ODE generation evaluates parametrized initial values", {
+    M <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_parameter(A0 = 100, ke = 0.2)
+
+    odeinfo <- to_ode(M)
+
+    expect_equal(odeinfo$y0, c(a_drug_Central = 100))
+    expect_equal(odeinfo$freeParams, character(0))
+})
+
+test_that("ODE generation evaluates parametrized initials with unit dimensions", {
+    M <- compartment_model() |>
+        add_compartment("Central", volume = "V") |>
+        add_molecule("drug", cmt = "Central", initial = "C0", type = "concentration") |>
+        add_transport("Central", "", const = "ke") |>
+        add_parameter(C0 = 10 [mg/L], V = 2 [L], ke = 0.2 [1/h])
+
+    odeinfo <- to_ode(M, dimensions = list(mass = "mg", length = "dm", time = "h"))
+
+    expect_equal(odeinfo$y0, c(a_drug_Central = 20))
+    expect_equal(odeinfo$freeParams, character(0))
+})
+
+test_that("ODE generation reports unresolved parametrized initial values", {
+    M <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_parameter(ke = 0.2)
+
+    expect_error(
+        to_ode(M),
+        "initial.*A0|A0.*initial"
+    )
+})
+
 
 test_that("ODE generation processes equations correctly", {
     # 1-CMT model with redefined elimination rate constant

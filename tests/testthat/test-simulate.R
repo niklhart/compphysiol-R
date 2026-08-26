@@ -173,6 +173,41 @@ test_that("simulate can pass unit-aware free parameters as a Parameters object",
     )
 })
 
+test_that("simulate can pass parametrized initial conditions as parameters", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport("Central", "", const = "ke")
+
+    out <- simulate(
+        model,
+        time = seq(0, 10, by = 1),
+        parameters = parameters(A0 = 100, ke = 0.2)
+    )
+
+    expect_equal(out$states$a_drug_Central, 100 * exp(-0.2 * out$states$time), tolerance = 1e-6)
+})
+
+test_that("simulate preserves state units for parametrized initial conditions", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport("Central", "", const = "ke")
+
+    out <- simulate(
+        model,
+        time = seq(0, 10, by = 1) [h],
+        parameters = parameters(A0 = 100 [mg], ke = 0.2 [1/h])
+    )
+
+    expect_equal(out$states$time, units::set_units(seq(0, 10, by = 1), "h", mode = "standard"))
+    expect_equal(
+        out$states$a_drug_Central,
+        units::set_units(100 * exp(-0.2 * seq(0, 10, by = 1)), "mg", mode = "standard"),
+        tolerance = 1e-6
+    )
+})
+
 test_that("simulate applies bolus dosing events", {
     model <- compartment_model() |>
         add_compartment("Central", volume = NA_real_) |>

@@ -56,6 +56,24 @@ test_that("Molecules concatenation with units works correctly", {
 
 
 test_that("Parametrized initial conditions work correctly", {
-    # This test is a placeholder for when we implement parametrized molecules
-    skip("Parametrized initial conditions not yet implemented")
+    molec <- molecules("drug", cmt = "Central", initial = "A0", type = "amount")
+    expect_equal(molec$init[[1]], as.name("A0"))
+
+    molec <- molecules(
+        c("drug", "met"),
+        cmt = c("Central", "Liver"),
+        initial = "A0_{molec}_{cmt}",
+        type = "amount"
+    )
+    expect_equal(molec$init[[1]], as.name("A0_drug_Central"))
+    expect_equal(molec$init[[2]], as.name("A0_met_Liver"))
+
+    molec <- molecules(
+        "drug",
+        cmt = c("Central", "Peripheral"),
+        initial = "C0_{cmt}",
+        type = "concentration"
+    )
+    expect_equal(molec$init[[1]], as.name("C0_Central"))
+    expect_equal(molec$init[[2]], as.name("C0_Peripheral"))
 })

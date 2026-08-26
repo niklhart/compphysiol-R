@@ -48,3 +48,39 @@ test_that("initials may fail if some volumes unspecified", {
     expect_identical(A0, A0b)
 
 })
+
+test_that("initials retrieves parametrized amount initials", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount")
+
+    A0 <- initials(model, type = "a[] only")
+
+    expect_named(A0, "a[drug, Central]")
+    expect_equal(A0[[1]], as.name("A0"))
+})
+
+test_that("initials converts parametrized concentration initials using parametrized volumes", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = "V") |>
+        add_molecule("drug", cmt = "Central", initial = "C0", type = "concentration")
+
+    A0 <- initials(model, type = "a[] only")
+    C0 <- initials(model, type = "c[] only")
+
+    expect_named(A0, "a[drug, Central]")
+    expect_equal(A0[[1]], quote(C0 * V))
+    expect_named(C0, "c[drug, Central]")
+    expect_equal(C0[[1]], as.name("C0"))
+})
+
+test_that("initials converts parametrized amount initials using fixed volumes", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = 2) |>
+        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount")
+
+    C0 <- initials(model, type = "c[] only")
+
+    expect_named(C0, "c[drug, Central]")
+    expect_equal(C0[[1]], quote(A0 / 2))
+})
