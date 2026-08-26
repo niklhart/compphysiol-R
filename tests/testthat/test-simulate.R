@@ -352,3 +352,65 @@ test_that("simulate uses unit-aware free parameters for observable units", {
         tolerance = 1e-6
     )
 })
+
+test_that("simulate supports amount per custom base unit with volume per custom base unit", {
+    skip("Pending refactor: simulate should support registered custom unit axes.")
+    reset_model_unit_registry()
+    on.exit(units::remove_unit("modelcell"), add = TRUE)
+    install_model_unit("modelcell")
+
+    model <- compartment_model() |>
+        add_compartment("ex", volume = "Vex") |>
+        add_molecule("D", cmt = "ex", type = "amount", initial = 1 [nmol/modelcell]) |>
+        add_parameter(Vex = 1 [L/modelcell]) |>
+        add_observable(Cex = c[D, ex]) |>
+        wire()
+
+    out <- simulate(model, time = seq(0 [h], 1 [h], by = 1 [h]))
+
+    expect_equal(out$states$time, units::set_units(c(0, 1), "h", mode = "standard"))
+    expect_equal(out$states$a_D_ex, units::set_units(c(1, 1), "nmol/modelcell", mode = "standard"))
+    expect_equal(out$observables$Cex, units::set_units(c(1, 1), "nmol/L", mode = "standard"))
+})
+
+test_that("simulate supports registered derived custom units in model inputs", {
+    skip("Pending refactor: simulate should decompose registered derived custom units.")
+    reset_model_unit_registry()
+    on.exit(units::remove_unit("modelcellperL"), add = TRUE)
+    on.exit(units::remove_unit("modelcelltwo"), add = TRUE)
+    install_model_unit("modelcelltwo")
+    install_model_unit("modelcellperL", "modelcelltwo/L")
+
+    model <- compartment_model() |>
+        add_compartment("ex", volume = 1 [L]) |>
+        add_molecule("N", cmt = "ex", type = "amount", initial = 1 [modelcellperL] * 1 [L]) |>
+        add_observable(Ndensity = a[N, ex] / 1 [L]) |>
+        wire()
+
+    out <- simulate(model, time = c(0, 1) [h])
+
+    expect_true(inherits(out$observables$Ndensity, "units"))
+    expect_equal(
+        units::set_units(out$observables$Ndensity, "modelcelltwo/L", mode = "standard"),
+        units::set_units(c(1, 1), "modelcelltwo/L", mode = "standard")
+    )
+})
+
+test_that("simulate errors informatively for unregistered derived custom units", {
+    skip("Pending refactor: simulate should diagnose unregistered derived custom units.")
+    reset_model_unit_registry()
+    on.exit(units::remove_unit("unregisteredcellperL"), add = TRUE)
+    on.exit(units::remove_unit("unregisteredcell"), add = TRUE)
+    units::install_unit("unregisteredcell")
+    units::install_unit("unregisteredcellperL", "unregisteredcell/L")
+
+    model <- compartment_model() |>
+        add_compartment("ex", volume = 1 [L]) |>
+        add_molecule("N", cmt = "ex", type = "amount", initial = 1 [unregisteredcellperL] * 1 [L]) |>
+        wire()
+
+    expect_error(
+        simulate(model, time = c(0, 1) [h]),
+        "not registered|install_model_unit|register_model_unit"
+    )
+})

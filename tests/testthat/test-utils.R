@@ -10,6 +10,53 @@ test_that("unit conversion via .to_dimensions() works as expected", {
     expect_equal(compphysiol:::.to_dimensions(x, amount = "mmol", length = "km"), x_si)
 })
 
+test_that(".to_dimensions preserves custom base units while converting SI parts", {
+    skip("Pending refactor: .to_dimensions should support registered custom unit axes.")
+    reset_model_unit_registry()
+    on.exit(units::remove_unit("modelcell"), add = TRUE)
+    install_model_unit("modelcell")
+
+    x <- units::set_units(1, "nmol/modelcell", mode = "standard")
+    out <- compphysiol:::.to_dimensions(x)
+
+    expect_equal(out, units::set_units(1e-9, "mol/modelcell", mode = "standard"))
+})
+
+test_that(".to_dimensions expands registered derived custom units", {
+    skip("Pending refactor: .to_dimensions should decompose registered derived custom units.")
+    reset_model_unit_registry()
+    on.exit(units::remove_unit("modelcellperL"), add = TRUE)
+    on.exit(units::remove_unit("modelcelltwo"), add = TRUE)
+    install_model_unit("modelcelltwo")
+    install_model_unit("modelcellperL", "modelcelltwo/L")
+
+    x <- units::set_units(1, "modelcellperL", mode = "standard")
+    out <- compphysiol:::.to_dimensions(x)
+
+    expect_true(units::ud_are_convertible(units(out), "modelcelltwo/m^3"))
+    expect_equal(
+        units::set_units(out, "modelcelltwo/m^3", mode = "standard"),
+        units::set_units(1000, "modelcelltwo/m^3", mode = "standard")
+    )
+})
+
+test_that(".to_dimensions treats convertible derived custom units as the same custom axis", {
+    skip("Pending refactor: .to_dimensions should canonicalize registered custom unit axes.")
+    reset_model_unit_registry()
+    on.exit(units::remove_unit("twomodelcell"), add = TRUE)
+    on.exit(units::remove_unit("modelcellthree"), add = TRUE)
+    install_model_unit("modelcellthree")
+    install_model_unit("twomodelcell", "2 modelcellthree")
+
+    x <- units::set_units(1, "twomodelcell", mode = "standard")
+    out <- compphysiol:::.to_dimensions(x)
+
+    expect_equal(
+        units::set_units(out, "modelcellthree", mode = "standard"),
+        units::set_units(2, "modelcellthree", mode = "standard")
+    )
+})
+
 test_that(".c_units returns numeric vectors for bare numeric inputs", {
     expect_equal(compphysiol:::.c_units(1, 2:3), c(1, 2, 3))
     expect_equal(compphysiol:::.c_units(), numeric(0))
