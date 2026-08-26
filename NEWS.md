@@ -1,3 +1,8 @@
+# compphysiol 0.3.5
+
+* introduced parametrized initial conditions
+* enhanced compartment volume handling (vectorized parametrized volumes)
+
 # compphysiol 0.3.4
 
 * introduced a high-level `simulate()` function, returning a `SimulationOutput` object
