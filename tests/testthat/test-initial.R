@@ -36,7 +36,7 @@ test_that("initials may fail if some volumes unspecified", {
 
     # Initial conditions specified as amounts, no volumes provided
     model <- compartment_model() |>
-        add_compartment(c("cyt", "nuc")) |>
+        add_compartment(c("cyt", "nuc"), volume = NA_real_) |>
         add_molecule(c("A", "B"), unit = "g", type = "amount") |>
         wire()
 
@@ -82,5 +82,5 @@ test_that("initials converts parametrized amount initials using fixed volumes", 
     C0 <- initials(model, type = "c[] only")
 
     expect_named(C0, "c[drug, Central]")
-    expect_equal(C0[[1]], quote(A0 / 2))
+    expect_equal(deparse1(C0[[1]]), "A0/2")
 })

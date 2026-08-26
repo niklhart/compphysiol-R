@@ -282,7 +282,9 @@ print.SimulationResult <- function(x, ...) {
 
 .simulation_unit_env <- function(model) {
     model <- model |> wire() |> make_depot()
-    values <- c(unclass(initials(model)), unclass(model$parameters))
+    inits <- initials(model) |>
+        .evaluate_initials(model$parameters, allow_unresolved = TRUE)
+    values <- c(unclass(inits), unclass(model$parameters))
     env <- list2env(values)
 
     .simulation_add_derived_states(env, model)
@@ -359,13 +361,16 @@ print.SimulationResult <- function(x, ...) {
 
 .simulation_state_unit_values <- function(model) {
     model <- model |> wire() |> make_depot()
-    initials(model)
+    initials(model) |>
+        .evaluate_initials(model$parameters, allow_unresolved = TRUE)
 }
 
 .simulation_dimension_values <- function(model) {
     model <- model |> wire() |> make_depot()
+    inits <- initials(model) |>
+        .evaluate_initials(model$parameters, allow_unresolved = TRUE)
     c(
-        initials(model),
+        inits,
         as.list(model$compartments$volume),
         unclass(model$parameters),
         as.list(model$doses$time),

@@ -12,9 +12,12 @@
 #' @param cmt Compartment name(s), character scalar or vector. If omitted,
 #'   the molecule is assumed to be present in all compartments.
 #' @param initial Initial concentration(s) or amount(s) of the molecule
-#'   (numeric, possibly as `values[unit]`). Scalar values are recycled across
-#'   the generated molecule definitions; otherwise the length must be compatible
-#'   with `name`, `cmt`, and `unit`.
+#'   (numeric, possibly as `values[unit]`, or character for parametrized
+#'   initials). Character values are converted to expressions; `{molec}` and
+#'   `{cmt}` placeholders are replaced by the generated molecule and
+#'   compartment names. Scalar values are recycled across the generated molecule
+#'   definitions; otherwise the length must be compatible with `name`, `cmt`,
+#'   and `unit`.
 #' @param unit Unit for the initial conditions (character scalar or `NULL`, the default), to be used if units are not specified via `initial`. 
 #' @param type Type of initial condition, either `"concentration"` (the default) or `"amount"`.
 #' @return A `Molecules` object containing the compartment and initial condition
@@ -40,18 +43,41 @@ molecules <- function(name = character(0), cmt = NULL, initial = 0, unit = NULL,
     nOut <- max(length(name), length(cmt), length(initial), length(unit))
 
     # Initial is a list-column --> manual recycing if needed
-    initial <- as.list(initial)
-    if (length(initial) == 1) initial <- rep(initial, nOut)
-    
-    # Unit provided as a separate argument --> combine into initial
-    if (!is.null(unit)) {
-        if (length(unit) == 1) unit <- rep(unit, nOut)
-        if (length(unit) != nOut) stop("Arguments 'initial' and 'unit' have incompatible lengths.")
+    if (is.numeric(initial) || inherits(initial, "units") || is.list(initial)) {
+        initial <- as.list(initial)
+        if (length(initial) == 1) initial <- rep(initial, nOut)
 
-        initial <- Map(
-            function(init, u) if (u != "") units::set_units(init, u, mode = "standard") else init,
-            initial, unit
-        )
+        # Unit provided as a separate argument --> combine into initial
+        if (!is.null(unit)) {
+            if (length(unit) == 1) unit <- rep(unit, nOut)
+            if (length(unit) != nOut) stop("Arguments 'initial' and 'unit' have incompatible lengths.")
+
+            initial <- Map(
+                function(init, u) if (u != "") units::set_units(init, u, mode = "standard") else init,
+                initial, unit
+            )
+        }
+    } else {
+        if (!is.null(unit)) warning("Argument 'unit' is ignored when 'initial' is not numeric.")
+        if (!is.character(initial)) stop("Argument 'initial' must be numeric or character.")
+
+        if (length(initial) == 1) initial <- rep(initial, nOut)
+        if (length(initial) != nOut) stop("Arguments 'initial' and 'unit' have incompatible lengths.")
+
+        name_for_initial <- if (length(name) == 1) rep(name, nOut) else name
+        cmt_for_initial <- cmt %||% rep(NA_character_, nOut)
+        if (length(cmt_for_initial) == 1) cmt_for_initial <- rep(cmt_for_initial, nOut)
+
+        initial <- unname(Map(
+            function(init, molec, cmt) {
+                init <- gsub(pattern = "{molec}", replacement = molec, x = init, fixed = TRUE)
+                init <- gsub(pattern = "{cmt}", replacement = cmt, x = init, fixed = TRUE)
+                .as_call(init)
+            },
+            initial,
+            name_for_initial,
+            cmt_for_initial
+        ))
     }
 
     # Early return for empty molecules

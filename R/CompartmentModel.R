@@ -405,12 +405,7 @@ initials <- function(model, type = c("a[] or c[]", "c[] or a[]", "a[] only", "c[
         molec_cmt,
         names(model$compartments)
     )]
-    is_value_vol <- vapply(
-        vol,
-        function(v) is.numeric(v),
-        FUN.VALUE = logical(1)
-    )
-    vol[!is_value_vol] <- list(NA_real_) # if volume is not numeric, set to NA for normalization     # TODO: query model$parameters for the respective value instead.
+    vol <- Map(.initial_resolve_volume, vol)
 
     init <- model$molecules$init
     molec_type <- model$molecules$type
@@ -418,37 +413,95 @@ initials <- function(model, type = c("a[] or c[]", "c[] or a[]", "a[] only", "c[
         type,
         "a[] or c[]" = {
             in_amount <- molec_type == "amount"
-            out_amount <- in_amount | !is.na(vol)
+            out_amount <- in_amount | !vapply(vol, .is_missing_volume, logical(1))
             to_convert <- out_amount & !in_amount
-            init <- Map(function(conv, x, v) if (conv) x * v else x, conv = to_convert, x = init, v = vol)
+            init <- Map(function(conv, x, v) if (conv) .initial_mul(x, v) else x, conv = to_convert, x = init, v = vol)
             prefix <- ifelse(out_amount, "a", "c")
             name <- .dsl_make_state(molec = molec_nm, cmt = molec_cmt, prefix = prefix)
         },
         "c[] or a[]" = {
             in_conc <- molec_type == "concentration"
-            out_conc <- in_conc | !is.na(vol)
+            out_conc <- in_conc | !vapply(vol, .is_missing_volume, logical(1))
             to_convert <- out_conc & !in_conc
-            init <- Map(function(conv, x, v) if (conv) x / v else x, conv = to_convert, x = init, v = vol)
+            init <- Map(function(conv, x, v) if (conv) .initial_div(x, v) else x, conv = to_convert, x = init, v = vol)
             prefix <- ifelse(out_conc, "c", "a")
             name <- .dsl_make_state(molec = molec_nm, cmt = molec_cmt, prefix = prefix)
         },
         "a[] only" = {
             needs_convert <- molec_type == "concentration"
-            cannot_convert <- is.na(vol) & needs_convert
+            cannot_convert <- vapply(vol, .is_missing_volume, logical(1)) & needs_convert
             if (any(cannot_convert)) stop("Cannot extract amount initials for molecules #", paste(which(cannot_convert), collapse = ", "),".")
-            init <- Map(function(conv, x, v) if (conv) x * v else x, conv = needs_convert, x = init, v = vol)
+            init <- Map(function(conv, x, v) if (conv) .initial_mul(x, v) else x, conv = needs_convert, x = init, v = vol)
             name <- .dsl_make_state(molec = molec_nm, cmt = molec_cmt, prefix = "a")
         },
         "c[] only" = {
             needs_convert <- molec_type == "amount"
-            cannot_convert <- is.na(vol) & needs_convert
+            cannot_convert <- vapply(vol, .is_missing_volume, logical(1)) & needs_convert
             if (any(cannot_convert)) stop("Cannot extract concentration initials for molecules #", paste(which(cannot_convert), collapse = ", "),".")
-            init <- Map(function(conv, x, v) if (conv) x / v else x, conv = needs_convert, x = init, v = vol)
+            init <- Map(function(conv, x, v) if (conv) .initial_div(x, v) else x, conv = needs_convert, x = init, v = vol)
             name <- .dsl_make_state(molec = molec_nm, cmt = molec_cmt, prefix = "c")
         }
     )
 
     setNames(init, nm = name)
+}
+
+.initial_resolve_volume <- function(vol) {
+    if (.is_missing_volume(vol)) NA_real_ else vol
+}
+
+.initial_is_expr <- function(x) is.language(x) || is.expression(x)
+
+.initial_mul <- function(x, y) {
+    if (!.initial_is_expr(x) && !.initial_is_expr(y)) return(x * y)
+    call("*", .initial_expr_arg(x), .initial_expr_arg(y))
+}
+
+.initial_div <- function(x, y) {
+    if (!.initial_is_expr(x) && !.initial_is_expr(y)) return(x / y)
+    call("/", .initial_expr_arg(x), .initial_expr_arg(y))
+}
+
+.initial_expr_arg <- function(x) {
+    if (.initial_is_expr(x)) .as_call(x) else x
+}
+
+.evaluate_initials <- function(inits, parameters, allow_unresolved = FALSE) {
+    param_env <- list2env(unclass(parameters), parent = baseenv())
+
+    lapply(seq_along(inits), function(i) {
+        init <- inits[[i]]
+        if (!.initial_is_expr(init)) return(init)
+
+        vars <- .dsl_all_vars(init)
+        missing_vars <- setdiff(vars, names(parameters))
+        if (length(missing_vars) > 0) {
+            if (allow_unresolved) return(init)
+            stop(
+                "Cannot evaluate parametrized initial '",
+                names(inits)[[i]],
+                "': missing parameter(s) ",
+                paste(missing_vars, collapse = ", "),
+                ".",
+                call. = FALSE
+            )
+        }
+
+        tryCatch(
+            .dsl_eval(init, envir = param_env),
+            error = function(e) {
+                if (allow_unresolved) return(init)
+                stop(
+                    "Cannot evaluate parametrized initial '",
+                    names(inits)[[i]],
+                    "': ",
+                    e$message,
+                    call. = FALSE
+                )
+            }
+        )
+    }) |>
+        setNames(names(inits))
 }
 
 #' Make auxiliary structures in a `CompartmentModel` object for handling continuous inputs
@@ -779,7 +832,9 @@ to_ode <- function(
 
     # Initial values in output units. Keep DSL state names for semantic lookup
     # and sanitized output names for deSolve-facing vectors/events.
-    y0_dsl <- .to_dimensions_vec(initials(model), dimensions)
+    y0_dsl <- initials(model) |>
+        .evaluate_initials(model$parameters) |>
+        .to_dimensions_vec(dimensions)
     dslStateNames <- names(y0_dsl)
     auto_placeholder <- model$metadata$auto_placeholder %||% list()
     outputStateNames <- .dsl_state_to_name(
@@ -1064,7 +1119,8 @@ to_ode <- function(
     .check_class(model, "CompartmentModel")
 
     # Available variables for unit checking: compartment volumes, initial amounts/concentrations, and parameters
-    inits <- initials(model)
+    inits <- initials(model) |>
+        .evaluate_initials(model$parameters, allow_unresolved = TRUE)
     varenv <- c(
         unclass(inits),
         unclass(model$parameters)

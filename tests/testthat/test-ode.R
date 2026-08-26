@@ -87,7 +87,7 @@ test_that("ODE observables convert between amount and concentration states", {
         add_parameter(V = 10)
 
     odeinfo <- to_ode(M_conc)
-    y <- cbind(time = 0, c_drug_Central = 10)
+    y <- cbind(time = 0, a_drug_Central = 100)
     expect_equal(odeinfo$obsFuncs$A(0, y, list()), 100)
 })
 
