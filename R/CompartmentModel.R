@@ -443,7 +443,8 @@ initials <- function(model, type = c("a[] or c[]", "c[] or a[]", "a[] only", "c[
         }
     )
 
-    setNames(init, nm = name)
+    setNames(init, nm = name) |>
+        .evaluate_initials(model$parameters, allow_unresolved = TRUE)
 }
 
 .initial_resolve_volume <- function(vol) {

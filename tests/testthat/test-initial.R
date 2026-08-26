@@ -84,3 +84,16 @@ test_that("initials converts parametrized amount initials using fixed volumes", 
     expect_named(C0, "c[drug, Central]")
     expect_equal(deparse1(C0[[1]]), "A0/2")
 })
+
+test_that("initials resolves conversions through model parameters", {
+    model <- compartment_model() |>
+        add_compartment("cmt", volume = "V") |>
+        add_molecule("molec", unit = "g", type = "amount") |>
+        add_parameter(V = 1 [L]) |>
+        wire()
+
+    C0 <- initials(model, type = "c[] only")
+
+    expect_named(C0, "c[molec, cmt]")
+    expect_equal(C0[[1]], units::set_units(0, "g/L", mode = "standard"))
+})
