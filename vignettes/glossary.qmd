@@ -87,11 +87,21 @@ compartment names before ODE generation.
 During ODE export, the integrated state representation is chosen by an export
 policy rather than by the molecule-compartment identity alone. The default
 policy prefers amount states when they are given directly or can be obtained
-from concentration initials using a fixed compartment volume. If no usable
-volume is available and the molecule is defined by concentration initials, the
-ODE state remains a concentration state. This supports pure reaction systems
-without physical compartment volumes, while transports and dosing require
-amount states or a volume-based conversion.
+from concentration initials using a fixed or parametrized compartment volume.
+If no usable volume is available and the molecule is defined by concentration
+initials, the ODE state remains a concentration state. This supports pure
+reaction systems without physical compartment volumes, while transports and
+dosing require amount states or a volume-based conversion.
+
+Initial values may themselves be fixed values or parameter expressions. For
+example, a molecule can be initialized with a named amount or concentration
+parameter rather than a numeric value. Such expressions are still attached to a
+specific molecule-in-compartment state; they do not create new states. When the
+parameters needed to evaluate an initial value or a volume conversion are
+present in the model, `initials()` resolves the expression to a value, including
+unit-aware values. When some parameters are not yet present, the unresolved
+expression remains symbolic until a later boundary, such as ODE export or
+simulation, where numerical solver initial values must be available.
 
 The `initials()` helper exposes this representation choice more flexibly. It
 can request amount initials, concentration initials, or fallback behavior in
@@ -320,8 +330,10 @@ ODE state vector.
 ODE export is a solver-facing boundary. The exported initial values, event
 tables, and derivative functions are numeric objects in the requested output
 dimensions, suitable for tools such as `deSolve`. Unit-aware model values are
-converted and stripped for this purpose; the export result is therefore not the
-preferred object for unit-aware downstream analysis.
+converted and stripped for this purpose. Parametrized initial values must be
+resolved by model or simulation parameters before this boundary can produce the
+numeric initial state vector. The export result is therefore not the preferred
+object for unit-aware downstream analysis.
 
 Implementation anchor: ODE export is handled by `to_ode()`.
 
