@@ -198,16 +198,24 @@ print.SimulationResult <- function(x, ...) {
 
 .simulation_check_time_mode <- function(model, time) {
     model_uses_time <- any(vapply(.simulation_dimension_values(model), .has_time_dimension, logical(1)))
+    model_has_time_dependent_process <- .simulation_has_time_dependent_process(model)
     time_has_units <- inherits(time, "units")
 
     if (model_uses_time && !time_has_units) {
         stop("Cannot simulate: model uses time units but simulation time is unit-free.", call. = FALSE)
     }
-    if (!model_uses_time && time_has_units) {
+    if (!model_uses_time && model_has_time_dependent_process && time_has_units) {
         stop("Cannot simulate: simulation time has units but the model is unit-free in time.", call. = FALSE)
     }
 
     invisible(NULL)
+}
+
+.simulation_has_time_dependent_process <- function(model) {
+    model <- model |> wire() |> make_depot()
+    length(model$transports) > 0 ||
+        length(model$reactions) > 0 ||
+        length(model$doses) > 0
 }
 
 .simulation_numeric_time <- function(time, dimensions) {

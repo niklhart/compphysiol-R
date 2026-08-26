@@ -106,6 +106,19 @@ test_that("simulate errors when simulation time has units but model is unit-free
     )
 })
 
+test_that("simulate accepts time units for static models without processes", {
+    model <- compartment_model() |>
+        add_compartment("ex", volume = 1 [L]) |>
+        add_molecule("D", cmt = "ex", type = "amount", initial = 0 [mol]) |>
+        wire()
+
+    out <- simulate(model, time = seq(0 [h], 1 [h], by = 1 [h]))
+
+    expect_s3_class(out, "SimulationResult")
+    expect_equal(out$states$time, units::set_units(c(0, 1), "h", mode = "standard"))
+    expect_equal(out$states$a_D_ex, units::set_units(c(0, 0), "mol", mode = "standard"))
+})
+
 test_that("simulate rejects invalid time inputs with clear errors", {
     model <- test_model_for_simulation()
 
