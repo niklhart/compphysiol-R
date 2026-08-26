@@ -1,6 +1,12 @@
 # global options
 # for now, just two dummy options that I can further adapt.
 .the <- new.env(parent = emptyenv())
+.the$registry <- new.env(parent = emptyenv())
+.the$registry$model_units <- data.frame(
+    symbol = character(),
+    def = character(),
+    stringsAsFactors = FALSE
+)
 .the$options_meta <- list(
     verbose = list(
         default = TRUE,
@@ -61,6 +67,5 @@ dispopt_compphysiol <- function() {
     )
     df
 }
-
 
 
