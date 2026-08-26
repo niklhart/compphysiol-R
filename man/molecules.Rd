@@ -19,9 +19,12 @@ molecules(
 the molecule is assumed to be present in all compartments.}
 
 \item{initial}{Initial concentration(s) or amount(s) of the molecule
-(numeric, possibly as \code{values[unit]}). Scalar values are recycled across
-the generated molecule definitions; otherwise the length must be compatible
-with \code{name}, \code{cmt}, and \code{unit}.}
+(numeric, possibly as \code{values[unit]}, or character for parametrized
+initials). Character values are converted to expressions; \code{{molec}} and
+\code{{cmt}} placeholders are replaced by the generated molecule and
+compartment names. Scalar values are recycled across the generated molecule
+definitions; otherwise the length must be compatible with \code{name}, \code{cmt},
+and \code{unit}.}
 
 \item{unit}{Unit for the initial conditions (character scalar or \code{NULL}, the default), to be used if units are not specified via \code{initial}.}
 
