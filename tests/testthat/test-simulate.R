@@ -233,10 +233,10 @@ test_that("simulate applies bolus dosing events", {
     out <- simulate(model, time = time)
 
     expect_equal(out$states$a_drug_Central[[1]], 0, tolerance = 1e-8)
-    expect_equal(out$states$a_drug_Central[[2]], 0, tolerance = 1e-8)
+    expect_equal(out$states$a_drug_Central[[2]], 100, tolerance = 1e-8)
     expect_equal(
         out$states$a_drug_Central,
-        c(0, 0, 100 * exp(-0.2 * (time[3:6] - 1))),
+        c(0, 100, 100 * exp(-0.2 * (time[3:6] - 1))),
         tolerance = 1e-5
     )
 })
@@ -255,9 +255,25 @@ test_that("simulate preserves state units for bolus dosing", {
     expect_equal(out$states$time, units::set_units(time, "h", mode = "standard"))
     expect_equal(
         out$states$a_drug_Central,
-        units::set_units(c(0, 0, 100 * exp(-0.2 * (time[3:6] - 1))), "mg", mode = "standard"),
+        units::set_units(c(0, 100, 100 * exp(-0.2 * (time[3:6] - 1))), "mg", mode = "standard"),
         tolerance = 1e-5
     )
+})
+
+test_that("simulate observables use post-dose event states", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = 10) |>
+        add_molecule("drug", cmt = "Central", initial = 0, type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_observable(C = c[drug, Central]) |>
+        add_dosing(time = 1, amount = 100, cmt = "Central", molec = "drug") |>
+        add_parameter(ke = 0.2)
+
+    time <- c(0, 1, 2)
+    out <- simulate(model, time = time)
+
+    expect_equal(out$states$a_drug_Central, c(0, 100, 100 * exp(-0.2)), tolerance = 1e-5)
+    expect_equal(out$observables$C, out$states$a_drug_Central / 10, tolerance = 1e-5)
 })
 
 test_that("simulate applies infusion dosing events", {
