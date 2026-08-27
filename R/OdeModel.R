@@ -43,7 +43,11 @@ to_ode_model.CompartmentModel <- function(model) {
         to_idx <- if (!is.na(to)) .ode_model_transport_state_idx(molec, to, name2idx) else NULL
         rate <- lower(model$transports$rate[[j]])
 
-        if (!is.na(from)) rhs[[from_idx]] <- c(rhs[[from_idx]], list(.negate_expr(rate)))
+        if (!is.na(from)) {
+            rhs[[from_idx]] <- c(rhs[[from_idx]], list(
+                .negate_expr(rate, simplify_product = identical(model$transports$type[[j]], "linear"))
+            ))
+        }
         if (!is.na(to)) rhs[[to_idx]] <- c(rhs[[to_idx]], list(rate))
     }
 
@@ -79,7 +83,9 @@ to_ode_model.CompartmentModel <- function(model) {
                 term <- .mul(term, .as_call(vol))
             }
             term <- lower(term)
-            if (identical(participants$role[[i]], "input")) term <- .negate_expr(term)
+            if (identical(participants$role[[i]], "input")) {
+                term <- .negate_expr(term, simplify_product = identical(model$reactions$type[[j]], "elementary"))
+            }
             rhs[[target$idx]] <- c(rhs[[target$idx]], list(term))
         }
     }
@@ -108,7 +114,6 @@ to_ode_model.CompartmentModel <- function(model) {
         class = "OdeModel"
     )
 
-    attr(ode_model, "auto_placeholder") <- model$metadata$auto_placeholder %||% list()
     ode_model
 }
 
@@ -145,12 +150,7 @@ to_deSolve.OdeModel <- function(model, parameters = list(), dimensions = NULL) {
     ) |>
         .to_dimensions_vec(dimensions)
 
-    auto_placeholder <- attr(model, "auto_placeholder") %||% list()
-    output_state_names <- .dsl_state_to_name(
-        model$states$dsl_name,
-        omit_molec = isTRUE(auto_placeholder$molec),
-        omit_cmt = isTRUE(auto_placeholder$cmt)
-    )
+    output_state_names <- model$states$output_name
     y0 <- setNames(unlist(y0), output_state_names)
 
     lines <- "function(t,y,params) {"
@@ -235,9 +235,15 @@ to_deSolve.OdeModel <- function(model, parameters = list(), dimensions = NULL) {
 
 .ode_model_state_info <- function(model, dsl_state_names) {
     parsed <- lapply(dsl_state_names, .dsl_parse_state)
+    auto_placeholder <- model$metadata$auto_placeholder %||% list()
     data.frame(
         index = seq_along(dsl_state_names),
         dsl_name = dsl_state_names,
+        output_name = .dsl_state_to_name(
+            dsl_state_names,
+            omit_molec = isTRUE(auto_placeholder$molec),
+            omit_cmt = isTRUE(auto_placeholder$cmt)
+        ),
         molec = vapply(parsed, `[[`, character(1), "molec"),
         cmt = vapply(parsed, `[[`, character(1), "cmt"),
         type = ifelse(vapply(parsed, `[[`, character(1), "prefix") == "a", "amount", "concentration"),
@@ -595,7 +601,13 @@ to_deSolve.OdeModel <- function(model, parameters = list(), dimensions = NULL) {
     Reduce(function(a, b) bquote(.(a) + .(b)), exprs)
 }
 
-.negate_expr <- function(expr) bquote(-(.(expr)))
+.negate_expr <- function(expr, simplify_product = FALSE) {
+    if (is.numeric(expr) && length(expr) == 1L) return(-expr)
+    if (simplify_product && is.call(expr) && identical(expr[[1]], as.name("*")) && length(expr) == 3L) {
+        return(call("*", .negate_expr(expr[[2]]), expr[[3]]))
+    }
+    call("-", expr)
+}
 
 .dsl_parse_state <- function(x) {
     prefix <- substr(x, 1, 1)

@@ -10,6 +10,7 @@ test_that("to_ode_model returns a backend-neutral OdeModel", {
 
     expect_s3_class(ode_model, "OdeModel")
     expect_null(attr(ode_model, "source_model"))
+    expect_null(attr(ode_model, "auto_placeholder"))
     expect_named(
         ode_model,
         c("states", "initials", "rhs", "equations", "observables", "parameters", "dosing", "freeParams")
@@ -19,9 +20,10 @@ test_that("to_ode_model returns a backend-neutral OdeModel", {
     expect_s3_class(ode_model$parameters, "Parameters")
 
     expect_s3_class(ode_model$states, "data.frame")
-    expect_named(ode_model$states, c("index", "dsl_name", "molec", "cmt", "type"), ignore.order = TRUE)
+    expect_named(ode_model$states, c("index", "dsl_name", "output_name", "molec", "cmt", "type"), ignore.order = TRUE)
     expect_equal(ode_model$states$index, 1L)
     expect_equal(ode_model$states$dsl_name, "a[drug, Central]")
+    expect_equal(ode_model$states$output_name, "a_drug_Central")
     expect_equal(ode_model$states$molec, "drug")
     expect_equal(ode_model$states$cmt, "Central")
     expect_equal(ode_model$states$type, "amount")
@@ -31,6 +33,30 @@ test_that("to_ode_model returns a backend-neutral OdeModel", {
     expect_false(grepl("a_drug_Central|y\\[,", deparse1(ode_model$rhs[[1]])))
     expect_equal(unclass(ode_model$parameters)$V, 10)
     expect_equal(ode_model$freeParams, c("A0", "ke"))
+})
+
+test_that("OdeModel stores shortened output names without placeholder attributes", {
+    model <- compartment_model() |>
+        add_compartment(c("Central", "Peripheral"), volume = 0) |>
+        add_transport("Central", "Peripheral", const = "k12")
+
+    ode_model <- to_ode_model(model)
+
+    expect_null(attr(ode_model, "auto_placeholder"))
+    expect_equal(ode_model$states$dsl_name, c("a[molec, Central]", "a[molec, Peripheral]"))
+    expect_equal(ode_model$states$output_name, c("a_Central", "a_Peripheral"))
+    expect_equal(to_deSolve(ode_model, parameters = parameters(k12 = 0.1))$stateNames, ode_model$states$output_name)
+})
+
+test_that("OdeModel sink terms from constants avoid redundant product parentheses", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = 100, type = "amount") |>
+        add_transport("Central", "", const = "ke")
+
+    ode_model <- to_ode_model(model)
+
+    expect_equal(deparse1(ode_model$rhs[[1]]), "-ke * y[1]")
 })
 
 test_that("OdeModel observables lower DSL states to indexed state references", {
