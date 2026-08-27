@@ -50,6 +50,20 @@ test_that("OdeModel observables lower DSL states to indexed state references", {
     expect_false(grepl("a_drug_Central|y\\[,", obs_text))
 })
 
+test_that("OdeModel keeps literal unit-bearing initial values as values", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = 100 [mg], type = "amount")
+
+    ode_model <- to_ode_model(model)
+
+    expect_s3_class(ode_model$initials[[1]], "units")
+    expect_equal(
+        ode_model$initials[[1]],
+        units::set_units(100, "mg", mode = "standard")
+    )
+})
+
 test_that("OdeModel equations can contain lowered state references", {
     model <- compartment_model() |>
         add_compartment("Central", volume = "V") |>

@@ -56,15 +56,24 @@ simulate.CompartmentModel <- function(
 ) {
     .check_class(object, "CompartmentModel")
     time <- .process_nse_arg(substitute(time), envir = parent.frame())
-    ode_model <- to_ode_model(object)
-    simulate(
+    time <- .simulation_apply_time_unit(time, unit)
+    .simulation_validate_time(time)
+
+    sim_parameters <- .simulation_parameters_object(parameters)
+    export_model <- .simulation_model_with_parameters(object, sim_parameters)
+    export_model <- export_model |> wire() |> make_depot() |> .check_unit_consistency()
+    .simulation_check_time_mode(export_model, time)
+
+    dimensions <- .simulation_dimensions(export_model, time, dimensions)
+    ode_model <- to_ode_model(export_model)
+    odeinfo <- to_deSolve(ode_model, dimensions = dimensions)
+
+    .simulation_solve_ode_model(
         ode_model,
-        nsim = nsim,
-        seed = seed,
+        odeinfo = odeinfo,
         time = time,
-        unit = unit,
-        parameters = parameters,
         dimensions = dimensions,
+        parameters = export_model$parameters,
         ...
     )
 }
@@ -83,12 +92,7 @@ simulate.OdeModel <- function(
     .check_class(object, "OdeModel")
 
     time <- .process_nse_arg(substitute(time), envir = parent.frame())
-    if (!is.null(unit)) {
-        if (inherits(time, "units")) {
-            stop("Argument 'unit' can only be used when 'time' does not already have units.", call. = FALSE)
-        }
-        time <- units::set_units(time, unit, mode = "standard")
-    }
+    time <- .simulation_apply_time_unit(time, unit)
     .simulation_validate_time(time)
 
     sim_parameters <- .simulation_parameters_object(parameters)
@@ -98,13 +102,35 @@ simulate.OdeModel <- function(
 
     dimensions <- .simulation_dimensions(object, time, dimensions, parameters = merged_parameters)
     odeinfo <- to_deSolve(object, parameters = sim_parameters, dimensions = dimensions)
+
+    .simulation_solve_ode_model(
+        object,
+        odeinfo = odeinfo,
+        time = time,
+        dimensions = dimensions,
+        parameters = merged_parameters,
+        ...
+    )
+}
+
+.simulation_apply_time_unit <- function(time, unit) {
+    if (!is.null(unit)) {
+        if (inherits(time, "units")) {
+            stop("Argument 'unit' can only be used when 'time' does not already have units.", call. = FALSE)
+        }
+        time <- units::set_units(time, unit, mode = "standard")
+    }
+    time
+}
+
+.simulation_solve_ode_model <- function(model, odeinfo, time, dimensions, parameters, ...) {
     solver_time <- .simulation_numeric_time(time, dimensions)
 
     solver_args <- list(...)
     solver_args$y <- odeinfo$y0
     solver_args$times <- solver_time
     solver_args$func <- odeinfo$odefun
-    solver_args$parms <- .simulation_solver_parameters(merged_parameters, dimensions)
+    solver_args$parms <- .simulation_solver_parameters(parameters, dimensions)
     solver_args$events <- odeinfo$events
     solver_args$rtol <- solver_args$rtol %||% 1e-10
     solver_args$atol <- solver_args$atol %||% 1e-10
@@ -113,16 +139,16 @@ simulate.OdeModel <- function(
     out <- .simulation_apply_output_events(out, odeinfo$events)
 
     states <- as.data.frame(out)
-    states <- .simulation_attach_state_units(states, object, odeinfo, dimensions, parameters = merged_parameters)
+    states <- .simulation_attach_state_units(states, model, odeinfo, dimensions, parameters = parameters)
     states$time <- .simulation_attach_time_units(states$time, time, dimensions)
     observables <- .simulation_observables(
         out,
         states$time,
-        object,
+        model,
         odeinfo,
         solver_time,
         dimensions,
-        parameters = merged_parameters
+        parameters = parameters
     )
 
     structure(

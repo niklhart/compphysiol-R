@@ -835,6 +835,7 @@ to_ode <- function(
         stop("Only backend 'deSolve' is currently supported.", call. = FALSE)
     }
 
+    model <- model |> wire() |> make_depot() |> .check_unit_consistency()
     to_deSolve(to_ode_model(model), dimensions = dimensions)
 }
 

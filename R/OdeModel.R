@@ -259,6 +259,9 @@ to_deSolve.OdeModel <- function(model, parameters = list(), dimensions = NULL) {
 }
 
 .ode_model_lower_expr <- function(expr, state_names, eq_names, name2idx, state_volumes) {
+    if (!is.character(expr) && !is.expression(expr) && !is.language(expr)) {
+        return(expr)
+    }
     expr <- .as_call(expr)
 
     lower <- function(e) {

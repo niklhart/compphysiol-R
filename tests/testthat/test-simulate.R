@@ -218,6 +218,22 @@ test_that("simulate validates OdeModel right-hand side units with runtime parame
     )
 })
 
+test_that("simulate reports CompartmentModel unit errors in component terms", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+        add_transport("Central", "", const = "ke")
+
+    expect_error(
+        simulate(
+            model,
+            time = seq(0, 1, by = 1) [h],
+            parameters = parameters(ke = 1 [mg])
+        ),
+        "transport \\(1\\)|rate constant"
+    )
+})
+
 test_that("simulate can pass free parameters as a Parameters object", {
     model <- compartment_model() |>
         add_compartment("Central", volume = NA_real_) |>
