@@ -11,8 +11,8 @@ to_ode(model, dimensions = NULL, backend = "deSolve")
 
 \item{dimensions}{Named list of unit dimensions used for inlining parameters in ODEs (default: SI units)}
 
-\item{backend}{Character scalar specifying the ODE solver backend (default: "deSolve") for which the output should be optimized.
-This argument is currently ignored, but may be extended in the future.}
+\item{backend}{Character scalar specifying the ODE solver backend. Currently
+only \code{"deSolve"} is supported.}
 }
 \value{
 A list with elements \code{odefun} (function), \code{y0} (named numeric vector), \code{obsFuncs} (list of functions),

@@ -194,28 +194,27 @@ test_that("simulate on an OdeModel applies runtime parameter values to initials 
     expect_equal(out$observables$C, out$states$a_drug_Central / 20, tolerance = 1e-6)
 })
 
-test_that("simulate validates unit-aware runtime parameter overrides for OdeModel objects", {
+test_that("simulate validates OdeModel right-hand side units with runtime parameters", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = "V") |>
+        add_compartment("Central", volume = NA_real_) |>
         add_molecule("drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
-        add_observable(C = c[drug, Central])
+        add_transport("Central", "", const = "ke")
     ode_model <- to_ode_model(model)
 
     expect_no_error(
         simulate(
             ode_model,
             time = seq(0, 1, by = 1) [h],
-            parameters = parameters(V = 1 [L], ke = 0.2 [1/h])
+            parameters = parameters(ke = 0.2 [1/h])
         )
     )
     expect_error(
         simulate(
             ode_model,
             time = seq(0, 1, by = 1) [h],
-            parameters = parameters(V = 1 [h], ke = 0.2 [1/h])
+            parameters = parameters(ke = 1 [mg])
         ),
-        "V|volume|unit|dimension"
+        "a\\[drug, Central\\]|right-hand side|unit"
     )
 })
 

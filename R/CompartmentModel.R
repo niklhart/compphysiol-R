@@ -790,8 +790,8 @@ to_analytical <- function(model) {
 #'
 #' @param model A `CompartmentModel` object
 #' @param dimensions Named list of unit dimensions used for inlining parameters in ODEs (default: SI units)
-#' @param backend Character scalar specifying the ODE solver backend (default: "deSolve") for which the output should be optimized.
-#'   This argument is currently ignored, but may be extended in the future.
+#' @param backend Character scalar specifying the ODE solver backend. Currently
+#'   only `"deSolve"` is supported.
 #' @returns A list with elements `odefun` (function), `y0` (named numeric vector), `obsFuncs` (list of functions),
 #' `freeParams` (character vector) and `dimensions` (named list).
 #' @examples
@@ -805,6 +805,9 @@ to_ode <- function(
     dimensions = NULL,
     backend = "deSolve"
 ) {
+    if (inherits(model, "OdeModel")) {
+        return(to_deSolve(model, dimensions = dimensions))
+    }
     .check_class(model, "CompartmentModel")
 
     if (
@@ -828,240 +831,11 @@ to_ode <- function(
         ))
     }
 
-    # Resolve wildcards, render depot compartments and check unit consistency before ODE generation
-    model <- model |> wire() |> make_depot() |> .check_unit_consistency()
-
-    # Initial values in output units. Keep DSL state names for semantic lookup
-    # and sanitized output names for deSolve-facing vectors/events.
-    y0_dsl <- initials(model) |>
-        .evaluate_initials(model$parameters) |>
-        .to_dimensions_vec(dimensions)
-    dslStateNames <- names(y0_dsl)
-    auto_placeholder <- model$metadata$auto_placeholder %||% list()
-    outputStateNames <- .dsl_state_to_name(
-        dslStateNames,
-        omit_molec = isTRUE(auto_placeholder$molec),
-        omit_cmt = isTRUE(auto_placeholder$cmt)
-    )
-    if (anyDuplicated(outputStateNames)) {
-        stop("Output state names are not unique after sanitizing DSL state names.")
-    }
-    y0 <- setNames(unlist(y0_dsl), outputStateNames)
-
-    # Different names for constructing the ODEs
-    compNames <- names(model$compartments)
-    stateNames <- dslStateNames
-    eqNames <- names(model$equations)
-    name2idx <- setNames(seq_along(stateNames), stateNames)
-    volume_by_cmt <- setNames(
-        lapply(model$compartments$volume, .to_dimensions_value, dimensions = dimensions),
-        names(model$compartments)
-    )
-    stateVolumes <- list()
-    for (i in seq_along(model$molecules)) {
-        molec <- model$molecules$name[[i]]
-        cmt <- model$molecules$cmt[[i]]
-        vol <- volume_by_cmt[[cmt]]
-        stateVolumes[[.dsl_make_state(molec = molec, cmt = cmt, prefix = "a")]] <- vol
-        stateVolumes[[.dsl_make_state(molec = molec, cmt = cmt, prefix = "c")]] <- vol
+    if (!identical(backend, "deSolve")) {
+        stop("Only backend 'deSolve' is currently supported.", call. = FALSE)
     }
 
-    # TODO: look up dimensions in global dimensions list instead of passing as argument (also see y0 pipeline)?
-    paramValues <- .to_dimensions_vec(model$parameters, dimensions)
-
-    # ---- Validation: check that all transports point to known compartments ----
-    check_comp <- function(nm) {
-        if (!is.null(nm) && any(!(nm %in% compNames))) {
-            missing <- nm[!(nm %in% compNames)]
-            stop(
-                "Transport references unknown compartment: ",
-                paste(missing, collapse = ", "),
-                ". ",
-                "Compartment names in this model: ",
-                paste(compNames, collapse = ", "),
-                ". ",
-                "Did you mean to merge this model with another?"
-            )
-        }
-    }
-
-    transport_comps <- setdiff(
-        unique(c(model$transports$from, model$transports$to)),
-        NA_character_
-    )
-    lapply(transport_comps, check_comp)
-
-    # Environment container for free parameters
-    freeParams <- new.env(parent = emptyenv())
-    freeParams$list <- character()
-
-    makeFun <- function(expr, obsFunc = FALSE) {
-        substitute_expr(
-            expr,
-            stateNames,
-            eqNames,
-            name2idx,
-            paramValues = paramValues,
-            freeParamsEnv = freeParams,
-            obsFunc = obsFunc,
-            stateVolumes = stateVolumes,
-            obsStateNames = outputStateNames
-        )
-    }
-
-    amount_state_for_transport <- function(molec, cmt) {
-        state <- .dsl_make_state(molec = molec, cmt = cmt, prefix = "a")
-        idx <- if (state %in% names(name2idx)) name2idx[[state]] else NULL
-        if (!is.null(idx)) return(idx)
-
-        conc_state <- .dsl_make_state(molec = molec, cmt = cmt, prefix = "c")
-        if (conc_state %in% names(name2idx)) {
-            stop(
-                "Transports require amount states or a compartment volume; ",
-                "state '",
-                conc_state,
-                "' is a concentration state and cannot be used for transport.",
-                call. = FALSE
-            )
-        }
-
-        stop(
-            "Transport references unknown state: ",
-            state,
-            ". Did you define the corresponding molecule in this compartment?",
-            call. = FALSE
-        )
-    }
-
-    reaction_state <- function(molec, cmt) {
-        amount_state <- .dsl_make_state(molec = molec, cmt = cmt, prefix = "a")
-        amount_idx <- if (amount_state %in% names(name2idx)) name2idx[[amount_state]] else NULL
-        if (!is.null(amount_idx)) {
-            return(list(name = amount_state, idx = amount_idx, type = "amount"))
-        }
-
-        conc_state <- .dsl_make_state(molec = molec, cmt = cmt, prefix = "c")
-        conc_idx <- if (conc_state %in% names(name2idx)) name2idx[[conc_state]] else NULL
-        if (!is.null(conc_idx)) {
-            return(list(name = conc_state, idx = conc_idx, type = "concentration"))
-        }
-
-        stop(
-            "Reaction references unknown state: ",
-            amount_state,
-            ". Did you define the corresponding molecule in this compartment?",
-            call. = FALSE
-        )
-    }
-
-    # Collect RHS terms for ODEs
-    rhs <- vector("list", length(stateNames))
-    for (j in seq_along(model$transports)) {
-        from <- model$transports$from[[j]]
-        to <- model$transports$to[[j]]
-        molec <- model$transports$molec[[j]]
-        from_idx <- if (!is.na(from)) amount_state_for_transport(molec, from) else NULL
-        to_idx <- if (!is.na(to)) amount_state_for_transport(molec, to) else NULL
-        expr_str <- model$transports$rate[[j]] |> makeFun() |> deparse1()
-        if (!is.na(from)) {
-            rhs[[from_idx]] <- c(rhs[[from_idx]], paste0("-(", expr_str, ")"))
-        }
-        if (!is.na(to)) {
-            rhs[[to_idx]] <- c(rhs[[to_idx]], paste0("+(", expr_str, ")"))
-        }
-    }
-
-    for (j in seq_along(model$reactions)) {
-        scale_cmt <- model$reactions$scale_cmt[[j]]
-        vol <- volume_by_cmt[[scale_cmt]]
-        rate_expr <- model$reactions$rate[[j]]
-
-        add_reaction_term <- function(molec, cmt, stoich, sign) {
-            target <- reaction_state(molec, cmt)
-            term_expr <- rate_expr
-            if (!identical(stoich, 1) && !identical(stoich, 1L)) {
-                term_expr <- .mul(term_expr, stoich)
-            }
-            if (identical(target$type, "amount")) {
-                if (.is_missing_volume(vol)) {
-                    stop(
-                        "Cannot export reaction in compartment '",
-                        scale_cmt,
-                        "' to amount-state ODEs: reaction rates are ",
-                        "concentration-change rates and require a compartment ",
-                        "volume to convert them to amount/time.",
-                        call. = FALSE
-                    )
-                }
-                term_expr <- .mul(term_expr, .as_call(vol))
-            }
-            expr_str <- term_expr |> makeFun() |> deparse1()
-            rhs[[target$idx]] <<- c(rhs[[target$idx]], paste0(sign, "(", expr_str, ")"))
-        }
-
-        participants <- as.data.frame(model$reactions$participants[[j]])
-        for (i in seq_len(nrow(participants))) {
-            sign <- if (identical(participants$role[[i]], "input")) "-" else "+"
-            add_reaction_term(
-                molec = participants$molec[[i]],
-                cmt = participants$cmt[[i]],
-                stoich = participants$stoich[[i]],
-                sign = sign
-            )
-        }
-    }
-
-    # Build ODE function body (explicit, human-readable)
-    lines <- "function(t,y,params) {"
-    for (i in seq_along(model$equations)) {
-        eq_rhs <- model$equations[[i]]
-        eq_nm <- names(model$equations)[i]
-        eq_str <- eq_rhs |> makeFun() |> deparse1()
-        lines <- c(lines, paste0("    ", eq_nm, " <- ", eq_str))
-        if (i == length(model$equations)) lines <- c(lines, "")
-    }
-    lines <- c(lines, paste0("    dydt <- numeric(", length(stateNames), ")"))
-    for (i in seq_along(stateNames)) {
-        if (length(rhs[[i]]) == 0) {
-            lines <- c(lines, paste0("    dydt[", i, "] <- 0"))
-        } else {
-            lines <- c(
-                lines,
-                paste0("    dydt[", i, "] <- ", paste(rhs[[i]], collapse = " "))
-            )
-        }
-    }
-    lines <- c(lines, "    list(dydt)", "}")
-    odefun <- eval(parse(text = paste(lines, collapse = "\n")))
-
-    # Observables (same substitution logic)
-    obsFuncs <- lapply(model$observables, function(o) {
-        expr_str <- o |> makeFun(obsFunc = TRUE) |> deparse1()
-        eval(parse(text = paste0("function(t,y,params) unname(", expr_str, ")")))
-    })
-    names(obsFuncs) <- names(model$observables)
-
-    # Dosing events table in output units
-    events <- .dosing_to_events(model)
-    events$data$value <- .to_dimensions_vec(events$data$value, dimensions)
-    events$data$time <- .to_dimensions_vec(events$data$time, dimensions)
-    if (nrow(events$data) > 0) {
-        events$data$var <- outputStateNames[match(events$data$var, dslStateNames)]
-        if (any(is.na(events$data$var))) {
-            stop("Some dosing events do not map to generated ODE state names.")
-        }
-    }
-
-    # Output list
-    list(
-        odefun = odefun,
-        stateNames = outputStateNames,
-        dslStateNames = dslStateNames,
-        obsFuncs = obsFuncs,
-        freeParams = sort(unique(freeParams$list)),
-        y0 = y0,
-        events = events
-    )
+    to_deSolve(to_ode_model(model), dimensions = dimensions)
 }
 
 # ------------------------------------ Non-exported helper functions for CompartmentModel processing ------------------------------------

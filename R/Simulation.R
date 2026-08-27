@@ -55,6 +55,32 @@ simulate.CompartmentModel <- function(
     ...
 ) {
     .check_class(object, "CompartmentModel")
+    time <- .process_nse_arg(substitute(time), envir = parent.frame())
+    ode_model <- to_ode_model(object)
+    simulate(
+        ode_model,
+        nsim = nsim,
+        seed = seed,
+        time = time,
+        unit = unit,
+        parameters = parameters,
+        dimensions = dimensions,
+        ...
+    )
+}
+
+#' @export
+simulate.OdeModel <- function(
+    object,
+    nsim = NULL,
+    seed = NULL,
+    time = numeric(0),
+    unit = NULL,
+    parameters = list(),
+    dimensions = NULL,
+    ...
+) {
+    .check_class(object, "OdeModel")
 
     time <- .process_nse_arg(substitute(time), envir = parent.frame())
     if (!is.null(unit)) {
@@ -66,18 +92,19 @@ simulate.CompartmentModel <- function(
     .simulation_validate_time(time)
 
     sim_parameters <- .simulation_parameters_object(parameters)
-    export_model <- .simulation_model_with_parameters(object, sim_parameters)
-    .simulation_check_time_mode(export_model, time)
+    merged_parameters <- .merge_ode_parameters(object$parameters, sim_parameters)
+    .ode_model_check_unit_consistency(object, merged_parameters)
+    .simulation_check_time_mode(object, time, parameters = merged_parameters)
 
-    dimensions <- .simulation_dimensions(export_model, time, dimensions)
-    odeinfo <- to_ode(export_model, dimensions = dimensions)
+    dimensions <- .simulation_dimensions(object, time, dimensions, parameters = merged_parameters)
+    odeinfo <- to_deSolve(object, parameters = sim_parameters, dimensions = dimensions)
     solver_time <- .simulation_numeric_time(time, dimensions)
 
     solver_args <- list(...)
     solver_args$y <- odeinfo$y0
     solver_args$times <- solver_time
     solver_args$func <- odeinfo$odefun
-    solver_args$parms <- .simulation_solver_parameters(parameters, dimensions)
+    solver_args$parms <- .simulation_solver_parameters(merged_parameters, dimensions)
     solver_args$events <- odeinfo$events
     solver_args$rtol <- solver_args$rtol %||% 1e-10
     solver_args$atol <- solver_args$atol %||% 1e-10
@@ -86,9 +113,17 @@ simulate.CompartmentModel <- function(
     out <- .simulation_apply_output_events(out, odeinfo$events)
 
     states <- as.data.frame(out)
-    states <- .simulation_attach_state_units(states, export_model, odeinfo, dimensions)
+    states <- .simulation_attach_state_units(states, object, odeinfo, dimensions, parameters = merged_parameters)
     states$time <- .simulation_attach_time_units(states$time, time, dimensions)
-    observables <- .simulation_observables(out, states$time, export_model, odeinfo, solver_time, dimensions)
+    observables <- .simulation_observables(
+        out,
+        states$time,
+        object,
+        odeinfo,
+        solver_time,
+        dimensions,
+        parameters = merged_parameters
+    )
 
     structure(
         list(
@@ -211,22 +246,22 @@ print.SimulationResult <- function(x, ...) {
     invisible(NULL)
 }
 
-.simulation_dimensions <- function(model, time, dimensions) {
+.simulation_dimensions <- function(model, time, dimensions, parameters = model$parameters) {
     dimensions <- dimensions %||% list()
 
     if (inherits(time, "units") && is.null(dimensions$time)) {
         dimensions$time <- .unit_label(time)
     }
 
-    for (value in .simulation_dimension_values(model)) {
+    for (value in .simulation_dimension_values(model, parameters = parameters)) {
         dimensions <- .infer_dimensions_from_unit(value, dimensions)
     }
 
     dimensions
 }
 
-.simulation_check_time_mode <- function(model, time) {
-    model_uses_time <- any(vapply(.simulation_dimension_values(model), .has_time_dimension, logical(1)))
+.simulation_check_time_mode <- function(model, time, parameters = model$parameters) {
+    model_uses_time <- any(vapply(.simulation_dimension_values(model, parameters = parameters), .has_time_dimension, logical(1)))
     model_has_time_dependent_process <- .simulation_has_time_dependent_process(model)
     time_has_units <- inherits(time, "units")
 
@@ -241,6 +276,10 @@ print.SimulationResult <- function(x, ...) {
 }
 
 .simulation_has_time_dependent_process <- function(model) {
+    if (inherits(model, "OdeModel")) {
+        has_rhs <- any(vapply(model$rhs, function(expr) !identical(expr, 0), logical(1)))
+        return(has_rhs || length(model$dosing$state) > 0)
+    }
     model <- model |> wire() |> make_depot()
     length(model$transports) > 0 ||
         length(model$reactions) > 0 ||
@@ -260,8 +299,8 @@ print.SimulationResult <- function(x, ...) {
     time
 }
 
-.simulation_attach_state_units <- function(states, model, odeinfo, dimensions) {
-    state_units <- .simulation_state_unit_values(model)
+.simulation_attach_state_units <- function(states, model, odeinfo, dimensions, parameters = model$parameters) {
+    state_units <- .simulation_state_unit_values(model, parameters = parameters)
     state_units <- lapply(state_units[odeinfo$dslStateNames], function(x) {
         if (inherits(x, "units")) do.call(.to_dimensions, c(list(x), dimensions)) else x
     })
@@ -277,7 +316,7 @@ print.SimulationResult <- function(x, ...) {
     states
 }
 
-.simulation_observables <- function(solver_output, time, model, odeinfo, solver_time, dimensions) {
+.simulation_observables <- function(solver_output, time, model, odeinfo, solver_time, dimensions, parameters = model$parameters) {
     if (length(odeinfo$obsFuncs) == 0) return(NULL)
 
     values <- lapply(odeinfo$obsFuncs, function(f) {
@@ -287,7 +326,7 @@ print.SimulationResult <- function(x, ...) {
     names(observables) <- names(odeinfo$obsFuncs)
     observables <- cbind(data.frame(time = time), observables)
 
-    obs_units <- .simulation_observable_unit_values(model)
+    obs_units <- .simulation_observable_unit_values(model, parameters = parameters)
     for (obs_name in intersect(names(obs_units), names(observables))) {
         unit_value <- obs_units[[obs_name]]
         if (inherits(unit_value, "units")) {
@@ -308,7 +347,10 @@ print.SimulationResult <- function(x, ...) {
     observables
 }
 
-.simulation_observable_unit_values <- function(model) {
+.simulation_observable_unit_values <- function(model, parameters = model$parameters) {
+    if (inherits(model, "OdeModel")) {
+        return(.ode_model_observable_unit_values(model, parameters))
+    }
     if (length(model$observables) == 0) return(list())
 
     unit_env <- .simulation_unit_env(model)
@@ -396,13 +438,19 @@ print.SimulationResult <- function(x, ...) {
     invisible(env)
 }
 
-.simulation_state_unit_values <- function(model) {
+.simulation_state_unit_values <- function(model, parameters = model$parameters) {
+    if (inherits(model, "OdeModel")) {
+        return(.ode_model_state_unit_values(model, parameters))
+    }
     model <- model |> wire() |> make_depot()
     initials(model) |>
         .evaluate_initials(model$parameters, allow_unresolved = TRUE)
 }
 
-.simulation_dimension_values <- function(model) {
+.simulation_dimension_values <- function(model, parameters = model$parameters) {
+    if (inherits(model, "OdeModel")) {
+        return(.ode_model_dimension_values(model, parameters))
+    }
     model <- model |> wire() |> make_depot()
     inits <- initials(model) |>
         .evaluate_initials(model$parameters, allow_unresolved = TRUE)

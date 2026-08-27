@@ -9,6 +9,7 @@ test_that("to_ode_model returns a backend-neutral OdeModel", {
     ode_model <- to_ode_model(model)
 
     expect_s3_class(ode_model, "OdeModel")
+    expect_null(attr(ode_model, "source_model"))
     expect_named(
         ode_model,
         c("states", "initials", "rhs", "equations", "observables", "parameters", "dosing", "freeParams")
