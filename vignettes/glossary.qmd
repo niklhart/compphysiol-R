@@ -335,6 +335,11 @@ resolved by model or simulation parameters before this boundary can produce the
 numeric initial state vector. The export result is therefore not the preferred
 object for unit-aware downstream analysis.
 
+Solver-facing exports preserve the conventions of the target solver. For
+example, `deSolve` event tables are returned as raw event data, and output rows
+that coincide with event times may follow `deSolve`'s event-time convention
+rather than the toolbox-level simulation convention.
+
 Implementation anchor: ODE export is handled by `to_ode()`.
 
 ## Simulation
@@ -347,6 +352,11 @@ the solver and attaches units back to the returned trajectories.
 Simulation returns ODE state trajectories in a `SimulationResult` object.
 When observables are defined, their trajectories are included as derived
 simulation output; otherwise the observables component is `NULL`.
+
+At requested time points that coincide with dosing events, simulation reports
+the post-event state. For example, a bolus dose at time zero appears in the
+state trajectory at time zero. Observables are calculated from the same
+post-event states.
 
 The `dimensions` argument controls the solver-facing numerical scale in
 unit-aware simulations. Unit-bearing quantities are converted to plain numbers
