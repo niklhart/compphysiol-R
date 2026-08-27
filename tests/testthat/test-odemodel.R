@@ -70,6 +70,22 @@ test_that("OdeModel nonlinear sink terms keep expression parentheses", {
     expect_equal(deparse1(ode_model$rhs[[1]]), "-(vmax * y[1]/(Km + y[1]))")
 })
 
+test_that("OdeModel print method uses DSL state names", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = "V") |>
+        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_equation(C = c[drug, Central]) |>
+        add_observable(Cobs = c[drug, Central]) |>
+        add_parameter(V = 10) |>
+        add_dosing(time = 0, amount = 100, cmt = "Central", molec = "drug")
+
+    ode_model <- to_ode_model(model)
+
+    expect_snapshot(print(ode_model))
+    expect_false(grepl("y\\[", paste(capture.output(print(ode_model)), collapse = "\n")))
+})
+
 test_that("OdeModel observables lower DSL states to indexed state references", {
     model <- compartment_model() |>
         add_compartment("Central", volume = "V") |>

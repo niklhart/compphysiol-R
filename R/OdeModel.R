@@ -128,6 +128,90 @@ to_deSolve <- function(model, parameters = list(), dimensions = NULL) {
     UseMethod("to_deSolve")
 }
 
+#' Print method for `OdeModel` class
+#'
+#' Pretty-prints an `OdeModel` object using DSL state names.
+#' @param x An `OdeModel` object.
+#' @param ... ignored
+#' @returns The `OdeModel` object (invisibly).
+#' @export
+print.OdeModel <- function(x, ...) {
+    .check_class(x, "OdeModel")
+
+    cat("OdeModel:\n")
+
+    if (nrow(x$states) > 0) {
+        cat(" States:\n")
+        cat(sprintf(
+            "  (%s) %s, initial = %s\n",
+            x$states$index,
+            x$states$dsl_name,
+            vapply(x$initials, .ode_model_format_expr, character(1), model = x)
+        ), sep = "")
+    } else {
+        cat(" States: (none)\n")
+    }
+
+    if (length(x$rhs) > 0) {
+        cat(" ODEs:\n")
+        cat(sprintf(
+            "  d/dt %s = %s\n",
+            x$states$dsl_name,
+            vapply(x$rhs, .ode_model_format_expr, character(1), model = x)
+        ), sep = "")
+    } else {
+        cat(" ODEs: (none)\n")
+    }
+
+    if (length(x$equations) > 0) {
+        cat(" Equations:\n")
+        cat(sprintf(
+            "  (%s) %s = %s\n",
+            seq_along(x$equations),
+            names(x$equations),
+            vapply(x$equations, .ode_model_format_expr, character(1), model = x)
+        ), sep = "")
+    } else {
+        cat(" Equations: (none)\n")
+    }
+
+    if (length(x$observables) > 0) {
+        cat(" Observables:\n")
+        cat(sprintf(
+            "  (%s) %s = %s\n",
+            seq_along(x$observables),
+            names(x$observables),
+            vapply(x$observables, .ode_model_format_expr, character(1), model = x)
+        ), sep = "")
+    } else {
+        cat(" Observables: (none)\n")
+    }
+
+    if (nrow(x$dosing) > 0) {
+        cat(" Dosing:\n")
+        cat(sprintf(
+            "  (%s) %s %s to %s at %s\n",
+            seq_len(nrow(x$dosing)),
+            x$dosing$operation,
+            vapply(x$dosing$value, .ode_model_format_expr, character(1), model = x),
+            x$states$dsl_name[x$dosing$state],
+            vapply(x$dosing$time, .ode_model_format_expr, character(1), model = x)
+        ), sep = "")
+    } else {
+        cat(" Dosing: (none)\n")
+    }
+
+    print(x$parameters)
+
+    if (length(x$freeParams) > 0) {
+        cat(" Free parameters: ", paste(x$freeParams, collapse = ", "), "\n", sep = "")
+    } else {
+        cat(" Free parameters: (none)\n")
+    }
+
+    invisible(x)
+}
+
 #' @export
 to_deSolve.OdeModel <- function(model, parameters = list(), dimensions = NULL) {
     .check_class(model, "OdeModel")
@@ -231,6 +315,40 @@ to_deSolve.OdeModel <- function(model, parameters = list(), dimensions = NULL) {
     }
 
     recurse(expr)
+}
+
+.ode_model_format_expr <- function(expr, model) {
+    if (!is.character(expr) && !is.expression(expr) && !is.language(expr)) {
+        return(format(expr))
+    }
+    deparse1(.ode_model_display_expr(expr, model))
+}
+
+.ode_model_display_expr <- function(expr, model) {
+    recurse <- function(e) {
+        if (is.call(e)) {
+            if (identical(e[[1]], as.name("[")) && length(e) == 3 && identical(e[[2]], as.name("y"))) {
+                idx <- e[[3]]
+                if (is.numeric(idx) && length(idx) == 1L) {
+                    return(.ode_model_dsl_state_call(model$states$dsl_name[[idx]]))
+                }
+            }
+            return(as.call(lapply(as.list(e), recurse)))
+        }
+        e
+    }
+
+    recurse(.as_call(expr))
+}
+
+.ode_model_dsl_state_call <- function(state_name) {
+    parsed <- .dsl_parse_state(state_name)
+    call(
+        "[",
+        as.name(parsed$prefix),
+        as.name(parsed$molec),
+        as.name(parsed$cmt)
+    )
 }
 
 .ode_model_state_info <- function(model, dsl_state_names) {
