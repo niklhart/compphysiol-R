@@ -151,6 +151,74 @@ test_that("simulate can pass free parameters to the ODE solver", {
     expect_equal(out$states$a_drug_Central, 100 * exp(-0.2 * out$states$time), tolerance = 1e-6)
 })
 
+test_that("simulate accepts a precompiled OdeModel with different parameter values", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport("Central", "", const = "ke")
+    ode_model <- to_ode_model(model)
+    time <- seq(0, 10, by = 1)
+
+    out_fast <- simulate(
+        ode_model,
+        time = time,
+        parameters = parameters(A0 = 100, ke = 0.4)
+    )
+    out_slow <- simulate(
+        ode_model,
+        time = time,
+        parameters = parameters(A0 = 100, ke = 0.1)
+    )
+
+    expect_s3_class(out_fast, "SimulationResult")
+    expect_equal(out_fast$states$a_drug_Central, 100 * exp(-0.4 * time), tolerance = 1e-6)
+    expect_equal(out_slow$states$a_drug_Central, 100 * exp(-0.1 * time), tolerance = 1e-6)
+    expect_true(out_fast$states$a_drug_Central[[length(time)]] < out_slow$states$a_drug_Central[[length(time)]])
+})
+
+test_that("simulate on an OdeModel applies runtime parameter values to initials and observables", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = "V") |>
+        add_molecule("drug", cmt = "Central", initial = "C0", type = "concentration") |>
+        add_transport("Central", "", const = "ke") |>
+        add_observable(C = c[drug, Central])
+    ode_model <- to_ode_model(model)
+
+    out <- simulate(
+        ode_model,
+        time = seq(0, 2, by = 1),
+        parameters = parameters(C0 = 5, V = 20, ke = 0.2)
+    )
+
+    expect_equal(out$states$a_drug_Central[[1]], 100)
+    expect_equal(out$observables$C, out$states$a_drug_Central / 20, tolerance = 1e-6)
+})
+
+test_that("simulate validates unit-aware runtime parameter overrides for OdeModel objects", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = "V") |>
+        add_molecule("drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_observable(C = c[drug, Central])
+    ode_model <- to_ode_model(model)
+
+    expect_no_error(
+        simulate(
+            ode_model,
+            time = seq(0, 1, by = 1) [h],
+            parameters = parameters(V = 1 [L], ke = 0.2 [1/h])
+        )
+    )
+    expect_error(
+        simulate(
+            ode_model,
+            time = seq(0, 1, by = 1) [h],
+            parameters = parameters(V = 1 [h], ke = 0.2 [1/h])
+        ),
+        "V|volume|unit|dimension"
+    )
+})
+
 test_that("simulate can pass free parameters as a Parameters object", {
     model <- compartment_model() |>
         add_compartment("Central", volume = NA_real_) |>
