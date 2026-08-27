@@ -83,6 +83,7 @@ simulate.CompartmentModel <- function(
     solver_args$atol <- solver_args$atol %||% 1e-10
 
     out <- do.call(deSolve::ode, solver_args)
+    out <- .simulation_apply_output_events(out, odeinfo$events)
 
     states <- as.data.frame(out)
     states <- .simulation_attach_state_units(states, export_model, odeinfo, dimensions)
@@ -96,6 +97,34 @@ simulate.CompartmentModel <- function(
         ),
         class = "SimulationResult"
     )
+}
+
+.simulation_apply_output_events <- function(out, events) {
+    event_data <- events$data
+    if (is.null(event_data) || nrow(event_data) == 0) return(out)
+
+    output_times <- out[, "time"]
+    for (i in seq_len(nrow(event_data))) {
+        row_idx <- which(output_times == event_data$time[[i]])
+        if (length(row_idx) == 0) next
+
+        var <- event_data$var[[i]]
+        if (!(var %in% colnames(out))) next
+
+        value <- event_data$value[[i]]
+        method <- event_data$method[[i]]
+        if (method %in% c("add", "2")) {
+            out[row_idx, var] <- out[row_idx, var] + value
+        } else if (method %in% c("replace", "rep", "1")) {
+            out[row_idx, var] <- value
+        } else if (method %in% c("multiply", "mult", "3")) {
+            out[row_idx, var] <- out[row_idx, var] * value
+        } else {
+            stop("Unknown event method: ", method, call. = FALSE)
+        }
+    }
+
+    out
 }
 
 #' Print a simulation result
