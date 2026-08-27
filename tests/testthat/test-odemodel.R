@@ -59,6 +59,17 @@ test_that("OdeModel sink terms from constants avoid redundant product parenthese
     expect_equal(deparse1(ode_model$rhs[[1]]), "-ke * y[1]")
 })
 
+test_that("OdeModel nonlinear sink terms keep expression parentheses", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = 100, type = "amount") |>
+        add_transport("Central", "", rate = "vmax * a[drug, Central] / (Km + a[drug, Central])")
+
+    ode_model <- to_ode_model(model)
+
+    expect_equal(deparse1(ode_model$rhs[[1]]), "-(vmax * y[1]/(Km + y[1]))")
+})
+
 test_that("OdeModel observables lower DSL states to indexed state references", {
     model <- compartment_model() |>
         add_compartment("Central", volume = "V") |>
