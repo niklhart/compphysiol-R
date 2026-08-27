@@ -1,3 +1,9 @@
+# compphysiol 0.3.6
+
+* introduced an `OdeModel` class as an intermediate between `CompartmentModel` and deSolve-exported models, in particular for more efficient repeated simulations with varied parameters
+* added support for custom base units, e.g. `"cell"`, via a session-persistent unit registry
+* at dosing times, `SimulationResults` now contains post-dose instead of pre-dose values to better match standards in pharmacometrics
+
 # compphysiol 0.3.5
 
 * introduced parametrized initial conditions
