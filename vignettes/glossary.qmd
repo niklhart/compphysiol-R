@@ -315,17 +315,51 @@ merging or a separate copy/renaming helper.
 
 Implementation anchor: overlay merging is handled by `mergeModels()`.
 
+## ODE model
+
+An `OdeModel` is the package-owned intermediate representation of a concrete
+ODE system. It sits between the modular `CompartmentModel` and a
+solver-specific export such as a `deSolve` model.
+
+Lowering a `CompartmentModel` to an `OdeModel` resolves wildcard wiring,
+applies the ODE state representation policy, and expands implementation
+structures such as infusion depots. After this step, the state structure is a
+one-dimensional ODE state vector. Each state still has its DSL state name, such
+as `a[drug, Central]`, but expressions in the internal representation refer to
+states by index. This makes the representation independent of solver-specific
+state naming conventions.
+
+An `OdeModel` stores initial value expressions, right-hand-side expressions,
+equations, observables, parameters, free parameter names, state metadata, and
+flattened dosing events. Expressions may still be symbolic and unit-aware.
+Parameters already defined by the `CompartmentModel` are carried into the
+`OdeModel`; other symbols remain free parameters to be supplied later, for
+example during simulation.
+
+Observables in an `OdeModel` are still defined in terms of the model state, not
+in terms of a solver output table. When an observable requests a concentration
+state but the ODE state is represented as an amount, the lowered observable
+uses the amount state together with the compartment volume conversion.
+
+Unit checking remains a boundary operation rather than a defining part of the
+representation. When the user supplies a `CompartmentModel`, unit errors can be
+reported in terms of compartments, transports, reactions, and other model
+components. When the user supplies an `OdeModel`, unit errors are reported in
+terms of ODE states and their expressions.
+
+Implementation anchor: `OdeModel` objects are created by `to_ode_model()`.
+
 ## ODE export
 
-ODE export turns a `CompartmentModel` into objects that can be used by an ODE
-solver. This step wires the model, prepares initial conditions, substitutes
-equations and parameters where needed, checks units, handles dosing events, and
-builds the generated derivative function.
+ODE export turns an `OdeModel` into objects that can be used by an ODE solver.
+This step prepares numeric initial conditions, substitutes equations and
+parameters where needed, checks that all required numerical values are
+available, handles dosing events, and builds the generated derivative function.
 
-Conceptually, this is the point where the modular model description becomes a
-concrete dynamical system. It is also the point where the amount-preferred
-state representation policy described under State is applied to the generated
-ODE state vector.
+Conceptually, this is the point where the backend-neutral ODE description
+becomes a solver-facing dynamical system. The amount-preferred state
+representation policy described under State has already been applied when
+creating the `OdeModel`.
 
 ODE export is a solver-facing boundary. The exported initial values, event
 tables, and derivative functions are numeric objects in the requested output
@@ -340,14 +374,17 @@ example, `deSolve` event tables are returned as raw event data, and output rows
 that coincide with event times may follow `deSolve`'s event-time convention
 rather than the toolbox-level simulation convention.
 
-Implementation anchor: ODE export is handled by `to_ode()`.
+Implementation anchor: solver-specific ODE export is handled by `to_deSolve()`.
+The older `to_ode()` interface remains the compatibility entry point for
+`deSolve` export.
 
 ## Simulation
 
-Simulation runs a `CompartmentModel` over requested time points and returns a
-toolbox-level result. Unlike ODE export, simulation owns both sides of the
-solver boundary: it converts unit-aware model quantities to numeric values for
-the solver and attaches units back to the returned trajectories.
+Simulation runs a `CompartmentModel` or `OdeModel` over requested time points
+and returns a toolbox-level result. Unlike ODE export, simulation owns both
+sides of the solver boundary: it converts unit-aware model quantities to
+numeric values for the solver and attaches units back to the returned
+trajectories.
 
 Simulation returns ODE state trajectories in a `SimulationResult` object.
 When observables are defined, their trajectories are included as derived
@@ -373,8 +410,13 @@ unit DSL or through the `unit` argument. Mixed time modes are rejected: a model
 with time units cannot be simulated with unit-free time points, and unit-aware
 time points cannot be used with a model that is unit-free in time.
 
-Implementation anchor: simulation is handled by `simulate()` for
-`CompartmentModel` objects.
+Passing an `OdeModel` to `simulate()` can avoid repeated lowering when the same
+model structure is simulated multiple times with different runtime parameter
+values. Passing a `CompartmentModel` keeps diagnostics closer to the original
+model components.
+
+Implementation anchor: simulation is handled by `simulate()` methods for
+`CompartmentModel` and `OdeModel` objects.
 
 ## Lumping
 
