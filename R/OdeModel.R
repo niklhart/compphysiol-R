@@ -319,9 +319,9 @@ to_deSolve.OdeModel <- function(model, parameters = list(), dimensions = NULL) {
 
 .ode_model_format_expr <- function(expr, model) {
     if (!is.character(expr) && !is.expression(expr) && !is.language(expr)) {
-        return(format(expr))
+        return(.ode_model_format_atom(expr))
     }
-    deparse1(.ode_model_display_expr(expr, model))
+    .ode_model_deparse_with_unit_placeholders(.ode_model_display_expr(expr, model))
 }
 
 .ode_model_display_expr <- function(expr, model) {
@@ -339,6 +339,40 @@ to_deSolve.OdeModel <- function(model, parameters = list(), dimensions = NULL) {
     }
 
     recurse(.as_call(expr))
+}
+
+.ode_model_deparse_with_unit_placeholders <- function(expr) {
+    unit_values <- list()
+    prefix <- .ode_model_unit_placeholder_prefix(expr)
+
+    recurse <- function(e) {
+        if (inherits(e, "units")) {
+            placeholder <- paste0(prefix, length(unit_values) + 1L)
+            unit_values[[placeholder]] <<- .ode_model_format_atom(e)
+            return(as.name(placeholder))
+        }
+        if (is.call(e)) return(as.call(lapply(as.list(e), recurse)))
+        e
+    }
+
+    out <- deparse1(recurse(expr))
+    for (placeholder in names(unit_values)) {
+        out <- gsub(placeholder, unit_values[[placeholder]], out, fixed = TRUE)
+    }
+    out
+}
+
+.ode_model_unit_placeholder_prefix <- function(expr) {
+    vars <- all.vars(expr)
+    prefix <- ".compphysiol_unit_display_"
+    while (any(startsWith(vars, prefix))) {
+        prefix <- paste0(prefix, "x")
+    }
+    prefix
+}
+
+.ode_model_format_atom <- function(expr) {
+    paste(format(expr), collapse = ", ")
 }
 
 .ode_model_dsl_state_call <- function(state_name) {

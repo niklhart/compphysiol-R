@@ -86,6 +86,19 @@ test_that("OdeModel print method uses DSL state names", {
     expect_false(grepl("y\\[", paste(capture.output(print(ode_model)), collapse = "\n")))
 })
 
+test_that("OdeModel print method formats unit values inside expressions", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = 1 [L]) |>
+        add_molecule("drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+        add_observable(C = c[drug, Central])
+
+    ode_model <- to_ode_model(model)
+    output <- paste(capture.output(print(ode_model)), collapse = "\n")
+
+    expect_match(output, "C = a\\[drug, Central\\]/1 \\[L\\]")
+    expect_false(grepl("structure\\(", output))
+})
+
 test_that("OdeModel observables lower DSL states to indexed state references", {
     model <- compartment_model() |>
         add_compartment("Central", volume = "V") |>
