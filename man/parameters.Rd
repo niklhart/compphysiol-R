@@ -7,7 +7,9 @@
 parameters(..., name = NULL, value = NULL, unit = NULL)
 }
 \arguments{
-\item{...}{Parameter values as name-value pairs, where values can optionally have units (e.g., \code{A = 2 [m]}).}
+\item{...}{Parameter values as name-value pairs, where values can optionally have units (e.g., \code{A = 2 [m]}).
+Values are evaluated from left to right and may refer to parameters
+defined earlier in the same call.}
 
 \item{name}{Optional parameter names (if not using named arguments).}
 
