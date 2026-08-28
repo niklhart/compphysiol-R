@@ -1,3 +1,8 @@
+# compphysiol 0.3.7
+
+* added recursive parameter definitions
+* improved `print.OdeModel` unit handling
+
 # compphysiol 0.3.6
 
 * introduced an `OdeModel` class as an intermediate between `CompartmentModel` and deSolve-exported models, in particular for more efficient repeated simulations with varied parameters
