@@ -60,6 +60,28 @@ test_that("On-the-fly unit conversion works correctly in NSE mode", {
     expect_equal(p1, p2)
 })
 
+test_that("Parameters can refer to earlier parameters in NSE mode", {
+    p <- parameters(
+        kon = 2 [L/mol/h],
+        KD = 3 [mol/L],
+        koff = kon * KD,
+        same_koff = koff
+    )
+
+    expect_equal(
+        units::set_units(p$koff, "1/h", mode = "standard"),
+        units::set_units(6, "1/h", mode = "standard")
+    )
+    expect_equal(p$same_koff, p$koff)
+})
+
+test_that("Parameters cannot refer to later parameters in NSE mode", {
+    expect_error(
+        parameters(koff = kon * KD, kon = 2 [L/mol/h], KD = 3 [mol/L]),
+        "Parameter 'koff' refers to later parameters: kon, KD"
+    )
+})
+
 test_that("Parameter replacement works correctly", {
     p <- parameters(name = c('A', 'B'), value = c(2, 3), unit = c("", "kg"))
     p["A"] <- parameters(name = 'C', value = 5, unit = "m")

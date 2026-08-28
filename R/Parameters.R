@@ -13,6 +13,8 @@
 #' `value` is a numeric vector of parameter values, and `unit` is an optional character vector of units).
 #'
 #' @param ... Parameter values as name-value pairs, where values can optionally have units (e.g., `A = 2 [m]`).
+#'   Values are evaluated from left to right and may refer to parameters
+#'   defined earlier in the same call.
 #' @param name Optional parameter names (if not using named arguments).
 #' @param value Optional parameter values (if not using named arguments).
 #' @param unit Optional parameter units (if not using named arguments).
@@ -33,7 +35,7 @@ parameters <- function(..., name = NULL, value = NULL, unit = NULL) {
             stop("Cannot use both '...' and 'name'/'value/unit' arguments.")
         }
         .check_parameter_names(names(args))
-        value <- lapply(args, .process_nse_arg, envir = parent.frame())
+        value <- .process_parameter_args(args, envir = parent.frame())
 
     } else if (!is.null(name)) {
         if (length(name) != length(value)) stop("All parameters must be named.")
@@ -52,6 +54,50 @@ parameters <- function(..., name = NULL, value = NULL, unit = NULL) {
         value %||% list(),
         class = c("Parameters", "list")
     )
+}
+
+.process_parameter_args <- function(args, envir) {
+    param_names <- names(args)
+    eval_env <- new.env(parent = envir)
+    value <- vector("list", length(args))
+    names(value) <- param_names
+
+    for (i in seq_along(args)) {
+        future_names <- if (i < length(args)) param_names[(i + 1):length(args)] else character()
+        future_refs <- intersect(.expr_symbols(args[[i]]), future_names)
+        if (length(future_refs) > 0) {
+            stop(
+                sprintf(
+                    "Parameter '%s' refers to later parameter%s: %s.",
+                    param_names[[i]],
+                    if (length(future_refs) == 1) "" else "s",
+                    paste(future_refs, collapse = ", ")
+                ),
+                call. = FALSE
+            )
+        }
+
+        value[[i]] <- .process_nse_arg(args[[i]], envir = eval_env)
+        assign(param_names[[i]], value[[i]], envir = eval_env)
+    }
+
+    value
+}
+
+.expr_symbols <- function(expr) {
+    if (is.symbol(expr)) {
+        return(as.character(expr))
+    }
+    if (!is.call(expr)) {
+        return(character())
+    }
+
+    expr <- as.list(expr)
+    if (identical(expr[[1]], quote(`[`)) && length(expr) == 3) {
+        return(.expr_symbols(expr[[2]]))
+    }
+
+    unique(unlist(lapply(expr[-1], .expr_symbols), use.names = FALSE))
 }
 
 .check_parameter_names <- function(name) {
