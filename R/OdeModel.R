@@ -1,9 +1,171 @@
-#' Create an ODE model representation
+#' Create a process model representation
 #'
-#' `to_ode_model()` lowers a `CompartmentModel` to a backend-neutral ODE
-#' representation with indexed one-dimensional states.
+#' `to_process_model()` lowers a `CompartmentModel` to a backend-neutral process
+#' representation with explicit states, process rates, and process
+#' stoichiometry.
 #'
 #' @param model A `CompartmentModel` object.
+#' @returns A `ProcessModel` object.
+#' @export
+to_process_model <- function(model) {
+    UseMethod("to_process_model")
+}
+
+#' @export
+to_process_model.CompartmentModel <- function(model) {
+    .check_class(model, "CompartmentModel")
+
+    model <- model |> wire() |> make_depot()
+    .ode_model_check_transport_compartments(model)
+
+    y0_dsl <- initials(model)
+    dsl_state_names <- names(y0_dsl)
+    state_info <- .ode_model_state_info(model, dsl_state_names)
+    name2idx <- setNames(state_info$index, state_info$dsl_name)
+    state_volumes <- .ode_model_state_volumes(model)
+    eq_names <- names(model$equations)
+
+    lower <- function(expr) {
+        .ode_model_lower_expr(
+            expr,
+            state_names = dsl_state_names,
+            eq_names = eq_names,
+            name2idx = name2idx,
+            state_volumes = state_volumes
+        )
+    }
+
+    process_names <- character()
+    process_rates <- list()
+    stoich_cols <- list()
+    ode_terms <- vector("list", length(dsl_state_names))
+
+    add_process <- function(rate, stoich) {
+        idx <- length(process_names) + 1L
+        name <- paste0("process_", idx)
+        process_names[[idx]] <<- name
+        process_rates[[idx]] <<- rate
+        stoich_cols[[idx]] <<- stoich
+        invisible(idx)
+    }
+
+    add_ode_term <- function(state_idx, term) {
+        ode_terms[[state_idx]] <<- c(ode_terms[[state_idx]], list(term))
+    }
+
+    for (j in seq_along(model$transports)) {
+        from <- model$transports$from[[j]]
+        to <- model$transports$to[[j]]
+        molec <- model$transports$molec[[j]]
+        from_idx <- if (!is.na(from)) .ode_model_transport_state_idx(molec, from, name2idx) else NULL
+        to_idx <- if (!is.na(to)) .ode_model_transport_state_idx(molec, to, name2idx) else NULL
+        rate <- lower(model$transports$rate[[j]])
+
+        stoich <- numeric(length(dsl_state_names))
+        names(stoich) <- dsl_state_names
+        if (!is.na(from)) stoich[[from_idx]] <- stoich[[from_idx]] - 1
+        if (!is.na(to)) stoich[[to_idx]] <- stoich[[to_idx]] + 1
+        add_process(rate, stoich)
+
+        if (!is.na(from)) {
+            add_ode_term(
+                from_idx,
+                .negate_expr(rate, simplify_product = identical(model$transports$type[[j]], "linear"))
+            )
+        }
+        if (!is.na(to)) add_ode_term(to_idx, rate)
+    }
+
+    volume_by_cmt <- setNames(model$compartments$volume, names(model$compartments))
+    for (j in seq_along(model$reactions)) {
+        scale_cmt <- model$reactions$scale_cmt[[j]]
+        vol <- volume_by_cmt[[scale_cmt]]
+        rate_expr <- model$reactions$rate[[j]]
+        participants <- as.data.frame(model$reactions$participants[[j]])
+
+        stoich <- numeric(length(dsl_state_names))
+        names(stoich) <- dsl_state_names
+        process_rate <- lower(rate_expr)
+
+        for (i in seq_len(nrow(participants))) {
+            target <- .ode_model_reaction_state(
+                participants$molec[[i]],
+                participants$cmt[[i]],
+                name2idx
+            )
+            multiplier <- if (identical(participants$role[[i]], "input")) -1 else 1
+            stoich[[target$idx]] <- stoich[[target$idx]] + multiplier * participants$stoich[[i]]
+
+            term <- rate_expr
+            stoich_i <- participants$stoich[[i]]
+            if (!identical(stoich_i, 1) && !identical(stoich_i, 1L)) {
+                term <- .mul(term, stoich_i)
+            }
+            if (identical(target$type, "amount")) {
+                if (.is_missing_volume(vol)) {
+                    stop(
+                        "Cannot export reaction in compartment '",
+                        scale_cmt,
+                        "' to amount-state ODEs: reaction rates are ",
+                        "concentration-change rates and require a compartment ",
+                        "volume to convert them to amount/time.",
+                        call. = FALSE
+                    )
+                }
+                term <- .mul(term, .as_call(vol))
+            }
+            term <- lower(term)
+            if (identical(participants$role[[i]], "input")) {
+                term <- .negate_expr(term, simplify_product = identical(model$reactions$type[[j]], "elementary"))
+            }
+            add_ode_term(target$idx, term)
+        }
+
+        add_process(process_rate, stoich)
+    }
+
+    lowered_equations <- lapply(model$equations, lower) |> structure(class = "Equations")
+    lowered_observables <- lapply(model$observables, lower) |> structure(class = "Observables")
+    dosing <- .ode_model_dosing(model, name2idx)
+    stoichiometry <- .process_model_stoichiometry(stoich_cols, dsl_state_names, process_names)
+    processes <- structure(
+        data.frame(
+            name = process_names,
+            rate = I(process_rates),
+            stringsAsFactors = FALSE
+        ),
+        class = "data.frame"
+    )
+
+    structure(
+        list(
+            states = state_info,
+            initials = unname(lapply(y0_dsl, lower)),
+            processes = processes,
+            stoichiometry = stoichiometry,
+            equations = lowered_equations,
+            observables = lowered_observables,
+            parameters = model$parameters,
+            dosing = dosing,
+            freeParams = .ode_model_free_params(
+                c(unname(lapply(y0_dsl, lower)), process_rates, unlist(ode_terms, recursive = FALSE),
+                  unclass(lowered_equations), unclass(lowered_observables),
+                  unname(as.list(dosing$time)), unname(as.list(dosing$value))),
+                eq_names = names(lowered_equations),
+                param_names = names(model$parameters)
+            ),
+            ode_terms = ode_terms
+        ),
+        class = "ProcessModel"
+    )
+}
+
+#' Create an ODE model representation
+#'
+#' `to_ode_model()` lowers a `CompartmentModel` or `ProcessModel` to a
+#' backend-neutral ODE representation with indexed one-dimensional states.
+#'
+#' @param model A `CompartmentModel` or `ProcessModel` object.
 #' @returns An `OdeModel` object.
 #' @export
 to_ode_model <- function(model) {
@@ -115,6 +277,31 @@ to_ode_model.CompartmentModel <- function(model) {
     )
 
     ode_model
+}
+
+#' @export
+to_ode_model.ProcessModel <- function(model) {
+    .check_class(model, "ProcessModel")
+
+    rhs <- lapply(model$ode_terms, .sum_exprs)
+    structure(
+        list(
+            states = model$states,
+            initials = model$initials,
+            rhs = rhs,
+            equations = model$equations,
+            observables = model$observables,
+            parameters = model$parameters,
+            dosing = model$dosing,
+            freeParams = .ode_model_free_params(
+                c(model$initials, rhs, unclass(model$equations), unclass(model$observables),
+                  unname(as.list(model$dosing$time)), unname(as.list(model$dosing$value))),
+                eq_names = names(model$equations),
+                param_names = names(model$parameters)
+            )
+        ),
+        class = "OdeModel"
+    )
 }
 
 #' Export an ODE model to deSolve format
@@ -298,6 +485,22 @@ to_deSolve.OdeModel <- function(model, parameters = list(), dimensions = NULL) {
         )
     }
     invisible(model)
+}
+
+.process_model_stoichiometry <- function(stoich_cols, state_names, process_names) {
+    if (length(stoich_cols) == 0) {
+        return(matrix(
+            numeric(0),
+            nrow = length(state_names),
+            ncol = 0,
+            dimnames = list(state_names, character())
+        ))
+    }
+
+    stoichiometry <- do.call(cbind, stoich_cols)
+    rownames(stoichiometry) <- state_names
+    colnames(stoichiometry) <- process_names
+    stoichiometry
 }
 
 .ode_model_observable_backend_expr <- function(expr, output_state_names) {

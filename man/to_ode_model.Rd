@@ -7,12 +7,12 @@
 to_ode_model(model)
 }
 \arguments{
-\item{model}{A \code{CompartmentModel} object.}
+\item{model}{A \code{CompartmentModel} or \code{ProcessModel} object.}
 }
 \value{
 An \code{OdeModel} object.
 }
 \description{
-\code{to_ode_model()} lowers a \code{CompartmentModel} to a backend-neutral ODE
-representation with indexed one-dimensional states.
+\code{to_ode_model()} lowers a \code{CompartmentModel} or \code{ProcessModel} to a
+backend-neutral ODE representation with indexed one-dimensional states.
 }
