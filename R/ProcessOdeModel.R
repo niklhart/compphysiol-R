@@ -356,26 +356,17 @@ print.ProcessModel <- function(x, ...) {
     }
 
     if (nrow(x$processes) > 0) {
-        cat(" Processes:\n")
-        for (i in seq_len(nrow(x$processes))) {
-            cat(sprintf(
-                "  (%s) rate = %s, const = %s, inputs = %s\n",
-                i,
-                .ode_model_format_expr(x$processes$rate[[i]], x),
-                .process_model_format_const(x$processes$const[[i]], x),
-                .process_model_format_inputs(
-                    x$processes$input_states[[i]],
-                    x$processes$input_stoich[[i]],
-                    x
-                )
-            ))
-            cat(sprintf(
-                "      stoichiometry: %s\n",
-                .process_model_format_stoichiometry(x$stoichiometry[, i], x)
-            ))
-        }
+        cat(" Process rates:\n")
+        cat(sprintf(
+            "  (%s) %s\n",
+            seq_len(nrow(x$processes)),
+            vapply(x$processes$rate, .ode_model_format_expr, character(1), model = x)
+        ), sep = "")
+        cat(" Stoichiometry:\n")
+        print(.process_model_display_stoichiometry(x$stoichiometry), quote = FALSE)
     } else {
-        cat(" Processes: (none)\n")
+        cat(" Process rates: (none)\n")
+        cat(" Stoichiometry: (none)\n")
     }
 
     if (length(x$equations) > 0) {
@@ -641,35 +632,9 @@ to_deSolve.OdeModel <- function(model, parameters = list(), dimensions = NULL) {
     !(is.atomic(x) && length(x) == 1L && is.na(x))
 }
 
-.process_model_format_const <- function(expr, model) {
-    if (!.process_model_has_const(expr)) return("NA")
-    .ode_model_format_expr(expr, model)
-}
-
-.process_model_format_inputs <- function(states, stoich, model) {
-    if (length(states) == 0) return("(none)")
-    paste(
-        mapply(
-            function(state, coeff) {
-                state_name <- model$states$dsl_name[[state]]
-                if (identical(coeff, 1) || identical(coeff, 1L)) return(state_name)
-                paste(coeff, state_name)
-            },
-            states,
-            stoich,
-            USE.NAMES = FALSE
-        ),
-        collapse = ", "
-    )
-}
-
-.process_model_format_stoichiometry <- function(stoich, model) {
-    nonzero <- which(stoich != 0)
-    if (length(nonzero) == 0) return("(none)")
-    paste(
-        sprintf("%s = %s", model$states$dsl_name[nonzero], stoich[nonzero]),
-        collapse = ", "
-    )
+.process_model_display_stoichiometry <- function(stoichiometry) {
+    colnames(stoichiometry) <- paste0("(", seq_len(ncol(stoichiometry)), ")")
+    stoichiometry
 }
 
 .process_model_amount_reaction_rate <- function(

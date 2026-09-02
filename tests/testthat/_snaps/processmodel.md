@@ -7,9 +7,12 @@
        States:
         (1) a[drug, Central], initial = A0
         (2) a[metabolite, Central], initial = 0
-       Processes:
-        (1) rate = kmet * a[drug, Central], const = kmet, inputs = a[drug, Central]
-            stoichiometry: a[drug, Central] = -1, a[metabolite, Central] = 1
+       Process rates:
+        (1) kmet * a[drug, Central]
+       Stoichiometry:
+                             (1)
+      a[drug, Central]        -1
+      a[metabolite, Central]   1
        Equations: (none)
        Observables:
         (1) C = a[drug, Central]/V
