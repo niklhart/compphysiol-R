@@ -54,7 +54,6 @@ simulate.CompartmentModel <- function(
     dimensions = NULL,
     ...
 ) {
-    .check_class(object, "CompartmentModel")
     time <- .process_nse_arg(substitute(time), envir = parent.frame())
     time <- .simulation_apply_time_unit(time, unit)
     .simulation_validate_time(time)
@@ -89,8 +88,6 @@ simulate.OdeModel <- function(
     dimensions = NULL,
     ...
 ) {
-    .check_class(object, "OdeModel")
-
     time <- .process_nse_arg(substitute(time), envir = parent.frame())
     time <- .simulation_apply_time_unit(time, unit)
     .simulation_validate_time(time)
@@ -195,8 +192,6 @@ simulate.OdeModel <- function(
 #' @returns The `SimulationResult` object, invisibly.
 #' @export
 print.SimulationResult <- function(x, ...) {
-    .check_class(x, "SimulationResult")
-
     n_time <- nrow(x$states)
     n_states <- max(ncol(x$states) - 1, 0)
     n_observables <- if (is.null(x$observables)) 0 else max(ncol(x$observables) - 1, 0)

@@ -13,8 +13,6 @@ to_process_model <- function(model) {
 
 #' @export
 to_process_model.CompartmentModel <- function(model) {
-    .check_class(model, "CompartmentModel")
-
     model <- model |> wire() |> make_depot()
     .ode_model_check_transport_compartments(model)
 
@@ -190,14 +188,11 @@ to_ode_model <- function(model) {
 
 #' @export
 to_ode_model.CompartmentModel <- function(model) {
-    .check_class(model, "CompartmentModel")
     model |> to_process_model() |> to_ode_model()
 }
 
 #' @export
 to_ode_model.ProcessModel <- function(model) {
-    .check_class(model, "ProcessModel")
-
     rhs <- lapply(seq_len(nrow(model$stoichiometry)), function(i) {
         terms <- lapply(seq_len(ncol(model$stoichiometry)), function(j) {
             coeff <- model$stoichiometry[[i, j]]
@@ -238,8 +233,6 @@ to_ode_model.ProcessModel <- function(model) {
 #' @returns The `ProcessModel` object (invisibly).
 #' @export
 print.ProcessModel <- function(x, ...) {
-    .check_class(x, "ProcessModel")
-
     cat("ProcessModel:\n")
 
     if (nrow(x$states) > 0) {
@@ -336,8 +329,6 @@ to_deSolve <- function(model, parameters = list(), dimensions = NULL) {
 #' @returns The `OdeModel` object (invisibly).
 #' @export
 print.OdeModel <- function(x, ...) {
-    .check_class(x, "OdeModel")
-
     cat("OdeModel:\n")
 
     if (nrow(x$states) > 0) {
@@ -414,8 +405,6 @@ print.OdeModel <- function(x, ...) {
 
 #' @export
 to_deSolve.OdeModel <- function(model, parameters = list(), dimensions = NULL) {
-    .check_class(model, "OdeModel")
-
     parameters <- .simulation_parameters_object(parameters)
     params <- .merge_ode_parameters(model$parameters, parameters)
     param_values <- .to_dimensions_vec(params, dimensions)
