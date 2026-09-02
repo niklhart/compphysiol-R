@@ -20,12 +20,10 @@ test_that("to_ode_model returns a backend-neutral OdeModel", {
     expect_s3_class(ode_model$parameters, "Parameters")
 
     expect_s3_class(ode_model$states, "data.frame")
-    expect_named(ode_model$states, c("index", "dsl_name", "output_name", "molec", "cmt", "type"), ignore.order = TRUE)
+    expect_named(ode_model$states, c("index", "dsl_name", "output_name", "type"), ignore.order = TRUE)
     expect_equal(ode_model$states$index, 1L)
     expect_equal(ode_model$states$dsl_name, "a[drug, Central]")
     expect_equal(ode_model$states$output_name, "a_drug_Central")
-    expect_equal(ode_model$states$molec, "drug")
-    expect_equal(ode_model$states$cmt, "Central")
     expect_equal(ode_model$states$type, "amount")
 
     expect_equal(deparse1(ode_model$initials[[1]]), "A0")

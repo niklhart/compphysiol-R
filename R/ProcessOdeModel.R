@@ -35,20 +35,16 @@ to_process_model.CompartmentModel <- function(model) {
         )
     }
 
-    process_rates <- list()
-    process_consts <- list()
-    process_input_states <- list()
-    process_input_stoich <- list()
-    stoich_cols <- list()
+    process_list <- list()
 
     add_process <- function(rate, const, input_states, input_stoich, stoich) {
-        idx <- length(process_rates) + 1L
-        process_rates[[idx]] <<- rate
-        process_consts[[idx]] <<- const
-        process_input_states[[idx]] <<- input_states
-        process_input_stoich[[idx]] <<- input_stoich
-        stoich_cols[[idx]] <<- stoich
-        invisible(idx)
+        list(
+            rate = rate,
+            const = const,
+            input_states = input_states,
+            input_stoich = input_stoich,
+            stoich = stoich
+        )
     }
 
     for (j in seq_along(model$transports)) {
@@ -66,7 +62,9 @@ to_process_model.CompartmentModel <- function(model) {
         names(stoich) <- dsl_state_names
         if (!is.na(from)) stoich[[from_idx]] <- stoich[[from_idx]] - 1
         if (!is.na(to)) stoich[[to_idx]] <- stoich[[to_idx]] + 1
-        add_process(rate, const, input_states, input_stoich, stoich)
+        process_list <- c(process_list, list(
+            add_process(rate, const, input_states, input_stoich, stoich)
+        ))
     }
 
     volume_by_cmt <- setNames(model$compartments$volume, names(model$compartments))
@@ -131,12 +129,19 @@ to_process_model.CompartmentModel <- function(model) {
         }
         const <- if (is.null(model$reactions$const[[j]])) NA else lower(model$reactions$const[[j]])
 
-        add_process(process_rate, const, input_states, input_stoich, stoich)
+        process_list <- c(process_list, list(
+            add_process(process_rate, const, input_states, input_stoich, stoich)
+        ))
     }
 
     lowered_equations <- lapply(model$equations, lower) |> structure(class = "Equations")
     lowered_observables <- lapply(model$observables, lower) |> structure(class = "Observables")
     dosing <- .ode_model_dosing(model, name2idx)
+    process_rates <- lapply(process_list, `[[`, "rate")
+    process_consts <- lapply(process_list, `[[`, "const")
+    process_input_states <- lapply(process_list, `[[`, "input_states")
+    process_input_stoich <- lapply(process_list, `[[`, "input_stoich")
+    stoich_cols <- lapply(process_list, `[[`, "stoich")
     stoichiometry <- .process_model_stoichiometry(stoich_cols, dsl_state_names)
     processes <- structure(
         data.frame(
@@ -690,8 +695,6 @@ to_deSolve.OdeModel <- function(model, parameters = list(), dimensions = NULL) {
             omit_molec = isTRUE(auto_placeholder$molec),
             omit_cmt = isTRUE(auto_placeholder$cmt)
         ),
-        molec = vapply(parsed, `[[`, character(1), "molec"),
-        cmt = vapply(parsed, `[[`, character(1), "cmt"),
         type = ifelse(vapply(parsed, `[[`, character(1), "prefix") == "a", "amount", "concentration"),
         stringsAsFactors = FALSE
     )
