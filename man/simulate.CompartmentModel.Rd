@@ -21,7 +21,7 @@
 
 \item{nsim}{Ignored; included for compatibility with \code{\link[stats:simulate]{stats::simulate()}}.}
 
-\item{seed}{Ignored; included for compatibility with \code{\link[stats:simulate]{stats::simulate()}}.}
+\item{seed}{Optional random seed for stochastic simulation routes.}
 
 \item{time}{Simulation time points. Units can be supplied with the unit DSL,
 e.g. \code{seq(0, 24) [h]}.}
@@ -36,9 +36,9 @@ used at the ODE solver boundary. These dimensions are passed to \code{\link[=to_
 and affect the scale of solver tolerances such as \code{atol}.}
 
 \item{simulation_type}{Simulation route. \code{"deterministic"} uses the
-established ODE path. \code{"ssa"} and \code{"hybrid"} reserve the stochastic
-Gillespie and hybrid stochastic-deterministic routes, respectively, but are
-not implemented yet.}
+established ODE path. \code{"ssa"} uses Gillespie's stochastic simulation
+algorithm. \code{"hybrid"} reserves the hybrid stochastic-deterministic route,
+but is not implemented yet.}
 
 \item{...}{Additional arguments passed to \code{\link[deSolve:ode]{deSolve::ode()}}.}
 }

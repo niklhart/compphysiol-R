@@ -225,6 +225,59 @@ to_ode_model.ProcessModel <- function(model) {
     )
 }
 
+#' Create a stochastic model representation
+#'
+#' `to_stochastic_model()` lowers a `CompartmentModel` or `ProcessModel` to a
+#' count-based representation suitable for Gillespie SSA simulation.
+#'
+#' The first implementation supports models whose processes can be rendered as
+#' elementary propensities from their `const` and input-state metadata. Explicit
+#' `rate = ...` processes and dosing are rejected.
+#'
+#' @param model A `CompartmentModel` or `ProcessModel` object.
+#' @returns A `StochasticModel` object.
+#' @export
+to_stochastic_model <- function(model) {
+    UseMethod("to_stochastic_model")
+}
+
+#' @export
+to_stochastic_model.CompartmentModel <- function(model) {
+    model |> to_process_model() |> to_stochastic_model()
+}
+
+#' @export
+to_stochastic_model.ProcessModel <- function(model) {
+    .stochastic_model_check_compatibility(model)
+
+    propensities <- lapply(seq_len(nrow(model$processes)), function(i) {
+        .stochastic_model_propensity(
+            const = model$processes$const[[i]],
+            input_states = model$processes$input_states[[i]],
+            input_stoich = model$processes$input_stoich[[i]]
+        )
+    })
+
+    structure(
+        list(
+            states = model$states,
+            initials = model$initials,
+            stoichiometry = model$stoichiometry,
+            propensities = propensities,
+            processes = model$processes,
+            equations = model$equations,
+            observables = model$observables,
+            parameters = model$parameters,
+            freeParams = .ode_model_free_params(
+                c(model$initials, propensities, unclass(model$equations), unclass(model$observables)),
+                eq_names = names(model$equations),
+                param_names = names(model$parameters)
+            )
+        ),
+        class = "StochasticModel"
+    )
+}
+
 #' Print method for `ProcessModel` class
 #'
 #' Pretty-prints a `ProcessModel` object using DSL state names.
@@ -297,6 +350,77 @@ print.ProcessModel <- function(x, ...) {
         ), sep = "")
     } else {
         cat(" Dosing: (none)\n")
+    }
+
+    print(x$parameters)
+
+    if (length(x$freeParams) > 0) {
+        cat(" Free parameters: ", paste(x$freeParams, collapse = ", "), "\n", sep = "")
+    } else {
+        cat(" Free parameters: (none)\n")
+    }
+
+    invisible(x)
+}
+
+#' Print method for `StochasticModel` class
+#'
+#' Pretty-prints a `StochasticModel` object using DSL state names.
+#' @param x A `StochasticModel` object.
+#' @param ... ignored
+#' @returns The `StochasticModel` object (invisibly).
+#' @export
+print.StochasticModel <- function(x, ...) {
+    cat("StochasticModel:\n")
+
+    if (nrow(x$states) > 0) {
+        cat(" States:\n")
+        cat(sprintf(
+            "  (%s) %s, initial = %s\n",
+            x$states$index,
+            x$states$dsl_name,
+            vapply(x$initials, .ode_model_format_expr, character(1), model = x)
+        ), sep = "")
+    } else {
+        cat(" States: (none)\n")
+    }
+
+    if (length(x$propensities) > 0) {
+        cat(" Propensities:\n")
+        cat(sprintf(
+            "  (%s) %s\n",
+            seq_along(x$propensities),
+            vapply(x$propensities, .ode_model_format_expr, character(1), model = x)
+        ), sep = "")
+        cat(" Stoichiometry:\n")
+        print(.process_model_display_stoichiometry(x$stoichiometry), quote = FALSE)
+    } else {
+        cat(" Propensities: (none)\n")
+        cat(" Stoichiometry: (none)\n")
+    }
+
+    if (length(x$equations) > 0) {
+        cat(" Equations:\n")
+        cat(sprintf(
+            "  (%s) %s = %s\n",
+            seq_along(x$equations),
+            names(x$equations),
+            vapply(x$equations, .ode_model_format_expr, character(1), model = x)
+        ), sep = "")
+    } else {
+        cat(" Equations: (none)\n")
+    }
+
+    if (length(x$observables) > 0) {
+        cat(" Observables:\n")
+        cat(sprintf(
+            "  (%s) %s = %s\n",
+            seq_along(x$observables),
+            names(x$observables),
+            vapply(x$observables, .ode_model_format_expr, character(1), model = x)
+        ), sep = "")
+    } else {
+        cat(" Observables: (none)\n")
     }
 
     print(x$parameters)
@@ -523,6 +647,128 @@ to_deSolve.OdeModel <- function(model, parameters = list(), dimensions = NULL) {
 .process_model_display_stoichiometry <- function(stoichiometry) {
     colnames(stoichiometry) <- paste0("(", seq_len(ncol(stoichiometry)), ")")
     stoichiometry
+}
+
+.stochastic_model_check_compatibility <- function(model) {
+    if (nrow(model$dosing) > 0) {
+        stop("SSA simulation with dosing is not implemented yet.", call. = FALSE)
+    }
+
+    if (any(model$states$type != "amount")) {
+        stop(
+            "StochasticModel requires amount/count states; concentration states are not supported.",
+            call. = FALSE
+        )
+    }
+
+    if (length(model$initials) > 0) {
+        initials <- .evaluate_initials(
+            setNames(model$initials, model$states$dsl_name),
+            model$parameters,
+            allow_unresolved = TRUE
+        )
+        .stochastic_model_check_initials(initials, allow_unresolved = TRUE)
+    }
+
+    if (length(model$stoichiometry) > 0 &&
+        any(model$stoichiometry != round(model$stoichiometry))) {
+        stop("StochasticModel requires integer-valued stoichiometry.", call. = FALSE)
+    }
+
+    explicit_rate <- vapply(model$processes$const, .stochastic_model_is_explicit_rate, logical(1))
+    if (any(explicit_rate)) {
+        stop(
+            "Explicit rate processes are not implemented for StochasticModel V1.",
+            call. = FALSE
+        )
+    }
+
+    invisible(model)
+}
+
+.stochastic_model_check_initials <- function(initials, allow_unresolved = FALSE) {
+    for (i in seq_along(initials)) {
+        value <- initials[[i]]
+        if (.initial_is_expr(value)) {
+            if (allow_unresolved) next
+            stop(
+                "Initial value for stochastic state '",
+                names(initials)[[i]],
+                "' must be a numeric count.",
+                call. = FALSE
+            )
+        }
+        if (inherits(value, "units")) {
+            stop(
+                "Initial value for stochastic state '",
+                names(initials)[[i]],
+                "' must be a dimensionless count, not a unit-bearing value.",
+                call. = FALSE
+            )
+        }
+        if (!is.numeric(value) || length(value) != 1L || is.na(value) || !is.finite(value)) {
+            stop(
+                "Initial value for stochastic state '",
+                names(initials)[[i]],
+                "' must be a finite numeric count.",
+                call. = FALSE
+            )
+        }
+        if (value < 0) {
+            stop(
+                "Initial value for stochastic state '",
+                names(initials)[[i]],
+                "' must be a non-negative count.",
+                call. = FALSE
+            )
+        }
+        if (value != round(value)) {
+            stop(
+                "Initial value for stochastic state '",
+                names(initials)[[i]],
+                "' must be an integer count.",
+                call. = FALSE
+            )
+        }
+    }
+
+    invisible(initials)
+}
+
+.stochastic_model_is_explicit_rate <- function(const) {
+    is.atomic(const) && length(const) == 1L && is.na(const)
+}
+
+.stochastic_model_propensity <- function(const, input_states, input_stoich) {
+    term <- .as_call(const)
+
+    if (length(input_states) == 0) return(term)
+
+    for (i in seq_along(input_states)) {
+        factor <- .stochastic_model_input_factor(
+            idx = input_states[[i]],
+            stoich = input_stoich[[i]]
+        )
+        term <- .stochastic_model_mul(term, factor)
+    }
+
+    term
+}
+
+.stochastic_model_input_factor <- function(idx, stoich) {
+    stoich <- as.integer(stoich)
+    idx <- as.numeric(idx)
+    if (identical(stoich, 1L)) return(bquote(y[.(idx)]))
+
+    bquote(.ssa_falling(y[.(idx)], .(stoich)) / .(factorial(stoich)))
+}
+
+.stochastic_model_mul <- function(x, y) {
+    if (is.numeric(x) && length(x) == 1L && identical(x, 0)) return(0)
+    if (is.numeric(y) && length(y) == 1L && identical(y, 0)) return(0)
+    if (is.numeric(x) && length(x) == 1L && identical(x, 1)) return(y)
+    if (is.numeric(y) && length(y) == 1L && identical(y, 1)) return(x)
+    call("*", x, y)
 }
 
 .process_model_amount_reaction_rate <- function(

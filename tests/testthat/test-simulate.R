@@ -35,12 +35,12 @@ test_that("simulate accepts an explicit deterministic simulation type", {
     expect_equal(deterministic, default)
 })
 
-test_that("simulate reserves stochastic and hybrid simulation types", {
+test_that("simulate supports SSA and reserves hybrid simulation type", {
     model <- test_model_for_simulation()
 
-    expect_error(
-        simulate(model, time = seq(0, 1, by = 1), simulation_type = "ssa"),
-        "SSA simulation is not implemented yet"
+    expect_s3_class(
+        simulate(model, time = seq(0, 1, by = 1), simulation_type = "ssa", seed = 1),
+        "SimulationResult"
     )
     expect_error(
         simulate(model, time = seq(0, 1, by = 1), simulation_type = "hybrid"),

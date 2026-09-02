@@ -84,6 +84,26 @@ test_that("to_stochastic_model allows inverse-time units in process parameters",
     expect_no_error(to_stochastic_model(model))
 })
 
+test_that("stochastic propensity functions compile equations before propensities", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = 10, type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_equation(ke = base_ke * scale) |>
+        add_parameter(base_ke = 0.2, scale = 2)
+
+    stochastic_model <- to_stochastic_model(model)
+    propfun <- .stochastic_model_propensity_function(
+        stochastic_model,
+        parameters = stochastic_model$parameters,
+        dimensions = list()
+    )
+    body_text <- paste(deparse(body(propfun)), collapse = "\n")
+
+    expect_lt(regexpr("ke <-", body_text)[[1]], regexpr("prop <-", body_text)[[1]])
+    expect_equal(propfun(10, list()), 4)
+})
+
 test_that("to_stochastic_model rejects dosing in V1", {
     model <- compartment_model() |>
         add_compartment("Central", volume = NA_real_) |>

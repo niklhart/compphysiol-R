@@ -18,7 +18,7 @@
 #'
 #' @param object A `CompartmentModel` object.
 #' @param nsim Ignored; included for compatibility with [stats::simulate()].
-#' @param seed Ignored; included for compatibility with [stats::simulate()].
+#' @param seed Optional random seed for stochastic simulation routes.
 #' @param time Simulation time points. Units can be supplied with the unit DSL,
 #'   e.g. `seq(0, 24) [h]`.
 #' @param unit Optional time unit used when `time` is numeric without units.
@@ -28,9 +28,9 @@
 #'   used at the ODE solver boundary. These dimensions are passed to [to_ode()]
 #'   and affect the scale of solver tolerances such as `atol`.
 #' @param simulation_type Simulation route. `"deterministic"` uses the
-#'   established ODE path. `"ssa"` and `"hybrid"` reserve the stochastic
-#'   Gillespie and hybrid stochastic-deterministic routes, respectively, but are
-#'   not implemented yet.
+#'   established ODE path. `"ssa"` uses Gillespie's stochastic simulation
+#'   algorithm. `"hybrid"` reserves the hybrid stochastic-deterministic route,
+#'   but is not implemented yet.
 #' @param ... Additional arguments passed to [deSolve::ode()].
 #' @returns A `SimulationResult` object.
 #' @examples
@@ -60,7 +60,7 @@ simulate.CompartmentModel <- function(
     ...
 ) {
     simulation_type <- match.arg(simulation_type)
-    if (!identical(simulation_type, "deterministic")) {
+    if (identical(simulation_type, "hybrid")) {
         .simulation_stop_unimplemented_type(simulation_type)
     }
 
@@ -69,6 +69,20 @@ simulate.CompartmentModel <- function(
     .simulation_validate_time(time)
 
     sim_parameters <- .simulation_parameters_object(parameters)
+    if (identical(simulation_type, "ssa")) {
+        stochastic_model <- .simulation_model_with_parameters(object, sim_parameters) |>
+            to_stochastic_model()
+        return(simulate(
+            stochastic_model,
+            nsim = nsim,
+            seed = seed,
+            time = time,
+            parameters = list(),
+            dimensions = dimensions,
+            ...
+        ))
+    }
+
     export_model <- .simulation_model_with_parameters(object, sim_parameters)
     export_model <- export_model |> wire() |> make_depot() |> .check_unit_consistency()
     .simulation_check_time_mode(export_model, time)
@@ -117,6 +131,63 @@ simulate.OdeModel <- function(
         dimensions = dimensions,
         parameters = merged_parameters,
         ...
+    )
+}
+
+#' @export
+simulate.StochasticModel <- function(
+    object,
+    nsim = NULL,
+    seed = NULL,
+    time = numeric(0),
+    unit = NULL,
+    parameters = list(),
+    dimensions = NULL,
+    ...
+) {
+    time <- .process_nse_arg(substitute(time), envir = parent.frame())
+    time <- .simulation_apply_time_unit(time, unit)
+    .simulation_validate_time(time)
+    .stochastic_simulation_validate_nsim(nsim)
+
+    sim_parameters <- .simulation_parameters_object(parameters)
+    merged_parameters <- .merge_ode_parameters(object$parameters, sim_parameters)
+    .simulation_check_time_mode(object, time, parameters = merged_parameters)
+
+    dimensions <- .simulation_dimensions(object, time, dimensions, parameters = merged_parameters)
+    y0 <- .stochastic_model_initial_counts(object, merged_parameters)
+    solver_time <- .simulation_numeric_time(time, dimensions)
+    propfun <- .stochastic_model_propensity_function(object, merged_parameters, dimensions)
+    solver_parameters <- .simulation_solver_parameters(merged_parameters, dimensions)
+
+    if (!is.null(seed)) set.seed(seed)
+
+    trajectory <- .ssa_simulate(
+        stoichiometry = object$stoichiometry,
+        propensity_function = propfun,
+        time = solver_time,
+        y0 = y0,
+        parameters = solver_parameters
+    )
+
+    states <- as.data.frame(trajectory)
+    names(states) <- c("time", object$states$output_name)
+    states$time <- .simulation_attach_time_units(states$time, time, dimensions)
+
+    observables <- .stochastic_simulation_observables(
+        states = states,
+        solver_time = solver_time,
+        model = object,
+        dimensions = dimensions,
+        parameters = merged_parameters
+    )
+
+    structure(
+        list(
+            states = states,
+            observables = observables
+        ),
+        class = "SimulationResult"
     )
 }
 
@@ -321,6 +392,9 @@ print.SimulationResult <- function(x, ...) {
         has_rhs <- any(vapply(model$rhs, function(expr) !identical(expr, 0), logical(1)))
         return(has_rhs || length(model$dosing$state) > 0)
     }
+    if (inherits(model, "StochasticModel")) {
+        return(length(model$propensities) > 0)
+    }
     model <- model |> wire() |> make_depot()
     length(model$transports) > 0 ||
         length(model$reactions) > 0 ||
@@ -389,7 +463,7 @@ print.SimulationResult <- function(x, ...) {
 }
 
 .simulation_observable_unit_values <- function(model, parameters = model$parameters) {
-    if (inherits(model, "OdeModel")) {
+    if (inherits(model, "OdeModel") || inherits(model, "StochasticModel")) {
         return(.ode_model_observable_unit_values(model, parameters))
     }
     if (length(model$observables) == 0) return(list())
@@ -480,7 +554,7 @@ print.SimulationResult <- function(x, ...) {
 }
 
 .simulation_state_unit_values <- function(model, parameters = model$parameters) {
-    if (inherits(model, "OdeModel")) {
+    if (inherits(model, "OdeModel") || inherits(model, "StochasticModel")) {
         return(.ode_model_state_unit_values(model, parameters))
     }
     model <- model |> wire() |> make_depot()
@@ -491,6 +565,9 @@ print.SimulationResult <- function(x, ...) {
 .simulation_dimension_values <- function(model, parameters = model$parameters) {
     if (inherits(model, "OdeModel")) {
         return(.ode_model_dimension_values(model, parameters))
+    }
+    if (inherits(model, "StochasticModel")) {
+        return(.stochastic_model_dimension_values(model, parameters))
     }
     model <- model |> wire() |> make_depot()
     inits <- initials(model) |>
@@ -549,6 +626,163 @@ print.SimulationResult <- function(x, ...) {
             x
         }
     })
+}
+
+.stochastic_simulation_validate_nsim <- function(nsim) {
+    if (is.null(nsim)) return(invisible(NULL))
+    if (is.numeric(nsim) && length(nsim) == 1L && !is.na(nsim) && nsim == 1) {
+        return(invisible(NULL))
+    }
+
+    stop("SSA simulation supports only one realization for nsim in V1.", call. = FALSE)
+}
+
+.stochastic_model_initial_counts <- function(model, parameters) {
+    initials <- .evaluate_initials(
+        setNames(model$initials, model$states$dsl_name),
+        parameters,
+        allow_unresolved = FALSE
+    )
+    .stochastic_model_check_initials(initials, allow_unresolved = FALSE)
+    counts <- unname(unlist(initials))
+    storage.mode(counts) <- "integer"
+    counts
+}
+
+.ssa_simulate <- function(stoichiometry, propensity_function, time, y0, parameters) {
+    out <- matrix(NA_real_, nrow = length(time), ncol = length(y0) + 1L)
+    out[, 1] <- time
+    if (length(time) == 0) return(out)
+
+    t <- time[[1]]
+    y <- as.numeric(y0)
+
+    for (i in seq_along(time)) {
+        target_time <- time[[i]]
+
+        while (t < target_time) {
+            a <- propensity_function(y, parameters)
+            if (length(a) == 0 || sum(a) <= 0) break
+
+            a0 <- sum(a)
+            tau <- stats::rexp(1, rate = a0)
+            if ((t + tau) <= target_time) {
+                j <- sample(seq_along(a), size = 1, prob = a / a0)
+                y <- y + stoichiometry[, j]
+                t <- t + tau
+            } else {
+                break
+            }
+        }
+
+        out[i, -1] <- y
+    }
+
+    out
+}
+
+.ssa_falling <- function(x, n) {
+    n <- as.integer(n)
+    if (n <= 0L) return(1)
+    if (x < n) return(0)
+    prod(seq(from = x - n + 1, to = x))
+}
+
+.stochastic_model_propensity_function <- function(model, parameters, dimensions) {
+    param_values <- .to_dimensions_vec(parameters, dimensions)
+    free_params <- new.env(parent = emptyenv())
+    free_params$list <- character()
+    eq_names <- names(model$equations)
+
+    subst <- function(expr) {
+        .ode_model_substitute_parameters(expr, eq_names, param_values, free_params, dimensions)
+    }
+
+    lines <- "function(y, params) {"
+    for (i in seq_along(model$equations)) {
+        lines <- c(lines, paste0("    ", names(model$equations)[[i]], " <- ", deparse1(subst(model$equations[[i]]))))
+        if (i == length(model$equations)) lines <- c(lines, "")
+    }
+    lines <- c(lines, paste0("    prop <- numeric(", length(model$propensities), ")"))
+    for (i in seq_along(model$propensities)) {
+        lines <- c(lines, paste0("    prop[", i, "] <- ", deparse1(subst(model$propensities[[i]]))))
+    }
+    lines <- c(lines, "    .ssa_validate_propensities(prop)", "}")
+
+    eval(parse(text = paste(lines, collapse = "\n")))
+}
+
+.ssa_validate_propensities <- function(prop) {
+    if (!is.numeric(prop) || anyNA(prop) || any(!is.finite(prop))) {
+        stop("SSA propensity evaluated to a missing, non-finite, or non-numeric value.", call. = FALSE)
+    }
+    if (any(prop < 0)) {
+        stop("SSA propensity evaluated to a negative value.", call. = FALSE)
+    }
+    unname(prop)
+}
+
+.stochastic_simulation_observables <- function(states, solver_time, model, dimensions, parameters) {
+    if (length(model$observables) == 0) return(NULL)
+
+    solver_output <- cbind(
+        time = solver_time,
+        as.matrix(states[, model$states$output_name, drop = FALSE])
+    )
+    storage.mode(solver_output) <- "numeric"
+
+    output_state_names <- model$states$output_name
+    param_values <- .to_dimensions_vec(parameters, dimensions)
+    free_params <- new.env(parent = emptyenv())
+    free_params$list <- character()
+    eq_names <- names(model$equations)
+
+    obs_funcs <- lapply(model$observables, function(obs) {
+        expr <- .ode_model_substitute_parameters(obs, eq_names, param_values, free_params, dimensions)
+        expr <- .ode_model_observable_backend_expr(expr, output_state_names)
+        eval(parse(text = paste0("function(t,y,params) unname(", deparse1(expr), ")")))
+    })
+    names(obs_funcs) <- names(model$observables)
+
+    odeinfo <- list(
+        obsFuncs = obs_funcs,
+        stateNames = output_state_names,
+        dslStateNames = model$states$dsl_name
+    )
+    .simulation_observables(
+        solver_output,
+        states$time,
+        model,
+        odeinfo,
+        solver_time,
+        dimensions,
+        parameters = parameters
+    )
+}
+
+.stochastic_model_dimension_values <- function(model, parameters) {
+    y0 <- tryCatch(
+        .ode_model_state_unit_values(model, parameters, allow_unresolved = TRUE),
+        error = function(e) list()
+    )
+    propensities <- tryCatch(
+        .stochastic_raw_propensity_values(model, y0, parameters),
+        error = function(e) list()
+    )
+
+    c(y0, unclass(parameters), propensities)
+}
+
+.stochastic_raw_propensity_values <- function(model, y0, parameters) {
+    if (length(y0) != nrow(model$states)) return(list())
+    if (any(vapply(y0, .initial_is_expr, logical(1)))) return(list())
+
+    env <- list2env(unclass(parameters), parent = baseenv())
+    env$y <- unname(unlist(y0))
+    env$.ssa_falling <- .ssa_falling
+    .ode_model_add_equations(model, env, y0)
+
+    lapply(model$propensities, function(expr) eval(expr, envir = env))
 }
 
 .infer_dimensions_from_unit <- function(x, dimensions) {
