@@ -315,6 +315,34 @@ merging or a separate copy/renaming helper.
 
 Implementation anchor: overlay merging is handled by `mergeModels()`.
 
+## Process model
+
+A `ProcessModel` is the package-owned intermediate representation of the
+explicit process system obtained from a `CompartmentModel`. It sits between the
+modular compartment/molecule representation and downstream deterministic or
+stochastic renderings.
+
+Lowering a `CompartmentModel` to a `ProcessModel` resolves wildcard wiring,
+applies the state representation policy where possible, and expands
+implementation structures such as infusion depots. The result has a
+one-dimensional state vector, flattened dosing events, and a process list with
+a stoichiometric matrix.
+
+Each row of the process list stores the deterministic process rate, the
+original constant expression for elementary/linear processes or `NA` for
+explicit `rate = ...` definitions, and the input state indices with their
+stoichiometries. The stoichiometric matrix maps these process rates onto state
+derivatives. This keeps enough information to derive ODE right-hand sides and,
+for supported elementary cases, future stochastic propensities.
+
+For amount-state reactions in compartments with known volume, the process rate
+is represented as an amount-change rate. Concentration-state reactions in an
+unspecified volume can still be represented for deterministic ODE export, but
+are not directly suitable for stochastic export.
+
+Implementation anchor: `ProcessModel` objects are created by
+`to_process_model()`.
+
 ## ODE model
 
 An `OdeModel` is the package-owned intermediate representation of a concrete

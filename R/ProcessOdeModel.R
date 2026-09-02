@@ -35,22 +35,20 @@ to_process_model.CompartmentModel <- function(model) {
         )
     }
 
-    process_names <- character()
     process_rates <- list()
+    process_consts <- list()
+    process_input_states <- list()
+    process_input_stoich <- list()
     stoich_cols <- list()
-    ode_terms <- vector("list", length(dsl_state_names))
 
-    add_process <- function(rate, stoich) {
-        idx <- length(process_names) + 1L
-        name <- paste0("process_", idx)
-        process_names[[idx]] <<- name
+    add_process <- function(rate, const, input_states, input_stoich, stoich) {
+        idx <- length(process_rates) + 1L
         process_rates[[idx]] <<- rate
+        process_consts[[idx]] <<- const
+        process_input_states[[idx]] <<- input_states
+        process_input_stoich[[idx]] <<- input_stoich
         stoich_cols[[idx]] <<- stoich
         invisible(idx)
-    }
-
-    add_ode_term <- function(state_idx, term) {
-        ode_terms[[state_idx]] <<- c(ode_terms[[state_idx]], list(term))
     }
 
     for (j in seq_along(model$transports)) {
@@ -60,20 +58,15 @@ to_process_model.CompartmentModel <- function(model) {
         from_idx <- if (!is.na(from)) .ode_model_transport_state_idx(molec, from, name2idx) else NULL
         to_idx <- if (!is.na(to)) .ode_model_transport_state_idx(molec, to, name2idx) else NULL
         rate <- lower(model$transports$rate[[j]])
+        const <- if (is.null(model$transports$const[[j]])) NA else lower(model$transports$const[[j]])
+        input_states <- if (!is.na(from)) from_idx else integer(0)
+        input_stoich <- if (!is.na(from)) 1 else numeric(0)
 
         stoich <- numeric(length(dsl_state_names))
         names(stoich) <- dsl_state_names
         if (!is.na(from)) stoich[[from_idx]] <- stoich[[from_idx]] - 1
         if (!is.na(to)) stoich[[to_idx]] <- stoich[[to_idx]] + 1
-        add_process(rate, stoich)
-
-        if (!is.na(from)) {
-            add_ode_term(
-                from_idx,
-                .negate_expr(rate, simplify_product = identical(model$transports$type[[j]], "linear"))
-            )
-        }
-        if (!is.na(to)) add_ode_term(to_idx, rate)
+        add_process(rate, const, input_states, input_stoich, stoich)
     }
 
     volume_by_cmt <- setNames(model$compartments$volume, names(model$compartments))
@@ -85,53 +78,72 @@ to_process_model.CompartmentModel <- function(model) {
 
         stoich <- numeric(length(dsl_state_names))
         names(stoich) <- dsl_state_names
-        process_rate <- lower(rate_expr)
-
-        for (i in seq_len(nrow(participants))) {
-            target <- .ode_model_reaction_state(
+        targets <- lapply(seq_len(nrow(participants)), function(i) {
+            .ode_model_reaction_state(
                 participants$molec[[i]],
                 participants$cmt[[i]],
                 name2idx
             )
-            multiplier <- if (identical(participants$role[[i]], "input")) -1 else 1
-            stoich[[target$idx]] <- stoich[[target$idx]] + multiplier * participants$stoich[[i]]
-
-            term <- rate_expr
-            stoich_i <- participants$stoich[[i]]
-            if (!identical(stoich_i, 1) && !identical(stoich_i, 1L)) {
-                term <- .mul(term, stoich_i)
-            }
-            if (identical(target$type, "amount")) {
-                if (.is_missing_volume(vol)) {
-                    stop(
-                        "Cannot export reaction in compartment '",
-                        scale_cmt,
-                        "' to amount-state ODEs: reaction rates are ",
-                        "concentration-change rates and require a compartment ",
-                        "volume to convert them to amount/time.",
-                        call. = FALSE
-                    )
-                }
-                term <- .mul(term, .as_call(vol))
-            }
-            term <- lower(term)
-            if (identical(participants$role[[i]], "input")) {
-                term <- .negate_expr(term, simplify_product = identical(model$reactions$type[[j]], "elementary"))
-            }
-            add_ode_term(target$idx, term)
+        })
+        target_types <- unique(vapply(targets, `[[`, character(1), "type"))
+        if (length(target_types) > 1L) {
+            stop(
+                "Cannot create a process model for a reaction with mixed amount and concentration states.",
+                call. = FALSE
+            )
         }
 
-        add_process(process_rate, stoich)
+        for (i in seq_len(nrow(participants))) {
+            target <- targets[[i]]
+            multiplier <- if (identical(participants$role[[i]], "input")) -1 else 1
+            stoich[[target$idx]] <- stoich[[target$idx]] + multiplier * participants$stoich[[i]]
+        }
+
+        input_participants <- participants[participants$role == "input", , drop = FALSE]
+        input_targets <- targets[participants$role == "input"]
+        input_states <- vapply(input_targets, `[[`, integer(1), "idx")
+        input_stoich <- input_participants$stoich
+
+        if (identical(target_types, "amount")) {
+            if (.is_missing_volume(vol)) {
+                stop(
+                    "Cannot export reaction in compartment '",
+                    scale_cmt,
+                    "' to amount-state ODEs: reaction rates are ",
+                    "concentration-change rates and require a compartment ",
+                    "volume to convert them to amount/time.",
+                    call. = FALSE
+                )
+            }
+            process_rate <- .process_model_amount_reaction_rate(
+                rate_expr = rate_expr,
+                type = model$reactions$type[[j]],
+                scale_cmt = scale_cmt,
+                volume = vol,
+                participants = participants,
+                state_names = dsl_state_names,
+                eq_names = eq_names,
+                name2idx = name2idx,
+                state_volumes = state_volumes
+            )
+        } else {
+            process_rate <- lower(rate_expr)
+        }
+        const <- if (is.null(model$reactions$const[[j]])) NA else lower(model$reactions$const[[j]])
+
+        add_process(process_rate, const, input_states, input_stoich, stoich)
     }
 
     lowered_equations <- lapply(model$equations, lower) |> structure(class = "Equations")
     lowered_observables <- lapply(model$observables, lower) |> structure(class = "Observables")
     dosing <- .ode_model_dosing(model, name2idx)
-    stoichiometry <- .process_model_stoichiometry(stoich_cols, dsl_state_names, process_names)
+    stoichiometry <- .process_model_stoichiometry(stoich_cols, dsl_state_names)
     processes <- structure(
         data.frame(
-            name = process_names,
             rate = I(process_rates),
+            const = I(process_consts),
+            input_states = I(process_input_states),
+            input_stoich = I(process_input_stoich),
             stringsAsFactors = FALSE
         ),
         class = "data.frame"
@@ -148,13 +160,12 @@ to_process_model.CompartmentModel <- function(model) {
             parameters = model$parameters,
             dosing = dosing,
             freeParams = .ode_model_free_params(
-                c(unname(lapply(y0_dsl, lower)), process_rates, unlist(ode_terms, recursive = FALSE),
+                c(unname(lapply(y0_dsl, lower)), process_rates,
                   unclass(lowered_equations), unclass(lowered_observables),
                   unname(as.list(dosing$time)), unname(as.list(dosing$value))),
                 eq_names = names(lowered_equations),
                 param_names = names(model$parameters)
-            ),
-            ode_terms = ode_terms
+            )
         ),
         class = "ProcessModel"
     )
@@ -283,7 +294,18 @@ to_ode_model.CompartmentModel <- function(model) {
 to_ode_model.ProcessModel <- function(model) {
     .check_class(model, "ProcessModel")
 
-    rhs <- lapply(model$ode_terms, .sum_exprs)
+    rhs <- lapply(seq_len(nrow(model$stoichiometry)), function(i) {
+        terms <- lapply(seq_len(ncol(model$stoichiometry)), function(j) {
+            coeff <- model$stoichiometry[[i, j]]
+            if (identical(coeff, 0) || identical(coeff, 0L)) return(NULL)
+            .process_model_ode_term(
+                coeff = coeff,
+                rate = model$processes$rate[[j]],
+                const = model$processes$const[[j]]
+            )
+        })
+        .sum_exprs(Filter(Negate(is.null), terms))
+    })
     structure(
         list(
             states = model$states,
@@ -487,7 +509,7 @@ to_deSolve.OdeModel <- function(model, parameters = list(), dimensions = NULL) {
     invisible(model)
 }
 
-.process_model_stoichiometry <- function(stoich_cols, state_names, process_names) {
+.process_model_stoichiometry <- function(stoich_cols, state_names) {
     if (length(stoich_cols) == 0) {
         return(matrix(
             numeric(0),
@@ -499,8 +521,77 @@ to_deSolve.OdeModel <- function(model, parameters = list(), dimensions = NULL) {
 
     stoichiometry <- do.call(cbind, stoich_cols)
     rownames(stoichiometry) <- state_names
-    colnames(stoichiometry) <- process_names
     stoichiometry
+}
+
+.process_model_ode_term <- function(coeff, rate, const) {
+    magnitude <- abs(coeff)
+    term <- rate
+    if (!identical(magnitude, 1) && !identical(magnitude, 1L)) {
+        term <- .mul(term, magnitude)
+    }
+    if (coeff < 0) {
+        return(.negate_expr(term, simplify_product = .process_model_has_const(const)))
+    }
+    term
+}
+
+.process_model_has_const <- function(x) {
+    !(is.atomic(x) && length(x) == 1L && is.na(x))
+}
+
+.process_model_amount_reaction_rate <- function(
+    rate_expr,
+    type,
+    scale_cmt,
+    volume,
+    participants,
+    state_names,
+    eq_names,
+    name2idx,
+    state_volumes
+) {
+    if (identical(type, "elementary")) {
+        scale_state <- .process_model_scale_concentration_state(participants, scale_cmt, state_names)
+        if (!is.null(scale_state)) {
+            return(.ode_model_lower_expr(
+                rate_expr,
+                state_names = state_names,
+                eq_names = eq_names,
+                name2idx = name2idx,
+                state_volumes = state_volumes,
+                concentration_as_amount_once = scale_state
+            ))
+        }
+    }
+
+    .ode_model_lower_expr(
+        .mul(rate_expr, .as_call(volume)),
+        state_names = state_names,
+        eq_names = eq_names,
+        name2idx = name2idx,
+        state_volumes = state_volumes
+    )
+}
+
+.process_model_scale_concentration_state <- function(participants, scale_cmt, state_names) {
+    if (is.na(scale_cmt)) return(NULL)
+    input <- participants[
+        participants$role == "input" &
+            !is.na(participants$cmt) &
+            participants$cmt == scale_cmt,
+        ,
+        drop = FALSE
+    ]
+    if (nrow(input) == 0) return(NULL)
+
+    for (i in seq_len(nrow(input))) {
+        conc_state <- .dsl_make_state(input$molec[[i]], input$cmt[[i]], prefix = "c")
+        amount_state <- .dsl_make_state(input$molec[[i]], input$cmt[[i]], prefix = "a")
+        if (amount_state %in% state_names) return(conc_state)
+    }
+
+    NULL
 }
 
 .ode_model_observable_backend_expr <- function(expr, output_state_names) {
@@ -619,11 +710,19 @@ to_deSolve.OdeModel <- function(model, parameters = list(), dimensions = NULL) {
     volumes
 }
 
-.ode_model_lower_expr <- function(expr, state_names, eq_names, name2idx, state_volumes) {
+.ode_model_lower_expr <- function(
+    expr,
+    state_names,
+    eq_names,
+    name2idx,
+    state_volumes,
+    concentration_as_amount_once = NULL
+) {
     if (!is.character(expr) && !is.expression(expr) && !is.language(expr)) {
         return(expr)
     }
     expr <- .as_call(expr)
+    concentration_as_amount_used <- FALSE
 
     lower <- function(e) {
         state_ref <- function(nm) bquote(y[.(as.numeric(name2idx[[nm]]))])
@@ -644,6 +743,15 @@ to_deSolve.OdeModel <- function(model, parameters = list(), dimensions = NULL) {
 
                 if (prefix == "c") {
                     amount_nm <- .dsl_make_state(molec = molec, cmt = cmt, prefix = "a")
+                    if (
+                        !is.null(concentration_as_amount_once) &&
+                            identical(nm, concentration_as_amount_once) &&
+                            !concentration_as_amount_used &&
+                            amount_nm %in% state_names
+                    ) {
+                        concentration_as_amount_used <<- TRUE
+                        return(state_ref(amount_nm))
+                    }
                     if (amount_nm %in% state_names) {
                         if (.is_missing_volume(state_volumes[[amount_nm]])) {
                             stop("Cannot convert amount state '", amount_nm, "' to concentration without a compartment volume.", call. = FALSE)
