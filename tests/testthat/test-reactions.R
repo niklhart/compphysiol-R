@@ -155,7 +155,7 @@ test_that("Cross-compartment reactions require an explicit involved scale compar
     )
 })
 
-test_that("Elementary cross-compartment reactions infer scale from unique input compartment", {
+test_that("First-order cross-compartment reactions infer scale from unique input compartment", {
     r <- reactions(
         input = state(molec = "A", cmt = "plasma"),
         output = state(molec = "B", cmt = "membrane"),
@@ -299,6 +299,7 @@ test_that("Character reaction formulas reject malformed formulas", {
 test_that("NSE reaction formulas are captured without assignment side effects", {
     skip("NSE reaction formulas are not implemented yet.")
 
+    A <- 2
     B <- 3
 
     r <- reactions(A -> B, const = "k")
