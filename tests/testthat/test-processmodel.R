@@ -175,6 +175,21 @@ test_that("ProcessModel expands infusion depots and flattens dosing", {
     expect_equal(process_model$freeParams, "ke")
 })
 
+test_that("ProcessModel print method uses DSL state names", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = "V") |>
+        add_molecule(c("drug", "metabolite"), cmt = "Central", initial = c("A0", 0), type = "amount") |>
+        add_reaction(input = "drug", output = "metabolite", cmt = "Central", const = "kmet") |>
+        add_observable(C = c[drug, Central]) |>
+        add_parameter(V = 10) |>
+        add_dosing(time = 0, amount = 100, cmt = "Central", molec = "drug")
+
+    process_model <- to_process_model(model)
+
+    expect_snapshot(print(process_model))
+    expect_false(grepl("y\\[", paste(capture.output(print(process_model)), collapse = "\n")))
+})
+
 test_that("ProcessModel tracks free parameters before ODE rhs accumulation", {
     model <- compartment_model() |>
         add_compartment("Central", volume = "V") |>

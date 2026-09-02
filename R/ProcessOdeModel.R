@@ -331,6 +331,102 @@ to_ode_model.ProcessModel <- function(model) {
     )
 }
 
+#' Print method for `ProcessModel` class
+#'
+#' Pretty-prints a `ProcessModel` object using DSL state names.
+#' @param x A `ProcessModel` object.
+#' @param ... ignored
+#' @returns The `ProcessModel` object (invisibly).
+#' @export
+print.ProcessModel <- function(x, ...) {
+    .check_class(x, "ProcessModel")
+
+    cat("ProcessModel:\n")
+
+    if (nrow(x$states) > 0) {
+        cat(" States:\n")
+        cat(sprintf(
+            "  (%s) %s, initial = %s\n",
+            x$states$index,
+            x$states$dsl_name,
+            vapply(x$initials, .ode_model_format_expr, character(1), model = x)
+        ), sep = "")
+    } else {
+        cat(" States: (none)\n")
+    }
+
+    if (nrow(x$processes) > 0) {
+        cat(" Processes:\n")
+        for (i in seq_len(nrow(x$processes))) {
+            cat(sprintf(
+                "  (%s) rate = %s, const = %s, inputs = %s\n",
+                i,
+                .ode_model_format_expr(x$processes$rate[[i]], x),
+                .process_model_format_const(x$processes$const[[i]], x),
+                .process_model_format_inputs(
+                    x$processes$input_states[[i]],
+                    x$processes$input_stoich[[i]],
+                    x
+                )
+            ))
+            cat(sprintf(
+                "      stoichiometry: %s\n",
+                .process_model_format_stoichiometry(x$stoichiometry[, i], x)
+            ))
+        }
+    } else {
+        cat(" Processes: (none)\n")
+    }
+
+    if (length(x$equations) > 0) {
+        cat(" Equations:\n")
+        cat(sprintf(
+            "  (%s) %s = %s\n",
+            seq_along(x$equations),
+            names(x$equations),
+            vapply(x$equations, .ode_model_format_expr, character(1), model = x)
+        ), sep = "")
+    } else {
+        cat(" Equations: (none)\n")
+    }
+
+    if (length(x$observables) > 0) {
+        cat(" Observables:\n")
+        cat(sprintf(
+            "  (%s) %s = %s\n",
+            seq_along(x$observables),
+            names(x$observables),
+            vapply(x$observables, .ode_model_format_expr, character(1), model = x)
+        ), sep = "")
+    } else {
+        cat(" Observables: (none)\n")
+    }
+
+    if (nrow(x$dosing) > 0) {
+        cat(" Dosing:\n")
+        cat(sprintf(
+            "  (%s) %s %s to %s at %s\n",
+            seq_len(nrow(x$dosing)),
+            x$dosing$operation,
+            vapply(x$dosing$value, .ode_model_format_expr, character(1), model = x),
+            x$states$dsl_name[x$dosing$state],
+            vapply(x$dosing$time, .ode_model_format_expr, character(1), model = x)
+        ), sep = "")
+    } else {
+        cat(" Dosing: (none)\n")
+    }
+
+    print(x$parameters)
+
+    if (length(x$freeParams) > 0) {
+        cat(" Free parameters: ", paste(x$freeParams, collapse = ", "), "\n", sep = "")
+    } else {
+        cat(" Free parameters: (none)\n")
+    }
+
+    invisible(x)
+}
+
 #' Export an ODE model to deSolve format
 #'
 #' @param model An `OdeModel` object.
@@ -543,6 +639,37 @@ to_deSolve.OdeModel <- function(model, parameters = list(), dimensions = NULL) {
 
 .process_model_has_const <- function(x) {
     !(is.atomic(x) && length(x) == 1L && is.na(x))
+}
+
+.process_model_format_const <- function(expr, model) {
+    if (!.process_model_has_const(expr)) return("NA")
+    .ode_model_format_expr(expr, model)
+}
+
+.process_model_format_inputs <- function(states, stoich, model) {
+    if (length(states) == 0) return("(none)")
+    paste(
+        mapply(
+            function(state, coeff) {
+                state_name <- model$states$dsl_name[[state]]
+                if (identical(coeff, 1) || identical(coeff, 1L)) return(state_name)
+                paste(coeff, state_name)
+            },
+            states,
+            stoich,
+            USE.NAMES = FALSE
+        ),
+        collapse = ", "
+    )
+}
+
+.process_model_format_stoichiometry <- function(stoich, model) {
+    nonzero <- which(stoich != 0)
+    if (length(nonzero) == 0) return("(none)")
+    paste(
+        sprintf("%s = %s", model$states$dsl_name[nonzero], stoich[nonzero]),
+        collapse = ", "
+    )
 }
 
 .process_model_amount_reaction_rate <- function(
