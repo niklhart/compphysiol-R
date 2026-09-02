@@ -409,10 +409,13 @@ The older `to_ode()` interface remains the compatibility entry point for
 ## Simulation
 
 Simulation runs a `CompartmentModel` or `OdeModel` over requested time points
-and returns a toolbox-level result. Unlike ODE export, simulation owns both
-sides of the solver boundary: it converts unit-aware model quantities to
-numeric values for the solver and attaches units back to the returned
-trajectories.
+and returns a toolbox-level result. For `CompartmentModel` inputs, the
+`simulation_type` argument selects the route: deterministic ODE simulation,
+Gillespie stochastic simulation, or hybrid stochastic-deterministic simulation.
+Only the deterministic route is implemented at present. Unlike ODE export,
+simulation owns both sides of the solver boundary: it converts unit-aware model
+quantities to numeric values for the solver and attaches units back to the
+returned trajectories.
 
 Simulation returns ODE state trajectories in a `SimulationResult` object.
 When observables are defined, their trajectories are included as derived

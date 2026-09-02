@@ -12,6 +12,7 @@
   unit = NULL,
   parameters = list(),
   dimensions = NULL,
+  simulation_type = c("deterministic", "ssa", "hybrid"),
   ...
 )
 }
@@ -33,6 +34,11 @@ or \code{Parameters} object.}
 \item{dimensions}{Named list of unit dimensions defining the numerical scale
 used at the ODE solver boundary. These dimensions are passed to \code{\link[=to_ode]{to_ode()}}
 and affect the scale of solver tolerances such as \code{atol}.}
+
+\item{simulation_type}{Simulation route. \code{"deterministic"} uses the
+established ODE path. \code{"ssa"} and \code{"hybrid"} reserve the stochastic
+Gillespie and hybrid stochastic-deterministic routes, respectively, but are
+not implemented yet.}
 
 \item{...}{Additional arguments passed to \code{\link[deSolve:ode]{deSolve::ode()}}.}
 }

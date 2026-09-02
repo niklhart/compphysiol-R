@@ -27,6 +27,10 @@
 #' @param dimensions Named list of unit dimensions defining the numerical scale
 #'   used at the ODE solver boundary. These dimensions are passed to [to_ode()]
 #'   and affect the scale of solver tolerances such as `atol`.
+#' @param simulation_type Simulation route. `"deterministic"` uses the
+#'   established ODE path. `"ssa"` and `"hybrid"` reserve the stochastic
+#'   Gillespie and hybrid stochastic-deterministic routes, respectively, but are
+#'   not implemented yet.
 #' @param ... Additional arguments passed to [deSolve::ode()].
 #' @returns A `SimulationResult` object.
 #' @examples
@@ -52,8 +56,14 @@ simulate.CompartmentModel <- function(
     unit = NULL,
     parameters = list(),
     dimensions = NULL,
+    simulation_type = c("deterministic", "ssa", "hybrid"),
     ...
 ) {
+    simulation_type <- match.arg(simulation_type)
+    if (!identical(simulation_type, "deterministic")) {
+        .simulation_stop_unimplemented_type(simulation_type)
+    }
+
     time <- .process_nse_arg(substitute(time), envir = parent.frame())
     time <- .simulation_apply_time_unit(time, unit)
     .simulation_validate_time(time)
@@ -108,6 +118,16 @@ simulate.OdeModel <- function(
         parameters = merged_parameters,
         ...
     )
+}
+
+.simulation_stop_unimplemented_type <- function(simulation_type) {
+    label <- switch(
+        simulation_type,
+        ssa = "SSA",
+        hybrid = "Hybrid",
+        simulation_type
+    )
+    stop(label, " simulation is not implemented yet.", call. = FALSE)
 }
 
 .simulation_apply_time_unit <- function(time, unit) {

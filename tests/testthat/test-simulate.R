@@ -25,6 +25,29 @@ test_that("simulate returns a SimulationResult with ODE states", {
     expect_equal(out$states$a_drug_Central, 100 * exp(-0.2 * out$states$time), tolerance = 1e-6)
 })
 
+test_that("simulate accepts an explicit deterministic simulation type", {
+    model <- test_model_for_simulation()
+    time <- seq(0, 10, by = 1)
+
+    default <- simulate(model, time = time)
+    deterministic <- simulate(model, time = time, simulation_type = "deterministic")
+
+    expect_equal(deterministic, default)
+})
+
+test_that("simulate reserves stochastic and hybrid simulation types", {
+    model <- test_model_for_simulation()
+
+    expect_error(
+        simulate(model, time = seq(0, 1, by = 1), simulation_type = "ssa"),
+        "SSA simulation is not implemented yet"
+    )
+    expect_error(
+        simulate(model, time = seq(0, 1, by = 1), simulation_type = "hybrid"),
+        "Hybrid simulation is not implemented yet"
+    )
+})
+
 test_that("SimulationResult can be printed", {
     model <- test_model_for_simulation()
 
