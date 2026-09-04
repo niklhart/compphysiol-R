@@ -25,14 +25,17 @@ test_that("simulate returns a SimulationResult with ODE states", {
     expect_equal(out$states$a_drug_Central, 100 * exp(-0.2 * out$states$time), tolerance = 1e-6)
 })
 
-test_that("simulate accepts an explicit deterministic simulation type", {
+test_that("simulate accepts explicit ODE and analytical simulation types", {
     model <- test_model_for_simulation()
     time <- seq(0, 10, by = 1)
 
     default <- simulate(model, time = time)
-    deterministic <- simulate(model, time = time, simulation_type = "deterministic")
+    ode <- simulate(model, time = time, simulation_type = "ode")
+    analytical <- simulate(model, time = time, simulation_type = "analytical")
 
-    expect_equal(deterministic, default)
+    expect_equal(ode, default)
+    expect_equal(analytical$states, default$states, tolerance = 1e-6)
+    expect_equal(analytical$observables, default$observables)
 })
 
 test_that("simulate supports SSA and reserves hybrid simulation type", {

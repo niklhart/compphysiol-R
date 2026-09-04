@@ -403,21 +403,22 @@ that coincide with event times may follow `deSolve`'s event-time convention
 rather than the toolbox-level simulation convention.
 
 Implementation anchor: solver-specific ODE export is handled internally.
-The older `to_ode()` interface remains the compatibility entry point for
-`deSolve` export.
+Users should call `simulate()` for solver output or `to_ode_model()` for the
+backend-neutral ODE representation.
 
 ## Simulation
 
 Simulation runs a `CompartmentModel` or one of its lowered model
 representations over requested time points and returns a toolbox-level result.
 For `CompartmentModel` inputs, the `simulation_type` argument selects the
-route: deterministic ODE simulation, Gillespie stochastic simulation, or hybrid
-stochastic-deterministic simulation. The hybrid route is reserved but not
-implemented yet. Lowered `OdeModel`, `AnalyticalModel`, and `StochasticModel`
-objects can be simulated directly when repeated runs should avoid repeated
-lowering. Unlike ODE export, simulation owns both sides of the solver boundary:
-it converts unit-aware model quantities to numeric values for the solver and
-attaches units back to the returned trajectories.
+route: numerical ODE simulation, analytical deterministic simulation,
+Gillespie stochastic simulation, or hybrid stochastic-deterministic simulation.
+The hybrid route is reserved but not implemented yet. Lowered `OdeModel`,
+`AnalyticalModel`, and `StochasticModel` objects can be simulated directly
+when repeated runs should avoid repeated lowering. Unlike ODE export,
+simulation owns both sides of the solver boundary: it converts unit-aware model
+quantities to numeric values for the solver and attaches units back to the
+returned trajectories.
 
 Simulation returns ODE state trajectories in a `SimulationResult` object.
 When observables are defined, their trajectories are included as derived
@@ -483,6 +484,5 @@ names. The constant source term `b` is part of the representation, although
 the first implementation only accepts homogeneous systems with `b = 0`.
 
 Implementation anchor: `AnalyticalModel` objects are created by
-`to_analytical_model()` and can be simulated with `simulate()`. The older
-`to_analytical()` interface remains the compatibility entry point for
-analytical solution functions.
+`to_analytical_model()` and can be simulated with `simulate()`. Exporting
+analytical solution functions is an internal compatibility path.

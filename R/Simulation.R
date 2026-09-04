@@ -1,8 +1,8 @@
 #' Simulate a compartment model
 #'
 #' `simulate()` solves a `CompartmentModel` and returns toolbox-level output.
-#' The current implementation wraps the `deSolve` ODE export and returns ODE
-#' states and observables.
+#' The default route wraps the `deSolve` ODE export and returns ODE states and
+#' observables.
 #'
 #' Simulation is either unit-free or unit-aware with respect to time. If the
 #' model uses a time dimension, `time` must carry units through the unit DSL or
@@ -25,12 +25,13 @@
 #' @param parameters Free parameters passed to the ODE solver, as a named list
 #'   or `Parameters` object.
 #' @param dimensions Named list of unit dimensions defining the numerical scale
-#'   used at the ODE solver boundary. These dimensions are passed to [to_ode()]
-#'   and affect the scale of solver tolerances such as `atol`.
-#' @param simulation_type Simulation route. `"deterministic"` uses the
-#'   established ODE path. `"ssa"` uses Gillespie's stochastic simulation
-#'   algorithm. `"hybrid"` reserves the hybrid stochastic-deterministic route,
-#'   but is not implemented yet.
+#'   used at the solver boundary. These dimensions affect the scale of solver
+#'   tolerances such as `atol`.
+#' @param simulation_type Simulation route. `"ode"` uses the established
+#'   numerical ODE path. `"analytical"` uses matrix exponentials for supported
+#'   linear models. `"ssa"` uses Gillespie's stochastic simulation algorithm.
+#'   `"hybrid"` reserves the hybrid stochastic-deterministic route, but is not
+#'   implemented yet.
 #' @param ... Additional arguments passed to [deSolve::ode()].
 #' @returns A `SimulationResult` object.
 #' @examples
@@ -56,7 +57,7 @@ simulate.CompartmentModel <- function(
     unit = NULL,
     parameters = list(),
     dimensions = NULL,
-    simulation_type = c("deterministic", "ssa", "hybrid"),
+    simulation_type = c("ode", "analytical", "ssa", "hybrid"),
     ...
 ) {
     simulation_type <- match.arg(simulation_type)
@@ -88,6 +89,19 @@ simulate.CompartmentModel <- function(
     .simulation_check_time_mode(export_model, time)
 
     dimensions <- .simulation_dimensions(export_model, time, dimensions)
+    if (identical(simulation_type, "analytical")) {
+        analytical_model <- to_analytical_model(export_model)
+        return(simulate(
+            analytical_model,
+            nsim = nsim,
+            seed = seed,
+            time = time,
+            parameters = list(),
+            dimensions = dimensions,
+            ...
+        ))
+    }
+
     ode_model <- to_ode_model(export_model)
     odeinfo <- .to_deSolve(ode_model, dimensions = dimensions)
 

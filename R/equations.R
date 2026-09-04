@@ -7,7 +7,7 @@
 #' 
 #' Observables and equations are very similar, but there are two key differences:
 #' 
-#' 1. For each observable (but not for equations), `to_ode()` returns a function to calculate it based on the ODE output.
+#' 1. Observables are evaluated from simulation output, while equations are evaluated inside model expressions.
 #' 2. Equations can be used in the definitions of transports, while observables cannot.
 #' 
 #' @param ... Name-expression pairs defining the equations. The expressions can be provided as character strings or as R calls. 

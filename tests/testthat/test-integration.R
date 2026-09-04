@@ -7,7 +7,7 @@ test_that("Full simulation with bolus dosing works", {
          add_dosing(cmt = "Central", amount = 100, time = 0) |>
          add_parameter(k12 = 0.1)
 
-    odeinfo <- to_ode(M)
+    odeinfo <- .to_ode(M)
     y0 <- odeinfo$y0
     times <- seq(0, 10, 1)
     out <- ode(y = y0, 
@@ -30,7 +30,7 @@ test_that("Full simulation with infusion dosing works", {
         add_dosing(cmt = "Central", rate = 10, duration = 5, time = 0) |> 
         add_parameter(k12 = 0.1)
     
-    odeinfo <- to_ode(M)
+    odeinfo <- .to_ode(M)
  
     times <- seq(0, 10, 0.5)
     out <- ode(
@@ -62,7 +62,7 @@ test_that("One-compartment model with first-order elimination matches analytical
         add_transport("Central", "", const = "k") |>
         add_parameter(k = k)
 
-    odeinfo <- to_ode(M)
+    odeinfo <- .to_ode(M)
 
     out <- ode(
         y = odeinfo$y0,
@@ -96,7 +96,7 @@ test_that("Two-compartment oral absorption model matches Bateman function", {
         add_transport("Central", "", const = "ke") |>
         add_parameter(ka = ka, ke = ke)
 
-    odeinfo <- to_ode(M)
+    odeinfo <- .to_ode(M)
 
     out <- ode(
         y = odeinfo$y0,
@@ -128,7 +128,7 @@ test_that("One-compartment model with observed concentration matches analytic so
         add_observable(C = a[Central] / V) |>
         add_parameter(k = k, V = V)
 
-    odeinfo <- to_ode(M)
+    odeinfo <- .to_ode(M)
 
     out <- ode(
         y = odeinfo$y0,
@@ -155,7 +155,7 @@ test_that("Observable functions respect requested time points", {
         add_observable(C = a[Central] / V) |>
         add_parameter(k = 0.1, V = 10)
 
-    odeinfo <- to_ode(M)
+    odeinfo <- .to_ode(M)
 
     out <- ode(
         y = odeinfo$y0,
@@ -187,7 +187,7 @@ test_that("to_ode flags transports pointing to unknown compartments", {
         add_parameter(ka = 0.1)
     
     expect_error(
-        to_ode(M),
+        .to_ode(M),
         regexp = "Transport references unknown compartment: central."
     )
 

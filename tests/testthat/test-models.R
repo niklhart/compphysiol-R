@@ -56,7 +56,7 @@ test_that("12-CMT well-stirred PBPK model behaves as expected under long-term in
         add_dosing(cmt = "ven", time = 0, amount = 1, duration = dur) |> # long-term infusion to test steady-state behaviour
         add_parameter(param = do.call(parameters, paramValues))
 
-    odeinfo <- to_ode(M)
+    odeinfo <- .to_ode(M)
     times <- c(0, dur)
     out <- deSolve::ode(
         y = odeinfo$y0,
@@ -207,8 +207,8 @@ test_that("Permeation-based model reduces to well-stirred in the fast permeabili
         add_dosing(dose = dose) |>
         add_parameter(param = do.call(parameters, paramValues_pb))
 
-    odeinfo_ws <- to_ode(Mws)
-    odeinfo_pb <- to_ode(Mpb)
+    odeinfo_ws <- .to_ode(Mws)
+    odeinfo_pb <- .to_ode(Mpb)
     out_ws <- deSolve::ode(
         y = odeinfo_ws$y0,
         times = times,

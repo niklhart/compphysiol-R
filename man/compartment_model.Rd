@@ -18,5 +18,5 @@ This function initializes an empty model that can then be built up by adding the
 \seealso{
 \code{\link[=add_compartment]{add_compartment()}}, \code{\link[=add_molecule]{add_molecule()}}, \code{\link[=add_transport]{add_transport()}}, \code{\link[=add_reaction]{add_reaction()}}, \code{\link[=add_equation]{add_equation()}},
 \code{\link[=add_observable]{add_observable()}}, \code{\link[=add_parameter]{add_parameter()}}, \code{\link[=add_dosing]{add_dosing()}} for building up a \code{CompartmentModel} object,
-and \code{\link[=to_ode]{to_ode()}}, \code{\link[=to_analytical]{to_analytical()}} for exporting a \code{CompartmentModel} to ODE or analytical solution format.
+and \code{\link[=to_process_model]{to_process_model()}}, \code{\link[=to_ode_model]{to_ode_model()}}, \code{\link[=to_analytical_model]{to_analytical_model()}} for lowered model representations.
 }

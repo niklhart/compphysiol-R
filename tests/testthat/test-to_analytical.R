@@ -10,10 +10,10 @@ test_that("1-CMT analytical solution handles fixed and free parameters", {
     expected <- cbind(time = times, a_drug_cen = 10 * exp(-times))
 
     sol_free <- M |> 
-        to_analytical()
+        .to_analytical()
     sol_fixed <- M |> 
         add_parameter(param = do.call(parameters, params)) |> 
-        to_analytical()
+        .to_analytical()
 
     expect_equal(sol_fixed$statefun(times), expected)
     expect_equal(sol_free$statefun(times, params), expected)
@@ -38,10 +38,10 @@ test_that("2-CMT analytical solution matches numerical ODE solution", {
         add_transport("per", "cen", const = "kpc", molec = "drug") |>
         add_parameter(param = do.call(parameters, paramValues))
 
-    sol_aly <- to_analytical(M)
+    sol_aly <- .to_analytical(M)
     y_aly <- sol_aly$statefun(times, params = paramValues)
 
-    sol_num <- to_ode(M)
+    sol_num <- .to_ode(M)
     y_num <- deSolve::ode(
         y = sol_num$y0,
         times = times,
@@ -62,8 +62,8 @@ test_that("analytical export accepts AnalyticalModel inputs", {
     times <- 0:3
     params <- list(kc0 = 0.2)
 
-    from_compartment_model <- to_analytical(M)
-    from_analytical_model <- to_analytical(analytical_model)
+    from_compartment_model <- .to_analytical(M)
+    from_analytical_model <- .to_analytical(analytical_model)
 
     expect_equal(from_analytical_model$statefun(times, params), from_compartment_model$statefun(times, params))
     expect_equal(from_analytical_model$freeParams, "kc0")
@@ -75,7 +75,7 @@ test_that("analytical state function does not require observable-only parameters
         add_molecule("drug", cmt = "cen", initial = 10, type = "amount") |>
         add_transport("cen", "", const = "kc0", molec = "drug") |>
         add_observable(C = a[drug, cen] / F)
-    sol <- to_analytical(M)
+    sol <- .to_analytical(M)
     times <- 0:3
 
     expect_equal(
@@ -98,7 +98,7 @@ test_that("analytical export supports first-order reaction systems", {
     times <- 0:3
     kAB <- 0.2
 
-    sol <- to_analytical(M)
+    sol <- .to_analytical(M)
     out <- sol$statefun(times, params = list(kAB = kAB))
 
     expect_equal(out[, "a_A_cyt"], 10 * exp(-kAB * times), tolerance = 1e-6)
@@ -116,8 +116,8 @@ test_that("1-CMT analytical observables follow ODE observable contract", {
         add_observable(Ccen = c[drug, cen]) |>
         add_parameter(param = do.call(parameters, params))
 
-    sol_aly <- to_analytical(M)
-    sol_num <- to_ode(M)
+    sol_aly <- .to_analytical(M)
+    sol_num <- .to_ode(M)
 
     y_aly <- sol_aly$statefun(times)
     y_num <- deSolve::ode(

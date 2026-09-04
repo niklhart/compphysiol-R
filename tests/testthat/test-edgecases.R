@@ -1,7 +1,7 @@
 
 test_that("Empty model returns zero-length ODE", {
     M <- compartment_model()
-    odeinfo <- to_ode(M)
+    odeinfo <- .to_ode(M)
 
     expect_equal(length(odeinfo$y0), 0)
     dydt <- odeinfo$odefun(0, odeinfo$y0, list())
@@ -16,7 +16,7 @@ test_that("Simulation fails if target compartment missing", {
     M <- add_dosing(M, cmt = "Peripheral", amount = 10, time = 0)
 
     # Expected to_ode error
-    expect_error(to_ode(M))
+    expect_error(.to_ode(M))
 })
 
 test_that("Missing parameters are listed as free", {
@@ -26,7 +26,7 @@ test_that("Missing parameters are listed as free", {
          add_transport("Central", "Peripheral", const = "k12")
 
     # Do not provide k12
-    odeinfo <- to_ode(M)
+    odeinfo <- .to_ode(M)
     expect_true("k12" %in% odeinfo$freeParams)
 })
 

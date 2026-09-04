@@ -12,7 +12,7 @@
   unit = NULL,
   parameters = list(),
   dimensions = NULL,
-  simulation_type = c("deterministic", "ssa", "hybrid"),
+  simulation_type = c("ode", "analytical", "ssa", "hybrid"),
   ...
 )
 }
@@ -32,13 +32,14 @@ e.g. \code{seq(0, 24) [h]}.}
 or \code{Parameters} object.}
 
 \item{dimensions}{Named list of unit dimensions defining the numerical scale
-used at the ODE solver boundary. These dimensions are passed to \code{\link[=to_ode]{to_ode()}}
-and affect the scale of solver tolerances such as \code{atol}.}
+used at the solver boundary. These dimensions affect the scale of solver
+tolerances such as \code{atol}.}
 
-\item{simulation_type}{Simulation route. \code{"deterministic"} uses the
-established ODE path. \code{"ssa"} uses Gillespie's stochastic simulation
-algorithm. \code{"hybrid"} reserves the hybrid stochastic-deterministic route,
-but is not implemented yet.}
+\item{simulation_type}{Simulation route. \code{"ode"} uses the established
+numerical ODE path. \code{"analytical"} uses matrix exponentials for supported
+linear models. \code{"ssa"} uses Gillespie's stochastic simulation algorithm.
+\code{"hybrid"} reserves the hybrid stochastic-deterministic route, but is not
+implemented yet.}
 
 \item{...}{Additional arguments passed to \code{\link[deSolve:ode]{deSolve::ode()}}.}
 }
@@ -47,8 +48,8 @@ A \code{SimulationResult} object.
 }
 \description{
 \code{simulate()} solves a \code{CompartmentModel} and returns toolbox-level output.
-The current implementation wraps the \code{deSolve} ODE export and returns ODE
-states and observables.
+The default route wraps the \code{deSolve} ODE export and returns ODE states and
+observables.
 }
 \details{
 Simulation is either unit-free or unit-aware with respect to time. If the

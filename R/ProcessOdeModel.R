@@ -641,7 +641,10 @@ print.OdeModel <- function(x, ...) {
 }
 
 .to_analytical <- function(model, parameters = list(), dimensions = NULL) {
-    .check_class(model, "AnalyticalModel")
+    if (!inherits(model, "AnalyticalModel")) {
+        .check_class(model, "CompartmentModel")
+        model <- to_analytical_model(model)
+    }
     parameters <- .simulation_parameters_object(parameters)
     output_state_names <- model$states$output_name
 

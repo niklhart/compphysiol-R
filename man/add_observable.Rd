@@ -48,7 +48,7 @@ represented internally as an amount or as a concentration.
 
 Observables and equations are very similar, but there are two key differences:
 \enumerate{
-\item For each observable (but not for equations), \code{to_ode()} returns a function to calculate it based on the ODE output.
+\item Observables are evaluated from simulation output, while equations are evaluated inside model expressions.
 \item Equations can be used in the definitions of transports, while observables cannot.
 }
 

@@ -12,8 +12,8 @@ test_that("lumping is exact in a 3-CMT model with identical peripherals", {
                     )
     )
 
-    odeinfoM <- to_ode(M)
-    odeinfoL <- to_ode(L)
+    odeinfoM <- .to_ode(M)
+    odeinfoL <- .to_ode(L)
 
     times <- 0:6
 
@@ -59,8 +59,8 @@ test_that("lumping works for 2-CMT blood/tissue model with CL", {
 
     times <- 0:6
 
-    odeinfoL    <- to_ode(L)
-    odeinfoLref <- to_ode(Lref)
+    odeinfoL    <- .to_ode(L)
+    odeinfoLref <- .to_ode(Lref)
 
     outL    <- deSolve::ode(y = odeinfoL$y0, times = times, func = odeinfoL$odefun)
     outLref <- deSolve::ode(y = odeinfoLref$y0, times = times, func = odeinfoLref$odefun)
@@ -90,8 +90,8 @@ test_that("lumping handles first-pass effect correctly", {
 
     times <- 0:6
 
-    odeinfoM    <- to_ode(M)
-    odeinfoL    <- to_ode(L)
+    odeinfoM    <- .to_ode(M)
+    odeinfoL    <- .to_ode(L)
 
     outM    <- deSolve::ode(y = odeinfoM$y0, times = times, func = odeinfoM$odefun)
     outL    <- deSolve::ode(y = odeinfoL$y0, times = times, func = odeinfoL$odefun)

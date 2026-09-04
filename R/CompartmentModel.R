@@ -8,7 +8,7 @@
 #' @returns A new `CompartmentModel` object.
 #' @seealso [add_compartment()], [add_molecule()], [add_transport()], [add_reaction()], [add_equation()], 
 #'   [add_observable()], [add_parameter()], [add_dosing()] for building up a `CompartmentModel` object, 
-#'   and [to_ode()], [to_analytical()] for exporting a `CompartmentModel` to ODE or analytical solution format.
+#'   and [to_process_model()], [to_ode_model()], [to_analytical_model()] for lowered model representations.
 #' @export
 compartment_model <- function() {
 
@@ -590,38 +590,6 @@ make_depot <- function(model) {
 
 # ------------------------------------ `to_*` functions for CompartmentModel exporting ------------------------------------
 
-#' Generate analytical solution function from a linear model object.
-#' 
-#' For linear models, the system of ODEs can be solved analytically using
-#' matrix exponentials. This function generates a state function that evaluates
-#' this analytical solution at given time points and parameter values.
-#'
-#' Analytical export first lowers `CompartmentModel` inputs to an
-#' `AnalyticalModel`. Passing an `AnalyticalModel` directly avoids repeated
-#' lowering when exporting the same model structure repeatedly.
-#' 
-#' @param model A `CompartmentModel` or `AnalyticalModel` object.
-#' @returns A length 2 list named `state` (a function) and `observable`
-#' (a list of functions, possibly empty). `state(t,param)` calculates the ODE
-#' solution at time `t` for free parameters `param`, while `observable[[i]](t,param)`
-#' calculates the `i`-th observable defined in the CompartmentModel.
-#' @examples
-#' M <- multiCompModel(ncomp = 2, type = "micro") |>
-#'     add_parameter(kc0 = 0.05)
-#' sol <- to_analytical(M)
-#'
-#' # Evaluate ODE state at t = 5 with free params
-#' sol$statefun(5, params = list(kcp = 0.2, kpc = 0.1))
-#' @export
-to_analytical <- function(model) {
-    if (!inherits(model, "AnalyticalModel")) {
-        .check_class(model, "CompartmentModel")
-        model <- to_analytical_model(model)
-    }
-
-    .to_analytical(model)
-}
-
 #' Generate ODE function, initial values, observables, and free parameters from a `CompartmentModel` object
 #'
 #' This function converts a `CompartmentModel` object into a format suitable for numerical ODE solvers,
@@ -652,9 +620,9 @@ to_analytical <- function(model) {
 #' M <- multiCompModel(ncomp = 2, type = "micro", unit = "mg") |>
 #'    add_parameter(k10 = 0.05 [1/h]) |> # fix one param
 #'    add_dosing(time = 0 [h], amount = 100 [mg], cmt = "cen")
-#' odeinfo <- to_ode(M, dimensions = list(time = "h"))
-#' @export
-to_ode <- function(
+#' odeinfo <- .to_ode(M, dimensions = list(time = "h"))
+#' @noRd
+.to_ode <- function(
     model,
     dimensions = NULL,
     backend = "deSolve"

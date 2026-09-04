@@ -172,7 +172,7 @@ test_that("legacy to_ode output matches OdeModel deSolve export", {
         add_observable(C = c[drug, Central]) |>
         add_parameter(k12 = 0.2, k21 = 0.1)
 
-    legacy <- to_ode(model)
+    legacy <- .to_ode(model)
     exported <- .to_deSolve(to_ode_model(model))
 
     expect_equal(exported$stateNames, legacy$stateNames)

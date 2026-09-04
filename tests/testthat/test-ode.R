@@ -14,7 +14,7 @@ test_that("ODE generation handles first-order reaction with bolus dosing", {
         add_transport("Central", "Peripheral", const = "k12") |>
         add_parameter(k12 = 0.1)
 
-    odeinfo <- to_ode(M)
+    odeinfo <- .to_ode(M)
 
     # Function generation and correct state names
     expect_true(is.function(odeinfo$odefun))
@@ -33,6 +33,11 @@ test_that("ODE generation handles first-order reaction with bolus dosing", {
 
 })
 
+test_that("legacy ODE and analytical exporters are internal", {
+    expect_false("to_ode" %in% getNamespaceExports("compphysiol"))
+    expect_false("to_analytical" %in% getNamespaceExports("compphysiol"))
+})
+
 test_that("ODE generation handles output dimensions", {
     # PK example with first-order reactions only
     M <- compartment_model() |>
@@ -42,7 +47,7 @@ test_that("ODE generation handles output dimensions", {
         add_parameter(ke = 6 [1/h]) |>
         add_dosing(cmt = "Central", amount = 100[mg], time = 1[h])
 
-    odeinfo <- to_ode(M, dimensions = list(mass = "g", time = "min"))
+    odeinfo <- .to_ode(M, dimensions = list(mass = "g", time = "min"))
 
     expect_equal(odeinfo$y0, c(a_drug_Central = 0.01))
     expect_equal(odeinfo$events$data$var, "a_drug_Central")
@@ -56,7 +61,7 @@ test_that("ODE generation shortens auto-placeholder state names", {
         add_transport("Central", "Peripheral", const = "k12") |>
         add_parameter(k12 = 0.1)
 
-    odeinfo <- to_ode(M)
+    odeinfo <- .to_ode(M)
 
     expect_equal(odeinfo$stateNames, c("a_Central", "a_Peripheral"))
     expect_equal(odeinfo$dslStateNames, c("a[molec, Central]", "a[molec, Peripheral]"))
@@ -64,7 +69,7 @@ test_that("ODE generation shortens auto-placeholder state names", {
     M <- compartment_model() |>
         add_molecule("drug", initial = 1, type = "amount")
 
-    odeinfo <- to_ode(M)
+    odeinfo <- .to_ode(M)
 
     expect_equal(odeinfo$stateNames, "a_drug")
     expect_equal(odeinfo$dslStateNames, "a[drug, cmt]")
@@ -76,7 +81,7 @@ test_that("ODE observables convert between amount and concentration states", {
         add_molecule("drug", cmt = "Central", initial = 100, type = "amount") |>
         add_observable(C = c[drug, Central])
 
-    odeinfo <- to_ode(M_amount)
+    odeinfo <- .to_ode(M_amount)
     y <- cbind(time = 0, a_drug_Central = 100)
     expect_equal(odeinfo$obsFuncs$C(0, y, list()), 10)
 
@@ -86,7 +91,7 @@ test_that("ODE observables convert between amount and concentration states", {
         add_observable(A = a[drug, Central]) |>
         add_parameter(V = 10)
 
-    odeinfo <- to_ode(M_conc)
+    odeinfo <- .to_ode(M_conc)
     y <- cbind(time = 0, a_drug_Central = 100)
     expect_equal(odeinfo$obsFuncs$A(0, y, list()), 100)
 })
@@ -97,7 +102,7 @@ test_that("ODE observable functions are unit-free after export", {
         add_molecule("drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
         add_observable(C = c[drug, Central])
 
-    odeinfo <- to_ode(M, dimensions = list(mass = "mg", length = "m"))
+    odeinfo <- .to_ode(M, dimensions = list(mass = "mg", length = "m"))
     y <- cbind(time = 0, a_drug_Central = 100)
     value <- odeinfo$obsFuncs$C(0, y, list())
 
@@ -112,7 +117,7 @@ test_that("ODE generation evaluates parametrized initial values", {
         add_transport("Central", "", const = "ke") |>
         add_parameter(A0 = 100, ke = 0.2)
 
-    odeinfo <- to_ode(M)
+    odeinfo <- .to_ode(M)
 
     expect_equal(odeinfo$y0, c(a_drug_Central = 100))
     expect_equal(odeinfo$freeParams, character(0))
@@ -125,7 +130,7 @@ test_that("ODE generation evaluates parametrized initials with unit dimensions",
         add_transport("Central", "", const = "ke") |>
         add_parameter(C0 = 10 [mg/L], V = 2 [L], ke = 0.2 [1/h])
 
-    odeinfo <- to_ode(M, dimensions = list(mass = "mg", length = "dm", time = "h"))
+    odeinfo <- .to_ode(M, dimensions = list(mass = "mg", length = "dm", time = "h"))
 
     expect_equal(odeinfo$y0, c(a_drug_Central = 20))
     expect_equal(odeinfo$freeParams, character(0))
@@ -139,7 +144,7 @@ test_that("ODE generation reports unresolved parametrized initial values", {
         add_parameter(ke = 0.2)
 
     expect_error(
-        to_ode(M),
+        .to_ode(M),
         "initial.*A0|A0.*initial"
     )
 })
@@ -154,7 +159,7 @@ test_that("ODE generation processes equations correctly", {
         add_parameter(ke_par = 1) |>
         add_equation(ke_eq = ke_par)
 
-    odeinfo <- to_ode(M)
+    odeinfo <- .to_ode(M)
 
     expect_equal(odeinfo$freeParams, character(0))
     expect_no_error(odeinfo$odefun(0, odeinfo$y0))
@@ -168,7 +173,7 @@ test_that("ODE generation includes elementary reactions", {
         add_reaction(input = "A", output = "B", cmt = "cyt", const = "kAB") |>
         add_parameter(kAB = 2)
 
-    odeinfo <- to_ode(M)
+    odeinfo <- .to_ode(M)
     dydt <- odeinfo$odefun(0, odeinfo$y0, list())[[1]]
 
     expect_equal(
@@ -189,7 +194,7 @@ test_that("ODE generation supports concentration states for reaction-only models
         add_reaction(input = "A", output = "B", cmt = "cyt", const = "kAB") |>
         add_parameter(kAB = 2)
 
-    odeinfo <- to_ode(M)
+    odeinfo <- .to_ode(M)
     dydt <- odeinfo$odefun(0, odeinfo$y0, list())[[1]]
 
     expect_equal(odeinfo$dslStateNames, c("c[A, cyt]", "c[B, cyt]"))
@@ -217,7 +222,7 @@ test_that("ODE generation includes complex reaction rates", {
         ) |>
         add_parameter(vmax = 2, Km = 10)
 
-    odeinfo <- to_ode(M)
+    odeinfo <- .to_ode(M)
     dydt <- odeinfo$odefun(0, odeinfo$y0, list())[[1]]
 
     expect_equal(
@@ -234,7 +239,7 @@ test_that("ODE generation includes reaction synthesis and degradation", {
         add_reaction(input = "A", output = NULL, cmt = "cyt", const = "kdeg") |>
         add_parameter(ksyn = 3, kdeg = 0.5)
 
-    odeinfo <- to_ode(M)
+    odeinfo <- .to_ode(M)
     dydt <- odeinfo$odefun(0, odeinfo$y0, list())[[1]]
 
     expect_equal(setNames(dydt, odeinfo$stateNames), c(a_A_cyt = -2))
@@ -248,7 +253,7 @@ test_that("reaction rates can use equations in ODE export", {
         add_equation(k_eq = k1 + k2) |>
         add_parameter(k1 = 1, k2 = 2)
 
-    odeinfo <- to_ode(M)
+    odeinfo <- .to_ode(M)
     dydt <- odeinfo$odefun(0, odeinfo$y0, list())[[1]]
 
     expect_equal(odeinfo$freeParams, character(0))
@@ -269,7 +274,7 @@ test_that("reaction ODEs conserve mass for reversible reactions", {
         add_reaction(input = "B", output = "A", cmt = c("cyt", "nuc"), const = "kBA") |>
         add_parameter(kAB = 0.2, kBA = 0.1)
 
-    odeinfo1 <- to_ode(M1)
+    odeinfo1 <- .to_ode(M1)
     out1 <- deSolve::ode(y = odeinfo1$y0, times = times, func = odeinfo1$odefun)
     total1 <- rowSums(out1[, c("a_A_cyt", "a_A_nuc", "a_B_cyt", "a_B_nuc")])
 
@@ -283,7 +288,7 @@ test_that("reaction ODEs conserve mass for reversible reactions", {
         add_reaction(input = "B", output = c("A", "A"), cmt = c("cyt", "nuc"), const = "kBA") |>
         add_parameter(kAB = 0.02, kBA = 0.1)
 
-    odeinfo2 <- to_ode(M2)
+    odeinfo2 <- .to_ode(M2)
     out2 <- deSolve::ode(y = odeinfo2$y0, times = times, func = odeinfo2$odefun)
     total_A <- rowSums(out2[, c("a_A_cyt", "a_A_nuc")])
     total_B <- rowSums(out2[, c("a_B_cyt", "a_B_nuc")])
@@ -309,7 +314,7 @@ test_that("ODE generation supports cross-compartment reaction participants", {
         ) |>
         add_parameter(kon = 1)
 
-    expect_silent(odeinfo <- to_ode(M))
+    expect_silent(odeinfo <- .to_ode(M))
     dydt <- odeinfo$odefun(0, odeinfo$y0, list())[[1]]
 
     expect_equal(odeinfo$stateNames, c("a_L_plasma", "a_R_membrane", "a_LR_membrane"))
@@ -327,7 +332,7 @@ test_that("ODE export rejects concentration-only transports without a volume", {
         add_parameter(k = 1)
 
     expect_error(
-        to_ode(M),
+        .to_ode(M),
         "Transports require amount states or a compartment volume"
     )
 })
@@ -339,7 +344,7 @@ test_that("ODE observables reject amount conversion from concentration states wi
         add_observable(A_amount = a[A, cyt])
 
     expect_error(
-        suppressWarnings(to_ode(M)),
+        suppressWarnings(.to_ode(M)),
         "Cannot convert concentration state .* to amount without a compartment volume"
     )
 })

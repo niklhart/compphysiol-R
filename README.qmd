@@ -62,19 +62,16 @@ Add a dosing regimen:
 M <- add_dosing(M, target = "ven", time = 0 [h], amount = 100 [mg])
 ```
 
-Convert to ODEs and simulate:
+Simulate:
 
 ```{r}
-odeinfo <- to_ode(M, dimensions = list(time = "h", mass = "mg", length = "cm"))
 times <- seq(0, 24, by = 0.1)
-out <- deSolve::ode(
-    y = odeinfo$y0,
-    times = times,
-    func = odeinfo$odefun,
-    parms = paramValues,
-    events = odeinfo$events
+out <- simulate(
+    M,
+    time = times [h],
+    dimensions = list(time = "h", mass = "mg", length = "cm")
 )
-out_df <- as.data.frame(out)
+out_df <- out$states
 ```
 
 Plot compartment amounts
