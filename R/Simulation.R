@@ -17,7 +17,8 @@
 #' scale even if results are displayed back in milligrams.
 #'
 #' @param object A `CompartmentModel` object.
-#' @param nsim Ignored; included for compatibility with [stats::simulate()].
+#' @param nsim Number of stochastic realizations for `simulation_type = "ssa"`.
+#'   Ignored by deterministic simulation routes.
 #' @param seed Optional random seed for stochastic simulation routes.
 #' @param time Simulation time points. Units can be supplied with the unit DSL,
 #'   e.g. `seq(0, 24) [h]`.
@@ -217,7 +218,7 @@ simulate.StochasticModel <- function(
     time <- .process_nse_arg(substitute(time), envir = parent.frame())
     time <- .simulation_apply_time_unit(time, unit)
     .simulation_validate_time(time)
-    .stochastic_simulation_validate_nsim(nsim)
+    nsim <- .stochastic_simulation_nsim(nsim)
 
     sim_parameters <- .simulation_parameters_object(parameters)
     merged_parameters <- .merge_ode_parameters(object$parameters, sim_parameters)
@@ -231,25 +232,43 @@ simulate.StochasticModel <- function(
 
     if (!is.null(seed)) set.seed(seed)
 
-    trajectory <- .ssa_simulate(
-        stoichiometry = object$stoichiometry,
-        propensity_function = propfun,
-        time = solver_time,
-        y0 = y0,
-        parameters = solver_parameters
-    )
+    trajectories <- lapply(seq_len(nsim), function(rep_idx) {
+        trajectory <- .ssa_simulate(
+            stoichiometry = object$stoichiometry,
+            propensity_function = propfun,
+            time = solver_time,
+            y0 = y0,
+            parameters = solver_parameters
+        )
 
-    states <- as.data.frame(trajectory)
-    names(states) <- c("time", object$states$output_name)
-    states$time <- .simulation_attach_time_units(states$time, time, dimensions)
+        states <- as.data.frame(trajectory)
+        names(states) <- c("time", object$states$output_name)
+        states$time <- .simulation_attach_time_units(states$time, time, dimensions)
+        if (nsim > 1L) {
+            states <- cbind(states["time"], rep = rep_idx, states[object$states$output_name])
+        }
 
-    observables <- .stochastic_simulation_observables(
-        states = states,
-        solver_time = solver_time,
-        model = object,
-        dimensions = dimensions,
-        parameters = merged_parameters
-    )
+        observables <- .stochastic_simulation_observables(
+            states = states,
+            solver_time = solver_time,
+            model = object,
+            dimensions = dimensions,
+            parameters = merged_parameters
+        )
+        if (nsim > 1L && !is.null(observables)) {
+            observables <- cbind(
+                observables["time"],
+                rep = rep_idx,
+                observables[setdiff(names(observables), "time")]
+            )
+        }
+
+        list(states = states, observables = observables)
+    })
+
+    states <- do.call(rbind, lapply(trajectories, `[[`, "states"))
+    rownames(states) <- NULL
+    observables <- .stochastic_simulation_bind_observables(lapply(trajectories, `[[`, "observables"))
 
     structure(
         list(
@@ -353,8 +372,10 @@ simulate.StochasticModel <- function(
 #' @export
 print.SimulationResult <- function(x, ...) {
     n_time <- nrow(x$states)
-    n_states <- max(ncol(x$states) - 1, 0)
-    n_observables <- if (is.null(x$observables)) 0 else max(ncol(x$observables) - 1, 0)
+    state_names <- setdiff(names(x$states), c("time", "rep"))
+    observable_names <- if (is.null(x$observables)) character(0) else setdiff(names(x$observables), c("time", "rep"))
+    n_states <- length(state_names)
+    n_observables <- length(observable_names)
     time_span <- if (n_time > 0) {
         sprintf("%s to %s", format(x$states$time[[1]]), format(x$states$time[[n_time]]))
     } else {
@@ -365,12 +386,12 @@ print.SimulationResult <- function(x, ...) {
     cat(sprintf("  time: %s (%s points)\n", time_span, n_time))
     cat(sprintf("  states: %s", n_states))
     if (n_states > 0) {
-        cat(sprintf(" (%s)", .simulation_format_names(setdiff(names(x$states), "time"), prefix = "  states: ")))
+        cat(sprintf(" (%s)", .simulation_format_names(state_names, prefix = "  states: ")))
     }
     cat("\n")
     cat(sprintf("  observables: %s", n_observables))
     if (n_observables > 0) {
-        cat(sprintf(" (%s)", .simulation_format_names(setdiff(names(x$observables), "time"), prefix = "  observables: ")))
+        cat(sprintf(" (%s)", .simulation_format_names(observable_names, prefix = "  observables: ")))
     }
     cat("\n")
 
@@ -705,13 +726,13 @@ print.SimulationResult <- function(x, ...) {
     })
 }
 
-.stochastic_simulation_validate_nsim <- function(nsim) {
-    if (is.null(nsim)) return(invisible(NULL))
-    if (is.numeric(nsim) && length(nsim) == 1L && !is.na(nsim) && nsim == 1) {
-        return(invisible(NULL))
+.stochastic_simulation_nsim <- function(nsim) {
+    if (is.null(nsim)) return(1L)
+    if (is.numeric(nsim) && length(nsim) == 1L && is.finite(nsim) && nsim >= 1 && nsim == round(nsim)) {
+        return(as.integer(nsim))
     }
 
-    stop("SSA simulation supports only one realization for nsim in V1.", call. = FALSE)
+    stop("Argument 'nsim' must be a positive integer scalar for SSA simulation.", call. = FALSE)
 }
 
 .stochastic_model_initial_counts <- function(model, parameters) {
@@ -835,6 +856,15 @@ print.SimulationResult <- function(x, ...) {
         dimensions,
         parameters = parameters
     )
+}
+
+.stochastic_simulation_bind_observables <- function(observables) {
+    observables <- Filter(Negate(is.null), observables)
+    if (length(observables) == 0) return(NULL)
+
+    out <- do.call(rbind, observables)
+    rownames(out) <- NULL
+    out
 }
 
 .stochastic_model_dimension_values <- function(model, parameters) {

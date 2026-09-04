@@ -54,12 +54,8 @@ test_that("SSA source and linear sink reactions approach Poisson counts", {
         add_parameter(ksyn = 2, kdeg = 1)
     stochastic_model <- to_stochastic_model(model)
     n <- 1500
-    final_counts <- integer(n)
-
-    for (i in seq_len(n)) {
-        out <- simulate(stochastic_model, time = c(0, 10), seed = i)
-        final_counts[[i]] <- out$states$a_A_cyt[[2]]
-    }
+    out <- simulate(stochastic_model, time = c(0, 10), nsim = n, seed = 1)
+    final_counts <- out$states$a_A_cyt[out$states$time == 10]
 
     lambda <- 2 * (1 - exp(-10))
     bins <- 0:5
@@ -78,16 +74,37 @@ test_that("SSA source and linear sink reactions approach Poisson counts", {
     expect_lt(pearson_statistic, stats::qchisq(0.999, df = length(observed) - 1))
 })
 
-test_that("SSA simulation supports only one realization in V1", {
+test_that("SSA simulation supports multiple realizations in long format", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = 5, type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_observable(Aobs = a[drug, Central]) |>
+        add_parameter(ke = 0.2)
+    time <- 0:2
+
+    expect_no_error(simulate(model, time = 0:2, simulation_type = "ssa", nsim = NULL))
+    expect_no_error(simulate(model, time = 0:2, simulation_type = "ssa", nsim = 1))
+    out <- simulate(model, time = time, simulation_type = "ssa", nsim = 3, seed = 1)
+    repeat_out <- simulate(model, time = time, simulation_type = "ssa", nsim = 3, seed = 1)
+
+    expect_named(out$states, c("time", "rep", "a_drug_Central"))
+    expect_named(out$observables, c("time", "rep", "Aobs"))
+    expect_equal(out$states$time, rep(time, times = 3))
+    expect_equal(out$states$rep, rep(1:3, each = length(time)))
+    expect_equal(out$observables$rep, out$states$rep)
+    expect_equal(out$observables$Aobs, out$states$a_drug_Central)
+    expect_equal(repeat_out, out)
+})
+
+test_that("SSA simulation rejects invalid nsim values", {
     model <- compartment_model() |>
         add_compartment("Central", volume = NA_real_) |>
         add_molecule("drug", cmt = "Central", initial = 5, type = "amount")
 
-    expect_no_error(simulate(model, time = 0:2, simulation_type = "ssa", nsim = NULL))
-    expect_no_error(simulate(model, time = 0:2, simulation_type = "ssa", nsim = 1))
     expect_error(
-        simulate(model, time = 0:2, simulation_type = "ssa", nsim = 2),
-        "nsim|one realization|not implemented",
+        simulate(model, time = 0:2, simulation_type = "ssa", nsim = 1.5),
+        "nsim|positive integer",
         ignore.case = TRUE
     )
 })
