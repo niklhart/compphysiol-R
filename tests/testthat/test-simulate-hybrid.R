@@ -69,6 +69,19 @@ test_that("hybrid deterministic partition supports large initial counts", {
     expect_equal(out$states$a_drug_Central[[2]], initial_count * exp(-0.2), tolerance = 1e-5)
 })
 
+test_that("hybrid simulation clamps negative propensities to zero", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = 10, type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_parameter(ke = -0.2)
+
+    out <- simulate(model, time = 0:2, simulation_type = "hybrid", partition = FALSE)
+
+    expect_equal(out$states$time, 0:2)
+    expect_equal(out$states$a_drug_Central, c(10, 10, 10))
+})
+
 test_that("hybrid adaptive partition and fixed all-stochastic partition are reproducible", {
     model <- compartment_model() |>
         add_compartment("Central", volume = NA_real_) |>

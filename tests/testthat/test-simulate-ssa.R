@@ -50,6 +50,20 @@ test_that("SSA rejects initial counts above the integer limit", {
     )
 })
 
+test_that("SSA rejects negative propensities", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = 10, type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_parameter(ke = -0.2)
+
+    expect_error(
+        simulate(model, time = 0:1, simulation_type = "ssa"),
+        "negative value",
+        ignore.case = TRUE
+    )
+})
+
 test_that("SSA simulation is reproducible with seed", {
     time <- seq(0, 10, by = 1)
 

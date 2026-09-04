@@ -256,7 +256,17 @@ simulate.StochasticModel <- function(
     y0_storage_mode <- if (identical(simulation_type, "hybrid")) "double" else "integer"
     y0 <- .stochastic_model_initial_counts(object, merged_parameters, storage_mode = y0_storage_mode)
     solver_time <- .simulation_numeric_time(time, dimensions)
-    propfun <- .stochastic_model_propensity_function(object, merged_parameters, dimensions)
+    propensity_validator <- if (identical(simulation_type, "hybrid")) {
+        ".hybrid_validate_propensities"
+    } else {
+        ".ssa_validate_propensities"
+    }
+    propfun <- .stochastic_model_propensity_function(
+        object,
+        merged_parameters,
+        dimensions,
+        validator = propensity_validator
+    )
     solver_parameters <- .simulation_solver_parameters(merged_parameters, dimensions)
     partition <- .hybrid_simulation_partition(partition, ncol(object$stoichiometry), simulation_type, dimensions)
 
@@ -1056,7 +1066,7 @@ print.SimulationResult <- function(x, ...) {
     prod(seq(from = x - n + 1, to = x))
 }
 
-.stochastic_model_propensity_function <- function(model, parameters, dimensions) {
+.stochastic_model_propensity_function <- function(model, parameters, dimensions, validator = ".ssa_validate_propensities") {
     param_values <- .to_dimensions_vec(parameters, dimensions)
     free_params <- new.env(parent = emptyenv())
     free_params$list <- character()
@@ -1075,9 +1085,16 @@ print.SimulationResult <- function(x, ...) {
     for (i in seq_along(model$propensities)) {
         lines <- c(lines, paste0("    prop[", i, "] <- ", deparse1(subst(model$propensities[[i]]))))
     }
-    lines <- c(lines, "    .ssa_validate_propensities(prop)", "}")
+    lines <- c(lines, paste0("    ", validator, "(prop)"), "}")
 
     eval(parse(text = paste(lines, collapse = "\n")))
+}
+
+.hybrid_validate_propensities <- function(prop) {
+    if (!is.numeric(prop) || anyNA(prop) || any(!is.finite(prop))) {
+        stop("Hybrid propensity evaluated to a missing, non-finite, or non-numeric value.", call. = FALSE)
+    }
+    unname(prop)
 }
 
 .ssa_validate_propensities <- function(prop) {
