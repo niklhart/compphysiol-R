@@ -245,7 +245,8 @@ simulate.StochasticModel <- function(
     .simulation_check_time_mode(object, time, parameters = merged_parameters)
 
     dimensions <- .simulation_dimensions(object, time, dimensions, parameters = merged_parameters)
-    y0 <- .stochastic_model_initial_counts(object, merged_parameters)
+    y0_storage_mode <- if (identical(simulation_type, "hybrid")) "double" else "integer"
+    y0 <- .stochastic_model_initial_counts(object, merged_parameters, storage_mode = y0_storage_mode)
     solver_time <- .simulation_numeric_time(time, dimensions)
     propfun <- .stochastic_model_propensity_function(object, merged_parameters, dimensions)
     solver_parameters <- .simulation_solver_parameters(merged_parameters, dimensions)
@@ -821,7 +822,7 @@ print.SimulationResult <- function(x, ...) {
     )
 }
 
-.stochastic_model_initial_counts <- function(model, parameters) {
+.stochastic_model_initial_counts <- function(model, parameters, storage_mode = "integer") {
     initials <- .evaluate_initials(
         setNames(model$initials, model$states$dsl_name),
         parameters,
@@ -829,7 +830,7 @@ print.SimulationResult <- function(x, ...) {
     )
     .stochastic_model_check_initials(initials, allow_unresolved = FALSE)
     counts <- unname(unlist(initials))
-    storage.mode(counts) <- "integer"
+    storage.mode(counts) <- storage_mode
     counts
 }
 
