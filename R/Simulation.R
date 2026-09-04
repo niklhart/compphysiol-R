@@ -71,6 +71,7 @@ simulate.CompartmentModel <- function(
     simulation_type <- match.arg(simulation_type)
 
     time <- .process_nse_arg(substitute(time), envir = parent.frame())
+    partition <- .process_nse_arg(substitute(partition), envir = parent.frame())
     time <- .simulation_apply_time_unit(time, unit)
     .simulation_validate_time(time)
 
@@ -235,6 +236,7 @@ simulate.StochasticModel <- function(
 ) {
     simulation_type <- match.arg(simulation_type)
     time <- .process_nse_arg(substitute(time), envir = parent.frame())
+    partition <- .process_nse_arg(substitute(partition), envir = parent.frame())
     time <- .simulation_apply_time_unit(time, unit)
     .simulation_validate_time(time)
     nsim <- .stochastic_simulation_nsim(nsim)
@@ -250,7 +252,7 @@ simulate.StochasticModel <- function(
     solver_time <- .simulation_numeric_time(time, dimensions)
     propfun <- .stochastic_model_propensity_function(object, merged_parameters, dimensions)
     solver_parameters <- .simulation_solver_parameters(merged_parameters, dimensions)
-    partition <- .hybrid_simulation_partition(partition, ncol(object$stoichiometry), simulation_type)
+    partition <- .hybrid_simulation_partition(partition, ncol(object$stoichiometry), simulation_type, dimensions)
 
     if (!is.null(seed)) set.seed(seed)
 
@@ -803,14 +805,27 @@ print.SimulationResult <- function(x, ...) {
     stop("Argument 'include_event_times' must be a logical scalar.", call. = FALSE)
 }
 
-.hybrid_simulation_partition <- function(partition, n_reactions, simulation_type) {
+.hybrid_simulation_partition <- function(partition, n_reactions, simulation_type, dimensions) {
     if (!identical(simulation_type, "hybrid")) return(NULL)
 
     if (is.null(partition)) {
         stop("Argument 'partition' is required for hybrid simulation.", call. = FALSE)
     }
+    if (inherits(partition, "units")) {
+        if (is.null(dimensions$time)) {
+            stop(
+                "Unit-bearing hybrid partition thresholds require unit-aware simulation time or model time units.",
+                call. = FALSE
+            )
+        }
+        if (!.hybrid_partition_is_inverse_time(partition)) {
+            stop("Unit-bearing hybrid partition thresholds must be convertible to inverse time.", call. = FALSE)
+        }
+        partition <- do.call(.to_dimensions, c(list(partition), dimensions))
+        partition <- units::set_units(partition, NULL)
+    }
     if (is.numeric(partition) && length(partition) == 1L && is.finite(partition) && partition >= 0) {
-        return(partition)
+        return(unname(partition))
     }
     if (is.logical(partition) && length(partition) == n_reactions && !anyNA(partition)) {
         return(partition)
@@ -971,6 +986,15 @@ print.SimulationResult <- function(x, ...) {
 
     force(partition)
     function(y) partition
+}
+
+.hybrid_partition_is_inverse_time <- function(partition) {
+    partition <- .expand_registered_model_units(partition)
+    unit_obj <- units(.convert_to_si_base_without_custom(partition))
+    numerator <- setdiff(unit_obj$numerator, "1")
+    denominator <- setdiff(unit_obj$denominator, "1")
+
+    length(numerator) == 0L && identical(denominator, "s")
 }
 
 .hybrid_clamp_state <- function(y, tolerance = sqrt(.Machine$double.eps)) {

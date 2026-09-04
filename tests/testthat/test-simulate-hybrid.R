@@ -86,6 +86,49 @@ test_that("hybrid adaptive partition and fixed all-stochastic partition are repr
     expect_true(all(fixed_first$states$a_drug_Central == round(fixed_first$states$a_drug_Central)))
 })
 
+test_that("hybrid simulation supports unit-aware time and fixed partitioning", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = 100, type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_parameter(ke = 0.2 [1/h])
+    time <- units::set_units(seq(0, 5, by = 1), "h", mode = "standard")
+
+    out <- simulate(model, time = time, simulation_type = "hybrid", partition = FALSE, seed = 1)
+
+    expect_equal(out$states$time, time)
+    expect_equal(out$states$a_drug_Central, 100 * exp(-0.2 * seq(0, 5, by = 1)), tolerance = 1e-5)
+})
+
+test_that("hybrid adaptive partition accepts unit-aware inverse-time thresholds", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = 20, type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_parameter(ke = 0.2 [1/h])
+    time <- units::set_units(seq(0, 5, by = 1), "h", mode = "standard")
+
+    fixed <- simulate(model, time = time, simulation_type = "hybrid", partition = TRUE, seed = 42)
+    adaptive <- simulate(model, time = time, simulation_type = "hybrid", partition = 100 [1/h], seed = 42)
+
+    expect_equal(adaptive, fixed)
+})
+
+test_that("hybrid adaptive partition rejects incompatible threshold units", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = 20, type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_parameter(ke = 0.2 [1/h])
+    time <- units::set_units(seq(0, 5, by = 1), "h", mode = "standard")
+
+    expect_error(
+        simulate(model, time = time, simulation_type = "hybrid", partition = 1 [h]),
+        "inverse time",
+        ignore.case = TRUE
+    )
+})
+
 test_that("hybrid event times are optional", {
     time <- c(0, 5)
 
