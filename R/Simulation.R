@@ -38,6 +38,8 @@
 #'   reactions with propensities below this threshold are stochastic.
 #' @param include_event_times Include stochastic event times in stochastic
 #'   simulation output in addition to the requested `time` points.
+#' @param max_events Maximum number of stochastic reaction events allowed per
+#'   realization. The default `Inf` imposes no limit.
 #' @param ... Additional arguments passed to [deSolve::ode()].
 #' @returns A `SimulationResult` object.
 #' @examples
@@ -66,6 +68,7 @@ simulate.CompartmentModel <- function(
     simulation_type = c("ode", "analytical", "ssa", "hybrid"),
     partition = NULL,
     include_event_times = FALSE,
+    max_events = Inf,
     ...
 ) {
     simulation_type <- match.arg(simulation_type)
@@ -89,6 +92,7 @@ simulate.CompartmentModel <- function(
             simulation_type = simulation_type,
             partition = partition,
             include_event_times = include_event_times,
+            max_events = max_events,
             ...
         ))
     }
@@ -232,6 +236,7 @@ simulate.StochasticModel <- function(
     simulation_type = c("ssa", "hybrid"),
     partition = NULL,
     include_event_times = FALSE,
+    max_events = Inf,
     ...
 ) {
     simulation_type <- match.arg(simulation_type)
@@ -241,6 +246,7 @@ simulate.StochasticModel <- function(
     .simulation_validate_time(time)
     nsim <- .stochastic_simulation_nsim(nsim)
     include_event_times <- .simulation_include_event_times(include_event_times)
+    max_events <- .stochastic_simulation_max_events(max_events)
 
     sim_parameters <- .simulation_parameters_object(parameters)
     merged_parameters <- .merge_ode_parameters(object$parameters, sim_parameters)
@@ -266,6 +272,7 @@ simulate.StochasticModel <- function(
                 parameters = solver_parameters,
                 partition = partition,
                 include_event_times = include_event_times,
+                max_events = max_events,
                 ...
             )
         } else {
@@ -275,7 +282,8 @@ simulate.StochasticModel <- function(
                 time = solver_time,
                 y0 = y0,
                 parameters = solver_parameters,
-                include_event_times = include_event_times
+                include_event_times = include_event_times,
+                max_events = max_events
             )
         }
 
@@ -805,6 +813,19 @@ print.SimulationResult <- function(x, ...) {
     stop("Argument 'include_event_times' must be a logical scalar.", call. = FALSE)
 }
 
+.stochastic_simulation_max_events <- function(max_events) {
+    if (identical(max_events, Inf)) return(max_events)
+    if (is.numeric(max_events) &&
+        length(max_events) == 1L &&
+        is.finite(max_events) &&
+        max_events >= 0 &&
+        max_events == round(max_events)) {
+        return(as.numeric(max_events))
+    }
+
+    stop("Argument 'max_events' must be a non-negative integer scalar or Inf.", call. = FALSE)
+}
+
 .hybrid_simulation_partition <- function(partition, n_reactions, simulation_type, dimensions) {
     if (!identical(simulation_type, "hybrid")) return(NULL)
 
@@ -859,13 +880,22 @@ print.SimulationResult <- function(x, ...) {
     counts
 }
 
-.ssa_simulate <- function(stoichiometry, propensity_function, time, y0, parameters, include_event_times = FALSE) {
+.ssa_simulate <- function(
+    stoichiometry,
+    propensity_function,
+    time,
+    y0,
+    parameters,
+    include_event_times = FALSE,
+    max_events = Inf
+) {
     if (length(time) == 0) {
         return(matrix(NA_real_, nrow = 0L, ncol = length(y0) + 1L))
     }
 
     t <- time[[1]]
     y <- as.numeric(y0)
+    event_count <- 0
     rows <- list(c(t, y))
 
     for (i in seq_along(time)[-1L]) {
@@ -878,6 +908,8 @@ print.SimulationResult <- function(x, ...) {
             a0 <- sum(a)
             tau <- stats::rexp(1, rate = a0)
             if ((t + tau) <= target_time) {
+                event_count <- event_count + 1
+                .stochastic_simulation_check_max_events(event_count, max_events)
                 j <- sample(seq_along(a), size = 1, prob = a / a0)
                 y <- y + stoichiometry[, j]
                 t <- t + tau
@@ -901,6 +933,7 @@ print.SimulationResult <- function(x, ...) {
     parameters,
     partition,
     include_event_times = FALSE,
+    max_events = Inf,
     ...
 ) {
     if (length(time) == 0) {
@@ -911,6 +944,7 @@ print.SimulationResult <- function(x, ...) {
     t <- time[[1]]
     tf <- time[[length(time)]]
     y <- as.numeric(y0)
+    event_count <- 0
     rows <- list(c(t, y))
 
     get_partitioning <- .hybrid_partition_function(partition, propensity_function, parameters)
@@ -970,12 +1004,25 @@ print.SimulationResult <- function(x, ...) {
         }
 
         j <- sample(seq_along(a), size = 1, prob = a / a0)
+        event_count <- event_count + 1
+        .stochastic_simulation_check_max_events(event_count, max_events)
         y <- .hybrid_clamp_state(y + stoichiometry[, j])
         if (include_event_times) rows[[length(rows) + 1L]] <- c(t, y)
         is_stochastic_reaction <- get_partitioning(y)
     }
 
     do.call(rbind, rows)
+}
+
+.stochastic_simulation_check_max_events <- function(event_count, max_events) {
+    if (event_count <= max_events) return(invisible(NULL))
+
+    stop(
+        "Stochastic simulation exceeded 'max_events' (",
+        max_events,
+        ") before reaching the final simulation time.",
+        call. = FALSE
+    )
 }
 
 .hybrid_partition_function <- function(partition, propensity_function, parameters) {

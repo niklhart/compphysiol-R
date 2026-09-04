@@ -153,6 +153,33 @@ test_that("hybrid event times are optional", {
     expect_true(all(time %in% with_events$states$time))
 })
 
+test_that("hybrid simulation can limit stochastic events", {
+    expect_error(
+        simulate(
+            birth_death_model,
+            time = c(0, 5),
+            simulation_type = "hybrid",
+            partition = c(TRUE, FALSE),
+            seed = 1,
+            max_events = 0
+        ),
+        "max_events",
+        ignore.case = TRUE
+    )
+})
+
+test_that("hybrid max_events does not count deterministic integration", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = 100, type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_parameter(ke = 0.2)
+
+    expect_no_error(
+        simulate(model, time = 0:2, simulation_type = "hybrid", partition = FALSE, max_events = 0)
+    )
+})
+
 test_that("hybrid simulation evaluates observables and supports multiple realizations", {
     model <- birth_death_model |>
         add_observable(Aobs = a[A, cyt])

@@ -76,6 +76,19 @@ test_that("SSA event times are optional", {
     expect_true(all(time %in% with_events$states$time))
 })
 
+test_that("SSA simulation can limit stochastic events", {
+    expect_error(
+        simulate(ssa_death_model, time = c(0, 10), simulation_type = "ssa", seed = 1, max_events = 0),
+        "max_events",
+        ignore.case = TRUE
+    )
+    expect_error(
+        simulate(ssa_death_model, time = c(0, 10), simulation_type = "ssa", seed = 1, max_events = 1.5),
+        "non-negative integer scalar or Inf",
+        ignore.case = TRUE
+    )
+})
+
 test_that("SSA source and linear sink reactions approach Poisson counts", {
     model <- compartment_model() |>
         add_compartment("cyt", volume = 1) |>

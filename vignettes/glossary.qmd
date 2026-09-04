@@ -473,6 +473,12 @@ threshold. Stochastic event times can optionally be included in stochastic
 simulation output for diagnostics; by default, stochastic and hybrid routes
 report only the requested simulation times.
 
+Stochastic and hybrid simulation can also limit the number of stochastic
+reaction events per realization. This is a computational guardrail for models
+whose stochastic event rate is too high for practical direct event simulation;
+deterministic integration steps in a hybrid simulation are not counted as
+stochastic events.
+
 Simulation returns ODE state trajectories in a `SimulationResult` object.
 When observables are defined, their trajectories are included as derived
 simulation output; otherwise the observables component is `NULL`.
