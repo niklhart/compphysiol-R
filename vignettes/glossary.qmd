@@ -111,8 +111,8 @@ its public default.
 ## Domain-specific language
 
 The domain-specific language is the small expression syntax that lets model
-components refer to states, parameters, equations, and units while remaining
-ordinary R expressions or character strings.
+components refer to states, parameters, and equations while remaining ordinary
+R expressions or character strings.
 
 State references use bracket forms. `a[molecule, compartment]` refers to an
 amount state and `c[molecule, compartment]` refers to a concentration state.
@@ -127,23 +127,38 @@ and add-functions, expressions may be supplied either as ordinary R expressions
 using non-standard evaluation, such as `add_observable(C = c[drug, Central])`,
 or as character strings, such as `add_observable(C = "c[drug, Central]")`.
 
+Expression-like arguments interpret bracket calls as model-state references.
+For example, `a[Central]` means an amount state in the `Central` compartment
+when the omitted molecule can be resolved. It is not interpreted as a numeric
+object named `a` with unit `Central`.
+
 ## Unit shorthand
 
-Units are part of the intended model semantics. Many constructors accept
-unit-aware syntax of the form `value [unit]`, for example `100 [mg]`,
-`0.2 [1/h]`, or `1 [mg/L]`. The shorthand is converted to `units` objects and
-can be used for compartment sizes, molecule initial values, parameters, dosing
-times, dosing amounts, rates, durations, and simulation time points.
+Units are part of the intended model semantics. Exported value-like arguments
+where physical units are meaningful accept unit-aware syntax of the form
+`value [unit]`, for example `100 [mg]`, `0.2 [1/h]`, or `1 [mg/L]`. The
+shorthand is converted to `units` objects and can be used for compartment
+sizes, molecule initial values, parameter values, dosing times, dosing
+amounts, infusion rates, infusion durations, and simulation time points.
 
 Unit-aware arguments support ordinary R arithmetic over unit expressions. For
 example, `10 [mg] / 200 [g/mol]` derives an amount from a mass and molar mass,
 and `30 [min] + 0.5 [h]` derives a dosing or simulation time. The same syntax
-can be used directly outside model constructors with `with_units()`.
+can be used directly outside unit-aware arguments (e.g., during data processing) 
+by using `with_units()`.
 
-The shorthand follows ordinary R parsing rules. This can be surprising for
-expressions such as `1/2[h]`: R parses this as `1 / (2 [h])`, so it means
-`0.5 [1/h]`, not `0.5 [h]`. Use parentheses when the intended order is
-different, for example `(1/2) [h]`.
+Unit shorthand is not evaluated inside expression-like arguments such as
+transport rates, reaction rates, equations, or observables. Use unit-aware
+*parameters* for numerical quantities in those expressions, for example
+`parameters(k = 0.2 [1/h])` together with `add_transport(..., const = "k")`.
+This keeps bracket syntax unambiguous: value-like arguments use brackets for
+units, while expression-like arguments use brackets for model-state
+references.
+
+The shorthand follows ordinary R parsing rules, meaning that the unit bracket
+takes precedence over arithmetic operators. For example, `1/2[h]` is parsed 
+as `1 / (2 [h])`, so it means `0.5 [1/h]`, not `0.5 [h]`. Use parentheses when 
+the intended order is different, for example `(1/2) [h]`.
 
 Unit checking is a boundary behavior rather than a separate model component.
 During ODE export and simulation, unit-aware model values are checked for
