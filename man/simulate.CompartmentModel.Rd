@@ -13,13 +13,16 @@
   parameters = list(),
   dimensions = NULL,
   simulation_type = c("ode", "analytical", "ssa", "hybrid"),
+  partition = NULL,
+  include_event_times = FALSE,
   ...
 )
 }
 \arguments{
 \item{object}{A \code{CompartmentModel} object.}
 
-\item{nsim}{Ignored; included for compatibility with \code{\link[stats:simulate]{stats::simulate()}}.}
+\item{nsim}{Number of stochastic realizations for \code{simulation_type = "ssa"}.
+Ignored by deterministic simulation routes.}
 
 \item{seed}{Optional random seed for stochastic simulation routes.}
 
@@ -38,8 +41,15 @@ tolerances such as \code{atol}.}
 \item{simulation_type}{Simulation route. \code{"ode"} uses the established
 numerical ODE path. \code{"analytical"} uses matrix exponentials for supported
 linear models. \code{"ssa"} uses Gillespie's stochastic simulation algorithm.
-\code{"hybrid"} reserves the hybrid stochastic-deterministic route, but is not
-implemented yet.}
+\code{"hybrid"} uses the Alfonsi hybrid stochastic-deterministic algorithm.}
+
+\item{partition}{Partitioning for \code{simulation_type = "hybrid"}. A logical
+vector marks stochastic reactions with \code{TRUE} and deterministic reactions
+with \code{FALSE}. A non-negative numeric scalar enables adaptive partitioning:
+reactions with propensities below this threshold are stochastic.}
+
+\item{include_event_times}{Include stochastic event times in stochastic
+simulation output in addition to the requested \code{time} points.}
 
 \item{...}{Additional arguments passed to \code{\link[deSolve:ode]{deSolve::ode()}}.}
 }
