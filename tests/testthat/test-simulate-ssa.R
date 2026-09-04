@@ -45,6 +45,23 @@ test_that("SSA simulation is reproducible with seed", {
     expect_equal(second, first)
 })
 
+test_that("SSA event times are optional", {
+    time <- c(0, 10)
+
+    requested_only <- simulate(ssa_death_model, time = time, simulation_type = "ssa", seed = 1)
+    with_events <- simulate(
+        ssa_death_model,
+        time = time,
+        simulation_type = "ssa",
+        seed = 1,
+        include_event_times = TRUE
+    )
+
+    expect_equal(requested_only$states$time, time)
+    expect_true(nrow(with_events$states) > length(time))
+    expect_true(all(time %in% with_events$states$time))
+})
+
 test_that("SSA source and linear sink reactions approach Poisson counts", {
     model <- compartment_model() |>
         add_compartment("cyt", volume = 1) |>

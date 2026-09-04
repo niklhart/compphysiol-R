@@ -38,16 +38,16 @@ test_that("simulate accepts explicit ODE and analytical simulation types", {
     expect_equal(analytical$observables, default$observables)
 })
 
-test_that("simulate supports SSA and reserves hybrid simulation type", {
+test_that("simulate supports SSA and hybrid simulation types", {
     model <- test_model_for_simulation()
 
     expect_s3_class(
         simulate(model, time = seq(0, 1, by = 1), simulation_type = "ssa", seed = 1),
         "SimulationResult"
     )
-    expect_error(
-        simulate(model, time = seq(0, 1, by = 1), simulation_type = "hybrid"),
-        "Hybrid simulation is not implemented yet"
+    expect_s3_class(
+        simulate(model, time = seq(0, 1, by = 1), simulation_type = "hybrid", partition = FALSE, seed = 1),
+        "SimulationResult"
     )
 })
 

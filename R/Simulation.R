@@ -31,8 +31,13 @@
 #' @param simulation_type Simulation route. `"ode"` uses the established
 #'   numerical ODE path. `"analytical"` uses matrix exponentials for supported
 #'   linear models. `"ssa"` uses Gillespie's stochastic simulation algorithm.
-#'   `"hybrid"` reserves the hybrid stochastic-deterministic route, but is not
-#'   implemented yet.
+#'   `"hybrid"` uses the Alfonsi hybrid stochastic-deterministic algorithm.
+#' @param partition Partitioning for `simulation_type = "hybrid"`. A logical
+#'   vector marks stochastic reactions with `TRUE` and deterministic reactions
+#'   with `FALSE`. A non-negative numeric scalar enables adaptive partitioning:
+#'   reactions with propensities below this threshold are stochastic.
+#' @param include_event_times Include stochastic event times in stochastic
+#'   simulation output in addition to the requested `time` points.
 #' @param ... Additional arguments passed to [deSolve::ode()].
 #' @returns A `SimulationResult` object.
 #' @examples
@@ -59,19 +64,18 @@ simulate.CompartmentModel <- function(
     parameters = list(),
     dimensions = NULL,
     simulation_type = c("ode", "analytical", "ssa", "hybrid"),
+    partition = NULL,
+    include_event_times = FALSE,
     ...
 ) {
     simulation_type <- match.arg(simulation_type)
-    if (identical(simulation_type, "hybrid")) {
-        .simulation_stop_unimplemented_type(simulation_type)
-    }
 
     time <- .process_nse_arg(substitute(time), envir = parent.frame())
     time <- .simulation_apply_time_unit(time, unit)
     .simulation_validate_time(time)
 
     sim_parameters <- .simulation_parameters_object(parameters)
-    if (identical(simulation_type, "ssa")) {
+    if (simulation_type %in% c("ssa", "hybrid")) {
         stochastic_model <- .simulation_model_with_parameters(object, sim_parameters) |>
             to_stochastic_model()
         return(simulate(
@@ -81,6 +85,9 @@ simulate.CompartmentModel <- function(
             time = time,
             parameters = list(),
             dimensions = dimensions,
+            simulation_type = simulation_type,
+            partition = partition,
+            include_event_times = include_event_times,
             ...
         ))
     }
@@ -213,12 +220,17 @@ simulate.StochasticModel <- function(
     unit = NULL,
     parameters = list(),
     dimensions = NULL,
+    simulation_type = c("ssa", "hybrid"),
+    partition = NULL,
+    include_event_times = FALSE,
     ...
 ) {
+    simulation_type <- match.arg(simulation_type)
     time <- .process_nse_arg(substitute(time), envir = parent.frame())
     time <- .simulation_apply_time_unit(time, unit)
     .simulation_validate_time(time)
     nsim <- .stochastic_simulation_nsim(nsim)
+    include_event_times <- .simulation_include_event_times(include_event_times)
 
     sim_parameters <- .simulation_parameters_object(parameters)
     merged_parameters <- .merge_ode_parameters(object$parameters, sim_parameters)
@@ -229,17 +241,32 @@ simulate.StochasticModel <- function(
     solver_time <- .simulation_numeric_time(time, dimensions)
     propfun <- .stochastic_model_propensity_function(object, merged_parameters, dimensions)
     solver_parameters <- .simulation_solver_parameters(merged_parameters, dimensions)
+    partition <- .hybrid_simulation_partition(partition, ncol(object$stoichiometry), simulation_type)
 
     if (!is.null(seed)) set.seed(seed)
 
     trajectories <- lapply(seq_len(nsim), function(rep_idx) {
-        trajectory <- .ssa_simulate(
-            stoichiometry = object$stoichiometry,
-            propensity_function = propfun,
-            time = solver_time,
-            y0 = y0,
-            parameters = solver_parameters
-        )
+        trajectory <- if (identical(simulation_type, "hybrid")) {
+            .hybrid_simulate(
+                stoichiometry = object$stoichiometry,
+                propensity_function = propfun,
+                time = solver_time,
+                y0 = y0,
+                parameters = solver_parameters,
+                partition = partition,
+                include_event_times = include_event_times,
+                ...
+            )
+        } else {
+            .ssa_simulate(
+                stoichiometry = object$stoichiometry,
+                propensity_function = propfun,
+                time = solver_time,
+                y0 = y0,
+                parameters = solver_parameters,
+                include_event_times = include_event_times
+            )
+        }
 
         states <- as.data.frame(trajectory)
         names(states) <- c("time", object$states$output_name)
@@ -745,6 +772,33 @@ print.SimulationResult <- function(x, ...) {
     stop("Argument 'nsim' must be a positive integer scalar for SSA simulation.", call. = FALSE)
 }
 
+.simulation_include_event_times <- function(include_event_times) {
+    if (is.logical(include_event_times) && length(include_event_times) == 1L && !is.na(include_event_times)) {
+        return(include_event_times)
+    }
+
+    stop("Argument 'include_event_times' must be a logical scalar.", call. = FALSE)
+}
+
+.hybrid_simulation_partition <- function(partition, n_reactions, simulation_type) {
+    if (!identical(simulation_type, "hybrid")) return(NULL)
+
+    if (is.null(partition)) {
+        stop("Argument 'partition' is required for hybrid simulation.", call. = FALSE)
+    }
+    if (is.numeric(partition) && length(partition) == 1L && is.finite(partition) && partition >= 0) {
+        return(partition)
+    }
+    if (is.logical(partition) && length(partition) == n_reactions && !anyNA(partition)) {
+        return(partition)
+    }
+
+    stop(
+        "Argument 'partition' must be a non-negative numeric scalar or a logical vector with one value per reaction.",
+        call. = FALSE
+    )
+}
+
 .stochastic_model_initial_counts <- function(model, parameters) {
     initials <- .evaluate_initials(
         setNames(model$initials, model$states$dsl_name),
@@ -757,15 +811,16 @@ print.SimulationResult <- function(x, ...) {
     counts
 }
 
-.ssa_simulate <- function(stoichiometry, propensity_function, time, y0, parameters) {
-    out <- matrix(NA_real_, nrow = length(time), ncol = length(y0) + 1L)
-    out[, 1] <- time
-    if (length(time) == 0) return(out)
+.ssa_simulate <- function(stoichiometry, propensity_function, time, y0, parameters, include_event_times = FALSE) {
+    if (length(time) == 0) {
+        return(matrix(NA_real_, nrow = 0L, ncol = length(y0) + 1L))
+    }
 
     t <- time[[1]]
     y <- as.numeric(y0)
+    rows <- list(c(t, y))
 
-    for (i in seq_along(time)) {
+    for (i in seq_along(time)[-1L]) {
         target_time <- time[[i]]
 
         while (t < target_time) {
@@ -778,15 +833,116 @@ print.SimulationResult <- function(x, ...) {
                 j <- sample(seq_along(a), size = 1, prob = a / a0)
                 y <- y + stoichiometry[, j]
                 t <- t + tau
+                if (include_event_times) rows[[length(rows) + 1L]] <- c(t, y)
             } else {
                 break
             }
         }
 
-        out[i, -1] <- y
+        rows[[length(rows) + 1L]] <- c(target_time, y)
     }
 
-    out
+    do.call(rbind, rows)
+}
+
+.hybrid_simulate <- function(
+    stoichiometry,
+    propensity_function,
+    time,
+    y0,
+    parameters,
+    partition,
+    include_event_times = FALSE,
+    ...
+) {
+    if (length(time) == 0) {
+        return(matrix(NA_real_, nrow = 0L, ncol = length(y0) + 1L))
+    }
+
+    nx <- length(y0)
+    t <- time[[1]]
+    tf <- time[[length(time)]]
+    y <- as.numeric(y0)
+    rows <- list(c(t, y))
+
+    get_partitioning <- .hybrid_partition_function(partition, propensity_function, parameters)
+    is_stochastic_reaction <- get_partitioning(y)
+
+    solver_args <- list(...)
+    solver_args$method <- solver_args$method %||% "lsodar"
+
+    while (t < tf) {
+        xi <- stats::rexp(1, rate = 1)
+
+        ode_function <- function(t, Y, parms) {
+            current_y <- Y[seq_len(nx)]
+            a <- propensity_function(current_y, parms)
+            a[a < 0] <- 0
+
+            stochastic_hazard <- sum(a[is_stochastic_reaction])
+            deterministic_propensity <- a * !is_stochastic_reaction
+            dydt <- as.vector(stoichiometry %*% deterministic_propensity)
+
+            list(c(dydt, stochastic_hazard))
+        }
+        root_function <- function(t, Y, parms) {
+            Y[[nx + 1L]] - xi
+        }
+
+        integration_times <- c(t, time[time > t])
+        solver_args$y <- c(y, stochastic_hazard = 0)
+        solver_args$times <- integration_times
+        solver_args$func <- ode_function
+        solver_args$parms <- parameters
+        solver_args$rootfunc <- root_function
+
+        out <- do.call(deSolve::ode, solver_args)
+        if (nrow(out) > 1L) {
+            for (i in seq.int(2L, nrow(out))) {
+                out_time <- out[i, "time"]
+                out_y <- .hybrid_clamp_state(unname(out[i, 1L + seq_len(nx)]))
+                if (include_event_times || out_time %in% time) {
+                    rows[[length(rows) + 1L]] <- c(out_time, out_y)
+                }
+            }
+        }
+
+        t <- out[nrow(out), "time"]
+        y <- .hybrid_clamp_state(unname(out[nrow(out), 1L + seq_len(nx)]))
+        root_reached <- isTRUE(attr(out, "iroot") == 1) && t < tf
+        if (!root_reached) break
+
+        a <- propensity_function(y, parameters)
+        a[a < 0] <- 0
+        a[!is_stochastic_reaction] <- 0
+        a0 <- sum(a)
+        if (a0 <= 0) {
+            is_stochastic_reaction <- get_partitioning(y)
+            next
+        }
+
+        j <- sample(seq_along(a), size = 1, prob = a / a0)
+        y <- .hybrid_clamp_state(y + stoichiometry[, j])
+        if (include_event_times) rows[[length(rows) + 1L]] <- c(t, y)
+        is_stochastic_reaction <- get_partitioning(y)
+    }
+
+    do.call(rbind, rows)
+}
+
+.hybrid_partition_function <- function(partition, propensity_function, parameters) {
+    if (is.numeric(partition)) {
+        threshold <- partition
+        return(function(y) propensity_function(y, parameters) < threshold)
+    }
+
+    force(partition)
+    function(y) partition
+}
+
+.hybrid_clamp_state <- function(y, tolerance = sqrt(.Machine$double.eps)) {
+    y[y < 0 & y > -tolerance] <- 0
+    y
 }
 
 .ssa_falling <- function(x, n) {

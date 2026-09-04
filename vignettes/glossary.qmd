@@ -412,13 +412,20 @@ Simulation runs a `CompartmentModel` or one of its lowered model
 representations over requested time points and returns a toolbox-level result.
 For `CompartmentModel` inputs, the `simulation_type` argument selects the
 route: numerical ODE simulation, analytical deterministic simulation,
-Gillespie stochastic simulation, or hybrid stochastic-deterministic simulation.
-The hybrid route is reserved but not implemented yet. Lowered `OdeModel`,
+Gillespie stochastic simulation, or Alfonsi hybrid stochastic-deterministic
+simulation. Lowered `OdeModel`,
 `AnalyticalModel`, and `StochasticModel` objects can be simulated directly
 when repeated runs should avoid repeated lowering. Unlike ODE export,
 simulation owns both sides of the solver boundary: it converts unit-aware model
 quantities to numeric values for the solver and attaches units back to the
 returned trajectories.
+
+Hybrid simulation uses the same count-based `StochasticModel` representation
+as Gillespie simulation. A partition marks reactions as stochastic or
+deterministic, either by a fixed logical vector or by an adaptive propensity
+threshold. Stochastic event times can optionally be included in stochastic
+simulation output for diagnostics; by default, stochastic and hybrid routes
+report only the requested simulation times.
 
 Simulation returns ODE state trajectories in a `SimulationResult` object.
 When observables are defined, their trajectories are included as derived
