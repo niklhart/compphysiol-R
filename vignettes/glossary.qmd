@@ -402,7 +402,7 @@ example, `deSolve` event tables are returned as raw event data, and output rows
 that coincide with event times may follow `deSolve`'s event-time convention
 rather than the toolbox-level simulation convention.
 
-Implementation anchor: solver-specific ODE export is handled by `to_deSolve()`.
+Implementation anchor: solver-specific ODE export is handled internally.
 The older `to_ode()` interface remains the compatibility entry point for
 `deSolve` export.
 

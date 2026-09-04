@@ -806,7 +806,7 @@ to_ode <- function(
     backend = "deSolve"
 ) {
     if (inherits(model, "OdeModel")) {
-        return(to_deSolve(model, dimensions = dimensions))
+        return(.to_deSolve(model, dimensions = dimensions))
     }
     .check_class(model, "CompartmentModel")
 
@@ -836,7 +836,7 @@ to_ode <- function(
     }
 
     model <- model |> wire() |> make_depot() |> .check_unit_consistency()
-    to_deSolve(to_ode_model(model), dimensions = dimensions)
+    .to_deSolve(to_ode_model(model), dimensions = dimensions)
 }
 
 # ------------------------------------ Non-exported helper functions for CompartmentModel processing ------------------------------------

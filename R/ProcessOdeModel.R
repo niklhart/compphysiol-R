@@ -434,17 +434,6 @@ print.StochasticModel <- function(x, ...) {
     invisible(x)
 }
 
-#' Export an ODE model to deSolve format
-#'
-#' @param model An `OdeModel` object.
-#' @param parameters Runtime parameter overrides.
-#' @param dimensions Named list of unit dimensions.
-#' @returns A list suitable for [deSolve::ode()].
-#' @export
-to_deSolve <- function(model, parameters = list(), dimensions = NULL) {
-    UseMethod("to_deSolve")
-}
-
 #' Print method for `OdeModel` class
 #'
 #' Pretty-prints an `OdeModel` object using DSL state names.
@@ -527,8 +516,8 @@ print.OdeModel <- function(x, ...) {
     invisible(x)
 }
 
-#' @export
-to_deSolve.OdeModel <- function(model, parameters = list(), dimensions = NULL) {
+.to_deSolve <- function(model, parameters = list(), dimensions = NULL) {
+    .check_class(model, "OdeModel")
     parameters <- .simulation_parameters_object(parameters)
     params <- .merge_ode_parameters(model$parameters, parameters)
     param_values <- .to_dimensions_vec(params, dimensions)

@@ -43,7 +43,7 @@ test_that("OdeModel stores shortened output names without placeholder attributes
     expect_null(attr(ode_model, "auto_placeholder"))
     expect_equal(ode_model$states$dsl_name, c("a[molec, Central]", "a[molec, Peripheral]"))
     expect_equal(ode_model$states$output_name, c("a_Central", "a_Peripheral"))
-    expect_equal(to_deSolve(ode_model, parameters = parameters(k12 = 0.1))$stateNames, ode_model$states$output_name)
+    expect_equal(.to_deSolve(ode_model, parameters = parameters(k12 = 0.1))$stateNames, ode_model$states$output_name)
 })
 
 test_that("OdeModel sink terms from constants avoid redundant product parentheses", {
@@ -173,7 +173,7 @@ test_that("legacy to_ode output matches OdeModel deSolve export", {
         add_parameter(k12 = 0.2, k21 = 0.1)
 
     legacy <- to_ode(model)
-    exported <- to_deSolve(to_ode_model(model))
+    exported <- .to_deSolve(to_ode_model(model))
 
     expect_equal(exported$stateNames, legacy$stateNames)
     expect_equal(exported$dslStateNames, legacy$dslStateNames)

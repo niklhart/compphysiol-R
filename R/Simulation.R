@@ -89,7 +89,7 @@ simulate.CompartmentModel <- function(
 
     dimensions <- .simulation_dimensions(export_model, time, dimensions)
     ode_model <- to_ode_model(export_model)
-    odeinfo <- to_deSolve(ode_model, dimensions = dimensions)
+    odeinfo <- .to_deSolve(ode_model, dimensions = dimensions)
 
     .simulation_solve_ode_model(
         ode_model,
@@ -122,7 +122,7 @@ simulate.OdeModel <- function(
     .simulation_check_time_mode(object, time, parameters = merged_parameters)
 
     dimensions <- .simulation_dimensions(object, time, dimensions, parameters = merged_parameters)
-    odeinfo <- to_deSolve(object, parameters = sim_parameters, dimensions = dimensions)
+    odeinfo <- .to_deSolve(object, parameters = sim_parameters, dimensions = dimensions)
 
     .simulation_solve_ode_model(
         object,
