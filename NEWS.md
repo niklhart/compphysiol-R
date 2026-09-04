@@ -1,3 +1,7 @@
+# compphysiol (development version)
+
+* better handling of large state or event counts in stochastic or hybrid simulations
+
 # compphysiol 0.4.0
 
 * refactored and extended the package-internal model representations:
