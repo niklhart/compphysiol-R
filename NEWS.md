@@ -1,6 +1,6 @@
 # compphysiol (development version)
 
-* better handling of large state or event counts in stochastic or hybrid simulations
+* better handling of large state or event counts in stochastic or hybrid simulations and numerically negative hybrid simulation propensities
 
 # compphysiol 0.4.0
 
