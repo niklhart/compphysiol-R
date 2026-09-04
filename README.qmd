@@ -49,6 +49,14 @@ pars <- parameters(
 )
 ```
 
+> **Note**
+> RStudio may currently flag expressions such as `100 [mg]` as syntax errors
+> even though they are valid R code and run correctly. This also affects
+> ordinary bracket calls outside `compphysiol`, such as `1 [TRUE]`, so it is an
+> RStudio diagnostics issue rather than a package error. Current workarounds
+> are switching diagnostics off for affected files with `# !diagnostics off`,
+> switching diagnostics off globally in RStudio, or using another IDE.
+
 Simulate the model over 24 hours:
 
 ```{r}
