@@ -1,3 +1,13 @@
+# compphysiol 0.4.0
+
+* refactored and extended the package-internal model representations:
+    * introduced a `ProcessModel` class which flattens `CompartmentModel` molecule-in-compartment pairs into states and transports/reactions into processes
+    * added a `StochasticModel` representation that can be solved via SSA or a hybrid algorithm
+    * the analytical simulation pathway uses an `AnalyticalModel` class now
+* promoted `simulate()` to the main interface for simulation of all of the above models returning `SimulationResult` objects; older `to_ode()` and `to_analytical()` have been removed.
+* better error handling for incomplete model specifications
+* consolidate the function index by un-exporting package functions that are still under development
+
 # compphysiol 0.3.7
 
 * added recursive parameter definitions
