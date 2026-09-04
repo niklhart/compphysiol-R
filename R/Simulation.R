@@ -93,12 +93,14 @@ simulate.CompartmentModel <- function(
     }
 
     export_model <- .simulation_model_with_parameters(object, sim_parameters)
-    export_model <- export_model |> wire() |> make_depot() |> .check_unit_consistency()
-    .simulation_check_time_mode(export_model, time)
-
-    dimensions <- .simulation_dimensions(export_model, time, dimensions)
+    export_model <- export_model |> wire() |> make_depot()
     if (identical(simulation_type, "analytical")) {
         analytical_model <- to_analytical_model(export_model)
+        .simulation_check_free_parameters_available(analytical_model, export_model$parameters)
+        export_model <- .check_unit_consistency(export_model)
+        .simulation_check_time_mode(export_model, time)
+
+        dimensions <- .simulation_dimensions(export_model, time, dimensions)
         return(simulate(
             analytical_model,
             nsim = nsim,
@@ -111,6 +113,11 @@ simulate.CompartmentModel <- function(
     }
 
     ode_model <- to_ode_model(export_model)
+    .simulation_check_free_parameters_available(ode_model, export_model$parameters)
+    export_model <- .check_unit_consistency(export_model)
+    .simulation_check_time_mode(export_model, time)
+
+    dimensions <- .simulation_dimensions(export_model, time, dimensions)
     odeinfo <- .to_deSolve(ode_model, dimensions = dimensions)
 
     .simulation_solve_ode_model(
@@ -140,6 +147,7 @@ simulate.OdeModel <- function(
 
     sim_parameters <- .simulation_parameters_object(parameters)
     merged_parameters <- .merge_ode_parameters(object$parameters, sim_parameters)
+    .simulation_check_free_parameters_available(object, merged_parameters)
     .ode_model_check_unit_consistency(object, merged_parameters)
     .simulation_check_time_mode(object, time, parameters = merged_parameters)
 
@@ -314,6 +322,20 @@ simulate.StochasticModel <- function(
         simulation_type
     )
     stop(label, " simulation is not implemented yet.", call. = FALSE)
+}
+
+.simulation_check_free_parameters_available <- function(model, parameters) {
+    missing <- setdiff(model$freeParams, names(parameters))
+    if (length(missing) > 0) {
+        stop(
+            "Missing parameter(s) for simulation: ",
+            paste(missing, collapse = ", "),
+            ".",
+            call. = FALSE
+        )
+    }
+
+    invisible(model)
 }
 
 .simulation_apply_time_unit <- function(time, unit) {

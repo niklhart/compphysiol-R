@@ -194,6 +194,19 @@ test_that("simulate can pass free parameters to the ODE solver", {
     expect_equal(out$states$a_drug_Central, 100 * exp(-0.2 * out$states$time), tolerance = 1e-6)
 })
 
+test_that("simulate reports missing ODE parameters before solver evaluation", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = 0, type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_dosing(time = 0, amount = 10, cmt = "Central", molec = "drug")
+
+    expect_error(
+        simulate(model, time = 1:10),
+        "Missing parameter\\(s\\) for simulation: ke\\."
+    )
+})
+
 test_that("simulate accepts a precompiled OdeModel with different parameter values", {
     model <- compartment_model() |>
         add_compartment("Central", volume = NA_real_) |>
@@ -217,6 +230,22 @@ test_that("simulate accepts a precompiled OdeModel with different parameter valu
     expect_equal(out_fast$states$a_drug_Central, 100 * exp(-0.4 * time), tolerance = 1e-6)
     expect_equal(out_slow$states$a_drug_Central, 100 * exp(-0.1 * time), tolerance = 1e-6)
     expect_true(out_fast$states$a_drug_Central[[length(time)]] < out_slow$states$a_drug_Central[[length(time)]])
+})
+
+test_that("simulate reports all missing OdeModel parameters together", {
+    model <- compartment_model() |>
+        add_compartment(c("Central", "Peripheral"), volume = NA_real_) |>
+        add_molecule("drug", cmt = c("Central", "Peripheral"), initial = c("A0", 0), type = "amount") |>
+        add_transport("Central", "", const = "k10") |>
+        add_transport("Central", "Peripheral", const = "k12") |>
+        add_transport("Peripheral", "Central", const = "k21") |>
+        add_observable(Acentral = a[drug, Central])
+    ode_model <- to_ode_model(model)
+
+    expect_error(
+        simulate(ode_model, time = 1:10),
+        "Missing parameter\\(s\\) for simulation: A0, k10, k12, k21\\."
+    )
 })
 
 test_that("simulate on an OdeModel applies runtime parameter values to initials and observables", {
