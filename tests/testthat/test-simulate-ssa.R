@@ -45,6 +45,39 @@ test_that("SSA simulation is reproducible with seed", {
     expect_equal(second, first)
 })
 
+test_that("SSA source and linear sink reactions approach Poisson counts", {
+    model <- compartment_model() |>
+        add_compartment("cyt", volume = 1) |>
+        add_molecule("A", cmt = "cyt", initial = 0, type = "amount") |>
+        add_reaction(input = NULL, output = "A", cmt = "cyt", const = "ksyn") |>
+        add_reaction(input = "A", output = NULL, cmt = "cyt", const = "kdeg") |>
+        add_parameter(ksyn = 2, kdeg = 1)
+    stochastic_model <- to_stochastic_model(model)
+    n <- 1500
+    final_counts <- integer(n)
+
+    for (i in seq_len(n)) {
+        out <- simulate(stochastic_model, time = c(0, 10), seed = i)
+        final_counts[[i]] <- out$states$a_A_cyt[[2]]
+    }
+
+    lambda <- 2 * (1 - exp(-10))
+    bins <- 0:5
+    observed <- c(
+        tabulate(factor(final_counts[final_counts <= 5], levels = bins), nbins = length(bins)),
+        sum(final_counts >= 6)
+    )
+    expected <- c(
+        stats::dpois(bins, lambda),
+        stats::ppois(max(bins), lambda, lower.tail = FALSE)
+    ) * n
+    pearson_statistic <- sum((observed - expected)^2 / expected)
+
+    expect_equal(mean(final_counts), lambda, tolerance = 0.12)
+    expect_equal(stats::var(final_counts), lambda, tolerance = 0.18)
+    expect_lt(pearson_statistic, stats::qchisq(0.999, df = length(observed) - 1))
+})
+
 test_that("SSA simulation supports only one realization in V1", {
     model <- compartment_model() |>
         add_compartment("Central", volume = NA_real_) |>
