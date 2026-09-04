@@ -408,14 +408,16 @@ The older `to_ode()` interface remains the compatibility entry point for
 
 ## Simulation
 
-Simulation runs a `CompartmentModel` or `OdeModel` over requested time points
-and returns a toolbox-level result. For `CompartmentModel` inputs, the
-`simulation_type` argument selects the route: deterministic ODE simulation,
-Gillespie stochastic simulation, or hybrid stochastic-deterministic simulation.
-Only the deterministic route is implemented at present. Unlike ODE export,
-simulation owns both sides of the solver boundary: it converts unit-aware model
-quantities to numeric values for the solver and attaches units back to the
-returned trajectories.
+Simulation runs a `CompartmentModel` or one of its lowered model
+representations over requested time points and returns a toolbox-level result.
+For `CompartmentModel` inputs, the `simulation_type` argument selects the
+route: deterministic ODE simulation, Gillespie stochastic simulation, or hybrid
+stochastic-deterministic simulation. The hybrid route is reserved but not
+implemented yet. Lowered `OdeModel`, `AnalyticalModel`, and `StochasticModel`
+objects can be simulated directly when repeated runs should avoid repeated
+lowering. Unlike ODE export, simulation owns both sides of the solver boundary:
+it converts unit-aware model quantities to numeric values for the solver and
+attaches units back to the returned trajectories.
 
 Simulation returns ODE state trajectories in a `SimulationResult` object.
 When observables are defined, their trajectories are included as derived
@@ -441,13 +443,14 @@ unit DSL or through the `unit` argument. Mixed time modes are rejected: a model
 with time units cannot be simulated with unit-free time points, and unit-aware
 time points cannot be used with a model that is unit-free in time.
 
-Passing an `OdeModel` to `simulate()` can avoid repeated lowering when the same
-model structure is simulated multiple times with different runtime parameter
-values. Passing a `CompartmentModel` keeps diagnostics closer to the original
-model components.
+Passing a lowered model representation to `simulate()` can avoid repeated
+lowering when the same model structure is simulated multiple times with
+different runtime parameter values. Passing a `CompartmentModel` keeps
+diagnostics closer to the original model components.
 
 Implementation anchor: simulation is handled by `simulate()` methods for
-`CompartmentModel` and `OdeModel` objects.
+`CompartmentModel`, `OdeModel`, `AnalyticalModel`, and `StochasticModel`
+objects.
 
 ## Lumping
 
@@ -480,5 +483,6 @@ names. The constant source term `b` is part of the representation, although
 the first implementation only accepts homogeneous systems with `b = 0`.
 
 Implementation anchor: `AnalyticalModel` objects are created by
-`to_analytical_model()`. The older `to_analytical()` interface remains the
-compatibility entry point for analytical solution functions.
+`to_analytical_model()` and can be simulated with `simulate()`. The older
+`to_analytical()` interface remains the compatibility entry point for
+analytical solution functions.

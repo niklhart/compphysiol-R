@@ -53,16 +53,56 @@ test_that("2-CMT analytical solution matches numerical ODE solution", {
     expect_equal(y_aly, y_num, tolerance = 1e-4)
 })
 
-test_that("analytical export rejects models with reactions", {
+test_that("analytical export accepts AnalyticalModel inputs", {
+    M <- compartment_model() |>
+        add_compartment("cen", volume = NA_real_) |>
+        add_molecule("drug", cmt = "cen", initial = 10, type = "amount") |>
+        add_transport("cen", "", const = "kc0", molec = "drug")
+    analytical_model <- to_analytical_model(M)
+    times <- 0:3
+    params <- list(kc0 = 0.2)
+
+    from_compartment_model <- to_analytical(M)
+    from_analytical_model <- to_analytical(analytical_model)
+
+    expect_equal(from_analytical_model$statefun(times, params), from_compartment_model$statefun(times, params))
+    expect_equal(from_analytical_model$freeParams, "kc0")
+})
+
+test_that("analytical state function does not require observable-only parameters", {
+    M <- compartment_model() |>
+        add_compartment("cen", volume = NA_real_) |>
+        add_molecule("drug", cmt = "cen", initial = 10, type = "amount") |>
+        add_transport("cen", "", const = "kc0", molec = "drug") |>
+        add_observable(C = a[drug, cen] / F)
+    sol <- to_analytical(M)
+    times <- 0:3
+
+    expect_equal(
+        sol$statefun(times, params = list(kc0 = 0.2))[, "a_drug_cen"],
+        10 * exp(-0.2 * times),
+        tolerance = 1e-6
+    )
+    expect_equal(
+        sol$obsFuncs$C(times, sol$statefun(times, params = list(kc0 = 0.2)), list(F = 2)),
+        10 * exp(-0.2 * times) / 2,
+        tolerance = 1e-6
+    )
+})
+
+test_that("analytical export supports first-order reaction systems", {
     M <- compartment_model() |>
         add_compartment("cyt", volume = 1) |>
         add_molecule(c("A", "B"), cmt = "cyt", initial = c(10, 0), type = "amount") |>
         add_reaction(input = "A", output = "B", cmt = "cyt", const = "kAB")
+    times <- 0:3
+    kAB <- 0.2
 
-    expect_error(
-        to_analytical(M),
-        "Analytical solutions with reactions are not implemented yet."
-    )
+    sol <- to_analytical(M)
+    out <- sol$statefun(times, params = list(kAB = kAB))
+
+    expect_equal(out[, "a_A_cyt"], 10 * exp(-kAB * times), tolerance = 1e-6)
+    expect_equal(out[, "a_B_cyt"], 10 * (1 - exp(-kAB * times)), tolerance = 1e-6)
 })
 
 test_that("1-CMT analytical observables follow ODE observable contract", {

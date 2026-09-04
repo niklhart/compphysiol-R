@@ -590,16 +590,17 @@ make_depot <- function(model) {
 
 # ------------------------------------ `to_*` functions for CompartmentModel exporting ------------------------------------
 
-#' Generate analytical solution function from a linear `CompartmentModel` object.
+#' Generate analytical solution function from a linear model object.
 #' 
-#' For linear compartment models, the system of ODEs can be solved analytically using matrix exponentials. 
-#' This function generates a state function that evaluates this analytical solution at given time points and parameter values.
+#' For linear models, the system of ODEs can be solved analytically using
+#' matrix exponentials. This function generates a state function that evaluates
+#' this analytical solution at given time points and parameter values.
 #'
-#' Analytical export currently supports wired models with linear transports and
-#' no dosing events, reactions, or nonlinear transports. Use [to_ode()] for the
-#' more general numerical export path.
+#' Analytical export first lowers `CompartmentModel` inputs to an
+#' `AnalyticalModel`. Passing an `AnalyticalModel` directly avoids repeated
+#' lowering when exporting the same model structure repeatedly.
 #' 
-#' @param model A `CompartmentModel` object.
+#' @param model A `CompartmentModel` or `AnalyticalModel` object.
 #' @returns A length 2 list named `state` (a function) and `observable`
 #' (a list of functions, possibly empty). `state(t,param)` calculates the ODE
 #' solution at time `t` for free parameters `param`, while `observable[[i]](t,param)`
@@ -613,159 +614,12 @@ make_depot <- function(model) {
 #' sol$statefun(5, params = list(kcp = 0.2, kpc = 0.1))
 #' @export
 to_analytical <- function(model) {
-
-    .check_class(model, "CompartmentModel")
-
-    model <- model |> wire()
-
-    if (length(model$doses) > 0) {
-        stop("Analytical solutions with dosing events are not implemented yet.")
-    }
-    if (length(model$reactions) > 0) {
-        stop("Analytical solutions with reactions are not implemented yet.")
-    }
-    if (any(model$transports$type == "nonlinear")) {
-        stop("Model contains nonlinear transports: cannot compute analytical solution.")
+    if (!inherits(model, "AnalyticalModel")) {
+        .check_class(model, "CompartmentModel")
+        model <- to_analytical_model(model)
     }
 
-    y0_dsl <- initials(model)
-    dslStateNames <- names(y0_dsl)
-    auto_placeholder <- model$metadata$auto_placeholder %||% list()
-    outputStateNames <- .dsl_state_to_name(
-        dslStateNames,
-        omit_molec = isTRUE(auto_placeholder$molec),
-        omit_cmt = isTRUE(auto_placeholder$cmt)
-    )
-    if (anyDuplicated(outputStateNames)) {
-        stop("Output state names are not unique after sanitizing DSL state names.")
-    }
-
-    stateNames <- dslStateNames
-    nStates <- length(stateNames)
-    name2idx <- setNames(seq_along(stateNames), stateNames)
-    eqNames <- names(model$equations)
-    paramValues <- unclass(model$parameters)
-
-    volume_by_cmt <- setNames(model$compartments$volume, names(model$compartments))
-    stateVolumes <- list()
-    for (i in seq_along(model$molecules)) {
-        molec <- model$molecules$name[[i]]
-        cmt <- model$molecules$cmt[[i]]
-        vol <- volume_by_cmt[[cmt]]
-        stateVolumes[[.dsl_make_state(molec = molec, cmt = cmt, prefix = "a")]] <- vol
-        stateVolumes[[.dsl_make_state(molec = molec, cmt = cmt, prefix = "c")]] <- vol
-    }
-    
-    # Initialize symbolic system matrix
-    A <- matrix("0", nStates, nStates)
-    rownames(A) <- stateNames
-    colnames(A) <- stateNames
-
-    # Track free parameters
-    freeParams <- new.env(parent = emptyenv())
-    freeParams$list <- character()
-
-    makeFun <- function(expr, obsFunc = FALSE) {
-        substitute_expr(
-            expr,
-            stateNames,
-            eqNames,
-            name2idx,
-            paramValues = paramValues,
-            freeParamsEnv = freeParams,
-            obsFunc = obsFunc,
-            stateVolumes = stateVolumes,
-            obsStateNames = outputStateNames
-        )
-    }
-
-    # ---- Process each transport ----
-    for (i in seq_along(model$transports)) {
-        coef_str <- model$transports$const[[i]] |> makeFun() |> deparse1()
-        from <- model$transports$from[[i]]
-        to <- model$transports$to[[i]]
-        molec <- model$transports$molec[[i]]
-
-        state_from <- .dsl_make_state(molec = molec, cmt = from, prefix = "a")
-        from_idx <- name2idx[[state_from]]
-        if (is.null(from_idx)) {
-            stop("Transport source state is not an analytical state: ", state_from)
-        }
-
-        # Diagonal contribution
-        if (A[from_idx, from_idx] == "0") {
-            A[from_idx, from_idx] <- paste0("-", "(", coef_str, ")")
-        } else {
-            A[from_idx, from_idx] <- paste0(
-                A[from_idx, from_idx],
-                "-(",
-                coef_str,
-                ")"
-            )
-        }
-
-        # Off-diagonal contribution
-        if (!is.na(to)) {
-            state_to <- .dsl_make_state(molec = molec, cmt = to, prefix = "a")
-            to_idx <- name2idx[[state_to]]
-            if (is.null(to_idx)) {
-                stop("Transport target state is not an analytical state: ", state_to)
-            }
-            if (A[to_idx, from_idx] == "0") {
-                A[to_idx, from_idx] <- paste0("+(", coef_str, ")")
-            } else {
-                A[to_idx, from_idx] <- paste0(
-                    A[to_idx, from_idx],
-                    "+(",
-                    coef_str,
-                    ")"
-                )
-            }
-        }
-    }
-
-    # ---- Construct vectorized statefun using matrix exponential ----
-    statefun <- function(t, params = list()) {
-        eval_env <- as.list(params)
-        A_eval <- matrix(0, nStates, nStates)
-        for (i in seq_len(nStates)) {
-            for (j in seq_len(nStates)) {
-                A_eval[i, j] <- eval(
-                    parse(text = A[i, j]),
-                    envir = eval_env
-                )
-            }
-        }
-        x0 <- unlist(y0_dsl)
-        res <- as.matrix(vapply(
-            t,
-            function(tt) expm::expm(A_eval * tt) %*% x0,
-            x0
-        ))
-        if (length(x0) > 1) {
-            res <- t(res)
-        }
-        colnames(res) <- outputStateNames
-        # Prepend t as the first column, as deSolve does
-        cbind(time = t, res)
-    }
-
-    # Observables (same substitution logic)
-    obsFuncs <- lapply(model$observables, function(o) {
-        expr_str <- o |> makeFun(obsFunc = TRUE) |> deparse1()
-        eval(parse(text = paste0("function(t,y,params) unname(", expr_str, ")")))
-    })
-    names(obsFuncs) <- names(model$observables)
-
-    # ---- Output ----
-    list(
-        statefun = statefun,
-        stateNames = outputStateNames,
-        dslStateNames = dslStateNames,
-        freeParams = sort(unique(freeParams$list)),
-        obsFuncs = obsFuncs,
-        A = A
-    )
+    .to_analytical(model)
 }
 
 #' Generate ODE function, initial values, observables, and free parameters from a `CompartmentModel` object

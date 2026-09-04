@@ -135,6 +135,61 @@ simulate.OdeModel <- function(
 }
 
 #' @export
+simulate.AnalyticalModel <- function(
+    object,
+    nsim = NULL,
+    seed = NULL,
+    time = numeric(0),
+    unit = NULL,
+    parameters = list(),
+    dimensions = NULL,
+    ...
+) {
+    time <- .process_nse_arg(substitute(time), envir = parent.frame())
+    time <- .simulation_apply_time_unit(time, unit)
+    .simulation_validate_time(time)
+
+    sim_parameters <- .simulation_parameters_object(parameters)
+    merged_parameters <- .merge_ode_parameters(object$parameters, sim_parameters)
+    .analytical_model_check_unit_consistency(object, merged_parameters)
+    .simulation_check_time_mode(object, time, parameters = merged_parameters)
+
+    dimensions <- .simulation_dimensions(object, time, dimensions, parameters = merged_parameters)
+    solver_time <- .simulation_numeric_time(time, dimensions)
+    system <- .analytical_model_numeric_system(object, sim_parameters, dimensions)
+    state_matrix <- .analytical_model_solve_states(
+        A = system$A,
+        b = system$b,
+        y0 = system$y0,
+        time = solver_time - solver_time[[1]]
+    )
+    solver_output <- cbind(time = solver_time, state_matrix)
+    colnames(solver_output) <- c("time", object$states$output_name)
+
+    analytical_info <- .to_analytical(object, parameters = sim_parameters, dimensions = dimensions)
+    states <- as.data.frame(solver_output)
+    states <- .simulation_attach_state_units(states, object, analytical_info, dimensions, parameters = merged_parameters)
+    states$time <- .simulation_attach_time_units(states$time, time, dimensions)
+    observables <- .simulation_observables(
+        solver_output,
+        states$time,
+        object,
+        analytical_info,
+        solver_time,
+        dimensions,
+        parameters = merged_parameters
+    )
+
+    structure(
+        list(
+            states = states,
+            observables = observables
+        ),
+        class = "SimulationResult"
+    )
+}
+
+#' @export
 simulate.StochasticModel <- function(
     object,
     nsim = NULL,
@@ -392,6 +447,11 @@ print.SimulationResult <- function(x, ...) {
         has_rhs <- any(vapply(model$rhs, function(expr) !identical(expr, 0), logical(1)))
         return(has_rhs || length(model$dosing$state) > 0)
     }
+    if (inherits(model, "AnalyticalModel")) {
+        has_A <- any(!vapply(as.list(model$A), .analytical_model_is_zero, logical(1)))
+        has_b <- any(!vapply(model$b, .analytical_model_is_zero, logical(1)))
+        return(has_A || has_b)
+    }
     if (inherits(model, "StochasticModel")) {
         return(length(model$propensities) > 0)
     }
@@ -463,7 +523,7 @@ print.SimulationResult <- function(x, ...) {
 }
 
 .simulation_observable_unit_values <- function(model, parameters = model$parameters) {
-    if (inherits(model, "OdeModel") || inherits(model, "StochasticModel")) {
+    if (inherits(model, "OdeModel") || inherits(model, "StochasticModel") || inherits(model, "AnalyticalModel")) {
         return(.ode_model_observable_unit_values(model, parameters))
     }
     if (length(model$observables) == 0) return(list())
@@ -554,7 +614,7 @@ print.SimulationResult <- function(x, ...) {
 }
 
 .simulation_state_unit_values <- function(model, parameters = model$parameters) {
-    if (inherits(model, "OdeModel") || inherits(model, "StochasticModel")) {
+    if (inherits(model, "OdeModel") || inherits(model, "StochasticModel") || inherits(model, "AnalyticalModel")) {
         return(.ode_model_state_unit_values(model, parameters))
     }
     model <- model |> wire() |> make_depot()
@@ -565,6 +625,9 @@ print.SimulationResult <- function(x, ...) {
 .simulation_dimension_values <- function(model, parameters = model$parameters) {
     if (inherits(model, "OdeModel")) {
         return(.ode_model_dimension_values(model, parameters))
+    }
+    if (inherits(model, "AnalyticalModel")) {
+        return(.analytical_model_dimension_values(model, parameters))
     }
     if (inherits(model, "StochasticModel")) {
         return(.stochastic_model_dimension_values(model, parameters))

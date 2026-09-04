@@ -217,6 +217,65 @@ test_that("simulate on an OdeModel applies runtime parameter values to initials 
     expect_equal(out$observables$C, out$states$a_drug_Central / 20, tolerance = 1e-6)
 })
 
+test_that("simulate accepts a precompiled AnalyticalModel", {
+    model <- compartment_model() |>
+        add_compartment(c("Central", "Peripheral"), volume = "V") |>
+        add_molecule("drug", cmt = c("Central", "Peripheral"), initial = c("A0", 0), type = "amount") |>
+        add_transport("Central", "", const = "k10") |>
+        add_transport("Central", "Peripheral", const = "k12") |>
+        add_transport("Peripheral", "Central", const = "k21") |>
+        add_observable(C = c[drug, Central])
+    analytical_model <- to_analytical_model(model)
+    ode_model <- to_ode_model(model)
+    time <- seq(0, 3, by = 1)
+    parameters <- parameters(A0 = 10, V = 2, k10 = 0.1, k12 = 0.2, k21 = 0.3)
+
+    analytical <- simulate(analytical_model, time = time, parameters = parameters)
+    numerical <- simulate(ode_model, time = time, parameters = parameters)
+
+    expect_s3_class(analytical, "SimulationResult")
+    expect_equal(analytical$states, numerical$states, tolerance = 1e-5)
+    expect_equal(analytical$observables, numerical$observables, tolerance = 1e-5)
+})
+
+test_that("simulate on an AnalyticalModel is unit-aware", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport("Central", "", const = "ke")
+    analytical_model <- to_analytical_model(model)
+
+    out <- simulate(
+        analytical_model,
+        time = seq(0, 2, by = 1) [h],
+        parameters = parameters(A0 = 100 [mg], ke = 0.2 [1/h])
+    )
+
+    expect_equal(out$states$time, units::set_units(seq(0, 2, by = 1), "h", mode = "standard"))
+    expect_equal(
+        out$states$a_drug_Central,
+        units::set_units(100 * exp(-0.2 * seq(0, 2, by = 1)), "mg", mode = "standard"),
+        tolerance = 1e-6
+    )
+})
+
+test_that("simulate validates AnalyticalModel coefficient units with runtime parameters", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+        add_transport("Central", "", const = "ke")
+    analytical_model <- to_analytical_model(model)
+
+    expect_error(
+        simulate(
+            analytical_model,
+            time = seq(0, 1, by = 1) [h],
+            parameters = parameters(ke = 1 [mg])
+        ),
+        "a\\[drug, Central\\]|right-hand side|unit"
+    )
+})
+
 test_that("simulate validates OdeModel right-hand side units with runtime parameters", {
     model <- compartment_model() |>
         add_compartment("Central", volume = NA_real_) |>

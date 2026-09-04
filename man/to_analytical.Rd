@@ -2,12 +2,12 @@
 % Please edit documentation in R/CompartmentModel.R
 \name{to_analytical}
 \alias{to_analytical}
-\title{Generate analytical solution function from a linear \code{CompartmentModel} object.}
+\title{Generate analytical solution function from a linear model object.}
 \usage{
 to_analytical(model)
 }
 \arguments{
-\item{model}{A \code{CompartmentModel} object.}
+\item{model}{A \code{CompartmentModel} or \code{AnalyticalModel} object.}
 }
 \value{
 A length 2 list named \code{state} (a function) and \code{observable}
@@ -16,13 +16,14 @@ solution at time \code{t} for free parameters \code{param}, while \code{observab
 calculates the \code{i}-th observable defined in the CompartmentModel.
 }
 \description{
-For linear compartment models, the system of ODEs can be solved analytically using matrix exponentials.
-This function generates a state function that evaluates this analytical solution at given time points and parameter values.
+For linear models, the system of ODEs can be solved analytically using
+matrix exponentials. This function generates a state function that evaluates
+this analytical solution at given time points and parameter values.
 }
 \details{
-Analytical export currently supports wired models with linear transports and
-no dosing events, reactions, or nonlinear transports. Use \code{\link[=to_ode]{to_ode()}} for the
-more general numerical export path.
+Analytical export first lowers \code{CompartmentModel} inputs to an
+\code{AnalyticalModel}. Passing an \code{AnalyticalModel} directly avoids repeated
+lowering when exporting the same model structure repeatedly.
 }
 \examples{
 M <- multiCompModel(ncomp = 2, type = "micro") |>

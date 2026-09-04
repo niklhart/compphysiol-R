@@ -640,6 +640,41 @@ print.OdeModel <- function(x, ...) {
     invisible(x)
 }
 
+.to_analytical <- function(model, parameters = list(), dimensions = NULL) {
+    .check_class(model, "AnalyticalModel")
+    parameters <- .simulation_parameters_object(parameters)
+    output_state_names <- model$states$output_name
+
+    statefun <- function(t, params = list()) {
+        runtime_parameters <- .merge_ode_parameters(parameters, .simulation_parameters_object(params))
+        system <- .analytical_model_numeric_system(
+            model,
+            parameters = runtime_parameters,
+            dimensions = dimensions
+        )
+        solver_time <- .simulation_numeric_time(t, dimensions %||% list())
+        state_matrix <- .analytical_model_solve_states(
+            A = system$A,
+            b = system$b,
+            y0 = system$y0,
+            time = solver_time
+        )
+        colnames(state_matrix) <- output_state_names
+        cbind(time = solver_time, state_matrix)
+    }
+
+    obs_funcs <- .analytical_model_observable_functions(model, parameters, dimensions)
+
+    list(
+        statefun = statefun,
+        stateNames = output_state_names,
+        dslStateNames = model$states$dsl_name,
+        freeParams = model$freeParams,
+        obsFuncs = obs_funcs,
+        A = model$A
+    )
+}
+
 .to_deSolve <- function(model, parameters = list(), dimensions = NULL) {
     .check_class(model, "OdeModel")
     parameters <- .simulation_parameters_object(parameters)
@@ -772,6 +807,187 @@ print.OdeModel <- function(x, ...) {
         )
     )
     A
+}
+
+.analytical_model_numeric_system <- function(model, parameters = list(), dimensions = NULL) {
+    parameters <- .simulation_parameters_object(parameters)
+    merged_parameters <- .merge_ode_parameters(model$parameters, parameters)
+    .analytical_model_check_parameters_available(
+        model,
+        merged_parameters,
+        free_params = .analytical_model_system_free_params(model)
+    )
+
+    y0 <- .evaluate_initials(
+        setNames(model$initials, model$states$dsl_name),
+        merged_parameters,
+        allow_unresolved = FALSE
+    ) |>
+        .to_dimensions_vec(dimensions)
+    y0 <- unname(unlist(y0))
+
+    system_fun <- .analytical_model_system_function(model, merged_parameters, dimensions)
+    system <- system_fun(.simulation_solver_parameters(merged_parameters, dimensions))
+    system$y0 <- y0
+    system
+}
+
+.analytical_model_system_function <- function(model, parameters, dimensions) {
+    param_values <- .to_dimensions_vec(parameters, dimensions)
+    free_params <- new.env(parent = emptyenv())
+    free_params$list <- character()
+    eq_names <- names(model$equations)
+
+    subst <- function(expr) {
+        .ode_model_substitute_parameters(expr, eq_names, param_values, free_params, dimensions)
+    }
+
+    lines <- "function(params) {"
+    for (i in seq_along(model$equations)) {
+        lines <- c(lines, paste0("    ", names(model$equations)[[i]], " <- ", deparse1(subst(model$equations[[i]]))))
+        if (i == length(model$equations)) lines <- c(lines, "")
+    }
+    lines <- c(lines, paste0("    A <- matrix(0, ", nrow(model$A), ", ", ncol(model$A), ")"))
+    for (i in seq_len(nrow(model$A))) {
+        for (j in seq_len(ncol(model$A))) {
+            lines <- c(lines, paste0("    A[", i, ", ", j, "] <- ", deparse1(subst(model$A[[i, j]]))))
+        }
+    }
+    lines <- c(lines, paste0("    b <- numeric(", length(model$b), ")"))
+    for (i in seq_along(model$b)) {
+        lines <- c(lines, paste0("    b[", i, "] <- ", deparse1(subst(model$b[[i]]))))
+    }
+    lines <- c(lines, "    list(A = A, b = b)", "}")
+
+    eval(parse(text = paste(lines, collapse = "\n")))
+}
+
+.analytical_model_observable_functions <- function(model, parameters, dimensions) {
+    param_values <- .to_dimensions_vec(.merge_ode_parameters(model$parameters, parameters), dimensions)
+    free_params <- new.env(parent = emptyenv())
+    free_params$list <- character()
+    eq_names <- names(model$equations)
+    output_state_names <- model$states$output_name
+
+    subst <- function(expr) {
+        .ode_model_substitute_parameters(expr, eq_names, param_values, free_params, dimensions)
+    }
+
+    obs_funcs <- lapply(model$observables, function(obs) {
+        expr <- .ode_model_observable_backend_expr(subst(obs), output_state_names)
+        eval(parse(text = paste0("function(t,y,params) unname(", deparse1(expr), ")")))
+    })
+    names(obs_funcs) <- names(model$observables)
+    obs_funcs
+}
+
+.analytical_model_solve_states <- function(A, b, y0, time) {
+    if (length(y0) == 0L) {
+        return(matrix(numeric(0), nrow = length(time), ncol = 0))
+    }
+    if (any(b != 0)) {
+        stop("AnalyticalModel simulation with nonzero b is not implemented yet.", call. = FALSE)
+    }
+
+    out <- vapply(
+        time,
+        function(tt) as.numeric(expm::expm(A * tt) %*% y0),
+        numeric(length(y0))
+    )
+    if (length(y0) == 1L) {
+        out <- matrix(out, ncol = 1L)
+    } else {
+        out <- t(out)
+    }
+    colnames(out) <- names(y0) %||% character(length(y0))
+    out
+}
+
+.analytical_model_check_parameters_available <- function(model, parameters, free_params = model$freeParams) {
+    missing <- setdiff(free_params, names(parameters))
+    if (length(missing) > 0) {
+        stop(
+            "AnalyticalModel requires missing free parameter(s): ",
+            paste(missing, collapse = ", "),
+            ".",
+            call. = FALSE
+        )
+    }
+
+    invisible(model)
+}
+
+.analytical_model_system_free_params <- function(model) {
+    .ode_model_free_params(
+        c(model$initials, as.list(model$A), as.list(model$b), unclass(model$equations)),
+        eq_names = names(model$equations),
+        param_names = names(model$parameters)
+    )
+}
+
+.analytical_model_check_unit_consistency <- function(model, parameters) {
+    context <- .ode_model_unit_context(model, parameters)
+    y0 <- context$y0
+    env <- context$env
+
+    for (i in seq_len(nrow(model$A))) {
+        rhs_value <- tryCatch(
+            {
+                terms <- list()
+                b_value <- .ode_model_eval_expr(model$b[[i]], env, y0)
+                if (!.ode_model_is_numeric_zero(b_value)) {
+                    terms <- c(terms, list(b_value))
+                }
+                for (j in seq_len(ncol(model$A))) {
+                    coeff <- .ode_model_eval_expr(model$A[[i, j]], env, y0)
+                    if (.ode_model_is_numeric_zero(coeff)) next
+                    terms <- c(terms, list(coeff * y0[[j]]))
+                }
+                if (length(terms) == 0L) 0 else Reduce(`+`, terms)
+            },
+            error = function(e) {
+                stop(
+                    "Cannot evaluate analytical state '",
+                    model$states$dsl_name[[i]],
+                    "': ",
+                    e$message,
+                    call. = FALSE
+                )
+            }
+        )
+        .ode_model_check_derivative_units(
+            state_value = y0[[i]],
+            rhs_value = rhs_value,
+            state_name = model$states$dsl_name[[i]]
+        )
+    }
+
+    invisible(model)
+}
+
+.analytical_model_dimension_values <- function(model, parameters) {
+    y0 <- tryCatch(
+        .ode_model_state_unit_values(model, parameters, allow_unresolved = TRUE),
+        error = function(e) list()
+    )
+    system <- tryCatch(
+        .analytical_model_raw_system_values(model, y0, parameters),
+        error = function(e) list(A = list(), b = list())
+    )
+
+    c(y0, unclass(parameters), as.list(system$A), system$b)
+}
+
+.analytical_model_raw_system_values <- function(model, y0, parameters) {
+    if (length(y0) != nrow(model$states)) return(list(A = list(), b = list()))
+    if (any(vapply(y0, .initial_is_expr, logical(1)))) return(list(A = list(), b = list()))
+
+    env <- list2env(unclass(parameters), parent = baseenv())
+    .ode_model_add_equations(model, env, y0)
+
+    A <- lapply(as.list(model$A), function(expr) eval(expr, envir = env))
+    b <- lapply(model$b, function(expr) eval(expr, envir = env))
+    list(A = A, b = b)
 }
 
 .analytical_model_check_compatibility <- function(model) {
