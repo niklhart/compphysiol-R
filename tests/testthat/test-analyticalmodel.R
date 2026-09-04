@@ -149,3 +149,18 @@ test_that("to_analytical_model rejects dosing in V1", {
         ignore.case = TRUE
     )
 })
+
+test_that("AnalyticalModel print method renders symbolic A matrix", {
+    model <- compartment_model() |>
+        add_compartment(c("Central", "Peripheral"), volume = NA_real_) |>
+        add_molecule("drug", cmt = c("Central", "Peripheral"), initial = c("A0", 0), type = "amount") |>
+        add_transport("Central", "", const = "k10") |>
+        add_transport("Central", "Peripheral", const = "k12") |>
+        add_transport("Peripheral", "Central", const = "k21") |>
+        add_observable(Acentral = a[drug, Central])
+
+    analytical_model <- to_analytical_model(model)
+
+    expect_snapshot(print(analytical_model))
+    expect_false(grepl("expression|\\?", paste(capture.output(print(analytical_model)), collapse = "\n")))
+})

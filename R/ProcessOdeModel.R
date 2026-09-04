@@ -482,6 +482,82 @@ print.StochasticModel <- function(x, ...) {
     invisible(x)
 }
 
+#' Print method for `AnalyticalModel` class
+#'
+#' Pretty-prints an `AnalyticalModel` object using state indices in the linear
+#' system and DSL state names in the state list.
+#' @param x An `AnalyticalModel` object.
+#' @param ... ignored
+#' @returns The `AnalyticalModel` object (invisibly).
+#' @export
+print.AnalyticalModel <- function(x, ...) {
+    cat("AnalyticalModel:\n")
+
+    if (nrow(x$states) > 0) {
+        cat(" States:\n")
+        cat(sprintf(
+            "  (%s) %s, initial = %s\n",
+            x$states$index,
+            x$states$dsl_name,
+            vapply(x$initials, .ode_model_format_expr, character(1), model = x)
+        ), sep = "")
+    } else {
+        cat(" States: (none)\n")
+    }
+
+    if (length(x$A) > 0) {
+        cat(" A:\n")
+        print(.analytical_model_display_A(x), quote = FALSE)
+    } else {
+        cat(" A: (none)\n")
+    }
+
+    if (length(x$b) > 0) {
+        cat(" b:\n")
+        cat(sprintf(
+            "  (%s) %s\n",
+            seq_along(x$b),
+            vapply(x$b, .ode_model_format_expr, character(1), model = x)
+        ), sep = "")
+    } else {
+        cat(" b: (none)\n")
+    }
+
+    if (length(x$equations) > 0) {
+        cat(" Equations:\n")
+        cat(sprintf(
+            "  (%s) %s = %s\n",
+            seq_along(x$equations),
+            names(x$equations),
+            vapply(x$equations, .ode_model_format_expr, character(1), model = x)
+        ), sep = "")
+    } else {
+        cat(" Equations: (none)\n")
+    }
+
+    if (length(x$observables) > 0) {
+        cat(" Observables:\n")
+        cat(sprintf(
+            "  (%s) %s = %s\n",
+            seq_along(x$observables),
+            names(x$observables),
+            vapply(x$observables, .ode_model_format_expr, character(1), model = x)
+        ), sep = "")
+    } else {
+        cat(" Observables: (none)\n")
+    }
+
+    print(x$parameters)
+
+    if (length(x$freeParams) > 0) {
+        cat(" Free parameters: ", paste(x$freeParams, collapse = ", "), "\n", sep = "")
+    } else {
+        cat(" Free parameters: (none)\n")
+    }
+
+    invisible(x)
+}
+
 #' Print method for `OdeModel` class
 #'
 #' Pretty-prints an `OdeModel` object using DSL state names.
@@ -684,6 +760,18 @@ print.OdeModel <- function(x, ...) {
 .process_model_display_stoichiometry <- function(stoichiometry) {
     colnames(stoichiometry) <- paste0("(", seq_len(ncol(stoichiometry)), ")")
     stoichiometry
+}
+
+.analytical_model_display_A <- function(model) {
+    A <- matrix(
+        vapply(as.list(model$A), .ode_model_format_expr, character(1), model = model),
+        nrow = nrow(model$A),
+        dimnames = list(
+            paste0("(", seq_len(nrow(model$A)), ")"),
+            paste0("(", seq_len(ncol(model$A)), ")")
+        )
+    )
+    A
 }
 
 .analytical_model_check_compatibility <- function(model) {
