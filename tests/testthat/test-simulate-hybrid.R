@@ -1,4 +1,4 @@
-hybrid_birth_death_model <- compartment_model() |>
+birth_death_model <- compartment_model() |>
     add_compartment("cyt", volume = 1) |>
     add_molecule("A", cmt = "cyt", initial = 20, type = "amount") |>
     add_reaction(input = NULL, output = "A", cmt = "cyt", const = "ksyn") |>
@@ -9,7 +9,7 @@ test_that("hybrid simulation returns requested times by default", {
     time <- 0:5
 
     out <- simulate(
-        hybrid_birth_death_model,
+        birth_death_model,
         time = time,
         simulation_type = "hybrid",
         partition = c(TRUE, FALSE),
@@ -24,7 +24,7 @@ test_that("hybrid simulation returns requested times by default", {
 })
 
 test_that("hybrid simulation accepts a precompiled StochasticModel", {
-    stochastic_model <- to_stochastic_model(hybrid_birth_death_model)
+    stochastic_model <- to_stochastic_model(birth_death_model)
     time <- 0:3
 
     out <- simulate(
@@ -74,14 +74,14 @@ test_that("hybrid event times are optional", {
     time <- c(0, 5)
 
     requested_only <- simulate(
-        hybrid_birth_death_model,
+        birth_death_model,
         time = time,
         simulation_type = "hybrid",
         partition = c(TRUE, FALSE),
         seed = 1
     )
     with_events <- simulate(
-        hybrid_birth_death_model,
+        birth_death_model,
         time = time,
         simulation_type = "hybrid",
         partition = c(TRUE, FALSE),
@@ -95,7 +95,7 @@ test_that("hybrid event times are optional", {
 })
 
 test_that("hybrid simulation evaluates observables and supports multiple realizations", {
-    model <- hybrid_birth_death_model |>
+    model <- birth_death_model |>
         add_observable(Aobs = a[A, cyt])
     time <- 0:2
 
@@ -115,7 +115,7 @@ test_that("hybrid simulation evaluates observables and supports multiple realiza
 })
 
 test_that("hybrid simulation rejects invalid partitioning", {
-    stochastic_model <- to_stochastic_model(hybrid_birth_death_model)
+    stochastic_model <- to_stochastic_model(birth_death_model)
 
     expect_error(
         simulate(stochastic_model, time = 0:1, simulation_type = "hybrid"),
