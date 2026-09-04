@@ -1,6 +1,8 @@
 
 #' Simulate a covariate distribution in human adults
 #'
+#' Experimental internal prototype for future physiology support.
+#'
 #' Generate pairs of body height (BH) and body weight (BW) values for a specified number of individuals.
 #' 
 #' To generate pairs of (BH,BW) values, independent (BH, BMI) pairs are first generated, assuming
@@ -15,7 +17,7 @@
 #' @returns A length `N` list of `Physiology` objects
 #' @examples
 #' humans <- humancovdistrib(5, "female")
-#' @export
+#' @noRd
 humancovdistrib <- function(N, sex) {
     if (!is.numeric(N) || length(N) != 1 || N <= 0 || N != as.integer(N)) {
         stop("N must be a positive integer")

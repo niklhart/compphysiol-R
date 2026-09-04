@@ -1,7 +1,9 @@
 #' Reference physiology of a male adult human
 #'
+#' Experimental internal prototype for future physiology support.
+#'
 #' @returns A `Physiology` object
-#' @export
+#' @noRd
 #' @examples
 #' # Load reference physiology
 #' phys <- human35m()
@@ -24,16 +26,22 @@ human35m <- function() {
 
 
 #' Reference physiology of a young rat
+#'
+#' Experimental internal prototype for future physiology support.
+#'
 #' @returns A `Physiology` object
-#' @export
+#' @noRd
 rat250 <- function() {
     .physiologies$rat250
 }
 
 
 #' Reference physiology of an old rat
+#'
+#' Experimental internal prototype for future physiology support.
+#'
 #' @returns A `Physiology` object
-#' @export
+#' @noRd
 rat475 <- function() {
     .physiologies$rat475
 }
