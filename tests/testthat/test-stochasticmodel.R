@@ -104,7 +104,7 @@ test_that("stochastic propensity functions compile equations before propensities
     expect_equal(propfun(10, list()), 4)
 })
 
-test_that("to_stochastic_model rejects dosing in V1", {
+test_that("to_stochastic_model rejects dosing in the current version", {
     model <- compartment_model() |>
         add_compartment("Central", volume = NA_real_) |>
         add_molecule("drug", cmt = "Central", initial = 10, type = "amount") |>
@@ -142,7 +142,7 @@ test_that("to_stochastic_model rejects non-count state initials", {
     expect_error(to_stochastic_model(negative), "non-negative|count", ignore.case = TRUE)
 })
 
-test_that("to_stochastic_model rejects explicit-rate processes in V1", {
+test_that("to_stochastic_model rejects explicit-rate processes in the current version", {
     transport <- compartment_model() |>
         add_compartment(c("Central", "Peripheral"), volume = NA_real_) |>
         add_molecule("drug", cmt = c("Central", "Peripheral"), initial = c(10, 0), type = "amount") |>

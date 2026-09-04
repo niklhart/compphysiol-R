@@ -1067,7 +1067,7 @@ print.OdeModel <- function(x, ...) {
     nonzero <- !vapply(b, .analytical_model_is_zero, logical(1))
     if (any(nonzero)) {
         stop(
-            "AnalyticalModel V1 represents b but requires b = 0; ",
+            "The current AnalyticalModel represents b but requires b = 0; ",
             "nonzero source or constant terms are not supported yet.",
             call. = FALSE
         )
@@ -1136,7 +1136,7 @@ print.OdeModel <- function(x, ...) {
     explicit_rate <- vapply(model$processes$const, .stochastic_model_is_explicit_rate, logical(1))
     if (any(explicit_rate)) {
         stop(
-            "Explicit rate processes are not implemented for StochasticModel V1.",
+            "Explicit rate processes are not implemented for the current StochasticModel.",
             call. = FALSE
         )
     }

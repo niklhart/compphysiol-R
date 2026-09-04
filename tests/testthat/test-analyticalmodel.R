@@ -106,7 +106,7 @@ test_that("AnalyticalModel keeps equations and observables in lowered state form
     expect_equal(analytical_model$freeParams, c("A0", "F", "base_ke", "scale"))
 })
 
-test_that("to_analytical_model rejects nonzero source terms in V1", {
+test_that("to_analytical_model rejects nonzero source terms in the current version", {
     model <- compartment_model() |>
         add_compartment("Central", volume = NA_real_) |>
         add_molecule("drug", cmt = "Central", initial = 0, type = "amount") |>
@@ -136,7 +136,7 @@ test_that("to_analytical_model rejects explicit nonlinear process rates", {
     )
 })
 
-test_that("to_analytical_model rejects dosing in V1", {
+test_that("to_analytical_model rejects dosing in the current version", {
     model <- compartment_model() |>
         add_compartment("Central", volume = NA_real_) |>
         add_molecule("drug", cmt = "Central", initial = 0, type = "amount") |>
