@@ -42,7 +42,7 @@ register_model_unit <- function(symbol, def = character(0)) {
 #' @returns A data frame with registered unit symbols and definitions.
 #' @export
 model_unit_registry <- function() {
-    .the$registry$model_units
+    .the$model_units
 }
 
 #' Reset registered model units
@@ -53,16 +53,12 @@ model_unit_registry <- function() {
 #' @returns Invisibly returns `NULL`.
 #' @export
 reset_model_unit_registry <- function() {
-    .the$registry$model_units <- .empty_model_unit_registry()
-    invisible(NULL)
-}
-
-.empty_model_unit_registry <- function() {
-    data.frame(
+    .the$model_units <- data.frame(
         symbol = character(),
         def = character(),
         stringsAsFactors = FALSE
     )
+    invisible(NULL)
 }
 
 .normalize_model_unit_def <- function(def) {
@@ -101,9 +97,9 @@ reset_model_unit_registry <- function() {
         stringsAsFactors = FALSE
     )
 
-    registry <- .the$registry$model_units
+    registry <- .the$model_units
     keep <- registry$symbol != symbol
-    .the$registry$model_units <- rbind(registry[keep, , drop = FALSE], row)
+    .the$model_units <- rbind(registry[keep, , drop = FALSE], row)
 
     invisible(row)
 }
