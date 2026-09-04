@@ -190,9 +190,11 @@ c.Parameters <- function(...) {
     if (!all(sapply(params_list, inherits, "Parameters"))) {
         stop("All arguments must be of class 'Parameters'")
     }
-    params_list |>
+    params <- params_list |>
         lapply(FUN = unclass) |>
-        do.call(what = "c") |>
+        do.call(what = "c")
+    .check_parameter_names(names(params))
+    params |>
         structure(class = c("Parameters", "list"))
 }
 

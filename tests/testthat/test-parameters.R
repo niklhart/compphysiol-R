@@ -49,6 +49,10 @@ test_that("Parameter names must be present and unique", {
         parameters(name = c("a", "a"), value = c(1, 2)),
         "Parameter names must be unique"
     )
+    expect_error(
+        c(parameters(a = 1), parameters(a = 2)),
+        "Parameter names must be unique"
+    )
 })
 
 test_that("On-the-fly unit conversion works correctly in NSE mode", {
