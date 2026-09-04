@@ -15,6 +15,7 @@
   simulation_type = c("ode", "analytical", "ssa", "hybrid"),
   partition = NULL,
   include_event_times = FALSE,
+  max_events = Inf,
   ...
 )
 }
@@ -50,6 +51,9 @@ reactions with propensities below this threshold are stochastic.}
 
 \item{include_event_times}{Include stochastic event times in stochastic
 simulation output in addition to the requested \code{time} points.}
+
+\item{max_events}{Maximum number of stochastic reaction events allowed per
+realization. The default \code{Inf} imposes no limit.}
 
 \item{...}{Additional arguments passed to \code{\link[deSolve:ode]{deSolve::ode()}}.}
 }
