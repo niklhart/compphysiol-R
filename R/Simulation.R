@@ -829,7 +829,17 @@ print.SimulationResult <- function(x, ...) {
         allow_unresolved = FALSE
     )
     .stochastic_model_check_initials(initials, allow_unresolved = FALSE)
-    counts <- unname(unlist(initials))
+    counts <- unlist(initials)
+    if (identical(storage_mode, "integer") && any(counts > .Machine$integer.max)) {
+        state_name <- names(counts)[[which(counts > .Machine$integer.max)[[1L]]]]
+        stop(
+            "Initial value for stochastic state '",
+            state_name,
+            "' exceeds the maximum supported integer count for SSA simulation.",
+            call. = FALSE
+        )
+    }
+    counts <- unname(counts)
     storage.mode(counts) <- storage_mode
     counts
 }

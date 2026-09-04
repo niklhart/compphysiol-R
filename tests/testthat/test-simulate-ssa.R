@@ -36,6 +36,20 @@ test_that("SSA output states are non-negative integer counts", {
     expect_true(all(counts == round(counts)))
 })
 
+test_that("SSA rejects initial counts above the integer limit", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = .Machine$integer.max + 1, type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_parameter(ke = 0.2)
+
+    expect_error(
+        simulate(model, time = 0:1, simulation_type = "ssa"),
+        "a\\[drug, Central\\].*maximum supported integer count.*SSA",
+        ignore.case = TRUE
+    )
+})
+
 test_that("SSA simulation is reproducible with seed", {
     time <- seq(0, 10, by = 1)
 
