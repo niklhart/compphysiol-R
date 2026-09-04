@@ -26,8 +26,8 @@ Ignored by deterministic simulation routes.}
 
 \item{seed}{Optional random seed for stochastic simulation routes.}
 
-\item{time}{Simulation time points. Units can be supplied with the unit DSL,
-e.g. \code{seq(0, 24) [h]}.}
+\item{time}{Simulation time points. Units can be supplied with the unit
+shorthand, e.g. \code{seq(0, 24) [h]}.}
 
 \item{unit}{Optional time unit used when \code{time} is numeric without units.}
 
@@ -63,9 +63,9 @@ observables.
 }
 \details{
 Simulation is either unit-free or unit-aware with respect to time. If the
-model uses a time dimension, \code{time} must carry units through the unit DSL or
-the \code{unit} argument. Conversely, unit-aware simulation times require a model
-with a time dimension.
+model uses a time dimension, \code{time} must carry units through the unit
+shorthand or the \code{unit} argument. Conversely, unit-aware simulation times
+require a model with a time dimension.
 
 In unit-aware simulations, \code{dimensions} defines the solver-facing numerical
 scale used when unit-bearing model quantities are converted to plain numbers

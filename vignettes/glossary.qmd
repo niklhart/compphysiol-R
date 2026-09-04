@@ -108,6 +108,48 @@ can request amount initials, concentration initials, or fallback behavior in
 either direction. ODE export currently uses the amount-preferred fallback as
 its public default.
 
+## Domain-specific language
+
+The domain-specific language is the small expression syntax that lets model
+components refer to states, parameters, equations, and units while remaining
+ordinary R expressions or character strings.
+
+State references use bracket forms. `a[molecule, compartment]` refers to an
+amount state and `c[molecule, compartment]` refers to a concentration state.
+When the model contains enough information, shorter one-index forms can be
+wired to full state references. For example, `a[drug]` can be expanded when
+there is only one relevant compartment, and `a[Central]` can be expanded when
+there is only one relevant molecule.
+
+The same expression syntax is used in transport rates, reaction rates,
+equations, observables, and some initial values. In user-facing constructors
+and add-functions, expressions may be supplied either as ordinary R expressions
+using non-standard evaluation, such as `add_observable(C = c[drug, Central])`,
+or as character strings, such as `add_observable(C = "c[drug, Central]")`.
+
+## Unit shorthand
+
+Units are part of the intended model semantics. Many constructors accept
+unit-aware syntax of the form `value [unit]`, for example `100 [mg]`,
+`0.2 [1/h]`, or `1 [mg/L]`. The shorthand is converted to `units` objects and
+can be used for compartment sizes, molecule initial values, parameters, dosing
+times, dosing amounts, rates, durations, and simulation time points.
+
+Unit-aware arguments support ordinary R arithmetic over unit expressions. For
+example, `10 [mg] / 200 [g/mol]` derives an amount from a mass and molar mass,
+and `30 [min] + 0.5 [h]` derives a dosing or simulation time. The same syntax
+can be used directly outside model constructors with `with_units()`.
+
+The shorthand follows ordinary R parsing rules. This can be surprising for
+expressions such as `1/2[h]`: R parses this as `1 / (2 [h])`, so it means
+`0.5 [1/h]`, not `0.5 [h]`. Use parentheses when the intended order is
+different, for example `(1/2) [h]`.
+
+Unit checking is a boundary behavior rather than a separate model component.
+During ODE export and simulation, unit-aware model values are checked for
+dimensional consistency, converted to solver-facing numeric dimensions, and
+then attached back to toolbox-level simulation output where possible.
+
 ## Transport
 
 A transport moves the same molecule from one compartment to another. It changes
@@ -224,19 +266,8 @@ A parameter is a named value used in the model. Parameters may represent
 physiology, compound properties, kinetic constants, partition coefficients, or
 other fixed inputs to simulation and analysis.
 
-Units are part of the intended semantics. Many constructors accept unit-aware
-syntax such as `100 [mg]`, and ODE export can check that model expressions are
-dimensionally consistent.
-
-Unit-aware constructor arguments also support arithmetic over unit expressions,
-for example `10 [mg] / 200 [g/mol]` for deriving an amount from a mass and a
-molar mass, or `30 [min] + 0.5 [h]` for deriving a dosing time. The same
-syntax can be used directly outside constructors with `with_units()`.
-
-The unit syntax follows ordinary R parsing rules. This can be surprising for
-expressions such as `1/2[h]`: R parses this as `1 / (2 [h])`, so it means
-`0.5 [1/h]`, not `0.5 [h]`. Use parentheses when the intended order is
-different, for example `(1/2) [h]`.
+Parameters can be numeric, categorical, symbolic, or unit-aware. Unit-aware
+parameter values use the general unit shorthand described above.
 
 Implementation anchor: parameters are represented by `Parameters` objects
 created with `parameters()` or added with `add_parameter()`.
@@ -447,9 +478,9 @@ Simulation has two working modes with respect to time. In unit-free mode, the
 model has no time units and simulation time is numeric. In unit-aware mode, the
 model contains a time dimension, for example through a rate constant or dosing
 time, and simulation time must carry compatible units, either directly in the
-unit DSL or through the `unit` argument. Mixed time modes are rejected: a model
-with time units cannot be simulated with unit-free time points, and unit-aware
-time points cannot be used with a model that is unit-free in time.
+unit shorthand or through the `unit` argument. Mixed time modes are rejected: a
+model with time units cannot be simulated with unit-free time points, and
+unit-aware time points cannot be used with a model that is unit-free in time.
 
 Passing a lowered model representation to `simulate()` can avoid repeated
 lowering when the same model structure is simulated multiple times with

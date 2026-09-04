@@ -5,9 +5,9 @@
 #' observables.
 #'
 #' Simulation is either unit-free or unit-aware with respect to time. If the
-#' model uses a time dimension, `time` must carry units through the unit DSL or
-#' the `unit` argument. Conversely, unit-aware simulation times require a model
-#' with a time dimension.
+#' model uses a time dimension, `time` must carry units through the unit
+#' shorthand or the `unit` argument. Conversely, unit-aware simulation times
+#' require a model with a time dimension.
 #'
 #' In unit-aware simulations, `dimensions` defines the solver-facing numerical
 #' scale used when unit-bearing model quantities are converted to plain numbers
@@ -20,8 +20,8 @@
 #' @param nsim Number of stochastic realizations for `simulation_type = "ssa"`.
 #'   Ignored by deterministic simulation routes.
 #' @param seed Optional random seed for stochastic simulation routes.
-#' @param time Simulation time points. Units can be supplied with the unit DSL,
-#'   e.g. `seq(0, 24) [h]`.
+#' @param time Simulation time points. Units can be supplied with the unit
+#'   shorthand, e.g. `seq(0, 24) [h]`.
 #' @param unit Optional time unit used when `time` is numeric without units.
 #' @param parameters Free parameters passed to the ODE solver, as a named list
 #'   or `Parameters` object.
