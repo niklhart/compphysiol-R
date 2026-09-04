@@ -472,4 +472,13 @@ being simulated only through numerical ODE integration. This is useful for
 closed-form reasoning, model reduction, and comparison with classical PK
 solutions.
 
-Implementation anchor: analytical export is handled by `to_analytical()`.
+An `AnalyticalModel` is the package-owned intermediate representation of a
+linear system derived from a `ProcessModel`. It stores the system in the form
+`dx/dt = A x + b`, together with the one-dimensional state metadata, initial
+value expressions, equations, observables, parameters, and free parameter
+names. The constant source term `b` is part of the representation, although
+the first implementation only accepts homogeneous systems with `b = 0`.
+
+Implementation anchor: `AnalyticalModel` objects are created by
+`to_analytical_model()`. The older `to_analytical()` interface remains the
+compatibility entry point for analytical solution functions.

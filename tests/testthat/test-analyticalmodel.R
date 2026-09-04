@@ -11,9 +11,9 @@ eval_expr_matrix <- function(x, env = list()) {
 }
 
 eval_expr_vector <- function(x, env = list()) {
-    vapply(x, function(expr) {
+    unname(vapply(x, function(expr) {
         if (is.language(expr)) eval(expr, envir = env) else expr
-    }, numeric(1))
+    }, numeric(1)))
 }
 
 test_that("to_analytical_model returns a backend-neutral AnalyticalModel", {

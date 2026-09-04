@@ -225,6 +225,54 @@ to_ode_model.ProcessModel <- function(model) {
     )
 }
 
+#' Create an analytical model representation
+#'
+#' `to_analytical_model()` lowers a `CompartmentModel` or `ProcessModel` to a
+#' backend-neutral linear analytical representation of the form `dx/dt = A x + b`.
+#'
+#' The first implementation supports homogeneous first-order linear systems.
+#' The constant source term `b` is part of the representation, but nonzero
+#' entries are rejected for now.
+#'
+#' @param model A `CompartmentModel` or `ProcessModel` object.
+#' @returns An `AnalyticalModel` object.
+#' @export
+to_analytical_model <- function(model) {
+    UseMethod("to_analytical_model")
+}
+
+#' @export
+to_analytical_model.CompartmentModel <- function(model) {
+    model |> to_process_model() |> to_analytical_model()
+}
+
+#' @export
+to_analytical_model.ProcessModel <- function(model) {
+    .analytical_model_check_compatibility(model)
+
+    system <- .analytical_model_linear_system(model)
+    .analytical_model_check_zero_b(system$b)
+
+    structure(
+        list(
+            states = model$states,
+            initials = model$initials,
+            A = system$A,
+            b = system$b,
+            equations = model$equations,
+            observables = model$observables,
+            parameters = model$parameters,
+            freeParams = .ode_model_free_params(
+                c(model$initials, as.list(system$A), as.list(system$b),
+                  unclass(model$equations), unclass(model$observables)),
+                eq_names = names(model$equations),
+                param_names = names(model$parameters)
+            )
+        ),
+        class = "AnalyticalModel"
+    )
+}
+
 #' Create a stochastic model representation
 #'
 #' `to_stochastic_model()` lowers a `CompartmentModel` or `ProcessModel` to a
@@ -636,6 +684,120 @@ print.OdeModel <- function(x, ...) {
 .process_model_display_stoichiometry <- function(stoichiometry) {
     colnames(stoichiometry) <- paste0("(", seq_len(ncol(stoichiometry)), ")")
     stoichiometry
+}
+
+.analytical_model_check_compatibility <- function(model) {
+    if (nrow(model$dosing) > 0) {
+        stop("AnalyticalModel with dosing is not implemented yet.", call. = FALSE)
+    }
+
+    invisible(model)
+}
+
+.analytical_model_linear_system <- function(model) {
+    n_states <- nrow(model$states)
+    state_names <- model$states$dsl_name
+    A <- matrix(
+        vector("list", n_states * n_states),
+        nrow = n_states,
+        dimnames = list(state_names, state_names)
+    )
+    A[] <- list(0)
+    b <- setNames(vector("list", n_states), state_names)
+    b[] <- list(0)
+
+    for (j in seq_len(nrow(model$processes))) {
+        rate <- model$processes$rate[[j]]
+        const <- model$processes$const[[j]]
+        input_states <- model$processes$input_states[[j]]
+        input_stoich <- model$processes$input_stoich[[j]]
+
+        if (.analytical_model_is_first_order_process(const, input_states, input_stoich)) {
+            source_state <- input_states[[1]]
+            for (target_state in seq_len(n_states)) {
+                coeff <- model$stoichiometry[[target_state, j]]
+                if (.analytical_model_is_zero(coeff)) next
+                term <- .analytical_model_scale_expr(const, coeff)
+                A[[target_state, source_state]] <- .analytical_model_add_expr(
+                    A[[target_state, source_state]],
+                    term
+                )
+            }
+            next
+        }
+
+        if (.analytical_model_is_constant_process(rate, input_states)) {
+            for (target_state in seq_len(n_states)) {
+                coeff <- model$stoichiometry[[target_state, j]]
+                if (.analytical_model_is_zero(coeff)) next
+                term <- .analytical_model_scale_expr(rate, coeff)
+                b[[target_state]] <- .analytical_model_add_expr(b[[target_state]], term)
+            }
+            next
+        }
+
+        stop(
+            "AnalyticalModel currently supports only linear first-order processes.",
+            call. = FALSE
+        )
+    }
+
+    list(A = A, b = b)
+}
+
+.analytical_model_is_first_order_process <- function(const, input_states, input_stoich) {
+    .process_model_has_const(const) &&
+        length(input_states) == 1L &&
+        length(input_stoich) == 1L &&
+        identical(as.numeric(input_stoich), 1)
+}
+
+.analytical_model_is_constant_process <- function(rate, input_states) {
+    length(input_states) == 0L && !.analytical_model_has_state_ref(rate)
+}
+
+.analytical_model_check_zero_b <- function(b) {
+    nonzero <- !vapply(b, .analytical_model_is_zero, logical(1))
+    if (any(nonzero)) {
+        stop(
+            "AnalyticalModel V1 represents b but requires b = 0; ",
+            "nonzero source or constant terms are not supported yet.",
+            call. = FALSE
+        )
+    }
+
+    invisible(b)
+}
+
+.analytical_model_add_expr <- function(x, y) {
+    if (.analytical_model_is_zero(x)) return(y)
+    if (.analytical_model_is_zero(y)) return(x)
+    call("+", x, y)
+}
+
+.analytical_model_scale_expr <- function(expr, coeff) {
+    if (.analytical_model_is_zero(coeff)) return(0)
+    if (identical(as.numeric(coeff), 1)) return(expr)
+    if (identical(as.numeric(coeff), -1)) {
+        return(.negate_expr(expr, simplify_product = TRUE))
+    }
+    .mul(expr, coeff)
+}
+
+.analytical_model_is_zero <- function(x) {
+    is.numeric(x) && length(x) == 1L && isTRUE(x == 0)
+}
+
+.analytical_model_has_state_ref <- function(expr) {
+    recurse <- function(e) {
+        if (!is.call(e)) return(FALSE)
+        if (identical(e[[1]], as.name("[")) && length(e) == 3L && identical(e[[2]], as.name("y"))) {
+            return(TRUE)
+        }
+        any(vapply(as.list(e), recurse, logical(1)))
+    }
+
+    recurse(.as_call(expr))
 }
 
 .stochastic_model_check_compatibility <- function(model) {
@@ -1220,8 +1382,7 @@ print.OdeModel <- function(x, ...) {
 .ode_model_free_params <- function(exprs, eq_names, param_names) {
     vars <- unique(unlist(lapply(exprs, .dsl_all_vars), use.names = FALSE))
     reserved <- c("t", "y", "params", "pi", "Inf", "NaN", "TRUE", "FALSE", "NULL")
-    funs <- vars[vapply(vars, exists, logical(1), mode = "function", inherits = TRUE)]
-    sort(setdiff(vars, c(eq_names, param_names, reserved, funs)))
+    sort(setdiff(vars, c(eq_names, param_names, reserved)))
 }
 
 .ode_model_transport_state_idx <- function(molec, cmt, name2idx) {
