@@ -26,96 +26,65 @@ devtools::install_github("niklhart/compphysiol-R")
 See `citation("compphysiol")` for how to cite this package in scientific work.
 
 
-## Usage - PBPK modeling workflow
+## Usage
 
 ```{r}
 library(compphysiol)
 ```
 
-For demonstrating a PBPK workflow, we will use the `sMD_PBPK_12CMT_wellstirred()` model, which is a generic 12-compartment whole-body PBPK model with well-stirred tissue compartments. We will load physiological parameters for a 35-year-old human and drug parameters for Warfarin from the built-in databases. We will then calculate tissue partition coefficients using the Rodgers and Rowland method.
+This example defines and simulates a two-compartment empirical PK model with
+unit-aware amounts, volumes, rate constants, and simulation times.
 
 ```{r}
-M <- sMD_PBPK_12CMT_wellstirred()
+model <- multiCompModel(ncomp = 2, type = "micro", unit = "mg") |>
+    add_dosing(time = 0 [h], amount = 100 [mg], cmt = "cen") |>
+    wire(what = "molec")
 
-phys <- loadphysiology("human35m")
-drug <- loaddrugdata("Warfarin", species = "human")
-
-compnames <- names(M$compartments)
-organs <- setdiff(compnames, c("ven","art"))
-Ktis <- rodgersrowland(phys, drug, organs = organs)
-```
-
-Physiological parameters (e.g., tissue volumes and blood flows), drug parameters (e.g., blood-to-plasma ratio and clearance) and tissue partition coefficients can be added to the model as follows:
-
-```{r}
-param <- c(
-    param(phys, name = c("Vtis","Qblo"), organs = organs),
-    param(drug, name = c("BP","CL")),
-    Ktis
-)
-M <- add_parameter(M, param = param)
-```
-
-Add a dosing regimen:
-
-```{r}
-M <- add_dosing(M, target = "ven", time = 0 [h], amount = 100 [mg])
-```
-
-Simulate:
-
-```{r}
-times <- seq(0, 24, by = 0.1)
-out <- simulate(
-    M,
-    time = times [h],
-    dimensions = list(time = "h", mass = "mg", length = "cm")
-)
-out_df <- out$states
-```
-
-Plot compartment amounts
-
-```{r}
-matplot(
-    out_df$time,
-    out_df[, -1],
-    type = "l",
-    lty = 1,
-    col = 1:12,
-    xlab = "Time (h)",
-    ylab = "Amount",
-    main = "PBPK Model Compartments"
-)
-legend(
-    "topright",
-    legend = colnames(out_df)[-1],
-    col = 1:12,
-    lty = 1
+pars <- parameters(
+    kc0 = 0.15 [1/h],
+    kcp = 0.08 [1/h],
+    kpc = 0.05 [1/h],
+    Vcen = 8 [L],
+    Vper = 20 [L]
 )
 ```
 
-Evaluate observables at each time point
+Simulate the model over 24 hours:
 
 ```{r}
-obs_df <- as.data.frame(sapply(
-    odeinfo$obsFuncs,
-    function(f) f(out_df$time, as.matrix(out_df[, -1]), paramValues)
-))
-names(obs_df) <- names(odeinfo$obsFuncs)
-obs_df$time <- out_df$time
-```
-
-Plot plasma concentration
-
-```{r}
-plot(
-    obs_df$time,
-    obs_df$Cpla,
-    type = "l",
-    col = "black",
-    lwd = 2,
-    xlab = "Time (h)",
-    ylab = "Plasma concentration"
+sim <- simulate(
+    model,
+    time = seq(0, 24, by = 0.5) [h],
+    parameters = pars
 )
+
+head(sim$states)
+head(sim$observables)
 ```
+
+The returned state and observable tables keep their units. If `ggplot2`,
+`reshape2`, and `units` are installed, they can be plotted directly:
+
+```{r, message = FALSE, eval = requireNamespace("ggplot2", quietly = TRUE) && requireNamespace("reshape2", quietly = TRUE) && requireNamespace("units", quietly = TRUE)}
+library(ggplot2)
+library(units)
+
+states_long <- reshape2::melt(
+    sim$states,
+    id.vars = "time",
+    variable.name = "state",
+    value.name = "amount"
+)
+
+ggplot(states_long, aes(x = time, y = amount)) +
+    geom_line(linewidth = 0.8) +
+    facet_wrap(vars(state), scales = "free_y") +
+    labs(x = "Time", y = "Amount")
+```
+
+## AI Agent Guidance
+
+This repository intentionally includes an AI-agent guidance file `AGENTS.md`
+and project-specific Codex skills. These files document repository
+conventions, modeling vocabulary, testing expectations, and review workflows
+for AI-assisted development.
