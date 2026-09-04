@@ -371,19 +371,29 @@ simulate.StochasticModel <- function(
 #' @returns The `SimulationResult` object, invisibly.
 #' @export
 print.SimulationResult <- function(x, ...) {
-    n_time <- nrow(x$states)
+    has_replicates <- "rep" %in% names(x$states)
+    n_rep <- if (has_replicates) length(unique(x$states$rep)) else 1L
+    n_time <- if (has_replicates) {
+        nrow(x$states) / n_rep
+    } else {
+        nrow(x$states)
+    }
     state_names <- setdiff(names(x$states), c("time", "rep"))
     observable_names <- if (is.null(x$observables)) character(0) else setdiff(names(x$observables), c("time", "rep"))
     n_states <- length(state_names)
     n_observables <- length(observable_names)
-    time_span <- if (n_time > 0) {
-        sprintf("%s to %s", format(x$states$time[[1]]), format(x$states$time[[n_time]]))
+    time_values <- if (has_replicates) x$states$time[x$states$rep == x$states$rep[[1]]] else x$states$time
+    time_span <- if (length(time_values) > 0) {
+        sprintf("%s to %s", format(time_values[[1]]), format(time_values[[length(time_values)]]))
     } else {
         "empty"
     }
 
     cat(" SimulationResult:\n")
     cat(sprintf("  time: %s (%s points)\n", time_span, n_time))
+    if (has_replicates) {
+        cat(sprintf("  replicates: %s\n", n_rep))
+    }
     cat(sprintf("  states: %s", n_states))
     if (n_states > 0) {
         cat(sprintf(" (%s)", .simulation_format_names(state_names, prefix = "  states: ")))

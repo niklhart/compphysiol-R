@@ -18,6 +18,17 @@
         states: 3 (very_long_state_..., ... +2 more)
         observables: 2 (very_long_o..., ... +1 more)
 
+# SimulationResult print summarizes repeated stochastic simulations
+
+    Code
+      print(out)
+    Output
+       SimulationResult:
+        time: 0 to 10 (2 points)
+        replicates: 1500
+        states: 1 (a_A_cyt)
+        observables: 0
+
 # simulate returns observable trajectories
 
     Code

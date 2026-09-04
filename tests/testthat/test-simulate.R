@@ -85,6 +85,23 @@ test_that("SimulationResult print truncates long state and observable lists", {
     expect_snapshot(print(out))
 })
 
+test_that("SimulationResult print summarizes repeated stochastic simulations", {
+    out <- structure(
+        list(
+            states = data.frame(
+                time = rep(c(0, 10), times = 1500),
+                rep = rep(seq_len(1500), each = 2),
+                a_A_cyt = 0,
+                check.names = FALSE
+            ),
+            observables = NULL
+        ),
+        class = "SimulationResult"
+    )
+
+    expect_snapshot(print(out))
+})
+
 test_that("simulate accepts time units through the time DSL", {
     model <- test_model_for_simulation(amount_unit = "mg", time_unit = TRUE)
 
