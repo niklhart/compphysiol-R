@@ -963,6 +963,7 @@ print.SimulationResult <- function(x, ...) {
     rows <- list(c(t, y))
 
     get_partitioning <- .hybrid_partition_function(partition, propensity_function, parameters)
+    feasibility <- .hybrid_stochastic_event_feasibility(input_states, input_stoich, ncol(stoichiometry))
     is_stochastic_reaction <- get_partitioning(y)
 
     solver_args <- list(...)
@@ -979,8 +980,7 @@ print.SimulationResult <- function(x, ...) {
             stochastic_propensity <- .hybrid_stochastic_event_propensities(
                 a,
                 current_y,
-                input_states,
-                input_stoich
+                feasibility
             )
             stochastic_hazard <- sum(stochastic_propensity[is_stochastic_reaction])
             deterministic_propensity <- a * !is_stochastic_reaction
@@ -1017,7 +1017,7 @@ print.SimulationResult <- function(x, ...) {
 
         a <- propensity_function(y, parameters)
         a[a < 0] <- 0
-        a <- .hybrid_stochastic_event_propensities(a, y, input_states, input_stoich)
+        a <- .hybrid_stochastic_event_propensities(a, y, feasibility)
         a[!is_stochastic_reaction] <- 0
         a0 <- sum(a)
         if (a0 <= 0) {
@@ -1036,13 +1036,29 @@ print.SimulationResult <- function(x, ...) {
     do.call(rbind, rows)
 }
 
-.hybrid_stochastic_event_propensities <- function(propensities, y, input_states, input_stoich) {
-    for (i in seq_along(propensities)) {
-        states <- input_states[[i]]
-        stoich <- input_stoich[[i]]
-        if (length(states) == 0L) next
-        if (any(y[states] < stoich)) propensities[[i]] <- 0
+.hybrid_stochastic_event_feasibility <- function(input_states, input_stoich, n_reactions) {
+    input_lengths <- lengths(input_states)
+    constrained <- input_lengths > 0L
+    if (!any(constrained)) {
+        return(list(n_reactions = n_reactions, reaction = integer(0), state = integer(0), stoich = numeric(0)))
     }
+
+    list(
+        n_reactions = n_reactions,
+        reaction = rep(seq_along(input_states), input_lengths),
+        state = unlist(input_states, use.names = FALSE),
+        stoich = unlist(input_stoich, use.names = FALSE)
+    )
+}
+
+.hybrid_stochastic_event_propensities <- function(propensities, y, feasibility) {
+    if (length(feasibility$reaction) == 0L) return(propensities)
+
+    met <- y[feasibility$state] >= feasibility$stoich
+    met_by_reaction <- tabulate(feasibility$reaction[met], nbins = feasibility$n_reactions)
+    required_by_reaction <- tabulate(feasibility$reaction, nbins = feasibility$n_reactions)
+    infeasible <- met_by_reaction < required_by_reaction
+    propensities[infeasible] <- 0
 
     propensities
 }
