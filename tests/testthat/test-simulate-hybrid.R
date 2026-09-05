@@ -95,6 +95,41 @@ test_that("hybrid simulation clamps negative propensities to zero", {
     expect_equal(out$states$a_drug_Central, c(10, 10, 10))
 })
 
+test_that("hybrid stochastic events require sufficient reactant counts", {
+    out <- .hybrid_simulate(
+        stoichiometry = matrix(-1, nrow = 1),
+        propensity_function = function(y, params) 100 * y[[1]],
+        time = c(0, 1),
+        y0 = 0.5,
+        parameters = list(),
+        partition = TRUE,
+        input_states = list(1L),
+        input_stoich = list(1),
+        max_events = 0
+    )
+
+    expect_equal(out[, 1], c(0, 1))
+    expect_equal(out[, 2], c(0.5, 0.5))
+})
+
+test_that("hybrid simulation treats vanishing state values as zero", {
+    out <- .hybrid_simulate(
+        stoichiometry = matrix(0, nrow = 1),
+        propensity_function = function(y, params) {
+            if (identical(y[[1]], 0)) return(0)
+            NaN
+        },
+        time = c(0, 1),
+        y0 = 1e-300,
+        parameters = list(),
+        partition = TRUE,
+        input_states = list(integer(0)),
+        input_stoich = list(numeric(0))
+    )
+
+    expect_equal(out[, 2], c(1e-300, 0))
+})
+
 test_that("hybrid adaptive partition and fixed all-stochastic partition are reproducible", {
     model <- compartment_model() |>
         add_compartment("Central", volume = NA_real_) |>

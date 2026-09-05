@@ -281,6 +281,8 @@ simulate.StochasticModel <- function(
                 y0 = y0,
                 parameters = solver_parameters,
                 partition = partition,
+                input_states = object$processes$input_states,
+                input_stoich = object$processes$input_stoich,
                 include_event_times = include_event_times,
                 max_events = max_events,
                 ...
@@ -943,6 +945,8 @@ print.SimulationResult <- function(x, ...) {
     y0,
     parameters,
     partition,
+    input_states,
+    input_stoich,
     include_event_times = FALSE,
     max_events = Inf,
     ...
@@ -968,11 +972,17 @@ print.SimulationResult <- function(x, ...) {
         xi <- stats::rexp(1, rate = 1)
 
         ode_function <- function(t, Y, parms) {
-            current_y <- Y[seq_len(nx)]
+            current_y <- .hybrid_clamp_state(Y[seq_len(nx)])
             a <- propensity_function(current_y, parms)
             a[a < 0] <- 0
 
-            stochastic_hazard <- sum(a[is_stochastic_reaction])
+            stochastic_propensity <- .hybrid_stochastic_event_propensities(
+                a,
+                current_y,
+                input_states,
+                input_stoich
+            )
+            stochastic_hazard <- sum(stochastic_propensity[is_stochastic_reaction])
             deterministic_propensity <- a * !is_stochastic_reaction
             dydt <- as.vector(stoichiometry %*% deterministic_propensity)
 
@@ -1007,6 +1017,7 @@ print.SimulationResult <- function(x, ...) {
 
         a <- propensity_function(y, parameters)
         a[a < 0] <- 0
+        a <- .hybrid_stochastic_event_propensities(a, y, input_states, input_stoich)
         a[!is_stochastic_reaction] <- 0
         a0 <- sum(a)
         if (a0 <= 0) {
@@ -1023,6 +1034,17 @@ print.SimulationResult <- function(x, ...) {
     }
 
     do.call(rbind, rows)
+}
+
+.hybrid_stochastic_event_propensities <- function(propensities, y, input_states, input_stoich) {
+    for (i in seq_along(propensities)) {
+        states <- input_states[[i]]
+        stoich <- input_stoich[[i]]
+        if (length(states) == 0L) next
+        if (any(y[states] < stoich)) propensities[[i]] <- 0
+    }
+
+    propensities
 }
 
 .stochastic_simulation_check_max_events <- function(event_count, max_events) {
@@ -1055,8 +1077,9 @@ print.SimulationResult <- function(x, ...) {
     length(numerator) == 0L && identical(denominator, "s")
 }
 
-.hybrid_clamp_state <- function(y, tolerance = sqrt(.Machine$double.eps)) {
-    y[y < 0 & y > -tolerance] <- 0
+.hybrid_clamp_state <- function(y, negative_tolerance = sqrt(.Machine$double.eps), zero_tolerance = .Machine$double.eps) {
+    y[abs(y) < zero_tolerance] <- 0
+    y[y < 0 & y > -negative_tolerance] <- 0
     y
 }
 
