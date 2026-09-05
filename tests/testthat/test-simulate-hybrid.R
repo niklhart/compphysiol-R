@@ -53,6 +53,19 @@ test_that("hybrid deterministic partition matches deterministic solution", {
     expect_equal(out$states$a_drug_Central, 100 * exp(-0.2 * time), tolerance = 1e-5)
 })
 
+test_that("hybrid normalizes dimensionless unit initials to numeric counts", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = 100 [1], type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_parameter(ke = 0.2)
+
+    out <- simulate(model, time = 0:1, simulation_type = "hybrid", partition = FALSE)
+
+    expect_false(inherits(out$states$a_drug_Central, "units"))
+    expect_equal(out$states$a_drug_Central, 100 * exp(-0.2 * 0:1), tolerance = 1e-5)
+})
+
 test_that("hybrid deterministic partition supports large initial counts", {
     initial_count <- .Machine$integer.max + 1000
     model <- compartment_model() |>

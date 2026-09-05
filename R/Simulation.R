@@ -875,6 +875,7 @@ print.SimulationResult <- function(x, ...) {
         allow_unresolved = FALSE
     )
     .stochastic_model_check_initials(initials, allow_unresolved = FALSE)
+    initials <- lapply(initials, .stochastic_model_normalize_count_initial)
     counts <- unlist(initials)
     if (identical(storage_mode, "integer") && any(counts > .Machine$integer.max)) {
         state_name <- names(counts)[[which(counts > .Machine$integer.max)[[1L]]]]

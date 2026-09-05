@@ -130,6 +130,18 @@ test_that("to_stochastic_model rejects unit-bearing state initials", {
     expect_error(to_stochastic_model(model), "dimensionless|count|unit", ignore.case = TRUE)
 })
 
+test_that("to_stochastic_model accepts dimensionless unit state initials", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = 10 [1], type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_parameter(ke = 0.2)
+
+    stochastic_model <- to_stochastic_model(model)
+
+    expect_s3_class(stochastic_model, "StochasticModel")
+})
+
 test_that("to_stochastic_model rejects non-count state initials", {
     fractional <- compartment_model() |>
         add_compartment("Central", volume = NA_real_) |>

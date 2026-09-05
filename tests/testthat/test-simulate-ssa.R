@@ -36,6 +36,19 @@ test_that("SSA output states are non-negative integer counts", {
     expect_true(all(counts == round(counts)))
 })
 
+test_that("SSA normalizes dimensionless unit initials to numeric counts", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = 20 [1], type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_parameter(ke = 0.2)
+
+    out <- simulate(model, time = 0:1, simulation_type = "ssa", seed = 1)
+
+    expect_false(inherits(out$states$a_drug_Central, "units"))
+    expect_equal(out$states$a_drug_Central[[1]], 20)
+})
+
 test_that("SSA rejects initial counts above the integer limit", {
     model <- compartment_model() |>
         add_compartment("Central", volume = NA_real_) |>

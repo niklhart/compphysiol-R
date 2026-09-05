@@ -1146,7 +1146,7 @@ print.OdeModel <- function(x, ...) {
 
 .stochastic_model_check_initials <- function(initials, allow_unresolved = FALSE) {
     for (i in seq_along(initials)) {
-        value <- initials[[i]]
+        value <- .stochastic_model_normalize_count_initial(initials[[i]])
         if (.initial_is_expr(value)) {
             if (allow_unresolved) next
             stop(
@@ -1191,6 +1191,18 @@ print.OdeModel <- function(x, ...) {
     }
 
     invisible(initials)
+}
+
+.stochastic_model_normalize_count_initial <- function(value) {
+    if (!inherits(value, "units")) return(value)
+
+    value <- .expand_registered_model_units(value)
+    unit_obj <- units(value)
+    if (length(unit_obj$numerator) == 0L && length(unit_obj$denominator) == 0L) {
+        return(units::set_units(value, NULL))
+    }
+
+    value
 }
 
 .stochastic_model_is_explicit_rate <- function(const) {
