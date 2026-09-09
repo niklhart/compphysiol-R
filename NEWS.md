@@ -1,6 +1,7 @@
 # compphysiol (development version)
 
 * better handling of large state or event counts in stochastic or hybrid simulations and numerically negative hybrid simulation propensities
+* improved generation of ODE right-hand side expressions in `OdeModel` class
 
 # compphysiol 0.4.0
 
