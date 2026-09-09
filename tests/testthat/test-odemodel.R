@@ -68,6 +68,42 @@ test_that("OdeModel nonlinear sink terms keep expression parentheses", {
     expect_equal(deparse1(ode_model$rhs[[1]]), "-(vmax * y[1]/(Km + y[1]))")
 })
 
+test_that("OdeModel pushes negation through reaction-rate products", {
+    model <- compartment_model() |>
+        add_compartment(c("cmt1", "cmt2"), volume = c(1, 2) [L]) |>
+        add_molecule("A", cmt = "cmt1", type = "amount") |>
+        add_molecule("B", cmt = "cmt2", type = "amount") |>
+        add_reaction(
+            "A[cmt1] + B[cmt2] -> A[cmt1]",
+            const = "k",
+            scale_cmt = "cmt1"
+        )
+
+    output <- paste(capture.output(print(to_ode_model(model))), collapse = "\n")
+
+    expect_match(
+        output,
+        "d/dt a[B, cmt2] = -k * a[A, cmt1] * (a[B, cmt2]/2 [L])",
+        fixed = TRUE
+    )
+})
+
+test_that("OdeModel renders negative terms in sums as subtraction", {
+    model <- compartment_model() |>
+        add_compartment(c("mem", "int"), volume = 1) |>
+        add_molecule("R", cmt = c("mem", "int"), type = "amount") |>
+        add_transport("mem", "int", molec = "R", const = "kdegR") |>
+        add_transport("int", "mem", molec = "R", const = "krecyRi") |>
+        add_transport("int", NULL, molec = "R", const = "kdegRi")
+
+    ode_model <- to_ode_model(model)
+
+    expect_equal(
+        deparse1(ode_model$rhs[[2]]),
+        "kdegR * y[1] - krecyRi * y[2] - kdegRi * y[2]"
+    )
+})
+
 test_that("OdeModel print method uses DSL state names", {
     model <- compartment_model() |>
         add_compartment("Central", volume = "V") |>

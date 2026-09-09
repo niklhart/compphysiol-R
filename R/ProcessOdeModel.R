@@ -1759,15 +1759,34 @@ print.OdeModel <- function(x, ...) {
 
 .sum_exprs <- function(exprs) {
     if (length(exprs) == 0) return(0)
-    Reduce(function(a, b) bquote(.(a) + .(b)), exprs)
+    Reduce(function(a, b) {
+        positive <- .remove_leading_negation(b)
+        if (positive$found) {
+            return(call("-", a, positive$expr))
+        }
+        call("+", a, b)
+    }, exprs)
 }
 
 .negate_expr <- function(expr, simplify_product = FALSE) {
     if (is.numeric(expr) && length(expr) == 1L) return(-expr)
     if (simplify_product && is.call(expr) && identical(expr[[1]], as.name("*")) && length(expr) == 3L) {
-        return(call("*", .negate_expr(expr[[2]]), expr[[3]]))
+        return(call("*", .negate_expr(expr[[2]], simplify_product = TRUE), expr[[3]]))
     }
     call("-", expr)
+}
+
+.remove_leading_negation <- function(expr) {
+    if (is.call(expr) && identical(expr[[1]], as.name("-")) && length(expr) == 2L) {
+        return(list(expr = expr[[2]], found = TRUE))
+    }
+    if (is.call(expr) && identical(expr[[1]], as.name("*")) && length(expr) == 3L) {
+        positive <- .remove_leading_negation(expr[[2]])
+        if (positive$found) {
+            return(list(expr = call("*", positive$expr, expr[[3]]), found = TRUE))
+        }
+    }
+    list(expr = expr, found = FALSE)
 }
 
 .dsl_parse_state <- function(x) {
