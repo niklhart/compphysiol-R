@@ -49,6 +49,21 @@ test_that("wire treats NA compartments in states like old compartment shorthand"
     )
 })
 
+test_that("wire preserves compound reaction constant expressions", {
+
+    model <- compartment_model() |>
+        add_compartment("body", volume = 1) |>
+        add_molecule("TU", type = "amount", initial = "TU0") |>
+        add_reaction("TU -> NULL", const = "1 - eta_RTI") |>
+        wire()
+
+    expect_equal(model$reactions$const[[1]], quote(1 - eta_RTI))
+    expect_equal(
+        deparse1(model$reactions$rate[[1]]),
+        "(1 - eta_RTI) * c[TU, body]"
+    )
+})
+
 test_that("wire expands partial NA state compartments in cross-compartment reactions", {
 
     model <- compartment_model() |>

@@ -220,7 +220,7 @@ wire <- function(model, what = c("molec", "cmt")) {
                                 input = input,
                                 output = output,
                                 cmt = values,
-                                const = m$const[[1]]
+                                const = list(m$const[[1]])
                             ))
                         }
 
@@ -252,7 +252,7 @@ wire <- function(model, what = c("molec", "cmt")) {
                                 input = input,
                                 output = output,
                                 scale_cmt = m$scale_cmt[[1]],
-                                const = m$const[[1]]
+                                const = list(m$const[[1]])
                             ))
                         }
 
