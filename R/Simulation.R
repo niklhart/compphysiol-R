@@ -146,25 +146,14 @@ simulate.OdeModel <- function(
     dimensions = NULL,
     ...
 ) {
-    time <- .process_nse_arg(substitute(time), envir = parent.frame())
-    time <- .simulation_apply_time_unit(time, unit)
-    .simulation_validate_time(time)
-
-    sim_parameters <- .simulation_parameters_object(parameters)
-    merged_parameters <- .merge_ode_parameters(object$parameters, sim_parameters)
-    .simulation_check_free_parameters_available(object, merged_parameters)
-    .ode_model_check_unit_consistency(object, merged_parameters)
-    .simulation_check_time_mode(object, time, parameters = merged_parameters)
-
-    dimensions <- .simulation_dimensions(object, time, dimensions, parameters = merged_parameters)
-    odeinfo <- .to_deSolve(object, parameters = sim_parameters, dimensions = dimensions)
-
-    .simulation_solve_ode_model(
+    .simulate_ode_backend(
         object,
-        odeinfo = odeinfo,
-        time = time,
+        time = substitute(time),
+        unit = unit,
+        parameters = parameters,
         dimensions = dimensions,
-        parameters = merged_parameters,
+        envir = parent.frame(),
+        export = .to_deSolve,
         ...
     )
 }
@@ -180,28 +169,16 @@ simulate.CompiledOdeModel <- function(
     dimensions = NULL,
     ...
 ) {
-    ode_model <- object$ode_model
-    .check_class(ode_model, "OdeModel")
-
-    time <- .process_nse_arg(substitute(time), envir = parent.frame())
-    time <- .simulation_apply_time_unit(time, unit)
-    .simulation_validate_time(time)
-
-    sim_parameters <- .simulation_parameters_object(parameters)
-    merged_parameters <- .merge_ode_parameters(ode_model$parameters, sim_parameters)
-    .simulation_check_free_parameters_available(ode_model, merged_parameters)
-    .ode_model_check_unit_consistency(ode_model, merged_parameters)
-    .simulation_check_time_mode(ode_model, time, parameters = merged_parameters)
-
-    dimensions <- .simulation_dimensions(ode_model, time, dimensions, parameters = merged_parameters)
-    odeinfo <- .to_deSolve(ode_model, parameters = sim_parameters, dimensions = dimensions)
-
-    .simulation_solve_ode_model(
-        ode_model,
-        odeinfo = odeinfo,
-        time = time,
+    .simulate_ode_backend(
+        object$ode_model,
+        time = substitute(time),
+        unit = unit,
+        parameters = parameters,
         dimensions = dimensions,
-        parameters = merged_parameters,
+        envir = parent.frame(),
+        export = function(ode_model, parameters, dimensions) {
+            .to_deSolve(ode_model, parameters = parameters, dimensions = dimensions)
+        },
         ...
     )
 }
@@ -382,6 +359,41 @@ simulate.StochasticModel <- function(
         simulation_type
     )
     stop(label, " simulation is not implemented yet.", call. = FALSE)
+}
+
+.simulate_ode_backend <- function(
+    ode_model,
+    time,
+    unit,
+    parameters,
+    dimensions,
+    envir,
+    export,
+    ...
+) {
+    .check_class(ode_model, "OdeModel")
+
+    time <- .process_nse_arg(time, envir = envir)
+    time <- .simulation_apply_time_unit(time, unit)
+    .simulation_validate_time(time)
+
+    sim_parameters <- .simulation_parameters_object(parameters)
+    merged_parameters <- .merge_ode_parameters(ode_model$parameters, sim_parameters)
+    .simulation_check_free_parameters_available(ode_model, merged_parameters)
+    .ode_model_check_unit_consistency(ode_model, merged_parameters)
+    .simulation_check_time_mode(ode_model, time, parameters = merged_parameters)
+
+    dimensions <- .simulation_dimensions(ode_model, time, dimensions, parameters = merged_parameters)
+    odeinfo <- export(ode_model, parameters = sim_parameters, dimensions = dimensions)
+
+    .simulation_solve_ode_model(
+        ode_model,
+        odeinfo = odeinfo,
+        time = time,
+        dimensions = dimensions,
+        parameters = merged_parameters,
+        ...
+    )
 }
 
 .simulation_check_free_parameters_available <- function(model, parameters) {
