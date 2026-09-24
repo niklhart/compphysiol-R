@@ -256,13 +256,6 @@ to_compiled_ode_model.OdeModel <- function(model) {
     structure(
         list(
             ode_model = model,
-            states = model$states,
-            initials = model$initials,
-            equations = model$equations,
-            observables = model$observables,
-            parameters = model$parameters,
-            dosing = model$dosing,
-            freeParams = model$freeParams,
             parameterNames = parameter_names,
             backend = "deSolve_compiled_rhs",
             source = NULL,

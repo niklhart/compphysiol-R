@@ -50,19 +50,11 @@ test_that("to_compiled_ode_model returns a compiled-backend representation", {
     expect_named(
         compiled_model,
         c(
-            "ode_model", "states", "initials", "equations", "observables",
-            "parameters", "dosing", "freeParams", "parameterNames", "backend",
-            "source", "dll", "entryPoints"
+            "ode_model", "parameterNames", "backend", "source", "dll",
+            "entryPoints"
         )
     )
     expect_identical(compiled_model$ode_model, ode_model)
-    expect_equal(compiled_model$states, ode_model$states)
-    expect_equal(compiled_model$initials, ode_model$initials)
-    expect_equal(compiled_model$equations, ode_model$equations)
-    expect_equal(compiled_model$observables, ode_model$observables)
-    expect_equal(compiled_model$parameters, ode_model$parameters)
-    expect_equal(compiled_model$dosing, ode_model$dosing)
-    expect_equal(compiled_model$freeParams, ode_model$freeParams)
     expect_equal(compiled_model$parameterNames, c("A0", "CL", "V"))
     expect_equal(compiled_model$backend, "deSolve_compiled_rhs")
     expect_null(compiled_model$source)
