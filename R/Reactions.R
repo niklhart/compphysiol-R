@@ -312,7 +312,8 @@ print.States <- function(x, ...) {
 #' @param ... Errors if used, enforces `rate` and `const` to be specified as named arguments only, not positional.
 #' @param rate Character string representing the concentration-change reaction rate (for nonlinear reactions).
 #'   Use `c[A]` to refer to the concentration of molecule A, and `a[A]` to refer to its amount.
-#' @param const Character string representing the reaction constant (for mass-action reactions).
+#' @param const Reaction constant for mass-action reactions (character string,
+#'   call, numeric, or unit-bearing value).
 #'   Formally, this corresponds to `rate = const * c[input[1]] * c[input[2]] * ...`. 
 #'   In addition, the information that the reaction is elementary is encoded in the `type` 
 #'   column of the resulting `Reactions` object.
@@ -376,6 +377,19 @@ reactions <- function(
     rate = NULL,
     const = NULL
 ) {
+    const_expr <- substitute(const)
+    if (.dsl_has_state_ref(const_expr)) {
+        stop(
+            "Argument 'const' cannot contain state references such as 'a[...]' or 'c[...]'. ",
+            "Use 'rate' for state-dependent reaction expressions.",
+            call. = FALSE
+        )
+    }
+    const <- .process_unit_shorthand_arg(
+        expr = const_expr,
+        value = const,
+        envir = parent.frame(n = 1)
+    )
 
     output_missing <- missing(output)
     formula_missing <- missing(formula)
@@ -540,8 +554,10 @@ reactions <- function(
             if (nConst == 1 && is.character(const)) {
                 const <- replace_pattern(const)
             }
-            const <- const |> .as_expr_arg_list() |> lapply(.as_call)
+            const <- const |> .as_const_arg_list()
             if (length(const) == 1 && nReact > 1) const <- rep(const, nReact)
+            is_value <- vapply(const, .is_const_value, logical(1))
+            const[!is_value] <- lapply(const[!is_value], .as_call)
             if (any(vapply(const, .dsl_has_state_ref, logical(1)))) {
                 stop(
                     "Argument 'const' cannot contain state references such as 'a[...]' or 'c[...]'. ",

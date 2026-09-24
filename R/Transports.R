@@ -14,7 +14,8 @@
 #' @param molec The name of the molecule(s) being transferred (character vector, optional, default: all molecules)
 #' @param ... Unused, enforces `rate` and `const` to be specified as named arguments only, not positional
 #' @param rate The transport rate (character or call, optional, mutually exclusive with `const`)
-#' @param const Rate constant for first-order transports (character or call, optional, mutually exclusive with `rate`)
+#' @param const Rate constant for first-order transports (character, call, numeric,
+#'   or unit-bearing value, optional, mutually exclusive with `rate`)
 #' @return A `Transports` object
 #' @examples
 #' # Linear transport
@@ -23,6 +24,19 @@
 #' f2 <- transports(from = "A", to = "B", rate = "k1 * A*B/(B+K)")
 #' @export
 transports <- function(from, to, molec = NA_character_, ..., rate = NULL, const = NULL) {
+    const_expr <- substitute(const)
+    if (.dsl_has_state_ref(const_expr)) {
+        stop(
+            "Argument 'const' cannot contain state references such as 'a[...]' or 'c[...]'. ",
+            "Use 'rate' for state-dependent transport expressions.",
+            call. = FALSE
+        )
+    }
+    const <- .process_unit_shorthand_arg(
+        expr = const_expr,
+        value = const,
+        envir = parent.frame(n = 1)
+    )
 
     # Error if any additional positional arguments are provided (enforces named arguments for rate and const)
     if (length(list(...)) > 0) {
@@ -115,10 +129,9 @@ transports <- function(from, to, molec = NA_character_, ..., rate = NULL, const 
                 stop("Linear transports must have a valid source compartment.")
             }
             if (nConst == 1 && is.character(const)) const <- replace_pattern(const)
-            const <- const |>
-                .as_expr_arg_list() |>
-                lapply(.as_call) |>
-                rep(length.out = nMax)
+            const <- const |> .as_const_arg_list() |> rep(length.out = nMax)
+            is_value <- vapply(const, .is_const_value, logical(1))
+            const[!is_value] <- lapply(const[!is_value], .as_call)
             if (any(vapply(const, .dsl_has_state_ref, logical(1)))) {
                 stop(
                     "Argument 'const' cannot contain state references such as 'a[...]' or 'c[...]'. ",

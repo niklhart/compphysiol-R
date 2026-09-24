@@ -35,7 +35,19 @@
 .neg <- function(x) if (x == 0) 0 else call("-", x)
 .add <- function(x, y) if (x == 0) y else if (y == 0) x else call("+", x, y)
 .sub <- function(x, y) if (y == 0) x else if (x == 0) .neg(y) else call("-", x, y)
-.mul <- function(x, y) if (x == 0 || y == 0) 0 else if (x == 1) y else if (y == 1) x else call("*", x, y)
+.is_plain_number <- function(x, value) {
+    is.numeric(x) &&
+        !inherits(x, "units") &&
+        length(x) == 1L &&
+        isTRUE(unname(x) == value)
+}
+
+.mul <- function(x, y) {
+    if (.is_plain_number(x, 0) || .is_plain_number(y, 0)) 0
+    else if (.is_plain_number(x, 1)) y
+    else if (.is_plain_number(y, 1)) x
+    else call("*", x, y)
+}
 .div <- function(x, y) if (x == 0) 0 else call("/", x, y)
 
 #' Solve a 1x1 linear system of equations Ax+b=0 with symbolic coefficients
@@ -126,4 +138,3 @@
     ## return symbolic linear system
     list(A = A, b = b)
 }
-

@@ -149,12 +149,14 @@ can be used directly outside unit-aware arguments (e.g., during data processing)
 by using `with_units()`.
 
 Unit shorthand is not evaluated inside expression-like arguments such as
-transport rates, reaction rates, equations, or observables. Use unit-aware
-*parameters* for numerical quantities in those expressions, for example
-`parameters(k = 0.2 [1/h])` together with `add_transport(..., const = "k")`.
-This keeps bracket syntax unambiguous: value-like arguments use brackets for
-units, while expression-like arguments use brackets for model-state
-references.
+transport rates, reaction rates, equations, or observables. Transport and
+reaction `const` arguments are value-like when supplied as explicit values, so
+`const = 0.2 [1/h]` is interpreted as a unit-bearing rate constant. Symbolic
+constants can still be supplied through character expressions, for example
+`add_transport(..., const = "k")` together with `parameters(k = 0.2 [1/h])`.
+This keeps bracket syntax unambiguous: value-like `const` arguments use
+brackets for units, while explicit `rate` expressions use brackets for
+model-state references.
 
 The shorthand follows ordinary R parsing rules, meaning that the unit bracket
 takes precedence over arithmetic operators. For example, `1/2[h]` is parsed 

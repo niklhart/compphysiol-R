@@ -52,6 +52,52 @@
     as.list(x)
 }
 
+#' Treat const arguments as vectors of values or expressions
+#' @param x Input const argument
+#' @returns A list of const inputs
+#' @noRd
+.as_const_arg_list <- function(x) {
+    if (is.null(x)) return(list())
+    if (is.numeric(x) || inherits(x, "units")) return(as.list(x))
+    .as_expr_arg_list(x)
+}
+
+#' Check whether a const element is a direct numeric value
+#' @param x Const element
+#' @returns `TRUE` for numeric values, including unit-bearing values.
+#' @noRd
+.is_const_value <- function(x) {
+    is.numeric(x) || inherits(x, "units")
+}
+
+#' Check whether an unevaluated expression contains unit shorthand
+#' @param expr An expression
+#' @returns `TRUE` if the expression contains a non-DSL bracket call.
+#' @noRd
+.has_unit_shorthand <- function(expr) {
+    if (!is.call(expr)) return(FALSE)
+    if (identical(expr[[1]], quote(quote))) return(FALSE)
+    if (length(expr) == 3 && identical(expr[[1]], quote(`[`)) && !.dsl_is_special(expr)) {
+        return(TRUE)
+    }
+
+    any(vapply(as.list(expr)[-1], .has_unit_shorthand, logical(1)))
+}
+
+#' Evaluate value-like arguments only when they use unit shorthand
+#' @param expr Unevaluated argument expression
+#' @param value Lazily evaluated argument value
+#' @param envir Environment for evaluating unit shorthand
+#' @returns The evaluated unit value for unit shorthand, otherwise `value`.
+#' @noRd
+.process_unit_shorthand_arg <- function(expr, value, envir = parent.frame(n = 1)) {
+    if (.has_unit_shorthand(expr)) {
+        return(.process_nse_arg(expr = expr, envir = envir))
+    }
+
+    value
+}
+
 
 #' Helper function to check if an object inherits from a specified class
 #' 

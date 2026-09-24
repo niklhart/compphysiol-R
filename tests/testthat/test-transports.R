@@ -82,6 +82,22 @@ test_that("Transport const rejects state references", {
     )
 })
 
+test_that("Transport const supports explicit unit values", {
+    t <- transports(from = "A", to = "B", const = 1 [1/h])
+
+    expect_s3_class(t$const[[1]], "units")
+    expect_equal(units::set_units(t$const[[1]], "1/h", mode = "standard"), units::set_units(1, "1/h", mode = "standard"))
+    expect_equal(
+        t$rate[[1]],
+        bquote(.(units::set_units(1, "1/h", mode = "standard")) * a[A])
+    )
+
+    model <- compartment_model() |>
+        add_transport("A", "B", const = 2 [1/h])
+
+    expect_equal(units::set_units(model$transports$const[[1]], "1/h", mode = "standard"), units::set_units(2, "1/h", mode = "standard"))
+})
+
 test_that("Transport printing works correctly", {
     # from -> to, 2 linear transports, molec as wildcard
     t1 <- transports(from = c("cen", "per"), to = c("per", "cen"), const = c("k1", "k2"))
