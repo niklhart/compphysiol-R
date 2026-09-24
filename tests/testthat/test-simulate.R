@@ -117,6 +117,25 @@ test_that("simulate accepts time units through the time DSL", {
     )
 })
 
+test_that("simulate wires scalar dosing targets before ODE export", {
+    model <- multiCompModel(ncomp = 2, type = "micro", unit = "mg") |>
+        add_dosing(time = 0 [h], amount = 100 [mg], cmt = "cen") |>
+        add_parameter(
+            kc0 = 0.15 [1/h],
+            kcp = 0.08 [1/h],
+            kpc = 0.05 [1/h],
+            Vcen = 8 [L],
+            Vper = 20 [L]
+        )
+
+    out <- simulate(model, time = seq(0, 24, by = 0.5) [h])
+
+    expect_s3_class(out, "SimulationResult")
+    expect_named(out$states, c("time", "a_drug_cen", "a_drug_per"))
+    expect_equal(out$states$time, units::set_units(seq(0, 24, by = 0.5), "h", mode = "standard"))
+    expect_equal(out$states$a_drug_cen[[1]], units::set_units(100, "mg", mode = "standard"))
+})
+
 test_that("simulate accepts time units through the unit argument", {
     model <- test_model_for_simulation(amount_unit = "mg", time_unit = TRUE)
 

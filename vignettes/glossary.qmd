@@ -5,6 +5,7 @@ format:
   html:
     toc: true
     number-sections: false
+    embed-resources: true
 vignette: >
   %\VignetteIndexEntry{Glossary of modelling concepts}
   %\VignetteEngine{quarto::html}

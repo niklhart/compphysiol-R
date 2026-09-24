@@ -1,10 +1,10 @@
 ---
 title: "Simulating and plotting unit-aware models"
-description: "A small unit-aware simulation workflow with ggplot2"
 format:
   html:
     toc: true
     number-sections: false
+    embed-resources: true
 vignette: >
   %\VignetteIndexEntry{Simulating and plotting unit-aware models}
   %\VignetteEngine{quarto::html}
@@ -27,35 +27,34 @@ library(reshape2)
 ## Model
 
 We use a two-compartment empirical PK model in micro-parameterization. The
-integrated states are amounts in the central and peripheral compartments. The
-model also defines the central concentration observable `Ccen`.
+integrated states are amounts in the central and peripheral compartments. 
+Model parameters are defined with units using `add_parameter()`.
+The model also defines the central concentration observable `Ccen`.
 
 ```{r}
 #| label: model
 model <- multiCompModel(ncomp = 2, type = "micro", unit = "mg") |>
     add_dosing(time = 0 [h], amount = 100 [mg], cmt = "cen") |>
-    wire(what = "molec")
-
-pars <- parameters(
-    kc0 = 0.15 [1/h],
-    kcp = 0.08 [1/h],
-    kpc = 0.05 [1/h],
-    Vcen = 8 [L],
-    Vper = 20 [L]
-)
+    add_parameter(
+        kc0 = 0.15 [1/h],
+        kcp = 0.08 [1/h],
+        kpc = 0.05 [1/h],
+        Vcen = 8 [L],
+        Vper = 20 [L]
+    )
+model
 ```
 
 ## Simulation
 
-`simulate()` owns the solver boundary: it strips units before calling the ODE
-solver and attaches units back to the returned trajectories.
+`simulate()` allows to simulate a compartment model (by default, using ODEs). 
+It handles units properly, ensuring that the simulation results are unit-aware.
 
 ```{r}
 #| label: simulate
 sim <- simulate(
     model,
-    time = seq(0, 24, by = 0.5) [h],
-    parameters = pars
+    time = seq(0, 24, by = 0.5) [h]
 )
 
 sim
