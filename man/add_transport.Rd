@@ -28,7 +28,8 @@ add_transport(
 
 \item{rate}{The transport rate (character or call, optional, mutually exclusive with \code{const})}
 
-\item{const}{Rate constant for first-order transports (character or call, optional, mutually exclusive with \code{rate})}
+\item{const}{Rate constant for first-order transports (character, call, numeric,
+or unit-bearing value, optional, mutually exclusive with \code{rate})}
 
 \item{trans}{A \code{Transports} object. Constructed from the other inputs if not provided.}
 }

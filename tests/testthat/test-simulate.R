@@ -374,6 +374,31 @@ test_that("simulate accepts a precompiled OdeModel with different parameter valu
     expect_true(out_fast$states$a_drug_Central[[length(time)]] < out_slow$states$a_drug_Central[[length(time)]])
 })
 
+test_that("simulate accepts a CompiledOdeModel with different parameter values", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport("Central", "", const = "ke")
+    compiled_model <- to_compiled_ode_model(to_ode_model(model))
+    time <- seq(0, 10, by = 1)
+
+    out_fast <- simulate(
+        compiled_model,
+        time = time,
+        parameters = parameters(A0 = 100, ke = 0.4)
+    )
+    out_slow <- simulate(
+        compiled_model,
+        time = time,
+        parameters = parameters(A0 = 100, ke = 0.1)
+    )
+
+    expect_s3_class(out_fast, "SimulationResult")
+    expect_equal(out_fast$states$a_drug_Central, 100 * exp(-0.4 * time), tolerance = 1e-6)
+    expect_equal(out_slow$states$a_drug_Central, 100 * exp(-0.1 * time), tolerance = 1e-6)
+    expect_true(out_fast$states$a_drug_Central[[length(time)]] < out_slow$states$a_drug_Central[[length(time)]])
+})
+
 test_that("simulate reports all missing OdeModel parameters together", {
     model <- compartment_model() |>
         add_compartment(c("Central", "Peripheral"), volume = NA_real_) |>
@@ -400,6 +425,24 @@ test_that("simulate on an OdeModel applies runtime parameter values to initials 
 
     out <- simulate(
         ode_model,
+        time = seq(0, 2, by = 1),
+        parameters = parameters(C0 = 5, V = 20, ke = 0.2)
+    )
+
+    expect_equal(out$states$a_drug_Central[[1]], 100)
+    expect_equal(out$observables$C, out$states$a_drug_Central / 20, tolerance = 1e-6)
+})
+
+test_that("simulate on a CompiledOdeModel applies runtime parameter values to initials and observables", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = "V") |>
+        add_molecule("drug", cmt = "Central", initial = "C0", type = "concentration") |>
+        add_transport("Central", "", const = "ke") |>
+        add_observable(C = c[drug, Central])
+    compiled_model <- to_compiled_ode_model(model)
+
+    out <- simulate(
+        compiled_model,
         time = seq(0, 2, by = 1),
         parameters = parameters(C0 = 5, V = 20, ke = 0.2)
     )

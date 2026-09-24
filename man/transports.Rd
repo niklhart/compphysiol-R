@@ -17,7 +17,8 @@ transports(from, to, molec = NA_character_, ..., rate = NULL, const = NULL)
 
 \item{rate}{The transport rate (character or call, optional, mutually exclusive with \code{const})}
 
-\item{const}{Rate constant for first-order transports (character or call, optional, mutually exclusive with \code{rate})}
+\item{const}{Rate constant for first-order transports (character, call, numeric,
+or unit-bearing value, optional, mutually exclusive with \code{rate})}
 }
 \value{
 A \code{Transports} object

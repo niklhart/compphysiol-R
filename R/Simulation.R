@@ -170,6 +170,43 @@ simulate.OdeModel <- function(
 }
 
 #' @export
+simulate.CompiledOdeModel <- function(
+    object,
+    nsim = NULL,
+    seed = NULL,
+    time = numeric(0),
+    unit = NULL,
+    parameters = list(),
+    dimensions = NULL,
+    ...
+) {
+    ode_model <- object$ode_model
+    .check_class(ode_model, "OdeModel")
+
+    time <- .process_nse_arg(substitute(time), envir = parent.frame())
+    time <- .simulation_apply_time_unit(time, unit)
+    .simulation_validate_time(time)
+
+    sim_parameters <- .simulation_parameters_object(parameters)
+    merged_parameters <- .merge_ode_parameters(ode_model$parameters, sim_parameters)
+    .simulation_check_free_parameters_available(ode_model, merged_parameters)
+    .ode_model_check_unit_consistency(ode_model, merged_parameters)
+    .simulation_check_time_mode(ode_model, time, parameters = merged_parameters)
+
+    dimensions <- .simulation_dimensions(ode_model, time, dimensions, parameters = merged_parameters)
+    odeinfo <- .to_deSolve(ode_model, parameters = sim_parameters, dimensions = dimensions)
+
+    .simulation_solve_ode_model(
+        ode_model,
+        odeinfo = odeinfo,
+        time = time,
+        dimensions = dimensions,
+        parameters = merged_parameters,
+        ...
+    )
+}
+
+#' @export
 simulate.AnalyticalModel <- function(
     object,
     nsim = NULL,

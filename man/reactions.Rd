@@ -39,7 +39,8 @@ contains \verb{->}, \code{input} is interpreted as \code{formula}.}
 \item{rate}{Character string representing the concentration-change reaction rate (for nonlinear reactions).
 Use \code{c[A]} to refer to the concentration of molecule A, and \code{a[A]} to refer to its amount.}
 
-\item{const}{Character string representing the reaction constant (for mass-action reactions).
+\item{const}{Reaction constant for mass-action reactions (character string,
+call, numeric, or unit-bearing value).
 Formally, this corresponds to \code{rate = const * c[input[1]] * c[input[2]] * ...}.
 In addition, the information that the reaction is elementary is encoded in the \code{type}
 column of the resulting \code{Reactions} object.}
