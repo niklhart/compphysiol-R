@@ -230,6 +230,12 @@ test_that("Reaction const supports explicit unit values", {
     expect_equal(units::set_units(model$reactions$const[[1]], "1/h", mode = "standard"), units::set_units(2, "1/h", mode = "standard"))
 })
 
+test_that("Reaction printing renders unit-bearing constants", {
+    r <- reactions("A -> B", cmt = "test", const = 1 [1/h])
+
+    expect_output(print(r), "rate = 1 \\[1/h\\] \\* c\\[A, test\\]")
+})
+
 test_that("Character reaction formulas support positional input and cmt localization", {
     r <- reactions("A + B -> C", cmt = "cyt", const = "k")
 

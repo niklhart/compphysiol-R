@@ -704,7 +704,7 @@ print.Reactions = function(x, ...) {
 
         in_str <- vapply(x$participants, format_side, character(1), role = "input")
         out_str <- vapply(x$participants, format_side, character(1), role = "output")
-        rate_str <- vapply(x$rate, function(r) paste(deparse(r), collapse = ""), character(1))
+        rate_str <- vapply(x$rate, .ode_model_deparse_with_unit_placeholders, character(1))
         location_str <- vapply(x$participants, function(participants) {
             cmt <- unique(participants$cmt[!is.na(participants$cmt)])
             if (length(cmt) == 0) " (<all cmt>)" else ""

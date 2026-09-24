@@ -231,7 +231,7 @@ print.Transports = function(x, ...) {
     to[is.na(to)] <- empty_symbol
 
     molec <- ifelse(is.na(x$molec), "<all molec>", x$molec)
-    rate <- vapply(x$rate,deparse1,character(1))
+    rate <- vapply(x$rate, .ode_model_deparse_with_unit_placeholders, character(1))
 
     if (length(x) > 0) {
         cat(" Transports:\n")
