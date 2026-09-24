@@ -58,6 +58,17 @@
         (expr[[2]] == as.name("a") || expr[[2]] == as.name("c"))
 }
 
+#' Check whether an expression contains DSL state references
+#' @param expr An expression
+#' @returns `TRUE` if the expression contains `a[...]` or `c[...]`.
+#' @noRd
+.dsl_has_state_ref <- function(expr) {
+    if (.dsl_is_special(expr)) return(TRUE)
+    if (!is.call(expr)) return(FALSE)
+
+    any(vapply(as.list(expr)[-1], .dsl_has_state_ref, logical(1)))
+}
+
 #' Variant of `all_vars()` that counts `a[molec,cmt]` and `c[molec,cmt]` as variables named `a[molec,cmt]` and `c[molec,cmt]`.
 #' @param expr An expression
 #' @returns A character vector of variables in the input, counting `a[molec,cmt]` and `c[molec,cmt]` as variables.

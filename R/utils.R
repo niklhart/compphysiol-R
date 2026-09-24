@@ -42,6 +42,16 @@
     if (is.list(x)) x else list(x)
 }
 
+#' Treat expression-like constructor arguments as vectors of expressions
+#' @param x Input expression argument
+#' @returns A list of expression inputs
+#' @noRd
+.as_expr_arg_list <- function(x) {
+    if (is.null(x)) return(list())
+    if (is.call(x) || is.symbol(x)) return(list(x))
+    as.list(x)
+}
+
 
 #' Helper function to check if an object inherits from a specified class
 #' 

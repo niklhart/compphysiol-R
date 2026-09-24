@@ -199,6 +199,21 @@ test_that("Character reactions remain same-compartment shorthand", {
     expect_equal(r$type, "elementary")
 })
 
+test_that("Reaction const rejects state references", {
+    expect_error(
+        reactions(input = "A", output = "B", const = "k * c[A]"),
+        "const.*state references.*rate"
+    )
+    expect_error(
+        reactions(input = "A", output = "B", const = quote(k * a[A])),
+        "const.*state references.*rate"
+    )
+
+    expect_no_error(
+        reactions(input = "A", output = "B", rate = "k * c[A]")
+    )
+})
+
 test_that("Character reaction formulas support positional input and cmt localization", {
     r <- reactions("A + B -> C", cmt = "cyt", const = "k")
 

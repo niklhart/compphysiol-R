@@ -460,8 +460,8 @@ reactions <- function(
     base_participants <- rbind(input_participants, output_participants)
 
     # Input lengths
-    nRate <- length(rate)
-    nConst <- length(const)
+    nRate <- length(.as_expr_arg_list(rate))
+    nConst <- length(.as_expr_arg_list(const))
     nReact <- if (uses_states) 1 else length(cmt)
 
     # Check that all inputs are either NULL, scalar or vector of the same length
@@ -529,7 +529,7 @@ reactions <- function(
             } else {
                 rate
             }
-            rate <- lapply(rate, .as_call)
+            rate <- rate |> .as_expr_arg_list() |> lapply(.as_call)
             if (length(rate) == 1 && nReact > 1) rate <- rep(rate, nReact)
             if (!uses_states && !all(is.na(cmt))) {
                 rate <- Map(f = .add_expr_index, expr = rate, pos = 2, val = cmt)
@@ -540,8 +540,15 @@ reactions <- function(
             if (nConst == 1 && is.character(const)) {
                 const <- replace_pattern(const)
             }
-            const <- lapply(const, .as_call)
+            const <- const |> .as_expr_arg_list() |> lapply(.as_call)
             if (length(const) == 1 && nReact > 1) const <- rep(const, nReact)
+            if (any(vapply(const, .dsl_has_state_ref, logical(1)))) {
+                stop(
+                    "Argument 'const' cannot contain state references such as 'a[...]' or 'c[...]'. ",
+                    "Use 'rate' for state-dependent reaction expressions.",
+                    call. = FALSE
+                )
+            }
 
             rate <- Map(
                 function(k, p) Reduce(.mul, c(list(k), .participants_to_rate_terms(p))),

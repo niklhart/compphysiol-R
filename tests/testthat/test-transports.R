@@ -67,6 +67,21 @@ test_that("Vectorized transport creation with substitution works correctly", {
     expect_equal(t2$rate[[2]], quote(kBD * a[B]))
 })
 
+test_that("Transport const rejects state references", {
+    expect_error(
+        transports(from = "A", to = "B", const = "k * a[A]"),
+        "const.*state references.*rate"
+    )
+    expect_error(
+        transports(from = "A", to = "B", const = quote(k * c[A])),
+        "const.*state references.*rate"
+    )
+
+    expect_no_error(
+        transports(from = "A", to = "B", rate = "k * a[A]")
+    )
+})
+
 test_that("Transport printing works correctly", {
     # from -> to, 2 linear transports, molec as wildcard
     t1 <- transports(from = c("cen", "per"), to = c("per", "cen"), const = c("k1", "k2"))

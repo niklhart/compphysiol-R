@@ -58,8 +58,8 @@ transports <- function(from, to, molec = NA_character_, ..., rate = NULL, const 
     nFrom <- length(from)
     nTo <- length(to)
     nMolec <- length(molec)
-    nRate <- length(rate)
-    nConst <- length(const)
+    nRate <- length(.as_expr_arg_list(rate))
+    nConst <- length(.as_expr_arg_list(const))
 
     # Check that all inputs are either NULL, scalar or vector of the same length
     nMax <- max(nFrom, nTo, nMolec)
@@ -107,7 +107,7 @@ transports <- function(from, to, molec = NA_character_, ..., rate = NULL, const 
             } else {
                 rate
             }
-            rate <- rate |> lapply(.as_call) |> rep(length.out = nMax)
+            rate <- rate |> .as_expr_arg_list() |> lapply(.as_call) |> rep(length.out = nMax)
             const <- rep(list(NULL), nMax)
         },
         linear = {
@@ -116,8 +116,16 @@ transports <- function(from, to, molec = NA_character_, ..., rate = NULL, const 
             }
             if (nConst == 1 && is.character(const)) const <- replace_pattern(const)
             const <- const |>
+                .as_expr_arg_list() |>
                 lapply(.as_call) |>
                 rep(length.out = nMax)
+            if (any(vapply(const, .dsl_has_state_ref, logical(1)))) {
+                stop(
+                    "Argument 'const' cannot contain state references such as 'a[...]' or 'c[...]'. ",
+                    "Use 'rate' for state-dependent transport expressions.",
+                    call. = FALSE
+                )
+            }
             rate <- Map(
                 function(f, c) .mul(c, .as_call(f)),
                 ifelse(is.na(molec), paste0("a[", from, "]"), paste0("a[", molec, ",", from, "]")),
