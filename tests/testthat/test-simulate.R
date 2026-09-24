@@ -11,6 +11,45 @@ test_model_for_simulation <- function(amount_unit = NULL, time_unit = FALSE) {
     }
 }
 
+compiled_ode_backend_available <- function() {
+    exists("to_compiled_ode_model", mode = "function")
+}
+
+simulate_with_ode_backends <- function(model, time, parameters = list(), dimensions = NULL, ...) {
+    ode_model <- to_ode_model(model)
+    out <- list(
+        ode = simulate(
+            ode_model,
+            time = time,
+            parameters = parameters,
+            dimensions = dimensions,
+            ...
+        )
+    )
+
+    if (compiled_ode_backend_available()) {
+        compiled_model <- to_compiled_ode_model(ode_model)
+        out$compiled <- simulate(
+            compiled_model,
+            time = time,
+            parameters = parameters,
+            dimensions = dimensions,
+            ...
+        )
+    }
+
+    out
+}
+
+expect_ode_backends_equal <- function(results, tolerance = 1e-6) {
+    skip_if_not(
+        "compiled" %in% names(results),
+        "CompiledOdeModel backend is not implemented yet."
+    )
+    expect_equal(results$compiled$states, results$ode$states, tolerance = tolerance)
+    expect_equal(results$compiled$observables, results$ode$observables, tolerance = tolerance)
+}
+
 test_that("simulate returns a SimulationResult with ODE states", {
     model <- test_model_for_simulation()
 
@@ -23,6 +62,89 @@ test_that("simulate returns a SimulationResult with ODE states", {
     expect_named(out$states, c("time", "a_drug_Central"))
     expect_equal(out$states$time, seq(0, 10, by = 1))
     expect_equal(out$states$a_drug_Central, 100 * exp(-0.2 * out$states$time), tolerance = 1e-6)
+})
+
+test_that("compiled ODE backend matches R ODE backend for representative deterministic models", {
+    one_compartment <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport("Central", "", const = "ke")
+
+    two_compartment <- compartment_model() |>
+        add_compartment(c("Central", "Peripheral"), volume = "V") |>
+        add_molecule("drug", cmt = c("Central", "Peripheral"), initial = c("A0", 0), type = "amount") |>
+        add_transport("Central", "", const = "k10") |>
+        add_transport("Central", "Peripheral", const = "k12") |>
+        add_transport("Peripheral", "Central", const = "k21") |>
+        add_observable(C = c[drug, Central])
+
+    equation_rate <- compartment_model() |>
+        add_compartment("Central", volume = "V") |>
+        add_molecule("drug", cmt = "Central", initial = "C0", type = "concentration") |>
+        add_equation(ke = CL / V) |>
+        add_transport("Central", "", rate = "ke * a[drug, Central]") |>
+        add_observable(C = c[drug, Central])
+
+    bolus_dose <- compartment_model() |>
+        add_compartment("Central", volume = 10) |>
+        add_molecule("drug", cmt = "Central", initial = 0, type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_observable(C = c[drug, Central]) |>
+        add_dosing(time = 1, amount = 100, cmt = "Central", molec = "drug")
+
+    infusion_dose <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = 0, type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_dosing(time = 0, rate = 10, duration = 5, cmt = "Central", molec = "drug")
+
+    unit_aware <- compartment_model() |>
+        add_compartment("Central", volume = 10 [L]) |>
+        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_observable(C = c[drug, Central])
+
+    cases <- list(
+        list(
+            model = one_compartment,
+            time = seq(0, 10, by = 1),
+            parameters = parameters(A0 = 100, ke = 0.2)
+        ),
+        list(
+            model = two_compartment,
+            time = seq(0, 3, by = 1),
+            parameters = parameters(A0 = 10, V = 2, k10 = 0.1, k12 = 0.2, k21 = 0.3)
+        ),
+        list(
+            model = equation_rate,
+            time = seq(0, 2, by = 1),
+            parameters = parameters(C0 = 5, V = 20, CL = 4)
+        ),
+        list(
+            model = bolus_dose,
+            time = c(0, 1, 2),
+            parameters = parameters(ke = 0.2)
+        ),
+        list(
+            model = infusion_dose,
+            time = seq(0, 10, by = 1),
+            parameters = parameters(ke = 0.2)
+        ),
+        list(
+            model = unit_aware,
+            time = units::set_units(seq(0, 10, by = 1), "h", mode = "standard"),
+            parameters = parameters(A0 = 100 [mg], ke = 0.2 [1/h])
+        )
+    )
+
+    for (case in cases) {
+        results <- simulate_with_ode_backends(
+            case$model,
+            time = case$time,
+            parameters = case$parameters
+        )
+        expect_ode_backends_equal(results)
+    }
 })
 
 test_that("simulate accepts explicit ODE and analytical simulation types", {
