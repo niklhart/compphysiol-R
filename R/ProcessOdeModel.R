@@ -225,6 +225,57 @@ to_ode_model.ProcessModel <- function(model) {
     )
 }
 
+#' Create a compiled ODE model representation
+#'
+#' `to_compiled_ode_model()` lowers a `CompartmentModel`, `ProcessModel`, or
+#' `OdeModel` to a compiled-backend representation. The first implementation
+#' records the stable model metadata needed by the compiled deSolve backend;
+#' code generation and dynamic loading are attached in later backend steps.
+#'
+#' @param model A `CompartmentModel`, `ProcessModel`, or `OdeModel` object.
+#' @returns A `CompiledOdeModel` object.
+#' @export
+to_compiled_ode_model <- function(model) {
+    UseMethod("to_compiled_ode_model")
+}
+
+#' @export
+to_compiled_ode_model.CompartmentModel <- function(model) {
+    model |> to_ode_model() |> to_compiled_ode_model()
+}
+
+#' @export
+to_compiled_ode_model.ProcessModel <- function(model) {
+    model |> to_ode_model() |> to_compiled_ode_model()
+}
+
+#' @export
+to_compiled_ode_model.OdeModel <- function(model) {
+    parameter_names <- sort(unique(c(names(model$parameters), model$freeParams)))
+
+    structure(
+        list(
+            ode_model = model,
+            states = model$states,
+            initials = model$initials,
+            equations = model$equations,
+            observables = model$observables,
+            parameters = model$parameters,
+            dosing = model$dosing,
+            freeParams = model$freeParams,
+            parameterNames = parameter_names,
+            backend = "deSolve_compiled_rhs",
+            source = NULL,
+            dll = NULL,
+            entryPoints = list(
+                func = "derivs",
+                initfunc = "initmod"
+            )
+        ),
+        class = "CompiledOdeModel"
+    )
+}
+
 #' Create an analytical model representation
 #'
 #' `to_analytical_model()` lowers a `CompartmentModel` or `ProcessModel` to a

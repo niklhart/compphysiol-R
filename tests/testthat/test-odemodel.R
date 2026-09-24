@@ -33,6 +33,62 @@ test_that("to_ode_model returns a backend-neutral OdeModel", {
     expect_equal(ode_model$freeParams, c("A0", "ke"))
 })
 
+test_that("to_compiled_ode_model returns a compiled-backend representation", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = "V") |>
+        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_equation(ke = CL / V) |>
+        add_transport("Central", "", rate = "ke * a[drug, Central]") |>
+        add_observable(C = c[drug, Central]) |>
+        add_parameter(V = 10)
+
+    ode_model <- to_ode_model(model)
+    compiled_model <- to_compiled_ode_model(ode_model)
+
+    expect_s3_class(compiled_model, "CompiledOdeModel")
+    expect_false(inherits(compiled_model, "OdeModel"))
+    expect_named(
+        compiled_model,
+        c(
+            "ode_model", "states", "initials", "equations", "observables",
+            "parameters", "dosing", "freeParams", "parameterNames", "backend",
+            "source", "dll", "entryPoints"
+        )
+    )
+    expect_identical(compiled_model$ode_model, ode_model)
+    expect_equal(compiled_model$states, ode_model$states)
+    expect_equal(compiled_model$initials, ode_model$initials)
+    expect_equal(compiled_model$equations, ode_model$equations)
+    expect_equal(compiled_model$observables, ode_model$observables)
+    expect_equal(compiled_model$parameters, ode_model$parameters)
+    expect_equal(compiled_model$dosing, ode_model$dosing)
+    expect_equal(compiled_model$freeParams, ode_model$freeParams)
+    expect_equal(compiled_model$parameterNames, c("A0", "CL", "V"))
+    expect_equal(compiled_model$backend, "deSolve_compiled_rhs")
+    expect_null(compiled_model$source)
+    expect_null(compiled_model$dll)
+    expect_equal(compiled_model$entryPoints$func, "derivs")
+    expect_equal(compiled_model$entryPoints$initfunc, "initmod")
+})
+
+test_that("to_compiled_ode_model accepts CompartmentModel and ProcessModel inputs", {
+    model <- compartment_model() |>
+        add_compartment(c("Central", "Peripheral"), volume = NA_real_) |>
+        add_molecule("drug", cmt = c("Central", "Peripheral"), initial = c("A0", 0), type = "amount") |>
+        add_transport("Central", "Peripheral", const = "k12") |>
+        add_transport("Peripheral", "Central", const = "k21")
+    process_model <- to_process_model(model)
+    ode_model <- to_ode_model(model)
+
+    from_compartment_model <- to_compiled_ode_model(model)
+    from_process_model <- to_compiled_ode_model(process_model)
+
+    expect_s3_class(from_compartment_model, "CompiledOdeModel")
+    expect_s3_class(from_process_model, "CompiledOdeModel")
+    expect_equal(from_compartment_model$ode_model, ode_model)
+    expect_equal(from_process_model$ode_model, ode_model)
+})
+
 test_that("OdeModel stores shortened output names without placeholder attributes", {
     model <- compartment_model() |>
         add_compartment(c("Central", "Peripheral"), volume = 0) |>

@@ -12,7 +12,8 @@ test_model_for_simulation <- function(amount_unit = NULL, time_unit = FALSE) {
 }
 
 compiled_ode_backend_available <- function() {
-    exists("to_compiled_ode_model", mode = "function")
+    exists("to_compiled_ode_model", mode = "function") &&
+        exists("simulate.CompiledOdeModel", mode = "function")
 }
 
 simulate_with_ode_backends <- function(model, time, parameters = list(), dimensions = NULL, ...) {
