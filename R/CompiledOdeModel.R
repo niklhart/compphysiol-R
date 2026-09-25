@@ -140,6 +140,11 @@ print.CompiledOdeModel <- function(x, ...) {
         dslStateNames = ode_model$states$dsl_name,
         obsFuncs = build$obsFuncs,
         obsParams = build$parms,
+        stateUnitValues = build$stateUnitValues,
+        stateUnitScales = build$stateUnitScales,
+        observableUnitValues = build$observableUnitValues,
+        observableExportUnitValues = build$observableExportUnitValues,
+        observableUnitScales = build$observableUnitScales,
         freeParams = character(0),
         y0 = y0,
         events = events,
@@ -269,6 +274,15 @@ print.CompiledOdeModel <- function(x, ...) {
             parameter_names = model$parameterNames,
             dimensions = dimensions
         ),
+        stateUnitValues = .compiled_ode_model_state_unit_values(
+            ode_model,
+            parameters = parameters,
+            dimensions = dimensions
+        ),
+        observableUnitValues = .simulation_observable_unit_values(
+            ode_model,
+            parameters = parameters
+        ),
         dimensions = dimensions,
         parameterSignature = .compiled_ode_model_parameter_signature(
             model$parameterNames,
@@ -276,9 +290,48 @@ print.CompiledOdeModel <- function(x, ...) {
         ),
         cacheKey = cache_key
     )
+    artifact$observableExportUnitValues <- lapply(artifact$observableUnitValues, function(x) {
+        if (inherits(x, "units")) do.call(.to_dimensions, c(list(x), dimensions)) else x
+    })
+    artifact$stateUnitScales <- .compiled_ode_model_unit_scales(
+        from = artifact$stateUnitValues,
+        to = artifact$stateUnitValues
+    )
+    artifact$observableUnitScales <- .compiled_ode_model_unit_scales(
+        from = artifact$observableExportUnitValues,
+        to = artifact$observableUnitValues
+    )
 
     if (is.environment(cache)) assign(cache_key, artifact, envir = cache)
     artifact
+}
+
+.compiled_ode_model_state_unit_values <- function(ode_model, parameters, dimensions = NULL) {
+    state_units <- .simulation_state_unit_values(ode_model, parameters = parameters)
+    state_units <- lapply(state_units[ode_model$states$dsl_name], function(x) {
+        if (inherits(x, "units")) do.call(.to_dimensions, c(list(x), dimensions)) else x
+    })
+    names(state_units) <- ode_model$states$output_name
+    state_units
+}
+
+.compiled_ode_model_unit_scales <- function(from, to) {
+    out <- vector("list", length(to))
+    names(out) <- names(to)
+    for (nm in names(to)) {
+        from_unit <- from[[nm]]
+        to_unit <- to[[nm]]
+        if (inherits(from_unit, "units") && inherits(to_unit, "units")) {
+            out[[nm]] <- as.numeric(units::set_units(
+                units::set_units(1, .unit_label(from_unit), mode = "standard"),
+                .unit_label(to_unit),
+                mode = "standard"
+            ))
+        } else {
+            out[[nm]] <- NULL
+        }
+    }
+    out
 }
 
 .compiled_ode_model_cache_key <- function(dimensions) {

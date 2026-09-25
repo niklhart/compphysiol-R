@@ -509,6 +509,28 @@ test_that("CompiledOdeModel converts parameter values to solver dimensions befor
     )
 })
 
+test_that("CompiledOdeModel converts observable values from solver to model units", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = 1 [L]) |>
+        add_molecule("drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_observable(C = c[drug, Central]) |>
+        add_parameter(ke = 0 [1/h])
+    compiled_model <- to_compiled_ode_model(model)
+
+    out <- simulate(
+        compiled_model,
+        time = seq(0, 1, by = 1) [h],
+        dimensions = list(mass = "kg", length = "m", time = "h")
+    )
+
+    expect_equal(
+        out$observables$C,
+        units::set_units(c(100, 100), "mg/L", mode = "standard"),
+        tolerance = 1e-6
+    )
+})
+
 test_that("simulate reports all missing OdeModel parameters together", {
     model <- compartment_model() |>
         add_compartment(c("Central", "Peripheral"), volume = NA_real_) |>

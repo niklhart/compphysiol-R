@@ -660,16 +660,25 @@ print.SimulationResult <- function(x, ...) {
 }
 
 .simulation_attach_state_units <- function(states, model, odeinfo, dimensions, parameters = model$parameters) {
-    state_units <- .simulation_state_unit_values(model, parameters = parameters)
-    state_units <- lapply(state_units[odeinfo$dslStateNames], function(x) {
-        if (inherits(x, "units")) do.call(.to_dimensions, c(list(x), dimensions)) else x
-    })
-    names(state_units) <- odeinfo$stateNames
+    state_units <- odeinfo$stateUnitValues
+    if (is.null(state_units)) {
+        state_units <- .simulation_state_unit_values(model, parameters = parameters)
+        state_units <- lapply(state_units[odeinfo$dslStateNames], function(x) {
+            if (inherits(x, "units")) do.call(.to_dimensions, c(list(x), dimensions)) else x
+        })
+        names(state_units) <- odeinfo$stateNames
+    }
 
     for (state_name in intersect(names(state_units), names(states))) {
         unit_value <- state_units[[state_name]]
         if (inherits(unit_value, "units")) {
-            states[[state_name]] <- units::set_units(states[[state_name]], .unit_label(unit_value), mode = "standard")
+            state_scale <- odeinfo$stateUnitScales[[state_name]]
+            if (is.null(state_scale)) state_scale <- 1
+            states[[state_name]] <- units::set_units(
+                states[[state_name]] * state_scale,
+                .unit_label(unit_value),
+                mode = "standard"
+            )
         }
     }
 
@@ -690,21 +699,38 @@ print.SimulationResult <- function(x, ...) {
     }
     observables <- .quick_df(columns)
 
-    obs_units <- .simulation_observable_unit_values(model, parameters = parameters)
+    obs_units <- odeinfo$observableUnitValues
+    if (is.null(obs_units)) {
+        obs_units <- .simulation_observable_unit_values(model, parameters = parameters)
+    }
+    obs_export_units <- odeinfo$observableExportUnitValues
+    obs_scales <- odeinfo$observableUnitScales
     for (obs_name in intersect(names(obs_units), names(observables))) {
         unit_value <- obs_units[[obs_name]]
         if (inherits(unit_value, "units")) {
-            export_unit_value <- do.call(.to_dimensions, c(list(unit_value), dimensions))
-            value_with_export_units <- units::set_units(
-                observables[[obs_name]],
-                .unit_label(export_unit_value),
-                mode = "standard"
-            )
-            observables[[obs_name]] <- units::set_units(
-                value_with_export_units,
-                .unit_label(unit_value),
-                mode = "standard"
-            )
+            obs_scale <- obs_scales[[obs_name]]
+            if (!is.null(obs_scale)) {
+                observables[[obs_name]] <- units::set_units(
+                    observables[[obs_name]] * obs_scale,
+                    .unit_label(unit_value),
+                    mode = "standard"
+                )
+            } else {
+                export_unit_value <- obs_export_units[[obs_name]]
+                if (is.null(export_unit_value)) {
+                    export_unit_value <- do.call(.to_dimensions, c(list(unit_value), dimensions))
+                }
+                value_with_export_units <- units::set_units(
+                    observables[[obs_name]],
+                    .unit_label(export_unit_value),
+                    mode = "standard"
+                )
+                observables[[obs_name]] <- units::set_units(
+                    value_with_export_units,
+                    .unit_label(unit_value),
+                    mode = "standard"
+                )
+            }
         }
     }
 
