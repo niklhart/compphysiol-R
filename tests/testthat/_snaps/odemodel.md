@@ -25,6 +25,10 @@
         Equations: none
         Observables: 1
         Dosing events: none
+       Solver dimensions:
+        mass: mg
+        length: dm
+        time: h
        Parameters:
         A0: required, [mg]
         V: default = 1 [L]

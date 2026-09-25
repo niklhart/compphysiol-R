@@ -96,7 +96,7 @@ test_that("CompiledOdeModel print method shows compact compiled status", {
 
     simulate(
         compiled_model,
-        time = units::set_units(seq(0, 1, by = 1), "h", mode = "standard"),
+        time = seq(0, 1, by = 1) [h],
         parameters = parameters(A0 = 100 [mg], ke = 0.2 [1/h]),
         dimensions = list(mass = "mg", length = "dm", time = "h")
     )

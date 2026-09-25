@@ -23,6 +23,11 @@ print.CompiledOdeModel <- function(x, ...) {
     cat("  Equations: ", .compiled_ode_model_count(length(ode_model$equations)), "\n", sep = "")
     cat("  Observables: ", .compiled_ode_model_count(length(ode_model$observables)), "\n", sep = "")
     cat("  Dosing events: ", .compiled_ode_model_count(nrow(ode_model$dosing)), "\n", sep = "")
+    dimensions <- .compiled_ode_model_print_dimensions(x)
+    if (!is.null(dimensions)) {
+        cat(" Solver dimensions:\n")
+        cat(sprintf("  %s: %s\n", names(dimensions), unlist(dimensions, use.names = FALSE)), sep = "")
+    }
 
     if (length(x$parameterNames) == 0L) {
         cat(" Parameters: none\n")
@@ -54,6 +59,16 @@ print.CompiledOdeModel <- function(x, ...) {
     if (length(cache_keys) != 1L) return(NULL)
     artifact <- get(cache_keys[[1]], envir = x$cache, inherits = FALSE)
     artifact$parameterSignature
+}
+
+.compiled_ode_model_print_dimensions <- function(x) {
+    if (!is.environment(x$cache)) return(NULL)
+    cache_keys <- ls(x$cache)
+    if (length(cache_keys) != 1L) return(NULL)
+    artifact <- get(cache_keys[[1]], envir = x$cache, inherits = FALSE)
+    dimensions <- artifact$dimensions
+    if (is.null(dimensions) || length(dimensions) == 0L) return(NULL)
+    dimensions
 }
 
 .compiled_ode_model_parameter_line <- function(nm, model, signature = NULL) {
@@ -147,6 +162,7 @@ print.CompiledOdeModel <- function(x, ...) {
         dllname = paths$dllname,
         source = paths$source,
         dll = paths$dll,
+        dimensions = dimensions,
         parameterSignature = .compiled_ode_model_parameter_signature(
             model$parameterNames,
             parameters
