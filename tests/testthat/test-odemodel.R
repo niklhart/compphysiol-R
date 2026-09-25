@@ -83,6 +83,27 @@ test_that("to_compiled_ode_model accepts CompartmentModel and ProcessModel input
     expect_equal(from_process_model$ode_model, ode_model)
 })
 
+test_that("CompiledOdeModel print method shows compact compiled status", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = "V") |>
+        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_observable(C = c[drug, Central]) |>
+        add_parameter(V = 1 [L])
+    compiled_model <- to_compiled_ode_model(model)
+
+    expect_snapshot(print(compiled_model))
+
+    simulate(
+        compiled_model,
+        time = units::set_units(seq(0, 1, by = 1), "h", mode = "standard"),
+        parameters = parameters(A0 = 100 [mg], ke = 0.2 [1/h]),
+        dimensions = list(mass = "mg", length = "dm", time = "h")
+    )
+
+    expect_snapshot(print(compiled_model))
+})
+
 test_that("OdeModel stores shortened output names without placeholder attributes", {
     model <- compartment_model() |>
         add_compartment(c("Central", "Peripheral"), volume = 0) |>

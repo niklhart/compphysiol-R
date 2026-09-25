@@ -1,3 +1,82 @@
+.compiled_ode_model_status <- function(x) {
+    cache_size <- if (is.environment(x$cache)) length(ls(x$cache)) else 0L
+    if (cache_size == 0L) return("pending")
+    if (cache_size == 1L) return("compiled")
+    paste0("compiled, ", cache_size, " unit signatures")
+}
+
+#' Print method for `CompiledOdeModel` class
+#'
+#' Pretty-prints the compiled model status, compact ODE model shape, and frozen
+#' parameter interface.
+#' @param x A `CompiledOdeModel` object.
+#' @param ... ignored
+#' @returns The `CompiledOdeModel` object (invisibly).
+#' @export
+print.CompiledOdeModel <- function(x, ...) {
+    ode_model <- x$ode_model
+    .check_class(ode_model, "OdeModel")
+
+    cat("CompiledOdeModel (", .compiled_ode_model_status(x), "):\n", sep = "")
+    cat(" ODE model:\n")
+    cat("  States: ", .compiled_ode_model_count(nrow(ode_model$states)), "\n", sep = "")
+    cat("  Equations: ", .compiled_ode_model_count(length(ode_model$equations)), "\n", sep = "")
+    cat("  Observables: ", .compiled_ode_model_count(length(ode_model$observables)), "\n", sep = "")
+    cat("  Dosing events: ", .compiled_ode_model_count(nrow(ode_model$dosing)), "\n", sep = "")
+
+    if (length(x$parameterNames) == 0L) {
+        cat(" Parameters: none\n")
+        return(invisible(x))
+    }
+
+    cat(" Parameters:\n")
+    parameter_signature <- .compiled_ode_model_print_signature(x)
+    parameter_lines <- vapply(
+        x$parameterNames,
+        .compiled_ode_model_parameter_line,
+        character(1),
+        model = x,
+        signature = parameter_signature
+    )
+    cat(parameter_lines, sep = "")
+
+    invisible(x)
+}
+
+.compiled_ode_model_count <- function(n) {
+    if (identical(n, 0L) || identical(n, 0)) return("none")
+    as.character(n)
+}
+
+.compiled_ode_model_print_signature <- function(x) {
+    if (!is.environment(x$cache)) return(NULL)
+    cache_keys <- ls(x$cache)
+    if (length(cache_keys) != 1L) return(NULL)
+    artifact <- get(cache_keys[[1]], envir = x$cache, inherits = FALSE)
+    artifact$parameterSignature
+}
+
+.compiled_ode_model_parameter_line <- function(nm, model, signature = NULL) {
+    ode_model <- model$ode_model
+    if (nm %in% names(ode_model$parameters)) {
+        value <- .ode_model_format_expr(ode_model$parameters[[nm]], model = ode_model)
+        return(sprintf("  %s: default = %s\n", nm, value))
+    }
+
+    unit_label <- "unit signature pending"
+    if (!is.null(signature) && nm %in% names(signature)) {
+        unit_label <- .compiled_ode_model_signature_label(signature[[nm]])
+    }
+    sprintf("  %s: required, %s\n", nm, unit_label)
+}
+
+.compiled_ode_model_signature_label <- function(signature) {
+    if (isTRUE(signature$has_units)) {
+        return(paste0("[", as.character(signature$unit), "]"))
+    }
+    "unitless"
+}
+
 .to_deSolve_compiled <- function(model, parameters = list(), dimensions = NULL) {
     .check_class(model, "CompiledOdeModel")
     ode_model <- model$ode_model

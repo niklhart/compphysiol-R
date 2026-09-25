@@ -1,3 +1,35 @@
+# CompiledOdeModel print method shows compact compiled status
+
+    Code
+      print(compiled_model)
+    Output
+      CompiledOdeModel (pending):
+       ODE model:
+        States: 1
+        Equations: none
+        Observables: 1
+        Dosing events: none
+       Parameters:
+        A0: required, unit signature pending
+        V: default = 1 [L]
+        ke: required, unit signature pending
+
+---
+
+    Code
+      print(compiled_model)
+    Output
+      CompiledOdeModel (compiled):
+       ODE model:
+        States: 1
+        Equations: none
+        Observables: 1
+        Dosing events: none
+       Parameters:
+        A0: required, [mg]
+        V: default = 1 [L]
+        ke: required, [1/h]
+
 # OdeModel print method uses DSL state names
 
     Code
