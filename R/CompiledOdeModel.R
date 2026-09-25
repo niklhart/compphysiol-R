@@ -3,6 +3,8 @@
     ode_model <- model$ode_model
     .check_class(ode_model, "OdeModel")
 
+    parameters <- .simulation_parameters_object(parameters)
+    .compiled_ode_model_check_parameter_names(names(parameters), model$parameterNames)
     odeinfo <- .to_deSolve(ode_model, parameters = parameters, dimensions = dimensions)
     build <- .compiled_ode_model_build(model, parameters = parameters, dimensions = dimensions)
 
@@ -25,7 +27,11 @@
         dimensions
     )
 
-    artifact <- .compiled_ode_model_artifact(model, dimensions = dimensions)
+    artifact <- .compiled_ode_model_artifact(
+        model,
+        parameters = merged_parameters,
+        dimensions = dimensions
+    )
 
     c(
         artifact,
@@ -36,14 +42,20 @@
     )
 }
 
-.compiled_ode_model_artifact <- function(model, dimensions = NULL) {
+.compiled_ode_model_artifact <- function(model, parameters, dimensions = NULL) {
     cache_key <- .compiled_ode_model_cache_key(dimensions)
     cache <- model$cache
     if (is.environment(cache) && exists(cache_key, envir = cache, inherits = FALSE)) {
-        return(get(cache_key, envir = cache, inherits = FALSE))
+        artifact <- get(cache_key, envir = cache, inherits = FALSE)
+        .compiled_ode_model_check_parameter_signature(
+            artifact$parameterSignature,
+            parameters = parameters
+        )
+        return(artifact)
     }
 
     ode_model <- model$ode_model
+    .ode_model_check_unit_consistency(ode_model, parameters)
     source <- .compiled_ode_model_source(
         ode_model,
         parameter_names = model$parameterNames,
@@ -56,6 +68,10 @@
         dllname = paths$dllname,
         source = paths$source,
         dll = paths$dll,
+        parameterSignature = .compiled_ode_model_parameter_signature(
+            model$parameterNames,
+            parameters
+        ),
         cacheKey = cache_key
     )
 
@@ -66,6 +82,64 @@
 .compiled_ode_model_cache_key <- function(dimensions) {
     if (is.null(dimensions)) return("default")
     paste(as.integer(serialize(dimensions, NULL)), collapse = "-")
+}
+
+.compiled_ode_model_check_parameter_names <- function(parameter_names, allowed_names) {
+    parameter_names <- parameter_names %||% character(0)
+    unknown <- setdiff(parameter_names, allowed_names)
+    if (length(unknown) == 0L) return(invisible(NULL))
+
+    stop(
+        "CompiledOdeModel has a fixed parameter interface; unknown runtime parameter(s): ",
+        paste(unknown, collapse = ", "),
+        ".",
+        call. = FALSE
+    )
+}
+
+.compiled_ode_model_parameter_signature <- function(parameter_names, parameters) {
+    out <- lapply(parameter_names, function(nm) {
+        value <- parameters[[nm]]
+        if (inherits(value, "units")) {
+            list(has_units = TRUE, unit = units(value))
+        } else {
+            list(has_units = FALSE, unit = NULL)
+        }
+    })
+    names(out) <- parameter_names
+    out
+}
+
+.compiled_ode_model_check_parameter_signature <- function(signature, parameters) {
+    for (nm in names(signature)) {
+        expected <- signature[[nm]]
+        value <- parameters[[nm]]
+        has_units <- inherits(value, "units")
+        if (!identical(has_units, expected$has_units)) {
+            stop(
+                "CompiledOdeModel parameter '",
+                nm,
+                "' must be ",
+                if (expected$has_units) "unit-bearing" else "unitless",
+                " to match the cached compiled model signature.",
+                call. = FALSE
+            )
+        }
+        if (has_units && !units::ud_are_convertible(units(value), expected$unit)) {
+            stop(
+                "CompiledOdeModel parameter '",
+                nm,
+                "' has units ",
+                units(value),
+                ", but cached compiled model signature expects units convertible to ",
+                expected$unit,
+                ".",
+                call. = FALSE
+            )
+        }
+    }
+
+    invisible(NULL)
 }
 
 .compiled_ode_model_parameter_values <- function(parameter_names, parameters, dimensions) {

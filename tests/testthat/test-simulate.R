@@ -440,6 +440,50 @@ test_that("CompiledOdeModel reuses compiled DLL across parameter changes", {
     expect_equal(get(cache_keys[[1]], envir = compiled_model$cache)$dll, cached_dll)
 })
 
+test_that("CompiledOdeModel rejects runtime parameters outside the frozen interface", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport("Central", "", const = "ke")
+    compiled_model <- to_compiled_ode_model(model)
+
+    expect_error(
+        simulate(
+            compiled_model,
+            time = seq(0, 1, by = 1),
+            parameters = parameters(A0 = 100, ke = 0.2, scale = 2)
+        ),
+        "fixed parameter interface.*scale"
+    )
+})
+
+test_that("CompiledOdeModel checks cached parameter unit signatures", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport("Central", "", const = "ke")
+    compiled_model <- to_compiled_ode_model(model)
+    time <- units::set_units(seq(0, 2, by = 1), "h", mode = "standard")
+    dimensions <- list(mass = "mg", time = "h")
+
+    simulate(
+        compiled_model,
+        time = time,
+        parameters = parameters(A0 = 100 [mg], ke = 0.2 [1/h]),
+        dimensions = dimensions
+    )
+
+    expect_error(
+        simulate(
+            compiled_model,
+            time = time,
+            parameters = parameters(A0 = 100 [L], ke = 0.2 [1/h]),
+            dimensions = dimensions
+        ),
+        "A0.*cached compiled model signature"
+    )
+})
+
 test_that("simulate reports all missing OdeModel parameters together", {
     model <- compartment_model() |>
         add_compartment(c("Central", "Peripheral"), volume = NA_real_) |>

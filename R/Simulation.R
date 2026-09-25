@@ -154,6 +154,7 @@ simulate.OdeModel <- function(
         dimensions = dimensions,
         envir = parent.frame(),
         export = .to_deSolve,
+        check_unit_consistency = TRUE,
         ...
     )
 }
@@ -181,6 +182,7 @@ simulate.CompiledOdeModel <- function(
             compiled_model$ode_model <- ode_model
             .to_deSolve_compiled(compiled_model, parameters = parameters, dimensions = dimensions)
         },
+        check_unit_consistency = FALSE,
         ...
     )
 }
@@ -371,6 +373,7 @@ simulate.StochasticModel <- function(
     dimensions,
     envir,
     export,
+    check_unit_consistency = TRUE,
     ...
 ) {
     .check_class(ode_model, "OdeModel")
@@ -382,7 +385,9 @@ simulate.StochasticModel <- function(
     sim_parameters <- .simulation_parameters_object(parameters)
     merged_parameters <- .merge_ode_parameters(ode_model$parameters, sim_parameters)
     .simulation_check_free_parameters_available(ode_model, merged_parameters)
-    .ode_model_check_unit_consistency(ode_model, merged_parameters)
+    if (isTRUE(check_unit_consistency)) {
+        .ode_model_check_unit_consistency(ode_model, merged_parameters)
+    }
     .simulation_check_time_mode(ode_model, time, parameters = merged_parameters)
 
     dimensions <- .simulation_dimensions(ode_model, time, dimensions, parameters = merged_parameters)
