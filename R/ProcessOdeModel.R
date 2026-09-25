@@ -723,10 +723,10 @@ print.OdeModel <- function(x, ...) {
     )
 }
 
-.to_deSolve <- function(model, parameters = list(), dimensions = NULL) {
+.to_deSolve <- function(model, parameters = list(), dimensions = NULL, merged_parameters = NULL) {
     .check_class(model, "OdeModel")
     parameters <- .simulation_parameters_object(parameters)
-    params <- .merge_ode_parameters(model$parameters, parameters)
+    params <- merged_parameters %||% .merge_ode_parameters(model$parameters, parameters)
     param_values <- .to_dimensions_vec(params, dimensions)
     free_params <- new.env(parent = emptyenv())
     free_params$list <- character()

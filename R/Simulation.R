@@ -177,10 +177,15 @@ simulate.CompiledOdeModel <- function(
         parameters = parameters,
         dimensions = dimensions,
         envir = parent.frame(),
-        export = function(ode_model, parameters, dimensions) {
+        export = function(ode_model, parameters, dimensions, merged_parameters = NULL) {
             compiled_model <- object
             compiled_model$ode_model <- ode_model
-            .to_deSolve_compiled(compiled_model, parameters = parameters, dimensions = dimensions)
+            .to_deSolve_compiled(
+                compiled_model,
+                parameters = parameters,
+                dimensions = dimensions,
+                merged_parameters = merged_parameters
+            )
         },
         check_unit_consistency = FALSE,
         ...
@@ -391,7 +396,12 @@ simulate.StochasticModel <- function(
     .simulation_check_time_mode(ode_model, time, parameters = merged_parameters)
 
     dimensions <- .simulation_dimensions(ode_model, time, dimensions, parameters = merged_parameters)
-    odeinfo <- export(ode_model, parameters = sim_parameters, dimensions = dimensions)
+    odeinfo <- export(
+        ode_model,
+        parameters = sim_parameters,
+        dimensions = dimensions,
+        merged_parameters = merged_parameters
+    )
 
     .simulation_solve_ode_model(
         ode_model,

@@ -92,14 +92,14 @@ print.CompiledOdeModel <- function(x, ...) {
     "unitless"
 }
 
-.to_deSolve_compiled <- function(model, parameters = list(), dimensions = NULL) {
+.to_deSolve_compiled <- function(model, parameters = list(), dimensions = NULL, merged_parameters = NULL) {
     .check_class(model, "CompiledOdeModel")
     ode_model <- model$ode_model
     .check_class(ode_model, "OdeModel")
 
     parameters <- .simulation_parameters_object(parameters)
     .compiled_ode_model_check_parameter_names(names(parameters), model$parameterNames)
-    merged_parameters <- .merge_ode_parameters(ode_model$parameters, parameters)
+    merged_parameters <- merged_parameters %||% .merge_ode_parameters(ode_model$parameters, parameters)
     build <- .compiled_ode_model_build_prepared(
         model,
         parameters = merged_parameters,
