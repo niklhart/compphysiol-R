@@ -105,6 +105,11 @@ test_that("compiled ODE backend matches R ODE backend for representative determi
         add_transport("Central", "", const = "ke") |>
         add_observable(C = c[drug, Central])
 
+    math_rate <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = 100, type = "amount") |>
+        add_transport("Central", "", rate = "ke * sqrt(a[drug, Central])")
+
     cases <- list(
         list(
             model = one_compartment,
@@ -135,6 +140,11 @@ test_that("compiled ODE backend matches R ODE backend for representative determi
             model = unit_aware,
             time = units::set_units(seq(0, 10, by = 1), "h", mode = "standard"),
             parameters = parameters(A0 = 100 [mg], ke = 0.2 [1/h])
+        ),
+        list(
+            model = math_rate,
+            time = seq(0, 10, by = 1),
+            parameters = parameters(ke = 0.2)
         )
     )
 
@@ -146,6 +156,18 @@ test_that("compiled ODE backend matches R ODE backend for representative determi
         )
         expect_ode_backends_equal(results)
     }
+})
+
+test_that("compiled ODE backend rejects unsupported RHS calls before solving", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = 100, type = "amount") |>
+        add_transport("Central", "", rate = "ifelse(a[drug, Central] > 0, a[drug, Central], 0)")
+
+    expect_error(
+        simulate(to_compiled_ode_model(model), time = seq(0, 1, by = 1)),
+        "ifelse\\(\\).*not supported"
+    )
 })
 
 test_that("simulate accepts explicit ODE and analytical simulation types", {

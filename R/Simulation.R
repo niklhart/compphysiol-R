@@ -177,7 +177,9 @@ simulate.CompiledOdeModel <- function(
         dimensions = dimensions,
         envir = parent.frame(),
         export = function(ode_model, parameters, dimensions) {
-            .to_deSolve(ode_model, parameters = parameters, dimensions = dimensions)
+            compiled_model <- object
+            compiled_model$ode_model <- ode_model
+            .to_deSolve_compiled(compiled_model, parameters = parameters, dimensions = dimensions)
         },
         ...
     )
@@ -427,8 +429,10 @@ simulate.StochasticModel <- function(
     solver_args$y <- odeinfo$y0
     solver_args$times <- solver_time
     solver_args$func <- odeinfo$odefun
-    solver_args$parms <- .simulation_solver_parameters(parameters, dimensions)
+    solver_args$parms <- odeinfo$parms %||% .simulation_solver_parameters(parameters, dimensions)
     solver_args$events <- odeinfo$events
+    if (!is.null(odeinfo$dllname)) solver_args$dllname <- odeinfo$dllname
+    if (!is.null(odeinfo$initfunc)) solver_args$initfunc <- odeinfo$initfunc
     solver_args$rtol <- solver_args$rtol %||% 1e-10
     solver_args$atol <- solver_args$atol %||% 1e-10
 
