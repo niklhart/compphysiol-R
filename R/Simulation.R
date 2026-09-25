@@ -170,33 +170,63 @@ simulate.CompiledOdeModel <- function(
     dimensions = NULL,
     ...
 ) {
-    .simulate_ode_backend(
-        object$ode_model,
-        time = substitute(time),
-        unit = unit,
-        parameters = parameters,
+    ode_model <- object$ode_model
+    .check_class(ode_model, "OdeModel")
+
+    time <- .process_nse_arg(substitute(time), envir = parent.frame())
+    time <- .simulation_apply_time_unit(time, unit)
+    .simulation_validate_time(time)
+
+    sim_parameters <- .simulation_parameters_object(parameters)
+    .compiled_ode_model_check_parameter_names(names(sim_parameters), object$parameterNames)
+    artifact <- .compiled_ode_model_cached_artifact(object)
+
+    if (is.null(artifact)) {
+        merged_parameters <- .merge_ode_parameters(ode_model$parameters, sim_parameters)
+        .simulation_check_free_parameters_available(ode_model, merged_parameters)
+        .simulation_check_time_mode(ode_model, time, parameters = merged_parameters)
+        dimensions <- .compiled_ode_model_dimensions(
+            object,
+            ode_model = ode_model,
+            time = time,
+            dimensions = dimensions,
+            parameters = merged_parameters
+        )
+        odeinfo <- .to_deSolve_compiled(
+            object,
+            parameters = sim_parameters,
+            dimensions = dimensions,
+            merged_parameters = merged_parameters
+        )
+        output_parameters <- merged_parameters
+    } else {
+        .compiled_ode_model_check_runtime_parameter_signature(
+            artifact$parameterSignature,
+            sim_parameters
+        )
+        .compiled_ode_model_check_time_mode(artifact, time)
+        dimensions <- .compiled_ode_model_dimensions(
+            object,
+            ode_model = ode_model,
+            time = time,
+            dimensions = dimensions,
+            parameters = sim_parameters
+        )
+        odeinfo <- .to_deSolve_compiled(
+            object,
+            parameters = sim_parameters,
+            dimensions = dimensions,
+            validate = FALSE
+        )
+        output_parameters <- sim_parameters
+    }
+
+    .simulation_solve_ode_model(
+        ode_model,
+        odeinfo = odeinfo,
+        time = time,
         dimensions = dimensions,
-        envir = parent.frame(),
-        export = function(ode_model, parameters, dimensions, merged_parameters = NULL) {
-            compiled_model <- object
-            compiled_model$ode_model <- ode_model
-            .to_deSolve_compiled(
-                compiled_model,
-                parameters = parameters,
-                dimensions = dimensions,
-                merged_parameters = merged_parameters
-            )
-        },
-        check_unit_consistency = FALSE,
-        dimensions_resolver = function(ode_model, time, dimensions, parameters) {
-            .compiled_ode_model_dimensions(
-                object,
-                ode_model = ode_model,
-                time = time,
-                dimensions = dimensions,
-                parameters = parameters
-            )
-        },
+        parameters = output_parameters,
         ...
     )
 }

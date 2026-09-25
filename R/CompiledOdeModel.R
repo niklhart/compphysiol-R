@@ -84,28 +84,26 @@ print.CompiledOdeModel <- function(x, ...) {
     "unitless"
 }
 
-.to_deSolve_compiled <- function(model, parameters = list(), dimensions = NULL, merged_parameters = NULL) {
+.to_deSolve_compiled <- function(model, parameters = list(), dimensions = NULL, merged_parameters = NULL, validate = TRUE) {
     .check_class(model, "CompiledOdeModel")
     ode_model <- model$ode_model
     .check_class(ode_model, "OdeModel")
 
     parameters <- .simulation_parameters_object(parameters)
-    .compiled_ode_model_check_parameter_names(names(parameters), model$parameterNames)
-    merged_parameters <- merged_parameters %||% .merge_ode_parameters(ode_model$parameters, parameters)
+    if (isTRUE(validate)) .compiled_ode_model_check_parameter_names(names(parameters), model$parameterNames)
+    if (is.null(merged_parameters) && is.null(.compiled_ode_model_cached_artifact(model))) {
+        merged_parameters <- .merge_ode_parameters(ode_model$parameters, parameters)
+    }
     build <- .compiled_ode_model_build_prepared(
         model,
-        parameters = merged_parameters,
-        dimensions = dimensions
+        parameters = parameters,
+        merged_parameters = merged_parameters,
+        dimensions = dimensions,
+        validate = validate
     )
     output_state_names <- ode_model$states$output_name
 
-    y0 <- .evaluate_initials(
-        setNames(ode_model$initials, ode_model$states$dsl_name),
-        merged_parameters,
-        allow_unresolved = FALSE
-    ) |>
-        .to_dimensions_vec(dimensions)
-    y0 <- setNames(unlist(y0), output_state_names)
+    y0 <- .compiled_ode_model_y0(build, state_names = output_state_names)
 
     list(
         odefun = build$func,
@@ -188,21 +186,26 @@ print.CompiledOdeModel <- function(x, ...) {
 
     .compiled_ode_model_build_prepared(
         model,
-        parameters = merged_parameters,
-        dimensions = dimensions
+        parameters = parameters,
+        dimensions = dimensions,
+        merged_parameters = merged_parameters
     )
 }
 
-.compiled_ode_model_build_prepared <- function(model, parameters, dimensions = NULL) {
-    parameter_names <- model$parameterNames
-    parameter_values <- .compiled_ode_model_parameter_values(
-        parameter_names,
-        parameters,
-        dimensions
-    )
-
+.compiled_ode_model_build_prepared <- function(model, parameters, dimensions = NULL, merged_parameters = NULL, validate = TRUE) {
+    parameters <- .simulation_parameters_object(parameters)
+    artifact <- .compiled_ode_model_cached_artifact(model)
+    if (is.null(artifact)) {
+        merged_parameters <- merged_parameters %||% .merge_ode_parameters(model$ode_model$parameters, parameters)
+    }
     artifact <- .compiled_ode_model_artifact(
         model,
+        parameters = merged_parameters %||% parameters,
+        dimensions = dimensions,
+        validate = validate
+    )
+    parameter_values <- .compiled_ode_model_runtime_parameter_values(
+        artifact,
         parameters = parameters,
         dimensions = dimensions
     )
@@ -211,12 +214,12 @@ print.CompiledOdeModel <- function(x, ...) {
         artifact,
         list(
             parms = parameter_values,
-            parameterNames = parameter_names
+            parameterNames = model$parameterNames
         )
     )
 }
 
-.compiled_ode_model_artifact <- function(model, parameters, dimensions = NULL) {
+.compiled_ode_model_artifact <- function(model, parameters, dimensions = NULL, validate = TRUE) {
     artifact <- .compiled_ode_model_cached_artifact(model)
     if (!is.null(artifact)) {
         fixed_dimensions <- .compiled_ode_model_fixed_dimensions(model)
@@ -226,10 +229,12 @@ print.CompiledOdeModel <- function(x, ...) {
                 call. = FALSE
             )
         }
-        .compiled_ode_model_check_parameter_signature(
-            artifact$parameterSignature,
-            parameters = parameters
-        )
+        if (isTRUE(validate)) {
+            .compiled_ode_model_check_parameter_signature(
+                artifact$parameterSignature,
+                parameters = parameters
+            )
+        }
         return(artifact)
     }
 
@@ -244,9 +249,16 @@ print.CompiledOdeModel <- function(x, ...) {
     artifact <- list(
         func = model$entryPoints$func,
         initfunc = model$entryPoints$initfunc,
+        y0func = model$entryPoints$y0func,
         dllname = paths$dllname,
         source = paths$source,
         dll = paths$dll,
+        parameterIndex = stats::setNames(seq_along(model$parameterNames), model$parameterNames),
+        defaultParms = .compiled_ode_model_parameter_values(
+            model$parameterNames,
+            parameters,
+            dimensions
+        ),
         obsFuncs = .compiled_ode_model_observable_functions(
             ode_model,
             parameter_names = model$parameterNames,
@@ -261,6 +273,12 @@ print.CompiledOdeModel <- function(x, ...) {
             ode_model,
             parameters = parameters
         ),
+        modelUsesTime = any(vapply(
+            .simulation_dimension_values(ode_model, parameters = parameters),
+            .has_time_dimension,
+            logical(1)
+        )),
+        modelHasTimeDependentProcess = .simulation_has_time_dependent_process(ode_model),
         events = .compiled_ode_model_events(
             ode_model,
             dimensions = dimensions
@@ -288,6 +306,85 @@ print.CompiledOdeModel <- function(x, ...) {
         assign(".dimensions", dimensions, envir = model$cache)
     }
     artifact
+}
+
+.compiled_ode_model_runtime_parameter_values <- function(artifact, parameters, dimensions = NULL) {
+    values <- artifact$defaultParms
+    if (length(parameters) == 0L) return(values)
+
+    for (nm in names(parameters)) {
+        idx <- artifact$parameterIndex[[nm]]
+        if (is.null(idx)) {
+            stop(
+                "CompiledOdeModel has a fixed parameter interface; unknown runtime parameter(s): ",
+                nm,
+                ".",
+                call. = FALSE
+            )
+        }
+        value <- .to_dimensions_value(parameters[[nm]], dimensions)
+        if (!is.numeric(value) || length(value) != 1L) {
+            stop("Compiled ODE parameter '", nm, "' must be a numeric scalar.", call. = FALSE)
+        }
+        values[[idx]] <- as.numeric(value)
+    }
+
+    values
+}
+
+.compiled_ode_model_y0 <- function(build, state_names) {
+    y0 <- .C(
+        build$y0func,
+        p = as.double(build$parms),
+        yout = double(length(state_names)),
+        PACKAGE = build$dllname
+    )$yout
+    setNames(y0, state_names)
+}
+
+.compiled_ode_model_check_runtime_parameter_signature <- function(signature, parameters) {
+    for (nm in names(parameters)) {
+        expected <- signature[[nm]]
+        if (is.null(expected)) next
+        value <- parameters[[nm]]
+        has_units <- inherits(value, "units")
+        if (!identical(has_units, expected$has_units)) {
+            stop(
+                "CompiledOdeModel parameter '",
+                nm,
+                "' must be ",
+                if (expected$has_units) "unit-bearing" else "unitless",
+                " to match the cached compiled model signature.",
+                call. = FALSE
+            )
+        }
+        if (has_units && !units::ud_are_convertible(units(value), expected$unit)) {
+            stop(
+                "CompiledOdeModel parameter '",
+                nm,
+                "' has units ",
+                units(value),
+                ", but cached compiled model signature expects units convertible to ",
+                expected$unit,
+                ".",
+                call. = FALSE
+            )
+        }
+    }
+
+    invisible(NULL)
+}
+
+.compiled_ode_model_check_time_mode <- function(artifact, time) {
+    time_has_units <- inherits(time, "units")
+    if (isTRUE(artifact$modelUsesTime) && !time_has_units) {
+        stop("Cannot simulate: model uses time units but simulation time is unit-free.", call. = FALSE)
+    }
+    if (!isTRUE(artifact$modelUsesTime) && isTRUE(artifact$modelHasTimeDependentProcess) && time_has_units) {
+        stop("Cannot simulate: simulation time has units but the model is unit-free in time.", call. = FALSE)
+    }
+
+    invisible(NULL)
 }
 
 .compiled_ode_model_dimensions <- function(model, ode_model, time, dimensions = NULL, parameters) {
@@ -463,6 +560,10 @@ print.CompiledOdeModel <- function(x, ...) {
         sprintf("  ydot[%i] = %s;", i - 1L, .compiled_ode_model_expr(ode_model$rhs[[i]], env))
     }, character(1))
 
+    y0_lines <- vapply(seq_along(ode_model$initials), function(i) {
+        sprintf("  yout[%i] = %s;", i - 1L, .compiled_ode_model_expr(ode_model$initials[[i]], .compiled_ode_model_codegen_env(parameter_names, dimensions)))
+    }, character(1))
+
     c(
         "#include <R.h>",
         "#include <math.h>",
@@ -481,6 +582,11 @@ print.CompiledOdeModel <- function(x, ...) {
         eq_lines,
         rhs_lines,
         "}",
+        "",
+        "void init_y(double *p, double *yout) {",
+        sprintf("  for (int i = 0; i < %i; ++i) parms[i] = p[i];", length(parameter_names)),
+        y0_lines,
+        "}",
         ""
     )
 }
@@ -498,14 +604,14 @@ print.CompiledOdeModel <- function(x, ...) {
     expr <- .as_call(expr)
 
     render <- function(e) {
+        if (inherits(e, "units")) {
+            return(.compiled_ode_model_number(as.numeric(.to_dimensions_value(e, env$dimensions))))
+        }
         if (is.numeric(e) || is.integer(e)) {
             if (length(e) != 1L) {
                 stop("Compiled ODE expressions only support scalar numeric constants.", call. = FALSE)
             }
             return(.compiled_ode_model_number(as.numeric(e)))
-        }
-        if (inherits(e, "units")) {
-            return(.compiled_ode_model_number(as.numeric(.to_dimensions_value(e, env$dimensions))))
         }
         if (is.symbol(e)) {
             nm <- as.character(e)

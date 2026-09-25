@@ -263,7 +263,8 @@ to_compiled_ode_model.OdeModel <- function(model) {
             cache = new.env(parent = emptyenv()),
             entryPoints = list(
                 func = "derivs",
-                initfunc = "initmod"
+                initfunc = "initmod",
+                y0func = "init_y"
             )
         ),
         class = "CompiledOdeModel"
