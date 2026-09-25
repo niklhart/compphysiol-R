@@ -681,12 +681,14 @@ print.SimulationResult <- function(x, ...) {
 
     obs_params <- odeinfo$obsParams
     if (is.null(obs_params)) obs_params <- list()
-    values <- lapply(odeinfo$obsFuncs, function(f) {
-        f(solver_time, solver_output, obs_params)
-    })
-    observables <- as.data.frame(values)
-    names(observables) <- names(odeinfo$obsFuncs)
-    observables <- cbind(data.frame(time = time), observables)
+    obs_names <- names(odeinfo$obsFuncs)
+    columns <- vector("list", length(obs_names) + 1L)
+    names(columns) <- c("time", obs_names)
+    columns[[1L]] <- time
+    for (i in seq_along(odeinfo$obsFuncs)) {
+        columns[[i + 1L]] <- odeinfo$obsFuncs[[i]](solver_time, solver_output, obs_params)
+    }
+    observables <- .quick_df(columns)
 
     obs_units <- .simulation_observable_unit_values(model, parameters = parameters)
     for (obs_name in intersect(names(obs_units), names(observables))) {

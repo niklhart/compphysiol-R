@@ -42,6 +42,23 @@
     if (is.list(x)) x else list(x)
 }
 
+#' Quickly construct a data frame from a validated column list
+#'
+#' `.quick_df()` is a small internal shortcut for hot paths where `x` is already
+#' known to be a named list whose elements all have the same length. It is based
+#' on the `quickdf()` example from Hadley Wickham's Advanced R, which shows how
+#' to avoid the validation and coercion overhead of `as.data.frame()` when those
+#' preconditions are guaranteed by the caller.
+#'
+#' @param x Named list of equal-length columns.
+#' @returns A data frame containing the columns of `x`.
+#' @noRd
+.quick_df <- function(x) {
+    class(x) <- "data.frame"
+    attr(x, "row.names") <- .set_row_names(length(x[[1L]]))
+    x
+}
+
 #' Treat expression-like constructor arguments as vectors of expressions
 #' @param x Input expression argument
 #' @returns A list of expression inputs
