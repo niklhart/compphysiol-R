@@ -431,13 +431,14 @@ test_that("CompiledOdeModel reuses compiled DLL across parameter changes", {
 
     expect_equal(ls(compiled_model$cache), character(0))
     simulate(compiled_model, time = time, parameters = parameters(A0 = 100, ke = 0.4))
-    cache_keys <- ls(compiled_model$cache)
-    expect_length(cache_keys, 1)
-    cached_dll <- get(cache_keys[[1]], envir = compiled_model$cache)$dll
+    expect_equal(ls(compiled_model$cache), character(0))
+    expect_true(exists(".artifact", envir = compiled_model$cache, inherits = FALSE))
+    expect_true(exists(".dimensions", envir = compiled_model$cache, inherits = FALSE))
+    cached_dll <- get(".artifact", envir = compiled_model$cache, inherits = FALSE)$dll
 
     simulate(compiled_model, time = time, parameters = parameters(A0 = 50, ke = 0.1))
-    expect_equal(ls(compiled_model$cache), cache_keys)
-    expect_equal(get(cache_keys[[1]], envir = compiled_model$cache)$dll, cached_dll)
+    expect_equal(ls(compiled_model$cache), character(0))
+    expect_equal(get(".artifact", envir = compiled_model$cache, inherits = FALSE)$dll, cached_dll)
 })
 
 test_that("CompiledOdeModel rejects runtime parameters outside the frozen interface", {
@@ -481,6 +482,30 @@ test_that("CompiledOdeModel checks cached parameter unit signatures", {
             dimensions = dimensions
         ),
         "A0.*cached compiled model signature"
+    )
+})
+
+test_that("CompiledOdeModel uses fixed solver dimensions after compilation", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_parameter(ke = 0.2 [1/h])
+    compiled_model <- to_compiled_ode_model(model)
+
+    simulate(
+        compiled_model,
+        time = seq(0, 1, by = 1) [h],
+        dimensions = list(mass = "mg", time = "h")
+    )
+
+    expect_error(
+        simulate(
+            compiled_model,
+            time = seq(0, 1, by = 1) [h],
+            dimensions = list(mass = "kg", time = "h")
+        ),
+        "fixed solver dimensions"
     )
 })
 

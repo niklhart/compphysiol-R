@@ -1,8 +1,6 @@
 .compiled_ode_model_status <- function(x) {
-    cache_size <- if (is.environment(x$cache)) length(ls(x$cache)) else 0L
-    if (cache_size == 0L) return("pending")
-    if (cache_size == 1L) return("compiled")
-    paste0("compiled, ", cache_size, " unit signatures")
+    if (is.null(.compiled_ode_model_cached_artifact(x))) return("pending")
+    "compiled"
 }
 
 #' Print method for `CompiledOdeModel` class
@@ -54,19 +52,13 @@ print.CompiledOdeModel <- function(x, ...) {
 }
 
 .compiled_ode_model_print_signature <- function(x) {
-    if (!is.environment(x$cache)) return(NULL)
-    cache_keys <- ls(x$cache)
-    if (length(cache_keys) != 1L) return(NULL)
-    artifact <- get(cache_keys[[1]], envir = x$cache, inherits = FALSE)
+    artifact <- .compiled_ode_model_cached_artifact(x)
+    if (is.null(artifact)) return(NULL)
     artifact$parameterSignature
 }
 
 .compiled_ode_model_print_dimensions <- function(x) {
-    if (!is.environment(x$cache)) return(NULL)
-    cache_keys <- ls(x$cache)
-    if (length(cache_keys) != 1L) return(NULL)
-    artifact <- get(cache_keys[[1]], envir = x$cache, inherits = FALSE)
-    dimensions <- artifact$dimensions
+    dimensions <- .compiled_ode_model_fixed_dimensions(x)
     if (is.null(dimensions) || length(dimensions) == 0L) return(NULL)
     dimensions
 }
@@ -225,10 +217,15 @@ print.CompiledOdeModel <- function(x, ...) {
 }
 
 .compiled_ode_model_artifact <- function(model, parameters, dimensions = NULL) {
-    cache_key <- .compiled_ode_model_cache_key(dimensions)
-    cache <- model$cache
-    if (is.environment(cache) && exists(cache_key, envir = cache, inherits = FALSE)) {
-        artifact <- get(cache_key, envir = cache, inherits = FALSE)
+    artifact <- .compiled_ode_model_cached_artifact(model)
+    if (!is.null(artifact)) {
+        fixed_dimensions <- .compiled_ode_model_fixed_dimensions(model)
+        if (!is.null(dimensions) && !identical(dimensions, fixed_dimensions)) {
+            stop(
+                "CompiledOdeModel uses fixed solver dimensions; requested dimensions differ from the compiled model.",
+                call. = FALSE
+            )
+        }
         .compiled_ode_model_check_parameter_signature(
             artifact$parameterSignature,
             parameters = parameters
@@ -272,8 +269,7 @@ print.CompiledOdeModel <- function(x, ...) {
         parameterSignature = .compiled_ode_model_parameter_signature(
             model$parameterNames,
             parameters
-        ),
-        cacheKey = cache_key
+        )
     )
     artifact$observableExportUnitValues <- lapply(artifact$observableUnitValues, function(x) {
         if (inherits(x, "units")) do.call(.to_dimensions, c(list(x), dimensions)) else x
@@ -287,8 +283,44 @@ print.CompiledOdeModel <- function(x, ...) {
         to = artifact$observableUnitValues
     )
 
-    if (is.environment(cache)) assign(cache_key, artifact, envir = cache)
+    if (is.environment(model$cache)) {
+        assign(".artifact", artifact, envir = model$cache)
+        assign(".dimensions", dimensions, envir = model$cache)
+    }
     artifact
+}
+
+.compiled_ode_model_dimensions <- function(model, ode_model, time, dimensions = NULL, parameters) {
+    fixed_dimensions <- .compiled_ode_model_fixed_dimensions(model)
+    if (is.null(fixed_dimensions)) {
+        resolved <- .simulation_dimensions(ode_model, time, dimensions, parameters = parameters)
+        if (is.environment(model$cache)) assign(".dimensions", resolved, envir = model$cache)
+        return(resolved)
+    }
+
+    if (!is.null(dimensions)) {
+        requested <- .simulation_dimensions(ode_model, time, dimensions, parameters = parameters)
+        if (!identical(requested, fixed_dimensions)) {
+            stop(
+                "CompiledOdeModel uses fixed solver dimensions; requested dimensions differ from the compiled model.",
+                call. = FALSE
+            )
+        }
+    }
+
+    fixed_dimensions
+}
+
+.compiled_ode_model_fixed_dimensions <- function(model) {
+    cache <- model$cache
+    if (!is.environment(cache) || !exists(".dimensions", envir = cache, inherits = FALSE)) return(NULL)
+    get(".dimensions", envir = cache, inherits = FALSE)
+}
+
+.compiled_ode_model_cached_artifact <- function(model) {
+    cache <- model$cache
+    if (!is.environment(cache) || !exists(".artifact", envir = cache, inherits = FALSE)) return(NULL)
+    get(".artifact", envir = cache, inherits = FALSE)
 }
 
 .compiled_ode_model_events <- function(ode_model, dimensions = NULL) {
@@ -334,11 +366,6 @@ print.CompiledOdeModel <- function(x, ...) {
         }
     }
     out
-}
-
-.compiled_ode_model_cache_key <- function(dimensions) {
-    if (is.null(dimensions)) return("default")
-    paste(as.integer(serialize(dimensions, NULL)), collapse = "-")
 }
 
 .compiled_ode_model_check_parameter_names <- function(parameter_names, allowed_names) {

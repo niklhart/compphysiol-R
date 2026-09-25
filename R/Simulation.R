@@ -188,6 +188,15 @@ simulate.CompiledOdeModel <- function(
             )
         },
         check_unit_consistency = FALSE,
+        dimensions_resolver = function(ode_model, time, dimensions, parameters) {
+            .compiled_ode_model_dimensions(
+                object,
+                ode_model = ode_model,
+                time = time,
+                dimensions = dimensions,
+                parameters = parameters
+            )
+        },
         ...
     )
 }
@@ -379,6 +388,7 @@ simulate.StochasticModel <- function(
     envir,
     export,
     check_unit_consistency = TRUE,
+    dimensions_resolver = .simulation_dimensions,
     ...
 ) {
     .check_class(ode_model, "OdeModel")
@@ -395,7 +405,7 @@ simulate.StochasticModel <- function(
     }
     .simulation_check_time_mode(ode_model, time, parameters = merged_parameters)
 
-    dimensions <- .simulation_dimensions(ode_model, time, dimensions, parameters = merged_parameters)
+    dimensions <- dimensions_resolver(ode_model, time, dimensions, parameters = merged_parameters)
     odeinfo <- export(
         ode_model,
         parameters = sim_parameters,
