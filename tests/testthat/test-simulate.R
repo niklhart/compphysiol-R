@@ -421,6 +421,25 @@ test_that("simulate accepts a CompiledOdeModel with different parameter values",
     expect_true(out_fast$states$a_drug_Central[[length(time)]] < out_slow$states$a_drug_Central[[length(time)]])
 })
 
+test_that("CompiledOdeModel reuses compiled DLL across parameter changes", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport("Central", "", const = "ke")
+    compiled_model <- to_compiled_ode_model(model)
+    time <- seq(0, 2, by = 1)
+
+    expect_equal(ls(compiled_model$cache), character(0))
+    simulate(compiled_model, time = time, parameters = parameters(A0 = 100, ke = 0.4))
+    cache_keys <- ls(compiled_model$cache)
+    expect_length(cache_keys, 1)
+    cached_dll <- get(cache_keys[[1]], envir = compiled_model$cache)$dll
+
+    simulate(compiled_model, time = time, parameters = parameters(A0 = 50, ke = 0.1))
+    expect_equal(ls(compiled_model$cache), cache_keys)
+    expect_equal(get(cache_keys[[1]], envir = compiled_model$cache)$dll, cached_dll)
+})
+
 test_that("simulate reports all missing OdeModel parameters together", {
     model <- compartment_model() |>
         add_compartment(c("Central", "Peripheral"), volume = NA_real_) |>

@@ -260,6 +260,7 @@ to_compiled_ode_model.OdeModel <- function(model) {
             backend = "deSolve_compiled_rhs",
             source = NULL,
             dll = NULL,
+            cache = new.env(parent = emptyenv()),
             entryPoints = list(
                 func = "derivs",
                 initfunc = "initmod"

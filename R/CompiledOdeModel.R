@@ -25,22 +25,47 @@
         dimensions
     )
 
+    artifact <- .compiled_ode_model_artifact(model, dimensions = dimensions)
+
+    c(
+        artifact,
+        list(
+            parms = parameter_values,
+            parameterNames = parameter_names
+        )
+    )
+}
+
+.compiled_ode_model_artifact <- function(model, dimensions = NULL) {
+    cache_key <- .compiled_ode_model_cache_key(dimensions)
+    cache <- model$cache
+    if (is.environment(cache) && exists(cache_key, envir = cache, inherits = FALSE)) {
+        return(get(cache_key, envir = cache, inherits = FALSE))
+    }
+
+    ode_model <- model$ode_model
     source <- .compiled_ode_model_source(
         ode_model,
-        parameter_names = parameter_names,
+        parameter_names = model$parameterNames,
         dimensions = dimensions
     )
     paths <- .compiled_ode_model_compile(source)
-
-    list(
+    artifact <- list(
         func = model$entryPoints$func,
         initfunc = model$entryPoints$initfunc,
         dllname = paths$dllname,
         source = paths$source,
         dll = paths$dll,
-        parms = parameter_values,
-        parameterNames = parameter_names
+        cacheKey = cache_key
     )
+
+    if (is.environment(cache)) assign(cache_key, artifact, envir = cache)
+    artifact
+}
+
+.compiled_ode_model_cache_key <- function(dimensions) {
+    if (is.null(dimensions)) return("default")
+    paste(as.integer(serialize(dimensions, NULL)), collapse = "-")
 }
 
 .compiled_ode_model_parameter_values <- function(parameter_names, parameters, dimensions) {

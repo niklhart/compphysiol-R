@@ -51,7 +51,7 @@ test_that("to_compiled_ode_model returns a compiled-backend representation", {
         compiled_model,
         c(
             "ode_model", "parameterNames", "backend", "source", "dll",
-            "entryPoints"
+            "cache", "entryPoints"
         )
     )
     expect_identical(compiled_model$ode_model, ode_model)
@@ -59,6 +59,8 @@ test_that("to_compiled_ode_model returns a compiled-backend representation", {
     expect_equal(compiled_model$backend, "deSolve_compiled_rhs")
     expect_null(compiled_model$source)
     expect_null(compiled_model$dll)
+    expect_true(is.environment(compiled_model$cache))
+    expect_equal(ls(compiled_model$cache), character(0))
     expect_equal(compiled_model$entryPoints$func, "derivs")
     expect_equal(compiled_model$entryPoints$initfunc, "initmod")
 })
