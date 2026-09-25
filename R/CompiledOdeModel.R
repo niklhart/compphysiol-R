@@ -99,9 +99,13 @@ print.CompiledOdeModel <- function(x, ...) {
 
     parameters <- .simulation_parameters_object(parameters)
     .compiled_ode_model_check_parameter_names(names(parameters), model$parameterNames)
-    build <- .compiled_ode_model_build(model, parameters = parameters, dimensions = dimensions)
     merged_parameters <- .merge_ode_parameters(ode_model$parameters, parameters)
-    param_values <- .to_dimensions_vec(merged_parameters, dimensions)
+    build <- .compiled_ode_model_build_prepared(
+        model,
+        parameters = merged_parameters,
+        dimensions = dimensions
+    )
+    param_values <- build$parms
     eq_names <- names(ode_model$equations)
     output_state_names <- ode_model$states$output_name
 
@@ -203,16 +207,25 @@ print.CompiledOdeModel <- function(x, ...) {
     ode_model <- model$ode_model
     parameters <- .simulation_parameters_object(parameters)
     merged_parameters <- .merge_ode_parameters(ode_model$parameters, parameters)
+
+    .compiled_ode_model_build_prepared(
+        model,
+        parameters = merged_parameters,
+        dimensions = dimensions
+    )
+}
+
+.compiled_ode_model_build_prepared <- function(model, parameters, dimensions = NULL) {
     parameter_names <- model$parameterNames
     parameter_values <- .compiled_ode_model_parameter_values(
         parameter_names,
-        merged_parameters,
+        parameters,
         dimensions
     )
 
     artifact <- .compiled_ode_model_artifact(
         model,
-        parameters = merged_parameters,
+        parameters = parameters,
         dimensions = dimensions
     )
 
