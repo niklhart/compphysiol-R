@@ -669,8 +669,10 @@ print.SimulationResult <- function(x, ...) {
 .simulation_observables <- function(solver_output, time, model, odeinfo, solver_time, dimensions, parameters = model$parameters) {
     if (length(odeinfo$obsFuncs) == 0) return(NULL)
 
+    obs_params <- odeinfo$obsParams
+    if (is.null(obs_params)) obs_params <- list()
     values <- lapply(odeinfo$obsFuncs, function(f) {
-        f(solver_time, solver_output, list())
+        f(solver_time, solver_output, obs_params)
     })
     observables <- as.data.frame(values)
     names(observables) <- names(odeinfo$obsFuncs)

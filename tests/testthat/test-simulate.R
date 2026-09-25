@@ -561,6 +561,30 @@ test_that("simulate on a CompiledOdeModel applies runtime parameter values to in
     expect_equal(out$observables$C, out$states$a_drug_Central / 20, tolerance = 1e-6)
 })
 
+test_that("cached CompiledOdeModel observables use current runtime parameters", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport("Central", "", const = "ke") |>
+        add_observable(C = a[drug, Central] / V)
+    compiled_model <- to_compiled_ode_model(model)
+    time <- seq(0, 1, by = 1)
+
+    out_v10 <- simulate(
+        compiled_model,
+        time = time,
+        parameters = parameters(A0 = 100, ke = 0, V = 10)
+    )
+    out_v20 <- simulate(
+        compiled_model,
+        time = time,
+        parameters = parameters(A0 = 100, ke = 0, V = 20)
+    )
+
+    expect_equal(out_v10$observables$C, c(10, 10), tolerance = 1e-6)
+    expect_equal(out_v20$observables$C, c(5, 5), tolerance = 1e-6)
+})
+
 test_that("simulate accepts a precompiled AnalyticalModel", {
     model <- compartment_model() |>
         add_compartment(c("Central", "Peripheral"), volume = "V") |>
