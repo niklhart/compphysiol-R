@@ -424,7 +424,13 @@ reported in terms of compartments, transports, reactions, and other model
 components. When the user supplies an `OdeModel`, unit errors are reported in
 terms of ODE states and their expressions.
 
+An `OdeModel` can also be lowered to a `CompiledOdeModel`. This does not change
+the mathematical model; it prepares a compiled solver representation for the
+same ODE system so that repeated numerical simulations can avoid rebuilding
+solver-facing functions and metadata.
+
 Implementation anchor: `OdeModel` objects are created by `to_ode_model()`.
+Compiled ODE models are created by `to_compiled_ode_model()`.
 
 ## ODE export
 
@@ -455,6 +461,14 @@ Implementation anchor: solver-specific ODE export is handled internally.
 Users should call `simulate()` for solver output or `to_ode_model()` for the
 backend-neutral ODE representation.
 
+Compiled ODE export is a cached form of solver-specific ODE export. A
+`CompiledOdeModel` stores the original `OdeModel` together with a compiled
+right-hand side, compiled initial-value evaluation, fixed solver dimensions,
+fixed dosing event data, and cached unit/output metadata. Runtime parameter
+values may still vary, but the parameter interface, solver dimensions, model
+structure, and dosing structure are fixed once the compiled cache has been
+created.
+
 ## Simulation
 
 Simulation runs a `CompartmentModel` or one of its lowered model
@@ -462,9 +476,9 @@ representations over requested time points and returns a toolbox-level result.
 For `CompartmentModel` inputs, the `simulation_type` argument selects the
 route: numerical ODE simulation, analytical deterministic simulation,
 Gillespie stochastic simulation, or Alfonsi hybrid stochastic-deterministic
-simulation. Lowered `OdeModel`,
-`AnalyticalModel`, and `StochasticModel` objects can be simulated directly
-when repeated runs should avoid repeated lowering. Unlike ODE export,
+simulation. Lowered `OdeModel`, `CompiledOdeModel`, `AnalyticalModel`, and
+`StochasticModel` objects can be simulated directly when repeated runs should
+avoid repeated lowering or repeated ODE export work. Unlike ODE export,
 simulation owns both sides of the solver boundary: it converts unit-aware model
 quantities to numeric values for the solver and attaches units back to the
 returned trajectories.
@@ -511,9 +525,17 @@ lowering when the same model structure is simulated multiple times with
 different runtime parameter values. Passing a `CompartmentModel` keeps
 diagnostics closer to the original model components.
 
+Passing a `CompiledOdeModel` goes further: after the first simulation fills the
+compiled cache, repeated simulations reuse the compiled ODE representation and
+cached solver metadata. This is intended for workloads such as parameter
+estimation where the model structure is fixed and only parameter values vary.
+Because the compiled cache fixes the solver dimensions and parameter interface,
+later simulations must use compatible parameter units and cannot introduce
+additional parameters or a different solver dimension set.
+
 Implementation anchor: simulation is handled by `simulate()` methods for
-`CompartmentModel`, `OdeModel`, `AnalyticalModel`, and `StochasticModel`
-objects.
+`CompartmentModel`, `OdeModel`, `CompiledOdeModel`, `AnalyticalModel`, and
+`StochasticModel` objects.
 
 ## Lumping
 
