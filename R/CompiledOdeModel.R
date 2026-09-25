@@ -105,13 +105,7 @@ print.CompiledOdeModel <- function(x, ...) {
         parameters = merged_parameters,
         dimensions = dimensions
     )
-    param_values <- build$parms
-    eq_names <- names(ode_model$equations)
     output_state_names <- ode_model$states$output_name
-
-    subst <- function(expr) {
-        .compiled_ode_model_substitute_parameters(expr, eq_names, param_values, dimensions)
-    }
 
     y0 <- .evaluate_initials(
         setNames(ode_model$initials, ode_model$states$dsl_name),
@@ -120,19 +114,6 @@ print.CompiledOdeModel <- function(x, ...) {
     ) |>
         .to_dimensions_vec(dimensions)
     y0 <- setNames(unlist(y0), output_state_names)
-
-    events <- list(data = data.frame(var = character(), time = numeric(), value = numeric(), method = character()))
-    if (length(ode_model$dosing$state) > 0L) {
-        event_time <- lapply(ode_model$dosing$time, subst) |> .to_dimensions_vec(dimensions)
-        event_value <- lapply(ode_model$dosing$value, subst) |> .to_dimensions_vec(dimensions)
-        events$data <- data.frame(
-            var = output_state_names[ode_model$dosing$state],
-            time = unlist(event_time),
-            value = unlist(event_value),
-            method = ode_model$dosing$operation,
-            stringsAsFactors = FALSE
-        )
-    }
 
     list(
         odefun = build$func,
@@ -147,7 +128,7 @@ print.CompiledOdeModel <- function(x, ...) {
         observableUnitScales = build$observableUnitScales,
         freeParams = character(0),
         y0 = y0,
-        events = events,
+        events = build$events,
         dllname = build$dllname,
         initfunc = build$initfunc,
         parms = build$parms,
@@ -283,6 +264,10 @@ print.CompiledOdeModel <- function(x, ...) {
             ode_model,
             parameters = parameters
         ),
+        events = .compiled_ode_model_events(
+            ode_model,
+            dimensions = dimensions
+        ),
         dimensions = dimensions,
         parameterSignature = .compiled_ode_model_parameter_signature(
             model$parameterNames,
@@ -304,6 +289,23 @@ print.CompiledOdeModel <- function(x, ...) {
 
     if (is.environment(cache)) assign(cache_key, artifact, envir = cache)
     artifact
+}
+
+.compiled_ode_model_events <- function(ode_model, dimensions = NULL) {
+    output_state_names <- ode_model$states$output_name
+    events <- list(data = data.frame(var = character(), time = numeric(), value = numeric(), method = character()))
+    if (length(ode_model$dosing$state) == 0L) return(events)
+
+    event_time <- .to_dimensions_vec(ode_model$dosing$time, dimensions)
+    event_value <- .to_dimensions_vec(ode_model$dosing$value, dimensions)
+    events$data <- data.frame(
+        var = output_state_names[ode_model$dosing$state],
+        time = unlist(event_time),
+        value = unlist(event_value),
+        method = ode_model$dosing$operation,
+        stringsAsFactors = FALSE
+    )
+    events
 }
 
 .compiled_ode_model_state_unit_values <- function(ode_model, parameters, dimensions = NULL) {
