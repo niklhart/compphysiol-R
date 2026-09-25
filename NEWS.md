@@ -1,5 +1,6 @@
-# compphysiol (development version)
+# compphysiol 0.4.1
 
+* introduced a `CompiledOdeModel` class for more efficient repeated simulations, for example in parmeter estimation workflows, using deSolve's C interface
 * better handling of large state or event counts in stochastic or hybrid simulations and numerically negative hybrid simulation propensities
 * improved generation of ODE right-hand side expressions in `OdeModel` class
 * fixed expression reconstruction bug for compound reaction rates
