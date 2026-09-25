@@ -333,11 +333,14 @@ print.CompiledOdeModel <- function(x, ...) {
 }
 
 .compiled_ode_model_y0 <- function(build, state_names) {
-    y0 <- .C(
-        build$y0func,
-        p = as.double(build$parms),
-        yout = double(length(state_names)),
-        PACKAGE = build$dllname
+    y0 <- do.call(
+        ".C",
+        list(
+            build$y0func,
+            p = as.double(build$parms),
+            yout = double(length(state_names)),
+            PACKAGE = build$dllname
+        )
     )$yout
     setNames(y0, state_names)
 }
