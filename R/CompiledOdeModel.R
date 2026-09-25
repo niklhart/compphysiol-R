@@ -99,15 +99,77 @@ print.CompiledOdeModel <- function(x, ...) {
 
     parameters <- .simulation_parameters_object(parameters)
     .compiled_ode_model_check_parameter_names(names(parameters), model$parameterNames)
-    odeinfo <- .to_deSolve(ode_model, parameters = parameters, dimensions = dimensions)
     build <- .compiled_ode_model_build(model, parameters = parameters, dimensions = dimensions)
+    merged_parameters <- .merge_ode_parameters(ode_model$parameters, parameters)
+    param_values <- .to_dimensions_vec(merged_parameters, dimensions)
+    eq_names <- names(ode_model$equations)
+    output_state_names <- ode_model$states$output_name
 
-    odeinfo$odefun <- build$func
-    odeinfo$dllname <- build$dllname
-    odeinfo$initfunc <- build$initfunc
-    odeinfo$parms <- build$parms
-    odeinfo$compiled <- build
-    odeinfo
+    subst <- function(expr) {
+        .compiled_ode_model_substitute_parameters(expr, eq_names, param_values, dimensions)
+    }
+
+    y0 <- .evaluate_initials(
+        setNames(ode_model$initials, ode_model$states$dsl_name),
+        merged_parameters,
+        allow_unresolved = FALSE
+    ) |>
+        .to_dimensions_vec(dimensions)
+    y0 <- setNames(unlist(y0), output_state_names)
+
+    obs_funcs <- lapply(ode_model$observables, function(obs) {
+        expr <- .ode_model_observable_backend_expr(subst(obs), output_state_names)
+        eval(parse(text = paste0("function(t,y,params) unname(", deparse1(expr), ")")))
+    })
+    names(obs_funcs) <- names(ode_model$observables)
+
+    events <- list(data = data.frame(var = character(), time = numeric(), value = numeric(), method = character()))
+    if (length(ode_model$dosing$state) > 0L) {
+        event_time <- lapply(ode_model$dosing$time, subst) |> .to_dimensions_vec(dimensions)
+        event_value <- lapply(ode_model$dosing$value, subst) |> .to_dimensions_vec(dimensions)
+        events$data <- data.frame(
+            var = output_state_names[ode_model$dosing$state],
+            time = unlist(event_time),
+            value = unlist(event_value),
+            method = ode_model$dosing$operation,
+            stringsAsFactors = FALSE
+        )
+    }
+
+    list(
+        odefun = build$func,
+        stateNames = output_state_names,
+        dslStateNames = ode_model$states$dsl_name,
+        obsFuncs = obs_funcs,
+        freeParams = character(0),
+        y0 = y0,
+        events = events,
+        dllname = build$dllname,
+        initfunc = build$initfunc,
+        parms = build$parms,
+        compiled = build
+    )
+}
+
+.compiled_ode_model_substitute_parameters <- function(expr, eq_names, param_values, dimensions) {
+    free_params <- new.env(parent = emptyenv())
+    free_params$list <- character()
+    out <- .ode_model_substitute_parameters(
+        expr,
+        eq_names = eq_names,
+        param_values = param_values,
+        free_params = free_params,
+        dimensions = dimensions
+    )
+    if (length(free_params$list) > 0L) {
+        stop(
+            "CompiledOdeModel expression contains parameter(s) outside the frozen interface: ",
+            paste(free_params$list, collapse = ", "),
+            ".",
+            call. = FALSE
+        )
+    }
+    out
 }
 
 .compiled_ode_model_build <- function(model, parameters = list(), dimensions = NULL) {
