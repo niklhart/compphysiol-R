@@ -484,6 +484,31 @@ test_that("CompiledOdeModel checks cached parameter unit signatures", {
     )
 })
 
+test_that("CompiledOdeModel converts parameter values to solver dimensions before RHS evaluation", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = NA_real_) |>
+        add_molecule("drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+        add_transport("Central", "", rate = "Q / V * a[drug, Central]") |>
+        add_parameter(
+            Q = 0.001 [m^3/h],
+            V = 1 [L]
+        )
+    compiled_model <- to_compiled_ode_model(model)
+    time <- seq(0, 2, by = 1)
+
+    out <- simulate(
+        compiled_model,
+        time = time [h],
+        dimensions = list(mass = "kg", length = "m", time = "h")
+    )
+
+    expect_equal(
+        out$states$a_drug_Central,
+        units::set_units(1e-4 * exp(-time), "kg", mode = "standard"),
+        tolerance = 1e-6
+    )
+})
+
 test_that("simulate reports all missing OdeModel parameters together", {
     model <- compartment_model() |>
         add_compartment(c("Central", "Peripheral"), volume = NA_real_) |>
