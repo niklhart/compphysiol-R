@@ -337,6 +337,12 @@ simulation and estimation are not yet implemented.
 Implementation anchor: experiments are represented by `Experiment` objects
 created with `experiment()` and checked with `validate_experiment()`.
 
+An `Experiments` collection, created with `experiments()`, holds several
+experiments with optional names. Subsetting with `[` retains a collection;
+`[[` extracts an individual `Experiment`. Collections can be combined with
+`c()`. Printing a collection shows one summary per experiment, while printing
+an individual experiment shows its parameters, dosing, and measurement schedule.
+
 ## Source and sink
 
 A source represents material entering the model from outside the explicit

@@ -125,8 +125,13 @@ validate_experiment <- function(x, model = NULL) {
 print.Experiment <- function(x, ...) {
     cat("Experiment:\n")
     cat(" Start: ", format(x$start), "\n", sep = "")
-    cat(" Parameters: ", length(x$parameters), "\n", sep = "")
-    cat(" Dosing events: ", length(x$dosing), "\n", sep = "")
-    cat(" Measurements: ", nrow(x$measurements), "\n", sep = "")
+    print(x$parameters)
+    print(x$dosing)
+    if (nrow(x$measurements)) {
+        cat(" Measurements:\n")
+        print(x$measurements, row.names = FALSE)
+    } else {
+        cat(" Measurements: (none)\n")
+    }
     invisible(x)
 }
