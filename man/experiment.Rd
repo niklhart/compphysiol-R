@@ -8,7 +8,7 @@ experiment(
   parameters = NULL,
   dosing = NULL,
   measurements = data.frame(time = numeric(0), observable = character(0)),
-  start = 0
+  start = NULL
 )
 }
 \arguments{
@@ -21,8 +21,10 @@ experiment(
 \code{observable} columns. Use \code{\link[=with_units]{with_units()}} to construct unit-bearing times.}
 
 \item{start}{Initial time, a finite numeric scalar, optionally with units.
-Supports unit shorthand such as \code{0 [h]}. Defaults to unit-free zero;
-supply units explicitly for a unit-aware experiment.}
+Supports unit shorthand such as \code{0 [h]}. The default \code{NULL} means zero in
+the units of the first nonempty schedule (dosing, then measurements), or
+unit-free zero if both schedules are empty. It does not mean the earliest
+scheduled time. Incompatible schedules still produce an error.}
 }
 \value{
 An \code{Experiment} object.
@@ -46,8 +48,7 @@ e <- experiment(
     measurements = data.frame(
         time = with_units(c(1, 2, 4) [h]),
         observable = "C"
-    ),
-    start = 0 [h]
+    )
 )
 e
 }

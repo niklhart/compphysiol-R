@@ -320,8 +320,12 @@ or their observation error. Repeated rows and their order are preserved.
 An experiment has an explicit initial time, at which the model's initial
 values apply. This can precede the first dose or measurement. Measurement and
 dosing times cannot precede it. Times are either all unit-free or carry
-compatible time units; hours and minutes can coexist. The default initial
-time is unit-free zero, so unit-aware experiments must supply it with units.
+compatible time units; hours and minutes can coexist. By default, `start = NULL`
+resolves to zero in the units of the first nonempty schedule (dosing, then
+measurements). If both are empty, it resolves to unit-free zero. It does not
+select the earliest scheduled time: adding a later first measurement does not
+shift when initial values apply. Negative schedule times require an explicit
+earlier start. Incompatible schedule units remain an error.
 
 Experiment parameters are known values, fixed during the experiment. The
 planned joint estimation interface will keep these separate from shared

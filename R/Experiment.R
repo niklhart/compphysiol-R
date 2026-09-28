@@ -16,8 +16,10 @@
 #' @param measurements A data frame with numeric `time` and nonempty character
 #'   `observable` columns. Use [with_units()] to construct unit-bearing times.
 #' @param start Initial time, a finite numeric scalar, optionally with units.
-#'   Supports unit shorthand such as `0 [h]`. Defaults to unit-free zero;
-#'   supply units explicitly for a unit-aware experiment.
+#'   Supports unit shorthand such as `0 [h]`. The default `NULL` means zero in
+#'   the units of the first nonempty schedule (dosing, then measurements), or
+#'   unit-free zero if both schedules are empty. It does not mean the earliest
+#'   scheduled time. Incompatible schedules still produce an error.
 #' @returns An `Experiment` object.
 #' @seealso [validate_experiment()]
 #' @examples
@@ -27,8 +29,7 @@
 #'     measurements = data.frame(
 #'         time = with_units(c(1, 2, 4) [h]),
 #'         observable = "C"
-#'     ),
-#'     start = 0 [h]
+#'     )
 #' )
 #' e
 #' @export
@@ -36,17 +37,34 @@ experiment <- function(
     parameters = NULL,
     dosing = NULL,
     measurements = data.frame(time = numeric(0), observable = character(0)),
-    start = 0
+    start = NULL
 ) {
     start <- .process_nse_arg(substitute(start), envir = parent.frame())
     if (is.null(parameters)) parameters <- parameters()
     if (is.null(dosing)) dosing <- dosing()
+    if (is.null(start)) start <- .experiment_default_start(dosing, measurements)
     x <- structure(
         list(parameters = parameters, dosing = dosing, measurements = measurements, start = start),
         class = "Experiment"
     )
     validate_experiment(x)
     x
+}
+
+.experiment_default_start <- function(dosing, measurements) {
+    .check_class(dosing, "Dosing")
+    time <- dosing$time
+    label <- "dosing time"
+    if (!length(time) && is.data.frame(measurements)) {
+        time <- measurements$time
+        label <- "measurement time"
+    }
+    if (!length(time)) return(0)
+    .experiment_check_time(time, label)
+    if (inherits(time, "units")) {
+        return(units::set_units(0, units::deparse_unit(time), mode = "standard"))
+    }
+    0
 }
 
 #' Validate an experiment

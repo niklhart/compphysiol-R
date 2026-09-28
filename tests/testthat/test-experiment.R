@@ -43,7 +43,7 @@ test_that("experiment components and measurement schema are checked", {
 
 test_that("experiment schedules require compatible time dimensions", {
     hours <- data.frame(time = with_units(1 [h]), observable = "C")
-    expect_error(experiment(measurements = hours), "unit")
+    expect_error(experiment(start = 0, measurements = hours), "unit")
     expect_error(experiment(start = 0 [h], measurements = data.frame(time = 1, observable = "C")), "unit")
     expect_error(experiment(start = 0 [kg]), "time units")
     expect_error(experiment(start = 0 [h], measurements = data.frame(time = with_units(1 [kg]), observable = "C")), "time units")
@@ -51,6 +51,33 @@ test_that("experiment schedules require compatible time dimensions", {
     expect_error(experiment(dosing = dosing(time = Inf, amount = 1)), "dosing")
     expect_error(experiment(start = 0 [h], dosing = dosing(time = 0 [h], amount = 1 [mg], duration = 1 [kg])), "time units")
     expect_no_error(experiment(start = 0 [h], dosing = dosing(time = 30 [min], amount = 1 [mg], duration = 60 [min])))
+})
+
+test_that("NULL start infers zero from nonempty schedules, not the first time", {
+    schedule <- data.frame(time = with_units(c(2, 4) [h]), observable = "C")
+    expect_equal(experiment(measurements = schedule)$start, with_units(0 [h]))
+    expect_equal(experiment(measurements = schedule, start = NULL)$start, with_units(0 [h]))
+    dose <- dosing(time = 30 [min], amount = 10 [mg])
+    expect_equal(experiment(dosing = dose)$start, with_units(0 [min]))
+    x <- experiment(dosing = dose, measurements = schedule)
+    expect_identical(x$start, with_units(0 [min]))
+    expect_identical(x$measurements, schedule)
+    expect_identical(x$dosing, dose)
+    expect_identical(experiment(start = NULL)$start, 0)
+    expect_identical(experiment(measurements = data.frame(time = 2, observable = "C"))$start, 0)
+    empty <- data.frame(time = with_units(numeric(0) [h]), observable = character())
+    expect_identical(experiment(measurements = empty)$start, 0)
+    expect_equal(experiment(measurements = schedule, start = 1 [h])$start, with_units(1 [h]))
+})
+
+test_that("inferred starts do not hide incompatible or negative schedule times", {
+    schedule <- data.frame(time = with_units(2 [h]), observable = "C")
+    expect_error(experiment(dosing = dosing(time = 0, amount = 1), measurements = schedule), "unit")
+    expect_error(experiment(dosing = dosing(time = 0 [h], amount = 1),
+                           measurements = data.frame(time = 2, observable = "C")), "unit")
+    expect_error(experiment(measurements = data.frame(time = with_units(1 [kg]), observable = "C")), "time units")
+    expect_error(experiment(dosing = dosing(time = -1 [h], amount = 1)), "before.*start")
+    expect_error(experiment(measurements = data.frame(time = -1, observable = "C")), "before.*start")
 })
 
 test_that("measurements and doses cannot precede the experiment start", {
