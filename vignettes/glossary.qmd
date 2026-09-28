@@ -343,6 +343,15 @@ experiments with optional names. Subsetting with `[` retains a collection;
 `c()`. Printing a collection shows one summary per experiment, while printing
 an individual experiment shows its parameters, dosing, and measurement schedule.
 
+Collections require a common time unit mode across experiments, including their
+initial times: all unit-free or all in compatible time units. Parameters shared
+by name must have compatible units, as must dose amounts for each shared
+molecule-compartment target. Boluses and infusions are compared through their
+total amounts. Compatible units are preserved, not converted in storage.
+Omitted dosing targets match identically omitted targets; matching them to
+explicit targets requires later model-based resolution. These checks also apply
+when combining collections with `c()`.
+
 ## Source and sink
 
 A source represents material entering the model from outside the explicit

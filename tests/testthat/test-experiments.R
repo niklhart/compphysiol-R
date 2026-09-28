@@ -1,6 +1,6 @@
 test_that("Experiments hold named and unnamed experiments without altering them", {
     a <- experiment(start = 0 [h], parameters = parameters(BW = 70 [kg]))
-    b <- experiment()
+    b <- experiment(start = 0 [min])
     x <- experiments(first = a, second = b)
     expect_s3_class(x, "Experiments")
     expect_length(x, 2)
@@ -30,7 +30,7 @@ test_that("Experiments subsetting preserves the collection and requested order",
 
 test_that("Experiments concatenation retains names, units, and empty collections", {
     a <- experiments(a = experiment(start = 0 [h]))
-    b <- experiments(b = experiment(start = -1))
+    b <- experiments(b = experiment(start = -1 [h]))
     expect_identical(c(a, b), experiments(a = a[[1]], b = b[[1]]))
     expect_identical(c(experiments(), a, experiments()), a)
     expect_identical(c(experiments(), experiments()), experiments())
@@ -44,7 +44,7 @@ test_that("collection printing summarizes while single printing shows details", 
         measurements = data.frame(time = with_units(c(1, 2) [h]), observable = "C"),
         start = 0 [h]
     )
-    x <- experiments(treatment = e, empty = experiment())
+    x <- experiments(treatment = e, empty = experiment(start = 0 [h]))
     summary <- capture.output(result <- print(x))
     expect_identical(result, x)
     expect_length(summary, 3)
@@ -57,4 +57,47 @@ test_that("collection printing summarizes while single printing shows details", 
     expect_true(any(grepl("observable", details)))
     expect_true(any(grepl("C", details)))
     expect_output(print(experiment()), "Measurements: \\(none\\)")
+})
+test_that("collection time units are consistent even without measurements", {
+    a <- experiment(start = 0 [h], measurements = data.frame(
+        time = with_units(60 [min]), observable = "C"))
+    b <- experiment(start = 0 [s])
+    expect_no_error(experiments(a, b))
+    expect_error(experiments(a, experiment()), "time.*units")
+    expect_error(c(experiments(a), experiments(experiment())), "time.*units")
+})
+
+test_that("overlapping experiment parameters require compatible units", {
+    a <- experiment(parameters = parameters(BW = 70 [kg], group = "adult"))
+    b <- experiment(parameters = parameters(BW = 60000 [g], group = "child"))
+    expect_no_error(experiments(a, b))
+    expect_no_error(experiments(a, experiment(parameters = parameters(age = 20 [h]))))
+    for (p in list(parameters(BW = 70), parameters(BW = 70 [h]))) {
+        bad <- experiment(parameters = p)
+        expect_error(experiments(a, bad), "parameter 'BW'.*units")
+        expect_error(c(experiments(a), experiments(bad)), "parameter 'BW'.*units")
+    }
+    expect_error(experiments(experiment(), a, experiment(parameters = parameters(BW = 1 [L]))), "BW")
+})
+
+test_that("matching dosing targets require compatible amount units", {
+    make <- function(amount, molec = "drug", cmt = "Central") {
+        experiment(start = 0 [h], dosing = dosing(time = 0 [h], amount = amount,
+                                                  molec = molec, cmt = cmt))
+    }
+    a <- make(with_units(100 [mg]))
+    b <- make(with_units(0.1 [g]))
+    expect_no_error(experiments(a, b))
+    for (amount in list(100, with_units(1 [mol]))) {
+        bad <- make(amount)
+        expect_error(experiments(a, bad), "dosing target.*drug.*Central.*units")
+        expect_error(c(experiments(a), experiments(bad)), "dosing target")
+        expect_no_error(experiments(a, make(amount, molec = "other")))
+        expect_no_error(experiments(a, make(amount, cmt = "Other")))
+    }
+    expect_error(experiments(make(1, NULL, NULL), make(with_units(1 [mg]), NULL, NULL)), "dosing target")
+    infusion <- experiment(start = 0 [h], dosing = dosing(time = 0 [min],
+        rate = 1 [g/h], duration = 60 [min], molec = "drug", cmt = "Central"))
+    expect_no_error(experiments(a, infusion))
+    expect_identical(experiments(a, b)[[2]], b)
 })

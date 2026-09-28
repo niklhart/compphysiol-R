@@ -18,6 +18,15 @@ Creates a list-like collection of experiments. Optional names, order, and
 duplicates are preserved. Each element retains its own parameters and units.
 Use \code{[} to obtain a collection and \code{[[} to extract a single experiment.
 }
+\details{
+All experiments must use the same time unit mode (unit-free or unit-bearing).
+Parameters with the same name and dose amounts for the same molecule and
+compartment must have compatible units, or all be unit-free. Convertible
+units are accepted without changing the stored values. Infusions are compared
+through their total amounts. Omitted dosing targets match other identically
+omitted targets; resolving them against explicit targets requires a model
+and is deferred to model preparation.
+}
 \examples{
 x <- experiments(control = experiment(), treatment = experiment())
 x
