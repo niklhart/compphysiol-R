@@ -303,6 +303,40 @@ schedule, not necessarily physiological compartments.
 Implementation anchor: dosing events are represented by `Dosing` objects
 created with `dosing()` or added with `add_dosing()`.
 
+## Experiment
+
+An experiment specifies known parameters, a fixed dosing schedule, and a
+measurement schedule for a model. It is separate from the biological model:
+several experiments can describe different administrations or experimental
+settings for the same system. Covariates such as body weight are ordinary
+experiment parameters. Derived quantities remain model equations, which may
+depend on both experimental parameters and shared model parameters.
+
+The measurement schedule identifies times and named observables, rather than
+ODE states. Even a directly measured state quantity must be declared as an
+observable. The schedule describes what to evaluate, not the measured values
+or their observation error. Repeated rows and their order are preserved.
+
+An experiment has an explicit initial time, at which the model's initial
+values apply. This can precede the first dose or measurement. Measurement and
+dosing times cannot precede it. Times are either all unit-free or carry
+compatible time units; hours and minutes can coexist. The default initial
+time is unit-free zero, so unit-aware experiments must supply it with units.
+
+Experiment parameters are known values, fixed during the experiment. The
+planned joint estimation interface will keep these separate from shared
+estimated parameters and reject overlap. General scheduled parameter changes
+and time-dependent model equations are not part of the current experiment
+contract. Dosing may be calculated from known experimental values before
+constructing the experiment.
+
+Current support covers construction, printing, time validation, and checking
+measurement observable names against a compartment model. Experiment-aware
+simulation and estimation are not yet implemented.
+
+Implementation anchor: experiments are represented by `Experiment` objects
+created with `experiment()` and checked with `validate_experiment()`.
+
 ## Source and sink
 
 A source represents material entering the model from outside the explicit
