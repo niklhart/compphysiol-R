@@ -160,11 +160,11 @@ test_that("SSA simulation supports multiple realizations in long format", {
     repeat_out <- simulate(model, time = time, simulation_type = "ssa", nsim = 3, seed = 1)
 
     expect_named(out$states, c("time", "rep", "a_drug_Central"))
-    expect_named(out$observables, c("time", "rep", "Aobs"))
+    expect_named(out$observables, c("time", "rep", "observable", "value"))
     expect_equal(out$states$time, rep(time, times = 3))
     expect_equal(out$states$rep, rep(1:3, each = length(time)))
     expect_equal(out$observables$rep, out$states$rep)
-    expect_equal(out$observables$Aobs, out$states$a_drug_Central)
+    expect_equal(as_observables_wide(out)$Aobs, out$states$a_drug_Central)
     expect_equal(repeat_out, out)
 })
 
@@ -189,7 +189,7 @@ test_that("SSA simulation evaluates observables at requested output times", {
 
     expect_s3_class(out$observables, "data.frame")
     expect_equal(out$observables$time, time)
-    expect_equal(out$observables$Aobs, out$states$a_drug_Central)
+    expect_equal(as_observables_wide(out)$Aobs, out$states$a_drug_Central)
 })
 
 test_that("SSA simulation supports unit-aware time and inverse-time rate constants", {

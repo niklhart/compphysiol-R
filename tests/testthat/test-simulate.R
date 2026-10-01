@@ -218,9 +218,9 @@ test_that("SimulationResult print truncates long state and observable lists", {
                 check.names = FALSE
             ),
             observables = data.frame(
-                time = 0,
-                very_long_observable_name_1 = 1,
-                very_long_observable_name_2 = 2,
+                time = c(0, 0),
+                observable = c("very_long_observable_name_1", "very_long_observable_name_2"),
+                value = c(1, 2),
                 check.names = FALSE
             )
         ),
@@ -550,7 +550,7 @@ test_that("CompiledOdeModel converts observable values from solver to model unit
     )
 
     expect_equal(
-        out$observables$C,
+        as_observables_wide(out)$C,
         units::set_units(c(100, 100), "mg/L", mode = "standard"),
         tolerance = 1e-6
     )
@@ -587,7 +587,7 @@ test_that("simulate on an OdeModel applies runtime parameter values to initials 
     )
 
     expect_equal(out$states$a_drug_Central[[1]], 100)
-    expect_equal(out$observables$C, out$states$a_drug_Central / 20, tolerance = 1e-6)
+    expect_equal(as_observables_wide(out)$C, out$states$a_drug_Central / 20, tolerance = 1e-6)
 })
 
 test_that("simulate on a CompiledOdeModel applies runtime parameter values to initials and observables", {
@@ -605,7 +605,7 @@ test_that("simulate on a CompiledOdeModel applies runtime parameter values to in
     )
 
     expect_equal(out$states$a_drug_Central[[1]], 100)
-    expect_equal(out$observables$C, out$states$a_drug_Central / 20, tolerance = 1e-6)
+    expect_equal(as_observables_wide(out)$C, out$states$a_drug_Central / 20, tolerance = 1e-6)
 })
 
 test_that("cached CompiledOdeModel observables use current runtime parameters", {
@@ -628,8 +628,8 @@ test_that("cached CompiledOdeModel observables use current runtime parameters", 
         parameters = parameters(A0 = 100, ke = 0, V = 20)
     )
 
-    expect_equal(out_v10$observables$C, c(10, 10), tolerance = 1e-6)
-    expect_equal(out_v20$observables$C, c(5, 5), tolerance = 1e-6)
+    expect_equal(as_observables_wide(out_v10)$C, c(10, 10), tolerance = 1e-6)
+    expect_equal(as_observables_wide(out_v20)$C, c(5, 5), tolerance = 1e-6)
 })
 
 test_that("simulate accepts a precompiled AnalyticalModel", {
@@ -853,7 +853,7 @@ test_that("simulate observables use post-dose event states", {
     out <- simulate(model, time = time)
 
     expect_equal(out$states$a_drug_Central, c(0, 100, 100 * exp(-0.2)), tolerance = 1e-5)
-    expect_equal(out$observables$C, out$states$a_drug_Central / 10, tolerance = 1e-5)
+    expect_equal(as_observables_wide(out)$C, out$states$a_drug_Central / 10, tolerance = 1e-5)
 })
 
 test_that("simulate applies infusion dosing events", {
@@ -903,9 +903,9 @@ test_that("simulate returns observable trajectories", {
 
     expect_s3_class(out, "SimulationResult")
     expect_s3_class(out$observables, "data.frame")
-    expect_named(out$observables, c("time", "C"))
+    expect_named(out$observables, c("time", "observable", "value"))
     expect_equal(out$observables$time, out$states$time)
-    expect_equal(out$observables$C, out$states$a_drug_Central / 10, tolerance = 1e-6)
+    expect_equal(as_observables_wide(out)$C, out$states$a_drug_Central / 10, tolerance = 1e-6)
     expect_snapshot(print(out))
 })
 
@@ -922,7 +922,7 @@ test_that("simulate reattaches units to observable trajectories", {
     expect_s3_class(out$observables, "data.frame")
     expect_equal(out$observables$time, out$states$time)
     expect_equal(
-        out$observables$C,
+        as_observables_wide(out)$C,
         units::set_units(100 * exp(-0.2 * seq(0, 10, by = 1)) / 10, "mg/L", mode = "standard"),
         tolerance = 1e-6
     )
@@ -943,7 +943,7 @@ test_that("simulate uses unit-aware free parameters for observable units", {
 
     expect_s3_class(out$observables, "data.frame")
     expect_equal(
-        out$observables$C,
+        as_observables_wide(out)$C,
         units::set_units(100 * exp(-0.2 * seq(0, 10, by = 1)) / 10, "mg/L", mode = "standard"),
         tolerance = 1e-6
     )
@@ -965,7 +965,7 @@ test_that("simulate supports amount per custom base unit with volume per custom 
 
     expect_equal(out$states$time, units::set_units(c(0, 1), "h", mode = "standard"))
     expect_equal(out$states$a_D_ex, units::set_units(c(1, 1), "nmol/modelcell", mode = "standard"))
-    expect_equal(out$observables$Cex, units::set_units(c(1, 1), "nmol/L", mode = "standard"))
+    expect_equal(as_observables_wide(out)$Cex, units::set_units(c(1, 1), "nmol/L", mode = "standard"))
 })
 
 test_that("simulate supports registered derived custom units in model inputs", {
@@ -984,9 +984,9 @@ test_that("simulate supports registered derived custom units in model inputs", {
 
     out <- simulate(model, time = c(0, 1) [h])
 
-    expect_true(inherits(out$observables$Ndensity, "units"))
+    expect_true(inherits(as_observables_wide(out)$Ndensity, "units"))
     expect_equal(
-        units::set_units(out$observables$Ndensity, "modelcelltwo/L", mode = "standard"),
+        units::set_units(as_observables_wide(out)$Ndensity, "modelcelltwo/L", mode = "standard"),
         units::set_units(c(1, 1), "modelcelltwo/L", mode = "standard")
     )
 })

@@ -16,7 +16,8 @@
   partition = NULL,
   include_event_times = FALSE,
   max_events = Inf,
-  ...
+  ...,
+  experiment = NULL
 )
 }
 \arguments{
@@ -56,9 +57,22 @@ simulation output in addition to the requested \code{time} points.}
 realization. The default \code{Inf} imposes no limit.}
 
 \item{...}{Additional arguments passed to \code{\link[deSolve:ode]{deSolve::ode()}}.}
+
+\item{experiment}{An \code{Experiment} or \code{Experiments} collection, as an alternative
+to \code{time}, \code{unit}, and \code{parameters}. Currently supported for the ODE route
+and \code{OdeModel}/\code{CompiledOdeModel} inputs. Known parameters override model
+defaults; experiment dosing replaces model dosing, including when empty.
+Simulation starts at the experiment's initial time and evaluates only its
+scheduled observable-time pairs. Collections return a list in input order.}
 }
 \value{
-A \code{SimulationResult} object.
+A \code{SimulationResult} with rectangular \code{states} and long-format
+\code{observables} (\code{time}, \code{observable}, \code{value}, plus \code{rep} for stochastic
+replicates). Direct \code{time} input requests all observables at every output
+time. Values are numeric, \code{units}, or \code{mixed_units} depending on their units.
+Without observables the component is \code{NULL}. An \code{Experiments} input returns
+a named list of results. See \code{\link[=as_observables_long]{as_observables_long()}} and
+\code{\link[=as_observables_wide]{as_observables_wide()}} for a storage-independent processing interface.
 }
 \description{
 \code{simulate()} solves a \code{CompartmentModel} and returns toolbox-level output.

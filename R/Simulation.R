@@ -38,10 +38,22 @@
 #'   reactions with propensities below this threshold are stochastic.
 #' @param include_event_times Include stochastic event times in stochastic
 #'   simulation output in addition to the requested `time` points.
+#' @param experiment An `Experiment` or `Experiments` collection, as an alternative
+#'   to `time`, `unit`, and `parameters`. Currently supported for the ODE route
+#'   and `OdeModel`/`CompiledOdeModel` inputs. Known parameters override model
+#'   defaults; experiment dosing replaces model dosing, including when empty.
+#'   Simulation starts at the experiment's initial time and evaluates only its
+#'   scheduled observable-time pairs. Collections return a list in input order.
 #' @param max_events Maximum number of stochastic reaction events allowed per
 #'   realization. The default `Inf` imposes no limit.
 #' @param ... Additional arguments passed to [deSolve::ode()].
-#' @returns A `SimulationResult` object.
+#' @returns A `SimulationResult` with rectangular `states` and long-format
+#'   `observables` (`time`, `observable`, `value`, plus `rep` for stochastic
+#'   replicates). Direct `time` input requests all observables at every output
+#'   time. Values are numeric, `units`, or `mixed_units` depending on their units.
+#'   Without observables the component is `NULL`. An `Experiments` input returns
+#'   a named list of results. See [as_observables_long()] and
+#'   [as_observables_wide()] for a storage-independent processing interface.
 #' @examples
 #' M <- multiCompModel(ncomp = 1, type = "micro", unit = "mg") |>
 #'     add_dosing(time = 0 [h], amount = 100 [mg], cmt = "cen") |>
@@ -69,8 +81,19 @@ simulate.CompartmentModel <- function(
     partition = NULL,
     include_event_times = FALSE,
     max_events = Inf,
-    ...
+    ...,
+    experiment = NULL
 ) {
+    if (!is.null(experiment)) {
+        if (!missing(time) || !missing(unit) || !missing(parameters)) {
+            stop("experiment cannot be combined with time, unit, or parameters.", call. = FALSE)
+        }
+        if (match.arg(simulation_type) != "ode") {
+            stop("Experiment simulation currently supports ODE models only.", call. = FALSE)
+        }
+        return(.simulate_experiments(object, experiment, dimensions = dimensions, ...))
+    }
+
     simulation_type <- match.arg(simulation_type)
 
     time <- .process_nse_arg(substitute(time), envir = parent.frame())
@@ -118,6 +141,7 @@ simulate.CompartmentModel <- function(
     }
 
     ode_model <- to_ode_model(export_model)
+    attr(ode_model, "measurement_schedule") <- attr(object, "measurement_schedule")
     .simulation_check_free_parameters_available(ode_model, export_model$parameters)
     export_model <- .check_unit_consistency(export_model)
     .simulation_check_time_mode(export_model, time)
@@ -144,8 +168,16 @@ simulate.OdeModel <- function(
     unit = NULL,
     parameters = list(),
     dimensions = NULL,
-    ...
+    ...,
+    experiment = NULL
 ) {
+    if (!is.null(experiment)) {
+        if (!missing(time) || !missing(unit) || !missing(parameters)) {
+            stop("experiment cannot be combined with time, unit, or parameters.", call. = FALSE)
+        }
+        return(.simulate_experiments(object, experiment, dimensions = dimensions, ...))
+    }
+
     .simulate_ode_backend(
         object,
         time = substitute(time),
@@ -168,9 +200,19 @@ simulate.CompiledOdeModel <- function(
     unit = NULL,
     parameters = list(),
     dimensions = NULL,
-    ...
+    ...,
+    experiment = NULL
 ) {
+    if (!is.null(experiment)) {
+        if (!missing(time) || !missing(unit) || !missing(parameters)) {
+            stop("experiment cannot be combined with time, unit, or parameters.", call. = FALSE)
+        }
+        return(.simulate_experiments(object, experiment, dimensions = dimensions, ...))
+    }
+
     ode_model <- object$ode_model
+    attr(ode_model, "measurement_schedule") <- attr(object, "measurement_schedule")
+    attr(ode_model, "experiment_dosing") <- attr(object, "experiment_dosing")
     .check_class(ode_model, "OdeModel")
 
     time <- .process_nse_arg(substitute(time), envir = parent.frame())
@@ -240,8 +282,16 @@ simulate.AnalyticalModel <- function(
     unit = NULL,
     parameters = list(),
     dimensions = NULL,
-    ...
+    ...,
+    experiment = NULL
 ) {
+    if (!is.null(experiment)) {
+        if (!missing(time) || !missing(unit) || !missing(parameters)) {
+            stop("experiment cannot be combined with time, unit, or parameters.", call. = FALSE)
+        }
+        stop("Experiment simulation currently supports ODE models only.", call. = FALSE)
+    }
+
     time <- .process_nse_arg(substitute(time), envir = parent.frame())
     time <- .simulation_apply_time_unit(time, unit)
     .simulation_validate_time(time)
@@ -299,8 +349,16 @@ simulate.StochasticModel <- function(
     partition = NULL,
     include_event_times = FALSE,
     max_events = Inf,
-    ...
+    ...,
+    experiment = NULL
 ) {
+    if (!is.null(experiment)) {
+        if (!missing(time) || !missing(unit) || !missing(parameters)) {
+            stop("experiment cannot be combined with time, unit, or parameters.", call. = FALSE)
+        }
+        stop("Experiment simulation currently supports ODE models only.", call. = FALSE)
+    }
+
     simulation_type <- match.arg(simulation_type)
     time <- .process_nse_arg(substitute(time), envir = parent.frame())
     partition <- .process_nse_arg(substitute(partition), envir = parent.frame())
@@ -479,6 +537,10 @@ simulate.StochasticModel <- function(
 
 .simulation_solve_ode_model <- function(model, odeinfo, time, dimensions, parameters, ...) {
     solver_time <- .simulation_numeric_time(time, dimensions)
+    experiment_dosing <- attr(model, "experiment_dosing")
+    if (!is.null(experiment_dosing)) {
+        odeinfo$events <- .simulation_experiment_events(model, experiment_dosing, dimensions, parameters)
+    }
 
     solver_args <- list(...)
     solver_args$y <- odeinfo$y0
@@ -491,8 +553,22 @@ simulate.StochasticModel <- function(
     solver_args$rtol <- solver_args$rtol %||% 1e-10
     solver_args$atol <- solver_args$atol %||% 1e-10
 
-    out <- do.call(deSolve::ode, solver_args)
+    event_data <- odeinfo$events$data
+    if (!is.null(event_data)) {
+        event_data <- event_data[event_data$time >= min(solver_time) &
+                                 event_data$time <= max(solver_time), , drop = FALSE]
+        odeinfo$events$data <- event_data
+        solver_args$events <- odeinfo$events
+        solver_args$times <- sort(unique(c(solver_time, event_data$time)))
+    }
+    if (length(unique(solver_time)) == 1L) {
+        out <- matrix(c(solver_time[1], odeinfo$y0), nrow = 1L,
+                      dimnames = list(NULL, c("time", names(odeinfo$y0))))
+    } else {
+        out <- do.call(deSolve::ode, solver_args)
+    }
     out <- .simulation_apply_output_events(out, odeinfo$events)
+    out <- out[match(solver_time, out[, "time"]), , drop = FALSE]
 
     states <- as.data.frame(out)
     states <- .simulation_attach_state_units(states, model, odeinfo, dimensions, parameters = parameters)
@@ -559,7 +635,7 @@ print.SimulationResult <- function(x, ...) {
         nrow(x$states)
     }
     state_names <- setdiff(names(x$states), c("time", "rep"))
-    observable_names <- if (is.null(x$observables)) character(0) else setdiff(names(x$observables), c("time", "rep"))
+    observable_names <- if (is.null(x$observables)) character(0) else unique(x$observables$observable)
     n_states <- length(state_names)
     n_observables <- length(observable_names)
     time_values <- if (has_replicates) x$states$time[x$states$rep == x$states$rep[[1]]] else x$states$time
@@ -725,19 +801,15 @@ print.SimulationResult <- function(x, ...) {
     states
 }
 
-.simulation_observables <- function(solver_output, time, model, odeinfo, solver_time, dimensions, parameters = model$parameters) {
+.simulation_observable_columns <- function(solver_output, time, model, odeinfo, solver_time, dimensions, parameters = model$parameters) {
     if (length(odeinfo$obsFuncs) == 0) return(NULL)
 
     obs_params <- odeinfo$obsParams
     if (is.null(obs_params)) obs_params <- list()
     obs_names <- names(odeinfo$obsFuncs)
-    columns <- vector("list", length(obs_names) + 1L)
-    names(columns) <- c("time", obs_names)
-    columns[[1L]] <- time
-    for (i in seq_along(odeinfo$obsFuncs)) {
-        columns[[i + 1L]] <- odeinfo$obsFuncs[[i]](solver_time, solver_output, obs_params)
-    }
-    observables <- .quick_df(columns)
+    observables <- lapply(odeinfo$obsFuncs, function(fun) {
+        rep_len(fun(solver_time, solver_output, obs_params), length(time))
+    })
 
     obs_units <- odeinfo$observableUnitValues
     if (is.null(obs_units)) {

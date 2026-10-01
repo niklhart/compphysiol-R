@@ -92,3 +92,32 @@ ggplot(states_long, aes(x = time, y = amount)) +
     facet_wrap(vars(state), scales = "free_y") +
     labs(x = "Time", y = "Amount")
 ```
+
+## Observable output
+
+Observable predictions are returned in long format. The helpers provide a
+consistent interface whether observable units are identical or mixed:
+
+```{r}
+head(as_observables_long(sim))
+head(as_observables_wide(sim))
+```
+
+For selected measurement times, use an experiment. Its dosing replaces any
+model-attached dosing; parameter overrides belong in the experiment.
+
+```{r}
+e <- experiment(
+    dosing = dosing(time = 0 [h], amount = 100 [mg], cmt = "cen"),
+    measurements = data.frame(
+        time = with_units(c(1, 4, 12) [h]),
+        observable = "Ccen"
+    )
+)
+selected <- simulate(model, experiment = e)
+as_observables_wide(selected)
+```
+
+Sparse wide output contains unit-aware missing values. Repeated measurements
+with the same time and observable remain distinct in long output and must be
+disambiguated before widening.

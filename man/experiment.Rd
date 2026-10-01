@@ -32,7 +32,8 @@ An \code{Experiment} object.
 \description{
 An experiment stores known parameters (including covariates), a fixed dosing
 schedule, and the times and observables to measure. It does not store a model
-or measured values. Simulation and estimation integration is not yet provided.
+or measured values. Pass it to \code{\link[=simulate]{simulate()}} through the \code{experiment} argument
+for ODE simulation. Estimation integration is not yet provided.
 }
 \details{
 Measurement rows retain their order, duplicates, additional columns, and

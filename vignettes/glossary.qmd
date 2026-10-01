@@ -334,9 +334,12 @@ and time-dependent model equations are not part of the current experiment
 contract. Dosing may be calculated from known experimental values before
 constructing the experiment.
 
-Current support covers construction, printing, time validation, and checking
-measurement observable names against a compartment model. Experiment-aware
-simulation and estimation are not yet implemented.
+Current support covers construction, printing, validation, and ODE simulation.
+An experiment supplies the complete dosing schedule, replacing model-attached
+dosing even when the experiment schedule is empty. Its known parameters override
+model defaults. Simulation starts at the initial time and evaluates only the
+scheduled observable-time pairs. Collections return a list of simulation results
+in experiment order. Estimation is not yet implemented.
 
 Implementation anchor: experiments are represented by `Experiment` objects
 created with `experiment()` and checked with `validate_experiment()`.
@@ -517,10 +520,12 @@ backend-neutral ODE representation.
 Compiled ODE export is a cached form of solver-specific ODE export. A
 `CompiledOdeModel` stores the original `OdeModel` together with a compiled
 right-hand side, compiled initial-value evaluation, fixed solver dimensions,
-fixed dosing event data, and cached unit/output metadata. Runtime parameter
-values may still vary, but the parameter interface, solver dimensions, model
-structure, and dosing structure are fixed once the compiled cache has been
-created.
+default dosing event data, and cached unit/output metadata. Runtime parameter
+values and experiment dosing schedules may vary, but the parameter interface,
+solver dimensions, and state/process structure are fixed once the compiled cache
+has been created. Experiment dosing can only address existing amount states,
+including the auxiliary states needed for infusions. Compartment-model simulation
+prepares the union of infusion auxiliaries when given several experiments.
 
 ## Simulation
 
@@ -550,8 +555,21 @@ deterministic integration steps in a hybrid simulation are not counted as
 stochastic events.
 
 Simulation returns ODE state trajectories in a `SimulationResult` object.
-When observables are defined, their trajectories are included as derived
-simulation output; otherwise the observables component is `NULL`.
+When observables are defined, their predictions are included in a long table
+with `time`, `observable`, and `value` columns (plus `rep` for stochastic
+replicates); otherwise the observables component is `NULL`. Direct time input
+requests all observables at each time. An explicit experiment requests only its
+scheduled pairs, preserving order and duplicate measurement rows. ODE state
+trajectories remain rectangular; experiment state output includes the initial
+time and the sorted unique measurement times.
+
+Observable values are numeric for unit-free output, an ordinary `units` vector
+when all units are identical, and a `mixed_units` column otherwise.
+`as_observables_long()` exposes this table. `as_observables_wide()` produces one
+ordinary unit-bearing or numeric column per observable, converting compatible
+units within a column and filling absent combinations with typed missing values.
+It rejects duplicate time-observable keys (within a replicate) instead of
+aggregating. This interface isolates downstream workflows from mixed-unit storage.
 
 At requested time points that coincide with dosing events, simulation reports
 the post-event state. For example, a bolus dose at time zero appears in the
