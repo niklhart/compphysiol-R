@@ -118,6 +118,20 @@ selected <- simulate(model, experiment = e)
 as_observables_wide(selected)
 ```
 
+The observable table can also be processed independently of its simulation
+result. For example, filter predictions before widening:
+
+```{r}
+selected$observables |>
+    subset(observable == "Ccen" & time > with_units(1 [h])) |>
+    as_observables_wide()
+```
+
+For a single observable, `subset(selected$observables, observable == "Ccen")$value`
+extracts the predictions directly; no reshaping is needed. Standard tidyr
+pivots can also operate on the table. The package's wide helper additionally
+simplifies mixed-unit columns and supplies unit-bearing missing values.
+
 Sparse wide output contains unit-aware missing values. Repeated measurements
 with the same time and observable remain distinct in long output and must be
 disambiguated before widening.

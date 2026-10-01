@@ -76,7 +76,7 @@ test_that("wide helpers handle unit-free outputs and no observables", {
         add_molecule("drug", initial = 1, type = "amount") |> add_observable(A = a[drug, Central])
     out <- simulate(m, time = 0:1)
     expect_type(out$observables$value, "double")
-    expect_equal(as_observables_wide(out)$A, c(1, 1))
+    expect_equal(subset(out$observables, observable == "A")$value, c(1, 1))
     m$observables <- observables()
     out <- simulate(m, time = 0:1)
     expect_null(out$observables)
@@ -150,7 +150,7 @@ test_that("compiled experiments retain defaults and do not modify direct dosing"
     first <- simulate(compiled, experiment = e)
     expect_equal(simulate(compiled, experiment = e)$observables, first$observables)
     direct <- simulate(compiled, time = c(0, 1) [h])
-    expect_equal(as.numeric(as_observables_wide(direct)$A[1]), 120)
+    expect_equal(as.numeric(subset(direct$observables, observable == "A")$value[[1]]), 120)
     e$dosing <- dosing(time = 0 [h], amount = 1 [L])
     expect_error(simulate(compiled, experiment = e), "unit")
 })
@@ -166,4 +166,28 @@ test_that("wide output keeps replicate keys and dimensionless mixed observables"
     m <- output_test_model() |> add_observable(F = 1)
     wide <- as_observables_wide(simulate(m, time = c(0, 1) [h]))
     expect_equal(as.numeric(wide$F), c(1, 1))
+})
+
+test_that("observable helpers operate directly on filtered long tables", {
+    out <- simulate(output_test_model(), time = c(0, 1, 2) [h])
+    before <- out
+    selected <- subset(out$observables, observable == "C" & time > with_units(0 [h]))
+    expect_identical(as_observables_long(selected), selected)
+    wide <- as_observables_wide(selected)
+    expect_named(wide, c("time", "C"))
+    expect_equal(wide$time, with_units(c(1, 2) [h]))
+    expect_equal(wide$C, units::as_units(selected$value))
+    expect_identical(out, before)
+    empty <- as_observables_wide(selected[FALSE, ])
+    expect_equal(nrow(empty), 0L)
+    expect_named(empty, "time")
+    expect_s3_class(empty$time, "units")
+    expect_error(as_observables_wide(data.frame(time = 1, value = 2)), "observable")
+})
+
+test_that("filtered unit-free and replicated observable tables can be widened", {
+    tab <- data.frame(time = c(0, 0, 1, 1), rep = c(1L, 2L, 1L, 2L),
+                      observable = "A", value = 1:4)
+    expect_equal(as_observables_wide(subset(tab, rep == 2L)),
+                 data.frame(time = c(0, 1), rep = c(2L, 2L), A = c(2L, 4L)))
 })

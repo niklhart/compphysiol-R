@@ -258,7 +258,7 @@ test_that("hybrid simulation evaluates observables and supports multiple realiza
     expect_named(out$states, c("time", "rep", "a_A_cyt"))
     expect_named(out$observables, c("time", "rep", "observable", "value"))
     expect_equal(out$states$time, rep(time, times = 2))
-    expect_equal(as_observables_wide(out)$Aobs, out$states$a_A_cyt)
+    expect_equal(subset(out$observables, observable == "Aobs")$value, out$states$a_A_cyt)
 })
 
 test_that("hybrid simulation rejects invalid partitioning", {

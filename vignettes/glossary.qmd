@@ -569,7 +569,10 @@ when all units are identical, and a `mixed_units` column otherwise.
 ordinary unit-bearing or numeric column per observable, converting compatible
 units within a column and filling absent combinations with typed missing values.
 It rejects duplicate time-observable keys (within a replicate) instead of
-aggregating. This interface isolates downstream workflows from mixed-unit storage.
+aggregating. Both helpers accept an observable data frame directly, as well as
+a simulation result, so users can subset the long table before widening without
+modifying the result. This interface isolates downstream workflows from
+mixed-unit storage.
 
 At requested time points that coincide with dosing events, simulation reports
 the post-event state. For example, a bolus dose at time zero appears in the

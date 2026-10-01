@@ -7,12 +7,15 @@
 as_observables_wide(x)
 }
 \arguments{
-\item{x}{A \code{SimulationResult}.}
+\item{x}{A \code{SimulationResult} or a long-format observable data frame with
+\code{time}, \code{observable}, and \code{value} columns, and optionally \code{rep}.}
 }
 \value{
 A data frame with one column per observable. Rows follow first
 occurrence of each time/replicate key in the long output. With no observables,
-returns the state output's time and replicate columns.
+a result input returns the state's time and replicate columns; an empty
+table input returns its empty identifier columns. Additional table columns
+are ignored.
 }
 \description{
 Each observable becomes a numeric or ordinary \code{units} column. Missing
@@ -20,4 +23,11 @@ time-observable combinations are filled with typed \code{NA}s. Time and optional
 replicate identify rows. Duplicate keys produce an error rather than implicit
 aggregation. Units within each observable must be convertible. Observable
 names must not collide with the identifier columns.
+}
+\examples{
+predictions <- data.frame(time = c(0, 1, 0, 1),
+                          observable = c("A", "A", "B", "B"), value = 1:4)
+predictions |>
+    subset(observable == "A") |>
+    as_observables_wide()
 }

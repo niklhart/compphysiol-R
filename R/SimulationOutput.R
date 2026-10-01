@@ -4,10 +4,19 @@
 #' for stochastic replicates. Values are numeric for unit-free output, a `units`
 #' vector when all output units are identical, and `mixed_units` otherwise.
 #' Experiment schedule order and duplicate measurement rows are retained.
-#' @param x A `SimulationResult`.
+#' Both helpers accept an observable table directly, allowing filtering before
+#' reshaping without modifying the simulation result.
+#' @param x A `SimulationResult` or a long-format observable data frame with
+#'   `time`, `observable`, and `value` columns, and optionally `rep`.
 #' @returns A data frame of observable predictions.
 #' @export
 as_observables_long <- function(x) {
+    if (is.data.frame(x)) {
+        if (anyDuplicated(names(x)) || !all(c("time", "observable", "value") %in% names(x))) {
+            stop("Observable tables require time, observable, and value columns with unique names.", call. = FALSE)
+        }
+        return(x)
+    }
     .check_class(x, "SimulationResult")
     if (!is.null(x$observables)) return(x$observables)
     out <- x$states[FALSE, intersect(c("time", "rep"), names(x$states)), drop = FALSE]
@@ -26,12 +35,23 @@ as_observables_long <- function(x) {
 #' @inheritParams as_observables_long
 #' @returns A data frame with one column per observable. Rows follow first
 #'   occurrence of each time/replicate key in the long output. With no observables,
-#'   returns the state output's time and replicate columns.
+#'   a result input returns the state's time and replicate columns; an empty
+#'   table input returns its empty identifier columns. Additional table columns
+#'   are ignored.
+#' @examples
+#' predictions <- data.frame(time = c(0, 1, 0, 1),
+#'                           observable = c("A", "A", "B", "B"), value = 1:4)
+#' predictions |>
+#'     subset(observable == "A") |>
+#'     as_observables_wide()
 #' @export
 as_observables_wide <- function(x) {
     long <- as_observables_long(x)
     ids <- intersect(c("time", "rep"), names(long))
-    if (!nrow(long)) return(x$states[, ids, drop = FALSE])
+    if (!nrow(long)) {
+        if (inherits(x, "SimulationResult")) return(x$states[, ids, drop = FALSE])
+        return(long[, ids, drop = FALSE])
+    }
     if (anyDuplicated(long[c(ids, "observable")])) {
         stop("Cannot widen duplicate time-observable keys; distinguish replicates before widening.", call. = FALSE)
     }
