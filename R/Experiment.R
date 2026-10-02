@@ -11,9 +11,9 @@
 #' Compatible units need not be identical. Doses and measurements cannot precede
 #' `start`. Empty schedules do not impose a time unit.
 #'
-#' @param parameters A [Parameters] object containing known experimental values.
+#' @param parameters A [Parameters][parameters()] object containing known experimental values.
 #'   `NULL` creates an empty parameter collection.
-#' @param dosing A [Dosing] object. `NULL` creates an empty dosing schedule.
+#' @param dosing A [Dosing][dosing()] object. `NULL` creates an empty dosing schedule.
 #' @param measurements A data frame with numeric `time` and nonempty character
 #'   `observable` columns. Use [with_units()] to construct unit-bearing times.
 #' @param start Initial time, a finite numeric scalar, optionally with units.

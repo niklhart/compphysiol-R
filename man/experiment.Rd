@@ -12,10 +12,10 @@ experiment(
 )
 }
 \arguments{
-\item{parameters}{A \link{Parameters} object containing known experimental values.
+\item{parameters}{A \link[=parameters]{Parameters} object containing known experimental values.
 \code{NULL} creates an empty parameter collection.}
 
-\item{dosing}{A \link{Dosing} object. \code{NULL} creates an empty dosing schedule.}
+\item{dosing}{A \link[=dosing]{Dosing} object. \code{NULL} creates an empty dosing schedule.}
 
 \item{measurements}{A data frame with numeric \code{time} and nonempty character
 \code{observable} columns. Use \code{\link[=with_units]{with_units()}} to construct unit-bearing times.}
