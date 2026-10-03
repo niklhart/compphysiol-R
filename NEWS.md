@@ -1,9 +1,12 @@
-# compphysiol 0.4.2
+# compphysiol (development version)
 
 * Added backend-neutral `EstimationProblem` specifications and `estimate()` with
   a `stats::optim()` backend, explicit parameter bounds and transformations,
   compositional observation-error models, unit-aware likelihood evaluation,
   and deterministic compartment, process, ODE, and compiled ODE model support.
+
+# compphysiol 0.4.2
+
 * `SimulationResult$observables` now uses the long-format `ObservationData`
   representation (`time`, `observable`, `value`, and optional `rep`); use
   `as_observables_wide()` for one unit-aware column per observable, or
