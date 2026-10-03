@@ -160,7 +160,7 @@ test_that("estimation problems reject unsupported model representations", {
         "AnalyticalModel|not supported"
     )
     expect_error(
-        do.call(estimation_problem, c(list(model = to_stochastic_model(model)), common)),
+        do.call(estimation_problem, c(list(model = structure(list(), class = "StochasticModel")), common)),
         "StochasticModel|not supported"
     )
 })
@@ -257,6 +257,32 @@ test_that("estimate consumes an EstimationProblem and returns a stable result", 
     expect_true(is.data.frame(fitted(fit)))
     expect_true(is.data.frame(residuals(fit)))
     expect_true(is.list(fit$backend_result))
+    expect_equal(as.numeric(coef(fit)$k), 0.197, tolerance = 0.01)
+    expect_identical(fit$convergence$code, 0L)
+})
+
+test_that("estimate runs lowered deterministic representations", {
+    model <- estimation_test_model()
+    representations <- list(
+        to_process_model(model),
+        to_ode_model(model),
+        to_compiled_ode_model(model)
+    )
+    for (representation in representations) {
+        problem <- estimation_problem(
+            representation,
+            estimation_test_experiment(),
+            estimated_parameters(
+                k = parameter_estimate(0.1 [1/h], lower = 0 [1/h], transform = "log"),
+                sigma = parameter_estimate(1 [mg/L], lower = 0 [mg/L], transform = "log")
+            ),
+            observation_model(C = additive_error(sigma = "sigma"))
+        )
+        fit <- estimate(problem, backend = optim_backend(control = list(maxit = 50)))
+        expect_s3_class(fit, "EstimationResult")
+        expect_identical(fit$convergence$code, 0L)
+        expect_equal(as.numeric(coef(fit)$k), 0.197, tolerance = 0.01)
+    }
 })
 
 test_that("estimate does not accept the model in place of an EstimationProblem", {

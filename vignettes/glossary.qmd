@@ -336,6 +336,20 @@ model, provided their observable names and units are compatible.
 Implementation anchor: observation data are represented by `ObservationData`
 data-frame-like objects created with `observation_data()`.
 
+## Observation model
+
+An observation model describes the probabilistic relationship between model
+predictions and values stored in `ObservationData`. It is separate from the
+dynamic model and from the experiment protocol. Each observed model observable
+is assigned a residual-error specification. Current specifications cover
+additive, proportional, combined additive-plus-proportional, and log-normal
+errors. Their scale parameters are explicit estimated parameters and may be
+unit-aware where appropriate.
+
+Implementation anchor: observation models are represented by `ObservationModel`
+objects created with `observation_model()` and error constructors such as
+`additive_error()`.
+
 ## Experiment
 
 An experiment specifies known parameters, a fixed dosing schedule, and either
@@ -363,9 +377,9 @@ select the earliest scheduled time: adding a later first observation does not
 shift when initial values apply. Negative schedule times require an explicit
 earlier start. Incompatible schedule units remain an error.
 
-Experiment parameters are known values, fixed during the experiment. The
-planned joint estimation interface will keep these separate from shared
-estimated parameters and reject overlap. General scheduled parameter changes
+Experiment parameters are known values, fixed during the experiment. Joint
+estimation keeps these separate from shared estimated parameters and rejects
+overlap. General scheduled parameter changes
 and time-dependent model equations are not part of the current experiment
 contract. Dosing may be calculated from known experimental values before
 constructing the experiment.
@@ -375,8 +389,8 @@ An experiment supplies the complete dosing schedule, replacing model-attached
 dosing even when the experiment schedule is empty. Its known parameters override
 model defaults. Simulation starts at the initial time and evaluates only the
 scheduled observable-time pairs. Stored observation values do not affect
-simulation. Collections return a list of simulation results
-in experiment order. Estimation is not yet implemented.
+simulation. Collections return a list of simulation results in experiment
+order. Experiments containing `ObservationData` can be used for estimation.
 
 Implementation anchor: experiments are represented by `Experiment` objects
 created with `experiment()` and checked with `validate_experiment()`.
@@ -395,6 +409,31 @@ total amounts. Compatible units are preserved, not converted in storage.
 Omitted dosing targets match identically omitted targets; matching them to
 explicit targets requires later model-based resolution. These checks also apply
 when combining collections with `c()`.
+
+## Estimation problem
+
+An estimation problem combines a deterministic dynamic model, one or more
+experiments containing observation data, explicit estimated-parameter
+specifications, and an observation model. It is backend-neutral: the same
+scientific estimation specification can be evaluated by different estimation
+backends without moving statistical assumptions into the compartment model.
+
+Estimated parameters declare an initial value, optional bounds, and an internal
+identity, log, or logit transformation. Units are retained at the model and
+observation boundaries while optimization uses numeric internal coordinates.
+Known experiment parameters cannot simultaneously be shared estimated
+parameters.
+
+Current estimation supports `CompartmentModel`, `ProcessModel`, `OdeModel`, and
+`CompiledOdeModel` inputs. Analytical and stochastic model representations are
+outside the current estimation contract. The first backend uses `stats::optim()`
+to minimize the joint negative log-likelihood across experiments. An
+`EstimationResult` exposes coefficients, objective value, convergence
+information, fitted values, residuals, and the raw backend result.
+
+Implementation anchors: `estimation_problem()` creates an `EstimationProblem`,
+`estimated_parameters()` declares shared estimates, `optim_backend()` configures
+the optimizer, and `estimate()` returns an `EstimationResult`.
 
 ## Source and sink
 
