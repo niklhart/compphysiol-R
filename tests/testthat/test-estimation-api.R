@@ -13,7 +13,7 @@ estimation_test_experiment <- function(observable = "C") {
         observable = observable,
         value = with_units(c(82, 68, 45) [mg/L])
     )
-    experiment(data = data, start = 0 [h])
+    experiment(observations = data, start = 0 [h])
 }
 
 test_that("observation_model composes named error models", {
@@ -103,6 +103,7 @@ test_that("estimation_problem is the backend-neutral estimation specification", 
     expect_s3_class(problem, "EstimationProblem")
     expect_identical(problem$model, model)
     expect_identical(problem$experiments, study)
+    expect_s3_class(problem$experiments[[1]]$observations, "ObservationData")
     expect_identical(problem$parameters, estimates)
     expect_identical(problem$observation, observation)
 })
@@ -174,7 +175,7 @@ test_that("estimation problems require observation data and validate it against 
     expect_error(
         estimation_problem(
             model,
-            experiment(schedule = observation_schedule(c(1, 2) [h], "C")),
+            experiment(observations = observation_schedule(c(1, 2) [h], "C")),
             estimates,
             observation_model(C = additive_error(sigma = "sigma"))
         ),

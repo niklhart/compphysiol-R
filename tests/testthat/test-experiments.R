@@ -41,7 +41,7 @@ test_that("collection printing summarizes while single printing shows details", 
     e <- experiment(
         parameters = parameters(BW = 70 [kg]),
         dosing = dosing(time = 0 [h], amount = 100 [mg], cmt = "Central"),
-        schedule = observation_schedule(c(1, 2) [h], "C"),
+        observations = observation_schedule(c(1, 2) [h], "C"),
         start = 0 [h]
     )
     x <- experiments(treatment = e, empty = experiment(start = 0 [h]))
@@ -56,10 +56,10 @@ test_that("collection printing summarizes while single printing shows details", 
     expect_true(any(grepl("Bolus:.*100.*mg", details)))
     expect_true(any(grepl("observable", details)))
     expect_true(any(grepl("C", details)))
-    expect_output(print(experiment()), "Schedule: \\(none\\)")
+    expect_output(print(experiment()), "Observations: \\(none\\)")
 })
 test_that("collection time units are consistent even without observations", {
-    a <- experiment(start = 0 [h], schedule = observation_schedule(60 [min], "C"))
+    a <- experiment(start = 0 [h], observations = observation_schedule(60 [min], "C"))
     b <- experiment(start = 0 [s])
     expect_no_error(experiments(a, b))
     expect_error(experiments(a, experiment()), "time.*units")

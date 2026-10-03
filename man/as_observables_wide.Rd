@@ -7,8 +7,9 @@
 as_observables_wide(x)
 }
 \arguments{
-\item{x}{A \code{SimulationResult} or a long-format observable data frame with
-\code{time}, \code{observable}, and \code{value} columns, and optionally \code{rep}.}
+\item{x}{A \code{SimulationResult}, \code{ObservationData}, or a long-format observable
+data frame with \code{time}, \code{observable}, and \code{value} columns, and optionally
+\code{rep}.}
 }
 \value{
 A data frame with one column per observable. Rows follow first

@@ -7,17 +7,18 @@
 as_observables_long(x)
 }
 \arguments{
-\item{x}{A \code{SimulationResult} or a long-format observable data frame with
-\code{time}, \code{observable}, and \code{value} columns, and optionally \code{rep}.}
+\item{x}{A \code{SimulationResult}, \code{ObservationData}, or a long-format observable
+data frame with \code{time}, \code{observable}, and \code{value} columns, and optionally
+\code{rep}.}
 }
 \value{
-A data frame of observable predictions.
+An \code{ObservationData} object containing observable predictions.
 }
 \description{
 Observable output has \code{time}, \code{observable}, and \code{value} columns, plus \code{rep}
 for stochastic replicates. Values are numeric for unit-free output, a \code{units}
 vector when all output units are identical, and \code{mixed_units} otherwise.
-Experiment schedule order and duplicate measurement rows are retained.
+Experiment schedule order and duplicate observation rows are retained.
 Both helpers accept an observable table directly, allowing filtering before
 reshaping without modifying the simulation result.
 }

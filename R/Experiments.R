@@ -143,7 +143,11 @@ print.Experiments <- function(x, ...) {
         cat(sprintf(
             "  (%s) %sstart = %s; %s parameters; %s dosing events; %s observations%s\n",
             i, label, format(e$start), length(e$parameters), length(e$dosing),
-            nrow(e$schedule), if (is.null(e$data)) " scheduled" else " with data"
+            nrow(e$observations), if (inherits(e$observations, "ObservationData")) {
+                " with data"
+            } else {
+                " scheduled"
+            }
         ))
     }
     invisible(x)

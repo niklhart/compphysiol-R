@@ -346,11 +346,12 @@ settings for the same system. Covariates such as body weight are ordinary
 experiment parameters. Derived quantities remain model equations, which may
 depend on both experimental parameters and shared model parameters.
 
-The `schedule` component always contains an `ObservationSchedule`. The optional
-`data` component contains `ObservationData`. When data are supplied, the
-schedule is derived from their non-value columns; callers supply either a
-schedule or data, not both. Observation error is not part of the experiment and
-belongs to a separate observation model used during estimation.
+The `observations` component contains either an `ObservationSchedule` or
+`ObservationData`. Because observation data inherit from observation schedules,
+simulation can use either representation directly. Estimation additionally
+requires the stored observations to contain values. Observation error is not
+part of the experiment and belongs to a separate observation model used during
+estimation.
 
 An experiment has an explicit initial time, at which the model's initial
 values apply. This can precede the first dose or observation. Observation and
@@ -384,8 +385,7 @@ An `Experiments` collection, created with `experiments()`, holds several
 experiments with optional names. Subsetting with `[` retains a collection;
 `[[` extracts an individual `Experiment`. Collections can be combined with
 `c()`. Printing a collection shows one summary per experiment, while printing
-an individual experiment shows its parameters, dosing, observation schedule,
-and optional observation data.
+an individual experiment shows its parameters, dosing, and observations.
 
 Collections require a common time unit mode across experiments, including their
 initial times: all unit-free or all in compatible time units. Parameters shared

@@ -16,7 +16,7 @@ validate_experiment(x, model = NULL)
 }
 \description{
 Checks the experiment's components and time compatibility. When a model is
-supplied, every measurement must reference a declared observable; state names
+supplied, every scheduled row must reference a declared observable; state names
 are not accepted unless explicitly declared as observable names. This does
 not wire dosing targets, resolve model parameters, or check model equations.
 }

@@ -109,7 +109,7 @@ model-attached dosing; parameter overrides belong in the experiment.
 ```{r}
 e <- experiment(
     dosing = dosing(time = 0 [h], amount = 100 [mg], cmt = "cen"),
-    schedule = observation_schedule(c(1, 4, 12) [h], "Ccen")
+    observations = observation_schedule(c(1, 4, 12) [h], "Ccen")
 )
 selected <- simulate(model, experiment = e)
 as_observables_wide(selected)

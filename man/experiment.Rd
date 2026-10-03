@@ -4,12 +4,7 @@
 \alias{experiment}
 \title{Describe an experiment}
 \usage{
-experiment(
-  parameters = NULL,
-  dosing = NULL,
-  measurements = data.frame(time = numeric(0), observable = character(0)),
-  start = NULL
-)
+experiment(parameters = NULL, dosing = NULL, observations = NULL, start = NULL)
 }
 \arguments{
 \item{parameters}{A \link[=parameters]{Parameters} object containing known experimental values.
@@ -17,12 +12,12 @@ experiment(
 
 \item{dosing}{A \link[=dosing]{Dosing} object. \code{NULL} creates an empty dosing schedule.}
 
-\item{measurements}{A data frame with numeric \code{time} and nonempty character
-\code{observable} columns. Use \code{\link[=with_units]{with_units()}} to construct unit-bearing times.}
+\item{observations}{An \link[=observation_schedule]{ObservationSchedule} or
+\link[=observation_data]{ObservationData}. \code{NULL} creates an empty schedule.}
 
 \item{start}{Initial time, a finite numeric scalar, optionally with units.
 Supports unit shorthand such as \code{0 [h]}. The default \code{NULL} means zero in
-the units of the first nonempty schedule (dosing, then measurements), or
+the units of the first nonempty schedule (dosing, then observations), or
 unit-free zero if both schedules are empty. It does not mean the earliest
 scheduled time. Incompatible schedules still produce an error.}
 }
@@ -31,25 +26,27 @@ An \code{Experiment} object.
 }
 \description{
 An experiment stores known parameters (including covariates), a fixed dosing
-schedule, and the times and observables to measure. It does not store a model
-or measured values. Pass it to \code{\link[=simulate]{simulate()}} through the \code{experiment} argument
-for ODE simulation. Estimation integration is not yet provided.
+schedule, and observations represented by either an observation schedule or
+observation data. It does not store a model or an observation error model.
+Pass it to \code{\link[=simulate]{simulate()}} through
+the \code{experiment} argument for ODE simulation. Estimation integration is not
+yet provided.
 }
 \details{
-Measurement rows retain their order, duplicates, additional columns, and
-units. Times need not be sorted. All nonempty schedules must use the same
-unit mode as \code{start}: either unit-free, or units convertible to time.
-Compatible units need not be identical. Doses and measurements cannot precede
-\code{start}. Empty schedules do not impose a time unit.
+Observation rows retain their order, duplicates, additional columns, and
+units. \code{ObservationData} inherits from \code{ObservationSchedule}, so simulation
+can use either representation while estimation can require data values.
+Times need not be sorted. All nonempty observations must use the same unit
+mode as \code{start}: either unit-free,
+or units convertible to time.
+Compatible units need not be identical. Doses and observations cannot precede
+\code{start}. Empty observations do not impose a time unit.
 }
 \examples{
 e <- experiment(
     parameters = parameters(BW = 70 [kg]),
     dosing = dosing(time = 0 [h], amount = 100 [mg]),
-    measurements = data.frame(
-        time = with_units(c(1, 2, 4) [h]),
-        observable = "C"
-    )
+    observations = observation_schedule(c(1, 2, 4) [h], "C")
 )
 e
 }

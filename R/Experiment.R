@@ -1,27 +1,26 @@
 #' Describe an experiment
 #'
 #' An experiment stores known parameters (including covariates), a fixed dosing
-#' schedule, and either an observation schedule or observation data. It does not
-#' store a model or an observation error model. Pass it to [simulate()] through
+#' schedule, and observations represented by either an observation schedule or
+#' observation data. It does not store a model or an observation error model.
+#' Pass it to [simulate()] through
 #' the `experiment` argument for ODE simulation. Estimation integration is not
 #' yet provided.
 #'
 #' Observation rows retain their order, duplicates, additional columns, and
-#' units. When `data` is supplied, its schedule is stored in `schedule` as well.
-#' Supply either `schedule` or `data`, not both. Times need not be sorted. All
-#' nonempty schedules must use the same unit mode as `start`: either unit-free,
+#' units. `ObservationData` inherits from `ObservationSchedule`, so simulation
+#' can use either representation while estimation can require data values.
+#' Times need not be sorted. All nonempty observations must use the same unit
+#' mode as `start`: either unit-free,
 #' or units convertible to time.
 #' Compatible units need not be identical. Doses and observations cannot precede
-#' `start`. Empty schedules do not impose a time unit.
+#' `start`. Empty observations do not impose a time unit.
 #'
 #' @param parameters A [Parameters][parameters()] object containing known experimental values.
 #'   `NULL` creates an empty parameter collection.
 #' @param dosing A [Dosing][dosing()] object. `NULL` creates an empty dosing schedule.
-#' @param schedule An [ObservationSchedule][observation_schedule()] describing
-#'   which observables to evaluate. `NULL` creates an empty schedule.
-#' @param data Optional [ObservationData][observation_data()] containing observed
-#'   or predicted values. Its schedule is derived automatically. Cannot be
-#'   combined with `schedule`.
+#' @param observations An [ObservationSchedule][observation_schedule()] or
+#'   [ObservationData][observation_data()]. `NULL` creates an empty schedule.
 #' @param start Initial time, a finite numeric scalar, optionally with units.
 #'   Supports unit shorthand such as `0 [h]`. The default `NULL` means zero in
 #'   the units of the first nonempty schedule (dosing, then observations), or
@@ -33,44 +32,36 @@
 #' e <- experiment(
 #'     parameters = parameters(BW = 70 [kg]),
 #'     dosing = dosing(time = 0 [h], amount = 100 [mg]),
-#'     schedule = observation_schedule(c(1, 2, 4) [h], "C")
+#'     observations = observation_schedule(c(1, 2, 4) [h], "C")
 #' )
 #' e
 #' @export
 experiment <- function(
     parameters = NULL,
     dosing = NULL,
-    schedule = NULL,
-    data = NULL,
+    observations = NULL,
     start = NULL
 ) {
     start <- .process_nse_arg(substitute(start), envir = parent.frame())
     if (is.null(parameters)) parameters <- parameters()
     if (is.null(dosing)) dosing <- dosing()
-    if (!is.null(schedule) && !is.null(data)) {
-        stop("Supply either schedule or data, not both.", call. = FALSE)
-    }
-    if (!is.null(data)) {
-        .check_class(data, "ObservationData")
-        schedule <- as_observation_schedule(data)
-    }
-    if (is.null(schedule)) schedule <- observation_schedule()
-    .check_class(schedule, "ObservationSchedule")
-    if (is.null(start)) start <- .experiment_default_start(dosing, schedule)
+    if (is.null(observations)) observations <- observation_schedule()
+    .check_class(observations, "ObservationSchedule")
+    if (is.null(start)) start <- .experiment_default_start(dosing, observations)
     x <- structure(
-        list(parameters = parameters, dosing = dosing, schedule = schedule, data = data, start = start),
+        list(parameters = parameters, dosing = dosing, observations = observations, start = start),
         class = "Experiment"
     )
     validate_experiment(x)
     x
 }
 
-.experiment_default_start <- function(dosing, schedule) {
+.experiment_default_start <- function(dosing, observations) {
     .check_class(dosing, "Dosing")
     time <- dosing$time
     label <- "dosing time"
     if (!length(time)) {
-        time <- schedule$time
+        time <- observations$time
         label <- "observation time"
     }
     if (!length(time)) return(0)
@@ -96,19 +87,17 @@ validate_experiment <- function(x, model = NULL) {
     .check_class(x, "Experiment")
     .check_class(x$parameters, "Parameters")
     .check_class(x$dosing, "Dosing")
-    .check_class(x$schedule, "ObservationSchedule")
-    if (!is.null(x$data)) {
-        .check_class(x$data, "ObservationData")
-        if (!identical(x$schedule, as_observation_schedule(x$data))) {
-            stop("Experiment schedule must match the schedule derived from its data.", call. = FALSE)
-        }
-    }
+    .check_class(x$observations, "ObservationSchedule")
     if (length(x$start) != 1L) stop("Experiment start must be a scalar.", call. = FALSE)
     .experiment_check_time(x$start, "start")
 
-    schedule <- x$schedule
-    .new_observation_schedule(schedule)
-    .experiment_check_time(schedule$time, "observation time", x$start)
+    observations <- x$observations
+    if (inherits(observations, "ObservationData")) {
+        .new_observation_data(observations)
+    } else {
+        .new_observation_schedule(observations)
+    }
+    .experiment_check_time(observations$time, "observation time", x$start)
     .experiment_check_time(x$dosing$time, "dosing time", x$start)
     infusion <- is_infusion(x$dosing)
     if (any(infusion)) {
@@ -120,9 +109,9 @@ validate_experiment <- function(x, model = NULL) {
     }
     if (!is.null(model)) {
         .check_class(model, "CompartmentModel")
-        unknown <- setdiff(schedule$observable, names(model$observables))
+        unknown <- setdiff(observations$observable, names(model$observables))
         if (length(unknown)) {
-            stop("Unknown observable(s) in experiment schedule: ",
+            stop("Unknown observable(s) in experiment observations: ",
                  paste(unknown, collapse = ", "), ".", call. = FALSE)
         }
     }
@@ -159,11 +148,15 @@ print.Experiment <- function(x, ...) {
     cat(" Start: ", format(x$start), "\n", sep = "")
     print(x$parameters)
     print(x$dosing)
-    if (nrow(x$schedule)) {
-        cat(if (is.null(x$data)) " Schedule:\n" else " Observation data:\n")
-        print(if (is.null(x$data)) x$schedule else x$data, row.names = FALSE)
+    if (nrow(x$observations)) {
+        cat(if (inherits(x$observations, "ObservationData")) {
+            " Observation data:\n"
+        } else {
+            " Observation schedule:\n"
+        })
+        print(x$observations, row.names = FALSE)
     } else {
-        cat(" Schedule: (none)\n")
+        cat(" Observations: (none)\n")
     }
     invisible(x)
 }
