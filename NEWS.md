@@ -1,11 +1,13 @@
 # compphysiol 0.4.2
 
-* `SimulationResult$observables` now uses long format (`time`, `observable`,
-  `value`, and optional `rep`); use `as_observables_wide()` for one unit-aware
-  column per observable, or `as_observables_long()` for the long table.
+* `SimulationResult$observables` now uses the long-format `ObservationData`
+  representation (`time`, `observable`, `value`, and optional `rep`); use
+  `as_observables_wide()` for one unit-aware column per observable, or
+  `as_observables_long()` for the long table.
 * ODE simulation accepts `experiment =` as an alternative to `time`/`parameters`,
-  including collections, sparse measurement schedules, and experiment-specific
-  dosing. Compiled models reuse their structure with runtime event schedules.
+  including collections, sparse observation schedules, observation data, and
+  experiment-specific dosing. Compiled models reuse their structure with
+  runtime event schedules.
 
 # compphysiol 0.4.1
 

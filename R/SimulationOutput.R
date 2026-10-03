@@ -3,26 +3,24 @@
 #' Observable output has `time`, `observable`, and `value` columns, plus `rep`
 #' for stochastic replicates. Values are numeric for unit-free output, a `units`
 #' vector when all output units are identical, and `mixed_units` otherwise.
-#' Experiment schedule order and duplicate measurement rows are retained.
+#' Experiment schedule order and duplicate observation rows are retained.
 #' Both helpers accept an observable table directly, allowing filtering before
 #' reshaping without modifying the simulation result.
-#' @param x A `SimulationResult` or a long-format observable data frame with
-#'   `time`, `observable`, and `value` columns, and optionally `rep`.
-#' @returns A data frame of observable predictions.
+#' @param x A `SimulationResult`, `ObservationData`, or a long-format observable
+#'   data frame with `time`, `observable`, and `value` columns, and optionally
+#'   `rep`.
+#' @returns An `ObservationData` object containing observable predictions.
 #' @export
 as_observables_long <- function(x) {
     if (is.data.frame(x)) {
-        if (anyDuplicated(names(x)) || !all(c("time", "observable", "value") %in% names(x))) {
-            stop("Observable tables require time, observable, and value columns with unique names.", call. = FALSE)
-        }
-        return(x)
+        return(.new_observation_data(x))
     }
     .check_class(x, "SimulationResult")
     if (!is.null(x$observables)) return(x$observables)
     out <- x$states[FALSE, intersect(c("time", "rep"), names(x$states)), drop = FALSE]
     out$observable <- character()
     out$value <- numeric()
-    out
+    .new_observation_data(out)
 }
 
 #' Extract wide-format observable predictions
@@ -50,7 +48,9 @@ as_observables_wide <- function(x) {
     ids <- intersect(c("time", "rep"), names(long))
     if (!nrow(long)) {
         if (inherits(x, "SimulationResult")) return(x$states[, ids, drop = FALSE])
-        return(long[, ids, drop = FALSE])
+        out <- long[, ids, drop = FALSE]
+        class(out) <- "data.frame"
+        return(out)
     }
     if (anyDuplicated(long[c(ids, "observable")])) {
         stop("Cannot widen duplicate time-observable keys; distinguish replicates before widening.", call. = FALSE)
@@ -58,6 +58,7 @@ as_observables_wide <- function(x) {
     obs <- unique(long$observable)
     if (any(obs %in% ids)) stop("Observable names collide with output identifier columns.", call. = FALSE)
     keys <- long[ids]
+    class(keys) <- "data.frame"
     out <- unique(keys)
     rownames(out) <- NULL
     for (nm in obs) {
@@ -91,12 +92,12 @@ as_observables_wide <- function(x) {
         value <- units::mixed_units(value, row_units)
     }
     schedule$value <- value
-    schedule
+    .new_observation_data(schedule)
 }
 
 .simulation_observables <- function(solver_output, time, model, odeinfo, solver_time, dimensions, parameters = model$parameters) {
     if (!length(odeinfo$obsFuncs)) return(NULL)
-    schedule <- attr(model, "measurement_schedule")
+    schedule <- attr(model, "observation_schedule")
     if (is.null(schedule)) {
         wide <- .simulation_observable_columns(solver_output, time, model, odeinfo,
                                                solver_time, dimensions, parameters)
@@ -109,7 +110,7 @@ as_observables_wide <- function(x) {
         rows <- which(schedule$observable == nm)
         requested <- .simulation_numeric_time(schedule$time[rows], dimensions)
         idx <- match(requested, solver_output[, "time"])
-        if (anyNA(idx)) stop("Solver output is missing requested measurement times.", call. = FALSE)
+        if (anyNA(idx)) stop("Solver output is missing requested observation times.", call. = FALSE)
         unique_idx <- unique(idx)
         info <- odeinfo
         info$obsFuncs <- info$obsFuncs[nm]
@@ -120,5 +121,5 @@ as_observables_wide <- function(x) {
         values[match(idx, unique_idx)]
     })
     names(groups) <- unique(schedule$observable)
-    .simulation_pack_observables(schedule[c("time", "observable")], groups)
+    .simulation_pack_observables(schedule, groups)
 }

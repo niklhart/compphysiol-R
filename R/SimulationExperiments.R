@@ -6,9 +6,9 @@
     }
     for (e in experiments) {
         validate_experiment(e)
-        if (!nrow(e$measurements)) stop("Experiment simulation requires a nonempty measurement schedule.", call. = FALSE)
+        if (!nrow(e$schedule)) stop("Experiment simulation requires a nonempty observation schedule.", call. = FALSE)
         model <- if (inherits(object, "CompiledOdeModel")) object$ode_model else object
-        unknown <- setdiff(e$measurements$observable, names(model$observables))
+        unknown <- setdiff(e$schedule$observable, names(model$observables))
         if (length(unknown)) stop("Unknown observable(s): ", paste(unknown, collapse = ", "), call. = FALSE)
     }
     prepared_doses <- NULL
@@ -32,13 +32,13 @@
         } else {
             attr(model, "experiment_dosing") <- e$dosing
         }
-        attr(model, "measurement_schedule") <- e$measurements
-        # Use measurement time units for the state grid, including the initial time.
+        attr(model, "observation_schedule") <- e$schedule
+        # Use observation time units for the state grid, including the initial time.
         start <- e$start
-        if (inherits(e$measurements$time, "units")) {
-            start <- units::set_units(start, units::deparse_unit(e$measurements$time), mode = "standard")
+        if (inherits(e$schedule$time, "units")) {
+            start <- units::set_units(start, units::deparse_unit(e$schedule$time), mode = "standard")
         }
-        time <- sort(unique(c(start, e$measurements$time)))
+        time <- sort(unique(c(start, e$schedule$time)))
         simulate(model, time = time, parameters = e$parameters, dimensions = dimensions, ...)
     })
     names(out) <- names(experiments)

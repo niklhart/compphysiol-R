@@ -11,6 +11,8 @@ test_that("direct simulation returns long observables and rectangular states", {
     m <- output_test_model()
     out <- simulate(m, time = c(0, 1, 2) [h])
     expect_s3_class(out, "SimulationResult")
+    expect_s3_class(out$observables, "ObservationData")
+    expect_s3_class(out$observables, "ObservationSchedule")
     expect_named(out$observables, c("time", "observable", "value"))
     expect_equal(nrow(out$observables), 6L)
     expect_s3_class(out$observables$value, "mixed_units")
@@ -25,15 +27,15 @@ test_that("direct simulation returns long observables and rectangular states", {
 })
 
 test_that("experiments preserve sparse schedule order and parameter overrides", {
-    e <- experiment(parameters = parameters(k = 0.1 [1/h]), measurements = data.frame(
-        time = with_units(c(120, 60, 120) [min]), observable = c("C", "A", "C")))
+    e <- experiment(parameters = parameters(k = 0.1 [1/h]), schedule = observation_schedule(
+        time = c(120, 60, 120) [min], observable = c("C", "A", "C")))
     out <- simulate(output_test_model(), experiment = e)
-    expect_identical(out$observables$time, e$measurements$time)
-    expect_identical(out$observables$observable, e$measurements$observable)
+    expect_identical(out$observables$time, e$schedule$time)
+    expect_identical(out$observables$observable, e$schedule$observable)
     expect_equal(as.numeric(out$observables$value[[1]]), 10 * exp(-0.2), tolerance = 1e-6)
     expect_equal(as.numeric(out$states$time), c(0, 60, 120))
     expect_error(as_observables_wide(out), "duplicate")
-    e$measurements <- e$measurements[1:2, ]
+    e$schedule <- e$schedule[1:2, ]
     wide <- as_observables_wide(simulate(output_test_model(), experiment = e))
     expect_true(is.na(wide$A[1]))
     expect_true(is.na(wide$C[2]))
@@ -41,25 +43,40 @@ test_that("experiments preserve sparse schedule order and parameter overrides", 
     expect_s3_class(wide$C, "units")
 })
 
+test_that("simulation predictions plug into another experiment as observation data", {
+    design <- experiment(schedule = observation_schedule(c(0, 1, 2) [h], "C"))
+    predictions <- simulate(output_test_model(), experiment = design)$observables
+    calibration <- experiment(data = predictions)
+
+    expect_s3_class(predictions, "ObservationData")
+    expect_s3_class(predictions, "ObservationSchedule")
+    expect_identical(calibration$data, predictions)
+    expect_identical(calibration$schedule, as_observation_schedule(predictions))
+    expect_equal(
+        simulate(output_test_model(), experiment = calibration)$observables,
+        predictions
+    )
+})
+
 test_that("experiment dosing replaces model dosing and collections retain names", {
     m <- output_test_model() |> add_dosing(time = 0 [h], amount = 999 [mg])
-    schedule <- data.frame(time = with_units(c(0, 1) [h]), observable = "A")
-    a <- experiment(measurements = schedule)
-    b <- experiment(measurements = schedule, dosing = dosing(time = 0 [h], amount = 10 [mg]))
+    schedule <- observation_schedule(c(0, 1) [h], "A")
+    a <- experiment(schedule = schedule)
+    b <- experiment(schedule = schedule, dosing = dosing(time = 0 [h], amount = 10 [mg]))
     out <- simulate(m, experiment = experiments(control = a, treated = b))
     expect_named(out, c("control", "treated"))
     expect_equal(as.numeric(out$control$observables$value[1]), 100)
     expect_equal(as.numeric(out$treated$observables$value[1]), 110)
     expect_error(simulate(m, experiment = a, time = 0:1), "cannot.*time")
     expect_error(simulate(m, experiment = a, parameters = list()), "cannot.*parameters")
-    expect_error(simulate(m, experiment = experiment()), "measurement")
-    a$measurements$observable <- "unknown"
+    expect_error(simulate(m, experiment = experiment()), "observation schedule")
+    a$schedule$observable <- "unknown"
     expect_error(simulate(m, experiment = a), "Unknown observable")
 })
 
 test_that("ODE and compiled experiment simulation reuse the sparse contract", {
     m <- output_test_model()
-    e <- experiment(measurements = data.frame(time = with_units(c(0, 1) [h]), observable = "A"),
+    e <- experiment(schedule = observation_schedule(c(0, 1) [h], "A"),
                     dosing = dosing(time = 0 [h], amount = 10 [mg]))
     expected <- simulate(m, experiment = e)
     for (obj in list(to_ode_model(m), to_compiled_ode_model(m))) {
@@ -86,10 +103,10 @@ test_that("wide helpers handle unit-free outputs and no observables", {
 
 test_that("experiment collections prepare inactive infusion structures", {
     m <- output_test_model()
-    schedule <- data.frame(time = with_units(c(0, 1, 2) [h]), observable = "A")
-    a <- experiment(measurements = schedule,
+    schedule <- observation_schedule(c(0, 1, 2) [h], "A")
+    a <- experiment(schedule = schedule,
         dosing = dosing(time = 0 [h], amount = 10 [mg], duration = 1 [h], cmt = "Central"))
-    b <- experiment(measurements = schedule)
+    b <- experiment(schedule = schedule)
     out <- simulate(m, experiment = experiments(infusion = a, control = b))
     expect_identical(names(out$infusion$states), names(out$control$states))
     expect_true(any(grepl("Depot", names(out$control$states))))
@@ -104,7 +121,7 @@ test_that("experiment collections prepare inactive infusion structures", {
 
 test_that("only scheduled observable-time pairs are evaluated", {
     m <- to_ode_model(output_test_model())
-    e <- experiment(measurements = data.frame(time = with_units(c(1, 1) [h]), observable = "A"))
+    e <- experiment(schedule = observation_schedule(c(1, 1) [h], "A"))
     info <- .to_deSolve(m, dimensions = list(time = "h", mass = "mg"))
     calls <- 0L
     original <- info$obsFuncs$A
@@ -113,18 +130,18 @@ test_that("only scheduled observable-time pairs are evaluated", {
         original(t, y, params)
     }
     info$obsFuncs$C <- function(...) stop("Unrequested observable was evaluated")
-    attr(m, "measurement_schedule") <- e$measurements
+    attr(m, "observation_schedule") <- e$schedule
     out <- .simulation_solve_ode_model(m, info, with_units(c(0, 1) [h]),
         dimensions = list(time = "h", mass = "mg"), parameters = m$parameters)
     expect_equal(calls, 1L)
     expect_equal(nrow(out$observables), 2L)
 })
 
-test_that("single initial-time measurements and intermediate dosing work", {
+test_that("single initial-time observations and intermediate dosing work", {
     m <- output_test_model()
-    e <- experiment(measurements = data.frame(time = with_units(0 [h]), observable = "A"))
+    e <- experiment(schedule = observation_schedule(0 [h], "A"))
     expect_equal(as.numeric(simulate(m, experiment = e)$observables$value), 100)
-    e$measurements$time <- with_units(2 [h])
+    e$schedule$time <- with_units(2 [h])
     e$dosing <- dosing(time = 1 [h], amount = 10 [mg])
     out <- simulate(m, experiment = e)
     expect_equal(as.numeric(out$observables$value), 100 * exp(-0.4) + 10 * exp(-0.2), tolerance = 1e-6)
@@ -132,7 +149,7 @@ test_that("single initial-time measurements and intermediate dosing work", {
 
 test_that("constant observables repeat and reserved names remain valid in long output", {
     m <- output_test_model() |> add_observable(K = k, time = a[drug, Central])
-    e <- experiment(measurements = data.frame(time = with_units(c(1, 2) [h]), observable = "K"))
+    e <- experiment(schedule = observation_schedule(c(1, 2) [h], "K"))
     out <- simulate(m, experiment = e)
     expect_equal(as.numeric(out$observables$value), c(0.2, 0.2))
     direct <- simulate(m, time = c(0, 1) [h])
@@ -146,7 +163,7 @@ test_that("compiled experiments retain defaults and do not modify direct dosing"
     m$molecules <- molecules("drug", cmt = "Central", initial = "initial", type = "amount")
     m <- m |> add_parameter(initial = 100 [mg]) |> add_dosing(time = 0 [h], amount = 20 [mg])
     compiled <- to_compiled_ode_model(m)
-    e <- experiment(measurements = data.frame(time = with_units(c(0, 1) [h]), observable = "A"))
+    e <- experiment(schedule = observation_schedule(c(0, 1) [h], "A"))
     first <- simulate(compiled, experiment = e)
     expect_equal(simulate(compiled, experiment = e)$observables, first$observables)
     direct <- simulate(compiled, time = c(0, 1) [h])

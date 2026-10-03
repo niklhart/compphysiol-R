@@ -41,14 +41,14 @@ test_that("collection printing summarizes while single printing shows details", 
     e <- experiment(
         parameters = parameters(BW = 70 [kg]),
         dosing = dosing(time = 0 [h], amount = 100 [mg], cmt = "Central"),
-        measurements = data.frame(time = with_units(c(1, 2) [h]), observable = "C"),
+        schedule = observation_schedule(c(1, 2) [h], "C"),
         start = 0 [h]
     )
     x <- experiments(treatment = e, empty = experiment(start = 0 [h]))
     summary <- capture.output(result <- print(x))
     expect_identical(result, x)
     expect_length(summary, 3)
-    expect_match(summary[2], "treatment.*0.*h.*1 parameter.*1 dosing event.*2 measurement")
+    expect_match(summary[2], "treatment.*0.*h.*1 parameter.*1 dosing event.*2 observations scheduled")
     expect_output(print(experiments()), "Experiments: \\(none\\)")
     details <- capture.output(result <- print(x[[1]]))
     expect_identical(result, e)
@@ -56,11 +56,10 @@ test_that("collection printing summarizes while single printing shows details", 
     expect_true(any(grepl("Bolus:.*100.*mg", details)))
     expect_true(any(grepl("observable", details)))
     expect_true(any(grepl("C", details)))
-    expect_output(print(experiment()), "Measurements: \\(none\\)")
+    expect_output(print(experiment()), "Schedule: \\(none\\)")
 })
-test_that("collection time units are consistent even without measurements", {
-    a <- experiment(start = 0 [h], measurements = data.frame(
-        time = with_units(60 [min]), observable = "C"))
+test_that("collection time units are consistent even without observations", {
+    a <- experiment(start = 0 [h], schedule = observation_schedule(60 [min], "C"))
     b <- experiment(start = 0 [s])
     expect_no_error(experiments(a, b))
     expect_error(experiments(a, experiment()), "time.*units")

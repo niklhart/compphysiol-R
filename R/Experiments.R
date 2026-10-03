@@ -141,9 +141,9 @@ print.Experiments <- function(x, ...) {
             paste0(labels[i], ": ")
         } else ""
         cat(sprintf(
-            "  (%s) %sstart = %s; %s parameters; %s dosing events; %s measurements\n",
+            "  (%s) %sstart = %s; %s parameters; %s dosing events; %s observations%s\n",
             i, label, format(e$start), length(e$parameters), length(e$dosing),
-            nrow(e$measurements)
+            nrow(e$schedule), if (is.null(e$data)) " scheduled" else " with data"
         ))
     }
     invisible(x)

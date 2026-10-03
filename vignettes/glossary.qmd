@@ -303,27 +303,62 @@ schedule, not necessarily physiological compartments.
 Implementation anchor: dosing events are represented by `Dosing` objects
 created with `dosing()` or added with `add_dosing()`.
 
+## Observation schedule
+
+An observation schedule specifies which named model observables to evaluate and
+at which times. It has `time` and `observable` columns but no value column. A
+schedule describes a design or request, rather than observed or predicted data.
+Repeated rows, row order, and additional metadata columns are preserved.
+
+Even a directly measured state quantity must be declared as a model observable
+and referenced by that observable's name. Observation times are either
+unit-free or carry time units.
+
+Implementation anchor: observation schedules are represented by
+`ObservationSchedule` data-frame-like objects created with
+`observation_schedule()`.
+
+## Observation data
+
+Observation data associate values with an observation schedule. They have the
+canonical columns `time`, `observable`, and `value`, and may retain additional
+row metadata. The representation is deliberately neutral about provenance:
+values may be experimental measurements, predictions from another model,
+synthetic data, or externally prepared observations.
+
+An `ObservationData` object is also an `ObservationSchedule`, so code that only
+needs evaluation points can consume it as a schedule. The explicit
+`as_observation_schedule()` conversion removes the `value` column. Observable
+simulation output uses the same `ObservationData` representation, allowing one
+model's predictions to be supplied directly as data when calibrating another
+model, provided their observable names and units are compatible.
+
+Implementation anchor: observation data are represented by `ObservationData`
+data-frame-like objects created with `observation_data()`.
+
 ## Experiment
 
-An experiment specifies known parameters, a fixed dosing schedule, and a
-measurement schedule for a model. It is separate from the biological model:
+An experiment specifies known parameters, a fixed dosing schedule, and either
+an observation schedule or observation data for a model. It is separate from
+the biological model:
 several experiments can describe different administrations or experimental
 settings for the same system. Covariates such as body weight are ordinary
 experiment parameters. Derived quantities remain model equations, which may
 depend on both experimental parameters and shared model parameters.
 
-The measurement schedule identifies times and named observables, rather than
-ODE states. Even a directly measured state quantity must be declared as an
-observable. The schedule describes what to evaluate, not the measured values
-or their observation error. Repeated rows and their order are preserved.
+The `schedule` component always contains an `ObservationSchedule`. The optional
+`data` component contains `ObservationData`. When data are supplied, the
+schedule is derived from their non-value columns; callers supply either a
+schedule or data, not both. Observation error is not part of the experiment and
+belongs to a separate observation model used during estimation.
 
 An experiment has an explicit initial time, at which the model's initial
-values apply. This can precede the first dose or measurement. Measurement and
+values apply. This can precede the first dose or observation. Observation and
 dosing times cannot precede it. Times are either all unit-free or carry
 compatible time units; hours and minutes can coexist. By default, `start = NULL`
 resolves to zero in the units of the first nonempty schedule (dosing, then
-measurements). If both are empty, it resolves to unit-free zero. It does not
-select the earliest scheduled time: adding a later first measurement does not
+observations). If both are empty, it resolves to unit-free zero. It does not
+select the earliest scheduled time: adding a later first observation does not
 shift when initial values apply. Negative schedule times require an explicit
 earlier start. Incompatible schedule units remain an error.
 
@@ -338,7 +373,8 @@ Current support covers construction, printing, validation, and ODE simulation.
 An experiment supplies the complete dosing schedule, replacing model-attached
 dosing even when the experiment schedule is empty. Its known parameters override
 model defaults. Simulation starts at the initial time and evaluates only the
-scheduled observable-time pairs. Collections return a list of simulation results
+scheduled observable-time pairs. Stored observation values do not affect
+simulation. Collections return a list of simulation results
 in experiment order. Estimation is not yet implemented.
 
 Implementation anchor: experiments are represented by `Experiment` objects
@@ -348,7 +384,8 @@ An `Experiments` collection, created with `experiments()`, holds several
 experiments with optional names. Subsetting with `[` retains a collection;
 `[[` extracts an individual `Experiment`. Collections can be combined with
 `c()`. Printing a collection shows one summary per experiment, while printing
-an individual experiment shows its parameters, dosing, and measurement schedule.
+an individual experiment shows its parameters, dosing, observation schedule,
+and optional observation data.
 
 Collections require a common time unit mode across experiments, including their
 initial times: all unit-free or all in compatible time units. Parameters shared
@@ -555,13 +592,14 @@ deterministic integration steps in a hybrid simulation are not counted as
 stochastic events.
 
 Simulation returns ODE state trajectories in a `SimulationResult` object.
-When observables are defined, their predictions are included in a long table
+When observables are defined, their predictions are included in an
+`ObservationData` object
 with `time`, `observable`, and `value` columns (plus `rep` for stochastic
 replicates); otherwise the observables component is `NULL`. Direct time input
 requests all observables at each time. An explicit experiment requests only its
-scheduled pairs, preserving order and duplicate measurement rows. ODE state
+scheduled pairs, preserving order and duplicate observation rows. ODE state
 trajectories remain rectangular; experiment state output includes the initial
-time and the sorted unique measurement times.
+time and the sorted unique observation times.
 
 Observable values are numeric for unit-free output, an ordinary `units` vector
 when all units are identical, and a `mixed_units` column otherwise.

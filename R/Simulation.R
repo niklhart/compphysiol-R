@@ -141,7 +141,7 @@ simulate.CompartmentModel <- function(
     }
 
     ode_model <- to_ode_model(export_model)
-    attr(ode_model, "measurement_schedule") <- attr(object, "measurement_schedule")
+    attr(ode_model, "observation_schedule") <- attr(object, "observation_schedule")
     .simulation_check_free_parameters_available(ode_model, export_model$parameters)
     export_model <- .check_unit_consistency(export_model)
     .simulation_check_time_mode(export_model, time)
@@ -211,7 +211,7 @@ simulate.CompiledOdeModel <- function(
     }
 
     ode_model <- object$ode_model
-    attr(ode_model, "measurement_schedule") <- attr(object, "measurement_schedule")
+    attr(ode_model, "observation_schedule") <- attr(object, "observation_schedule")
     attr(ode_model, "experiment_dosing") <- attr(object, "experiment_dosing")
     .check_class(ode_model, "OdeModel")
 
