@@ -128,6 +128,28 @@ parameter_estimate <- function(
     )
 }
 
+#' Print an estimated-parameter specification
+#'
+#' @param x A `ParameterEstimate` object.
+#' @param ... Unused.
+#' @returns `x`, invisibly.
+#' @export
+print.ParameterEstimate <- function(x, ...) {
+    unit <- if (inherits(x$initial, "units")) units::deparse_unit(x$initial) else NULL
+    values <- c(
+        initial = as.numeric(x$initial),
+        lower = .estimation_bound_numeric(x$lower, x$initial, "lower"),
+        upper = .estimation_bound_numeric(x$upper, x$initial, "upper")
+    )
+    cat("ParameterEstimate:\n")
+    cat(" initial: ", format(values[["initial"]], trim = TRUE), "\n", sep = "")
+    cat(" bounds: [", format(values[["lower"]], trim = TRUE), ", ",
+        format(values[["upper"]], trim = TRUE), "]\n", sep = "")
+    cat(" transform: ", x$transform, "\n", sep = "")
+    if (!is.null(unit)) cat(" unit: ", unit, "\n", sep = "")
+    invisible(x)
+}
+
 .estimation_scalar <- function(x, label, finite) {
     if (!is.numeric(x) || !is.null(dim(x)) || length(x) != 1L || is.na(x) ||
         (finite && !is.finite(x))) {
@@ -266,6 +288,30 @@ estimation_problem <- function(model, experiments, parameters, observation) {
     )
 }
 
+#' Print an estimation problem
+#'
+#' @param x An `EstimationProblem` object.
+#' @param ... Unused.
+#' @returns `x`, invisibly.
+#' @export
+print.EstimationProblem <- function(x, ...) {
+    observations <- sum(vapply(
+        unclass(x$experiments), function(e) nrow(e$observations), integer(1)
+    ))
+    cat("EstimationProblem:\n")
+    cat(" model: ", class(x$model)[[1]], "\n", sep = "")
+    cat(" experiments: ", length(x$experiments), "\n", sep = "")
+    cat(" observations: ", observations, "\n", sep = "")
+    cat(" estimated parameters: ", .estimation_format_names(names(x$parameters)), "\n", sep = "")
+    cat(" observation models: ", .estimation_format_names(names(x$observation)), "\n", sep = "")
+    invisible(x)
+}
+
+.estimation_format_names <- function(x) {
+    if (!length(x)) return("(none)")
+    paste(x, collapse = ", ")
+}
+
 .estimation_model_observables <- function(model) {
     if (inherits(model, "CompiledOdeModel")) model <- model$ode_model
     names(model$observables)
@@ -366,7 +412,7 @@ estimate.EstimationProblem <- function(
     structure(
         list(
             coefficients = coefficients,
-            objective = unname(raw$value),
+            neg_log_lik = unname(raw$value),
             convergence = list(code = raw$convergence, message = raw$message %||% NULL),
             predictions = diagnostics$predictions,
             residuals = diagnostics$residuals,
@@ -376,6 +422,37 @@ estimate.EstimationProblem <- function(
         ),
         class = "EstimationResult"
     )
+}
+
+#' Print an estimation result
+#'
+#' @param x An `EstimationResult` object.
+#' @param ... Unused.
+#' @returns `x`, invisibly.
+#' @export
+print.EstimationResult <- function(x, ...) {
+    cat("EstimationResult:\n")
+    cat(" Coefficients:\n")
+    if (length(x$coefficients)) {
+        cat(sprintf(
+            "  %s = %s\n",
+            names(x$coefficients),
+            vapply(x$coefficients, format, character(1))
+        ), sep = "")
+    } else {
+        cat("  (none)\n")
+    }
+    cat(" negative log-likelihood: ", format(x$neg_log_lik, digits = 7), "\n", sep = "")
+    cat(" convergence code: ", x$convergence$code, "\n", sep = "")
+    if (!is.null(x$convergence$message)) {
+        cat(" convergence message: ", x$convergence$message, "\n", sep = "")
+    }
+    backend <- class(x$backend)[[1]]
+    if (inherits(x$backend, "OptimBackend")) {
+        backend <- paste0(backend, " (", x$backend$method, ")")
+    }
+    cat(" backend: ", backend, "\n", sep = "")
+    invisible(x)
 }
 
 .estimation_coordinates_within_bounds <- function(par, coordinates) {

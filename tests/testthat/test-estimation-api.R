@@ -84,6 +84,21 @@ test_that("estimated parameter specifications reject ambiguous inputs", {
     expect_error(parameter_estimate(initial = 1, transform = "unknown"), "transform")
 })
 
+test_that("ParameterEstimate prints its unit once", {
+    estimate <- parameter_estimate(
+        initial = 1 [L], lower = 500 [mL], upper = 2 [L], transform = "log"
+    )
+
+    output <- capture.output(returned <- print(estimate))
+    output <- paste(output, collapse = "\n")
+
+    expect_identical(returned, estimate)
+    expect_match(output, "initial: 1", fixed = TRUE)
+    expect_match(output, "bounds: [0.5, 2]", fixed = TRUE)
+    expect_identical(sum(strsplit(output, "", fixed = TRUE)[[1]] == "L"), 1L)
+    expect_match(output, "unit: L", fixed = TRUE)
+})
+
 test_that("estimation_problem is the backend-neutral estimation specification", {
     model <- estimation_test_model()
     study <- experiments(subject_1 = estimation_test_experiment())
@@ -121,6 +136,29 @@ test_that("estimation_problem normalizes one experiment to a collection", {
 
     expect_s3_class(problem$experiments, "Experiments")
     expect_length(problem$experiments, 1L)
+})
+
+test_that("EstimationProblem has a concise print method", {
+    problem <- estimation_problem(
+        estimation_test_model(),
+        estimation_test_experiment(),
+        estimated_parameters(
+            k = parameter_estimate(0.1 [1/h]),
+            sigma = parameter_estimate(1 [mg/L], lower = 0 [mg/L], transform = "log")
+        ),
+        observation_model(C = additive_error(sigma = "sigma"))
+    )
+
+    output <- capture.output(returned <- print(problem))
+    output <- paste(output, collapse = "\n")
+
+    expect_identical(returned, problem)
+    expect_match(output, "EstimationProblem", fixed = TRUE)
+    expect_match(output, "model: CompartmentModel", fixed = TRUE)
+    expect_match(output, "experiments: 1", fixed = TRUE)
+    expect_match(output, "observations: 3", fixed = TRUE)
+    expect_match(output, "estimated parameters: k, sigma", fixed = TRUE)
+    expect_match(output, "observation models: C", fixed = TRUE)
 })
 
 test_that("estimation problems accept deterministic lowered representations", {
@@ -252,7 +290,8 @@ test_that("estimate consumes an EstimationProblem and returns a stable result", 
     expect_s3_class(fit, "EstimationResult")
     expect_s3_class(fit$backend, "OptimBackend")
     expect_named(coef(fit), c("k", "sigma"))
-    expect_true(is.numeric(fit$objective) && length(fit$objective) == 1L)
+    expect_true(is.numeric(fit$neg_log_lik) && length(fit$neg_log_lik) == 1L)
+    expect_null(fit$objective)
     expect_true(is.list(fit$convergence))
     expect_s3_class(fitted(fit), "ObservationData")
     expect_s3_class(residuals(fit), "ObservationData")
@@ -267,6 +306,13 @@ test_that("estimate consumes an EstimationProblem and returns a stable result", 
     expect_true(is.list(fit$backend_result))
     expect_equal(as.numeric(coef(fit)$k), 0.197, tolerance = 0.01)
     expect_identical(fit$convergence$code, 0L)
+
+    output <- capture.output(returned <- print(fit))
+    output <- paste(output, collapse = "\n")
+    expect_identical(returned, fit)
+    expect_match(output, "EstimationResult", fixed = TRUE)
+    expect_match(output, "negative log-likelihood", fixed = TRUE)
+    expect_match(output, "OptimBackend (L-BFGS-B)", fixed = TRUE)
 })
 
 test_that("estimation diagnostics retain rows with missing observations", {

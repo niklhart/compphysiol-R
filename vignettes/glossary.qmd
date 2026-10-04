@@ -428,7 +428,8 @@ Current estimation supports `CompartmentModel`, `ProcessModel`, `OdeModel`, and
 `CompiledOdeModel` inputs. Analytical and stochastic model representations are
 outside the current estimation contract. The first backend uses `stats::optim()`
 to minimize the joint negative log-likelihood across experiments. An
-`EstimationResult` exposes coefficients, objective value, convergence
+`EstimationResult` exposes coefficients, the negative log-likelihood as
+`neg_log_lik`, convergence
 information, fitted values, residuals, and the raw backend result.
 
 Fitted values and residuals preserve the observation rows and their order.

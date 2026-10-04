@@ -158,12 +158,12 @@ backend <- optim_backend(
 fit <- estimate(problem, backend = backend)
 
 coef(fit)
-fit$objective
+fit$neg_log_lik
 fit$convergence
 ```
 
 `coef()` returns a `Parameters` object and therefore retains parameter units.
-The objective is the joint negative log-likelihood. Backend-independent
+`neg_log_lik` is the joint negative log-likelihood. Backend-independent
 convergence information is available in `fit$convergence`, while the complete
 `stats::optim()` return value remains available as `fit$backend_result`.
 
