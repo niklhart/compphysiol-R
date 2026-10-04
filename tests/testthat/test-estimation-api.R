@@ -48,8 +48,8 @@ test_that("observation error constructors validate their public contract", {
                  "distinct|parameter")
 })
 
-test_that("estimated_parameters declare initial values, bounds, and transformations", {
-    estimates <- estimated_parameters(
+test_that("parameter estimates combine into a named collection", {
+    estimates <- c(
         k = parameter_estimate(
             initial = 0.1 [1/h],
             lower = 0 [1/h],
@@ -63,7 +63,7 @@ test_that("estimated_parameters declare initial values, bounds, and transformati
         )
     )
 
-    expect_s3_class(estimates, "EstimatedParameters")
+    expect_s3_class(estimates, "ParameterEstimates")
     expect_named(estimates, c("k", "sigma"))
     expect_s3_class(estimates[["k"]], "ParameterEstimate")
     expect_equal(estimates[["k"]]$initial, with_units(0.1 [1/h]))
@@ -72,10 +72,43 @@ test_that("estimated_parameters declare initial values, bounds, and transformati
     expect_identical(estimates[["k"]]$transform, "log")
 })
 
+test_that("ParameterEstimates compose, subset, and print by row", {
+    rates <- c(
+        k = parameter_estimate(
+            initial = 1 [1/h], lower = 0 [1/h], upper = 2 [1/h], transform = "log"
+        )
+    )
+    errors <- c(sigma = parameter_estimate(initial = 0.5, lower = 0))
+    estimates <- c(rates, errors)
+
+    expect_s3_class(estimates, "ParameterEstimates")
+    expect_named(estimates, c("k", "sigma"))
+    expect_s3_class(estimates["k"], "ParameterEstimates")
+    expect_named(estimates["k"], "k")
+    expect_s3_class(estimates[["k"]], "ParameterEstimate")
+    expect_identical(estimates[], estimates)
+    expect_error(c(estimates, k = parameter_estimate(1)), "unique|duplicated")
+    expect_error(c(estimates, invalid = 1), "ParameterEstimate")
+
+    output <- capture.output(returned <- print(estimates))
+    output <- paste(output, collapse = "\n")
+    expect_identical(returned, estimates)
+    expect_match(
+        output,
+        "k: initial = 1, bounds = [0, 2], transform = log, unit [1/h]",
+        fixed = TRUE
+    )
+    expect_match(
+        output,
+        "sigma: initial = 0.5, bounds = [0, Inf], transform = identity, unit [1]",
+        fixed = TRUE
+    )
+})
+
 test_that("estimated parameter specifications reject ambiguous inputs", {
-    expect_error(estimated_parameters(parameter_estimate(initial = 1)), "named|parameter")
+    expect_error(c(parameter_estimate(initial = 1)), "named|parameter")
     expect_error(
-        estimated_parameters(k = parameter_estimate(1), k = parameter_estimate(2)),
+        c(k = parameter_estimate(1), k = parameter_estimate(2)),
         "unique|duplicated"
     )
     expect_error(parameter_estimate(initial = c(1, 2)), "scalar")
@@ -102,7 +135,7 @@ test_that("ParameterEstimate prints its unit once", {
 test_that("estimation_problem is the backend-neutral estimation specification", {
     model <- estimation_test_model()
     study <- experiments(subject_1 = estimation_test_experiment())
-    estimates <- estimated_parameters(
+    estimates <- c(
         k = parameter_estimate(0.1 [1/h], lower = 0 [1/h], transform = "log"),
         sigma = parameter_estimate(1 [mg/L], lower = 0 [mg/L], transform = "log")
     )
@@ -127,7 +160,7 @@ test_that("estimation_problem normalizes one experiment to a collection", {
     problem <- estimation_problem(
         model = estimation_test_model(),
         experiments = estimation_test_experiment(),
-        parameters = estimated_parameters(
+        parameters = c(
             k = parameter_estimate(0.1 [1/h]),
             sigma = parameter_estimate(1 [mg/L], lower = 0 [mg/L], transform = "log")
         ),
@@ -142,7 +175,7 @@ test_that("EstimationProblem has a concise print method", {
     problem <- estimation_problem(
         estimation_test_model(),
         estimation_test_experiment(),
-        estimated_parameters(
+        c(
             k = parameter_estimate(0.1 [1/h]),
             sigma = parameter_estimate(1 [mg/L], lower = 0 [mg/L], transform = "log")
         ),
@@ -174,7 +207,7 @@ test_that("estimation problems accept deterministic lowered representations", {
         problem <- estimation_problem(
             representation,
             estimation_test_experiment(),
-            estimated_parameters(
+            c(
                 k = parameter_estimate(0.1 [1/h]),
                 sigma = parameter_estimate(1 [mg/L], lower = 0 [mg/L], transform = "log")
             ),
@@ -189,7 +222,7 @@ test_that("estimation problems reject unsupported model representations", {
     model <- estimation_test_model()
     common <- list(
         experiments = estimation_test_experiment(),
-        parameters = estimated_parameters(k = parameter_estimate(0.1 [1/h])),
+        parameters = c(k = parameter_estimate(0.1 [1/h])),
         observation = observation_model(C = additive_error(sigma = "sigma"))
     )
 
@@ -205,7 +238,7 @@ test_that("estimation problems reject unsupported model representations", {
 
 test_that("estimation problems require observation data and validate it against the model", {
     model <- estimation_test_model()
-    estimates <- estimated_parameters(
+    estimates <- c(
         k = parameter_estimate(0.1 [1/h]),
         sigma = parameter_estimate(1 [mg/L], lower = 0 [mg/L], transform = "log")
     )
@@ -247,7 +280,7 @@ test_that("known experiment parameters cannot also be estimated", {
         estimation_problem(
             estimation_test_model(),
             study,
-            estimated_parameters(
+            c(
                 k = parameter_estimate(0.1 [1/h]),
                 sigma = parameter_estimate(1 [mg/L])
             ),
@@ -275,7 +308,7 @@ test_that("estimate consumes an EstimationProblem and returns a stable result", 
     problem <- estimation_problem(
         estimation_test_model(),
         estimation_test_experiment(),
-        estimated_parameters(
+        c(
             k = parameter_estimate(0.1 [1/h], lower = 0 [1/h], transform = "log"),
             sigma = parameter_estimate(1 [mg/L], lower = 0 [mg/L], transform = "log")
         ),
@@ -321,7 +354,7 @@ test_that("estimation diagnostics retain rows with missing observations", {
     problem <- estimation_problem(
         estimation_test_model(),
         study,
-        estimated_parameters(
+        c(
             k = parameter_estimate(0.1 [1/h], lower = 0 [1/h], transform = "log"),
             sigma = parameter_estimate(1 [mg/L], lower = 0 [mg/L], transform = "log")
         ),
@@ -347,7 +380,7 @@ test_that("estimate runs lowered deterministic representations", {
         problem <- estimation_problem(
             representation,
             estimation_test_experiment(),
-            estimated_parameters(
+            c(
                 k = parameter_estimate(0.1 [1/h], lower = 0 [1/h], transform = "log"),
                 sigma = parameter_estimate(1 [mg/L], lower = 0 [mg/L], transform = "log")
             ),

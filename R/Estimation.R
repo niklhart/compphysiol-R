@@ -177,24 +177,115 @@ print.ParameterEstimate <- function(x, ...) {
     as.numeric(bound)
 }
 
-#' Collect estimated parameter specifications
+#' Combine parameter-estimation specifications
 #'
-#' @param ... Named objects created by [parameter_estimate()].
-#' @returns An `EstimatedParameters` object.
+#' Named [parameter_estimate()] objects and existing `ParameterEstimates`
+#' collections can be combined with `c()`. Names identify the model or
+#' observation-model parameters being estimated.
+#'
+#' @param ... Named `ParameterEstimate` or `ParameterEstimates` objects.
+#' @param recursive Unused.
+#' @returns A `ParameterEstimates` collection.
+#' @name parameter_estimates
+NULL
+
+#' @rdname parameter_estimates
 #' @export
-estimated_parameters <- function(...) {
-    x <- list(...)
+c.ParameterEstimate <- function(..., recursive = FALSE) {
+    .combine_parameter_estimates(list(...))
+}
+
+#' @rdname parameter_estimates
+#' @export
+c.ParameterEstimates <- function(..., recursive = FALSE) {
+    .combine_parameter_estimates(list(...))
+}
+
+.combine_parameter_estimates <- function(x) {
+    labels <- names(x)
+    if (is.null(labels)) labels <- rep("", length(x))
+    out <- list()
+    for (i in seq_along(x)) {
+        item <- x[[i]]
+        label <- labels[[i]]
+        if (inherits(item, "ParameterEstimate")) {
+            if (is.na(label) || !nzchar(label)) {
+                stop("Every parameter estimate must be named.", call. = FALSE)
+            }
+            part <- setNames(list(item), label)
+        } else if (inherits(item, "ParameterEstimates")) {
+            part <- unclass(item)
+            if (!is.na(label) && nzchar(label)) {
+                names(part) <- paste(label, names(part), sep = ".")
+            }
+        } else {
+            stop("c() can only combine ParameterEstimate and ParameterEstimates objects.",
+                 call. = FALSE)
+        }
+        out <- append(out, part)
+    }
+    .new_parameter_estimates(out)
+}
+
+.new_parameter_estimates <- function(x = list()) {
     nm <- names(x)
     if (length(x) && (is.null(nm) || anyNA(nm) || any(!nzchar(nm)))) {
-        stop("Every estimated parameter must be named.", call. = FALSE)
+        stop("Every parameter estimate must be named.", call. = FALSE)
     }
     if (anyDuplicated(nm)) {
-        stop("Estimated parameter names must be unique; duplicated names are not allowed.", call. = FALSE)
+        stop("Parameter estimate names must be unique; duplicated names are not allowed.",
+             call. = FALSE)
     }
     if (!all(vapply(x, inherits, logical(1), "ParameterEstimate"))) {
-        stop("Every estimated parameter must be a ParameterEstimate object.", call. = FALSE)
+        stop("Every parameter estimate must be a ParameterEstimate object.", call. = FALSE)
     }
-    structure(x, class = c("EstimatedParameters", "list"))
+    structure(x, class = c("ParameterEstimates", "list"))
+}
+
+#' Subset parameter-estimation specifications
+#'
+#' @param x A `ParameterEstimates` collection.
+#' @param i Indices or names of estimates to retain.
+#' @param ... Unused.
+#' @returns A `ParameterEstimates` collection.
+#' @export
+`[.ParameterEstimates` <- function(x, i, ...) {
+    if (missing(i)) return(x)
+    .new_parameter_estimates(unclass(x)[i])
+}
+
+#' Print parameter-estimation specifications
+#'
+#' @param x A `ParameterEstimates` collection.
+#' @param ... Unused.
+#' @returns `x`, invisibly.
+#' @export
+print.ParameterEstimates <- function(x, ...) {
+    if (!length(x)) {
+        cat(" Parameter estimates: (none)\n")
+        return(invisible(x))
+    }
+    cat(" Parameter estimates:\n")
+    for (i in seq_along(x)) {
+        estimate <- x[[i]]
+        values <- c(
+            initial = as.numeric(estimate$initial),
+            lower = .estimation_bound_numeric(estimate$lower, estimate$initial, "lower"),
+            upper = .estimation_bound_numeric(estimate$upper, estimate$initial, "upper")
+        )
+        unit <- if (inherits(estimate$initial, "units")) {
+            as.character(units(estimate$initial))
+        } else {
+            "1"
+        }
+        cat(sprintf(
+            "  (%s) %s: initial = %s, bounds = [%s, %s], transform = %s, unit [%s]\n",
+            i, names(x)[[i]], format(values[["initial"]], trim = TRUE),
+            format(values[["lower"]], trim = TRUE),
+            format(values[["upper"]], trim = TRUE), estimate$transform, unit
+        ))
+    }
+    invisible(x)
 }
 
 #' Configure the stats optim estimation backend
@@ -225,8 +316,8 @@ optim_backend <- function(
 #'   `CompiledOdeModel`.
 #' @param experiments An [Experiment][experiment()] or
 #'   [Experiments][experiments()] collection containing `ObservationData`.
-#' @param parameters Estimated parameter specifications from
-#'   [estimated_parameters()].
+#' @param parameters Named [parameter_estimate()] objects combined with `c()`
+#'   into a `ParameterEstimates` collection.
 #' @param observation An observation model from [observation_model()].
 #' @returns An `EstimationProblem` object.
 #' @export
@@ -238,7 +329,7 @@ estimation_problem <- function(model, experiments, parameters, observation) {
         stop(supplied, " is not supported for estimation. Supported models are ",
              paste(supported, collapse = ", "), ".", call. = FALSE)
     }
-    .check_class(parameters, "EstimatedParameters")
+    .check_class(parameters, "ParameterEstimates")
     .check_class(observation, "ObservationModel")
     if (inherits(experiments, "Experiment")) experiments <- .new_experiments(list(experiments))
     .check_class(experiments, "Experiments")

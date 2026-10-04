@@ -113,7 +113,7 @@ strictly positive rate and scale parameters.
 
 ```{r}
 #| label: estimated-parameters
-estimates <- estimated_parameters(
+estimates <- c(
     k = parameter_estimate(
         initial = 0.1 [1/h],
         lower = 0 [1/h],
@@ -125,6 +125,8 @@ estimates <- estimated_parameters(
         transform = "log"
     )
 )
+
+estimates
 ```
 
 The transformation affects only the optimizer coordinates. Returned estimates
