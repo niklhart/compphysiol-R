@@ -26,6 +26,7 @@ boundaries. Optimization itself uses transformed numeric coordinates.
 #| label: setup
 library(compphysiol)
 library(units)
+library(ggplot2)
 ```
 
 ## Dynamic model
@@ -166,14 +167,60 @@ The objective is the joint negative log-likelihood. Backend-independent
 convergence information is available in `fit$convergence`, while the complete
 `stats::optim()` return value remains available as `fit$backend_result`.
 
-Fitted values and observed-minus-fitted residuals retain experiment and source
-row identifiers. Their `unit` column records the physical scale represented by
-the numeric `value` column.
+Fitted values and observed-minus-fitted residuals are `ObservationData` objects.
+They retain experiment and source-row identifiers as well as unit-bearing
+`time` and `value` columns.
 
 ```{r}
 #| label: diagnostics
 fitted(fit)
 residuals(fit)
+```
+
+## Goodness-of-fit plot
+
+`fitted(fit)` contains predictions at the observation times. For a smooth
+time-course line, simulate the fitted dynamic parameters on a finer observation
+schedule. Observation-error parameters such as `sigma` are not needed for this
+deterministic prediction.
+
+```{r}
+#| label: goodness-of-fit
+prediction_grid <- observation_schedule(
+    time = seq(0, 4, length.out = 101) [h],
+    observable = "C"
+)
+
+prediction_experiment <- experiment(
+    parameters = coef(fit)["k"],
+    observations = prediction_grid,
+    start = 0 [h]
+)
+
+prediction_curve <- simulate(
+    model,
+    experiment = prediction_experiment
+)$observables
+
+ggplot() +
+    geom_line(
+        data = prediction_curve,
+        aes(x = time, y = value),
+        linewidth = 0.8,
+        colour = "#3366AA"
+    ) +
+    geom_point(
+        data = observed,
+        aes(x = time, y = value),
+        size = 2.5,
+        colour = "#AA3333"
+    ) +
+    labs(
+        x = "Time",
+        y = "Central concentration",
+        title = "Observed and fitted concentration-time profile"
+    ) +
+    theme_minimal()
 ```
 
 ## Reusing a lowered model

@@ -12,7 +12,7 @@
 \item{...}{Unused.}
 }
 \value{
-A data frame of fitted values in estimation-row order.
+Unit-aware \code{ObservationData} of fitted values in estimation-row order.
 }
 \description{
 Extract fitted observable values

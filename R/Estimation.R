@@ -459,27 +459,69 @@ estimate.EstimationProblem <- function(
             contribution <- .estimation_error_nll(obs, pred, error, parameters)
             objective <- objective + contribution$nll
             if (diagnostics) {
-                prediction_rows[[length(prediction_rows) + 1L]] <- data.frame(
-                    experiment = label, row = j, time = as.numeric(observed$time[[j]]),
-                    observable = observed$observable[[j]], value = contribution$predicted,
-                    unit = contribution$unit, stringsAsFactors = FALSE
+                prediction_rows[[length(prediction_rows) + 1L]] <- list(
+                    experiment = label, row = j, time = observed$time[[j]],
+                    observable = observed$observable[[j]],
+                    value = .estimation_restore_unit(contribution$predicted, contribution$unit)
                 )
-                residual_rows[[length(residual_rows) + 1L]] <- data.frame(
-                    experiment = label, row = j, time = as.numeric(observed$time[[j]]),
-                    observable = observed$observable[[j]], value = contribution$residual,
-                    unit = contribution$unit, stringsAsFactors = FALSE
+                residual_rows[[length(residual_rows) + 1L]] <- list(
+                    experiment = label, row = j, time = observed$time[[j]],
+                    observable = observed$observable[[j]],
+                    value = .estimation_restore_unit(contribution$residual, contribution$unit)
                 )
             }
         }
     }
     if (!diagnostics) return(objective)
-    empty <- data.frame(experiment = character(), row = integer(), time = numeric(),
-                        observable = character(), value = numeric(), unit = character())
     list(
         objective = objective,
-        predictions = if (length(prediction_rows)) do.call(rbind, prediction_rows) else empty,
-        residuals = if (length(residual_rows)) do.call(rbind, residual_rows) else empty
+        predictions = .estimation_bind_diagnostic_rows(prediction_rows),
+        residuals = .estimation_bind_diagnostic_rows(residual_rows)
     )
+}
+
+.estimation_restore_unit <- function(value, unit) {
+    if (!nzchar(unit)) return(value)
+    units::set_units(value, unit, mode = "standard")
+}
+
+.estimation_bind_diagnostic_rows <- function(rows) {
+    if (!length(rows)) return(observation_data())
+    time <- .estimation_combine_times(lapply(rows, `[[`, "time"))
+    value <- .estimation_combine_values(lapply(rows, `[[`, "value"))
+    observation_data(
+        time = time,
+        observable = vapply(rows, `[[`, character(1), "observable"),
+        value = value,
+        experiment = vapply(rows, `[[`, character(1), "experiment"),
+        row = vapply(rows, `[[`, integer(1), "row")
+    )
+}
+
+.estimation_combine_times <- function(values) {
+    has_units <- vapply(values, inherits, logical(1), "units")
+    if (!any(has_units)) return(vapply(values, as.numeric, numeric(1)))
+    if (!all(has_units)) {
+        stop("Estimation diagnostic times must consistently use time units.", call. = FALSE)
+    }
+    target <- units::deparse_unit(values[[1]])
+    numeric <- vapply(values, function(x) {
+        as.numeric(units::set_units(x, target, mode = "standard"))
+    }, numeric(1))
+    units::set_units(numeric, target, mode = "standard")
+}
+
+.estimation_combine_values <- function(values) {
+    labels <- vapply(values, function(x) {
+        if (inherits(x, "units")) units::deparse_unit(x) else ""
+    }, character(1))
+    numeric <- vapply(values, as.numeric, numeric(1))
+    unique_labels <- unique(labels)
+    if (identical(unique_labels, "")) return(numeric)
+    if (length(unique_labels) == 1L) {
+        return(units::set_units(numeric, unique_labels, mode = "standard"))
+    }
+    units::mixed_units(numeric, ifelse(nzchar(labels), labels, "1"))
 }
 
 .estimation_error_nll <- function(observed, predicted, error, parameters) {
@@ -574,13 +616,13 @@ coef.EstimationResult <- function(object, ...) object$coefficients
 #' Extract fitted observable values
 #' @param object An `EstimationResult`.
 #' @param ... Unused.
-#' @returns A data frame of fitted values in estimation-row order.
+#' @returns Unit-aware `ObservationData` of fitted values in estimation-row order.
 #' @export
 fitted.EstimationResult <- function(object, ...) object$predictions
 
 #' Extract estimation residuals
 #' @param object An `EstimationResult`.
 #' @param ... Unused.
-#' @returns A data frame of observed-minus-fitted residuals.
+#' @returns Unit-aware `ObservationData` of observed-minus-fitted residuals.
 #' @export
 residuals.EstimationResult <- function(object, ...) object$residuals

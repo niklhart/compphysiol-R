@@ -12,7 +12,7 @@
 \item{...}{Unused.}
 }
 \value{
-A data frame of observed-minus-fitted residuals.
+Unit-aware \code{ObservationData} of observed-minus-fitted residuals.
 }
 \description{
 Extract estimation residuals
