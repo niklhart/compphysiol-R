@@ -6,16 +6,18 @@
 \usage{
 parameter_estimate(
   initial,
-  lower = -Inf,
-  upper = Inf,
+  lower = NULL,
+  upper = NULL,
   transform = c("identity", "log", "logit")
 )
 }
 \arguments{
 \item{initial}{Finite numeric scalar initial estimate, optionally with units.}
 
-\item{lower, upper}{Scalar bounds. Finite bounds must use units compatible with
-\code{initial} when it is unit-aware.}
+\item{lower, upper}{Optional scalar bounds. When \code{NULL}, identity transforms
+use \code{-Inf} or \code{Inf}, while log transforms use zero or \code{Inf}. Inferred bounds
+inherit the units of \code{initial}. Logit transforms use zero and one.
+Explicit finite bounds must use units compatible with \code{initial}.}
 
 \item{transform}{Internal optimizer transformation: \code{"identity"}, \code{"log"},
 or \code{"logit"}. Log transforms require a positive initial value. Logit

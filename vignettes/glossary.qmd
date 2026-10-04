@@ -424,6 +424,10 @@ observation boundaries while optimization uses numeric internal coordinates.
 Known experiment parameters cannot simultaneously be shared estimated
 parameters.
 
+Omitted bounds depend on the transformation and inherit the initial value's
+units. Identity uses an unbounded interval, log uses zero as its lower bound and
+has no finite upper bound, and logit uses the interval from zero to one.
+
 An individual specification is a `ParameterEstimate`. Named specifications are
 combined with `c()` into a `ParameterEstimates` collection. Collections can be
 combined again; `[` retains a collection, while `[[` extracts one specification.

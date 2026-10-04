@@ -114,7 +114,25 @@ test_that("estimated parameter specifications reject ambiguous inputs", {
     expect_error(parameter_estimate(initial = c(1, 2)), "scalar")
     expect_error(parameter_estimate(initial = 1, lower = 2, upper = 1), "bound|lower")
     expect_error(parameter_estimate(initial = -1, transform = "log"), "log|positive")
+    expect_error(parameter_estimate(initial = 2, transform = "logit"),
+                 "bounds|between")
     expect_error(parameter_estimate(initial = 1, transform = "unknown"), "transform")
+})
+
+test_that("parameter estimate defaults follow the transform and initial units", {
+    identity <- parameter_estimate(initial = 2 [L])
+    log <- parameter_estimate(initial = 2 [L], transform = "log")
+    logit <- parameter_estimate(initial = 0.5 [L], transform = "logit")
+    unitless <- parameter_estimate(initial = 2, transform = "log")
+
+    expect_equal(identity$lower, with_units(-Inf [L]))
+    expect_equal(identity$upper, with_units(Inf [L]))
+    expect_equal(log$lower, with_units(0 [L]))
+    expect_equal(log$upper, with_units(Inf [L]))
+    expect_equal(logit$lower, with_units(0 [L]))
+    expect_equal(logit$upper, with_units(1 [L]))
+    expect_identical(unitless$lower, 0)
+    expect_identical(unitless$upper, Inf)
 })
 
 test_that("ParameterEstimate prints its unit once", {

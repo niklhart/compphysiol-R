@@ -78,8 +78,10 @@ lognormal_error <- function(sigma = "sigma") {
 #' Describe one parameter to estimate
 #'
 #' @param initial Finite numeric scalar initial estimate, optionally with units.
-#' @param lower,upper Scalar bounds. Finite bounds must use units compatible with
-#'   `initial` when it is unit-aware.
+#' @param lower,upper Optional scalar bounds. When `NULL`, identity transforms
+#'   use `-Inf` or `Inf`, while log transforms use zero or `Inf`. Inferred bounds
+#'   inherit the units of `initial`. Logit transforms use zero and one.
+#'   Explicit finite bounds must use units compatible with `initial`.
 #' @param transform Internal optimizer transformation: `"identity"`, `"log"`,
 #'   or `"logit"`. Log transforms require a positive initial value. Logit
 #'   transforms require finite lower and upper bounds.
@@ -87,8 +89,8 @@ lognormal_error <- function(sigma = "sigma") {
 #' @export
 parameter_estimate <- function(
     initial,
-    lower = -Inf,
-    upper = Inf,
+    lower = NULL,
+    upper = NULL,
     transform = c("identity", "log", "logit")
 ) {
     initial <- .process_nse_arg(substitute(initial), envir = parent.frame())
@@ -100,6 +102,17 @@ parameter_estimate <- function(
                                  call. = FALSE)
     )
     .estimation_scalar(initial, "initial", finite = TRUE)
+    if (is.null(lower)) {
+        lower <- .estimation_default_bound(if (transform %in% c("log", "logit")) 0 else -Inf,
+                                           initial)
+    }
+    if (is.null(upper)) {
+        upper <- .estimation_default_bound(if (identical(transform, "logit")) 1 else Inf,
+                                           initial)
+    }
+    if (identical(transform, "log") && as.numeric(initial) <= 0) {
+        stop("A log-transformed parameter must have a positive initial value.", call. = FALSE)
+    }
     .estimation_scalar(lower, "lower", finite = FALSE)
     .estimation_scalar(upper, "upper", finite = FALSE)
 
@@ -112,9 +125,6 @@ parameter_estimate <- function(
     if (initial_numeric < lower_numeric || initial_numeric > upper_numeric) {
         stop("Parameter initial value must lie within its bounds.", call. = FALSE)
     }
-    if (identical(transform, "log") && initial_numeric <= 0) {
-        stop("A log-transformed parameter must have a positive initial value.", call. = FALSE)
-    }
     if (identical(transform, "logit")) {
         if (!is.finite(lower_numeric) || !is.finite(upper_numeric) ||
             initial_numeric <= lower_numeric || initial_numeric >= upper_numeric) {
@@ -126,6 +136,11 @@ parameter_estimate <- function(
         list(initial = initial, lower = lower, upper = upper, transform = transform),
         class = "ParameterEstimate"
     )
+}
+
+.estimation_default_bound <- function(value, initial) {
+    if (!inherits(initial, "units")) return(value)
+    units::set_units(value, units::deparse_unit(initial), mode = "standard")
 }
 
 #' Print an estimated-parameter specification

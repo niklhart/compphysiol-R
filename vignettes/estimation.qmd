@@ -109,19 +109,19 @@ units.
 
 Every estimated parameter has an explicit initial estimate. Bounds and an
 internal transformation are optional. Log transformations are convenient for
-strictly positive rate and scale parameters.
+strictly positive rate and scale parameters. Omitted bounds adapt to the
+transformation and inherit the initial value's units: identity uses an unbounded
+interval, log uses a zero lower bound, and logit uses the interval from zero to one.
 
 ```{r}
 #| label: estimated-parameters
 estimates <- c(
     k = parameter_estimate(
         initial = 0.1 [1/h],
-        lower = 0 [1/h],
         transform = "log"
     ),
     sigma = parameter_estimate(
         initial = 1 [mg/L],
-        lower = 0 [mg/L],
         transform = "log"
     )
 )
