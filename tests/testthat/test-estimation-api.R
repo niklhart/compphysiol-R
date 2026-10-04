@@ -262,9 +262,32 @@ test_that("estimate consumes an EstimationProblem and returns a stable result", 
     expect_s3_class(residuals(fit)$value, "units")
     expect_equal(fitted(fit)$time, with_units(c(1, 2, 4) [h]))
     expect_identical(units::deparse_unit(fitted(fit)$value), "mg L-1")
+    expect_identical(names(fitted(fit)), c("time", "observable", "value", "experiment"))
+    expect_identical(names(residuals(fit)), c("time", "observable", "value", "experiment"))
     expect_true(is.list(fit$backend_result))
     expect_equal(as.numeric(coef(fit)$k), 0.197, tolerance = 0.01)
     expect_identical(fit$convergence$code, 0L)
+})
+
+test_that("estimation diagnostics retain rows with missing observations", {
+    study <- estimation_test_experiment()
+    study$observations$value[[2]] <- NA_real_ * study$observations$value[[2]]
+    problem <- estimation_problem(
+        estimation_test_model(),
+        study,
+        estimated_parameters(
+            k = parameter_estimate(0.1 [1/h], lower = 0 [1/h], transform = "log"),
+            sigma = parameter_estimate(1 [mg/L], lower = 0 [mg/L], transform = "log")
+        ),
+        observation_model(C = additive_error(sigma = "sigma"))
+    )
+
+    fit <- estimate(problem, backend = optim_backend(control = list(maxit = 50)))
+
+    expect_equal(nrow(fitted(fit)), nrow(study$observations))
+    expect_equal(nrow(residuals(fit)), nrow(study$observations))
+    expect_false(is.na(fitted(fit)$value[[2]]))
+    expect_true(is.na(residuals(fit)$value[[2]]))
 })
 
 test_that("estimate runs lowered deterministic representations", {

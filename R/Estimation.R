@@ -453,23 +453,26 @@ estimate.EstimationProblem <- function(
         }
         for (j in seq_len(nrow(observed))) {
             obs <- observed$value[[j]]
-            if (length(obs) != 1L || is.na(obs)) next
             pred <- predicted$value[[j]]
+            if (diagnostics) {
+                aligned <- .estimation_align_values(obs, pred, "observed value")
+                prediction_rows[[length(prediction_rows) + 1L]] <- list(
+                    experiment = label, time = observed$time[[j]],
+                    observable = observed$observable[[j]],
+                    value = .estimation_restore_unit(aligned$predicted, aligned$unit)
+                )
+                residual_rows[[length(residual_rows) + 1L]] <- list(
+                    experiment = label, time = observed$time[[j]],
+                    observable = observed$observable[[j]],
+                    value = .estimation_restore_unit(
+                        aligned$observed - aligned$predicted, aligned$unit
+                    )
+                )
+            }
+            if (length(obs) != 1L || is.na(obs)) next
             error <- observation[[observed$observable[[j]]]]
             contribution <- .estimation_error_nll(obs, pred, error, parameters)
             objective <- objective + contribution$nll
-            if (diagnostics) {
-                prediction_rows[[length(prediction_rows) + 1L]] <- list(
-                    experiment = label, row = j, time = observed$time[[j]],
-                    observable = observed$observable[[j]],
-                    value = .estimation_restore_unit(contribution$predicted, contribution$unit)
-                )
-                residual_rows[[length(residual_rows) + 1L]] <- list(
-                    experiment = label, row = j, time = observed$time[[j]],
-                    observable = observed$observable[[j]],
-                    value = .estimation_restore_unit(contribution$residual, contribution$unit)
-                )
-            }
         }
     }
     if (!diagnostics) return(objective)
@@ -493,8 +496,7 @@ estimate.EstimationProblem <- function(
         time = time,
         observable = vapply(rows, `[[`, character(1), "observable"),
         value = value,
-        experiment = vapply(rows, `[[`, character(1), "experiment"),
-        row = vapply(rows, `[[`, integer(1), "row")
+        experiment = vapply(rows, `[[`, character(1), "experiment")
     )
 }
 

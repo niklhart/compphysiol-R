@@ -431,6 +431,9 @@ to minimize the joint negative log-likelihood across experiments. An
 `EstimationResult` exposes coefficients, objective value, convergence
 information, fitted values, residuals, and the raw backend result.
 
+Fitted values and residuals preserve the observation rows and their order.
+Rows with missing observed values have a fitted value and a missing residual.
+
 Implementation anchors: `estimation_problem()` creates an `EstimationProblem`,
 `estimated_parameters()` declares shared estimates, `optim_backend()` configures
 the optimizer, and `estimate()` returns an `EstimationResult`.
