@@ -426,6 +426,14 @@ Omitted dosing targets match identically omitted targets; matching them to
 explicit targets requires later model-based resolution. These checks also apply
 when combining collections with `c()`.
 
+A shared experimental protocol can be extended across a realized population
+with `extend_protocol()`. The protocol supplies dosing, observations, start,
+and shared parameters; each element of a `ParameterSets` population supplies
+the individual parameters for one resulting `Experiment`. Protocol and
+individual parameter names must not overlap. This explicit transformation
+produces an `Experiments` collection before simulation rather than adding a
+population concept to `simulate()`.
+
 ## Estimation problem
 
 An estimation problem combines a deterministic dynamic model, one or more
