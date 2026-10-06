@@ -1,6 +1,10 @@
-.statistical_parameter_name <- function(x, label) {
-    if (!is.character(x) || length(x) != 1L || is.na(x) || !nzchar(trimws(x))) {
-        stop(label, " must name a statistical parameter.", call. = FALSE)
+.statistical_value_spec <- function(x, label) {
+    is_name <- is.character(x) && length(x) == 1L && !is.na(x) && nzchar(trimws(x))
+    is_value <- is.numeric(x) && is.null(dim(x)) && length(x) == 1L &&
+        !is.na(x) && is.finite(x)
+    if (!is_name && !is_value) {
+        stop(label, " must be a statistical-parameter name or a finite numeric scalar.",
+             call. = FALSE)
     }
     x
 }
@@ -21,9 +25,10 @@
 #' is `coefficient * abs(mean)`. The combined convention is initially
 #' `constant + proportional * abs(mean)`.
 #'
-#' @param coefficient Name of a dimensionless statistical parameter.
-#' @param constant Name of a statistical parameter with the target's units.
-#' @param proportional Name of a dimensionless statistical parameter.
+#' @param coefficient Name or fixed scalar value of a dimensionless coefficient.
+#' @param constant Name or fixed scalar value of a component with the target's
+#'   units.
+#' @param proportional Name or fixed scalar value of a dimensionless component.
 #' @returns A standard-deviation specification for use in [normal()].
 #' @name sd_specifications
 NULL
@@ -31,16 +36,19 @@ NULL
 #' @rdname sd_specifications
 #' @export
 proportional <- function(coefficient) {
-    coefficient <- .statistical_parameter_name(coefficient, "coefficient")
+    coefficient <- .process_nse_arg(substitute(coefficient), envir = parent.frame())
+    coefficient <- .statistical_value_spec(coefficient, "coefficient")
     structure(list(coefficient = coefficient), class = "ProportionalSD")
 }
 
 #' @rdname sd_specifications
 #' @export
 combined <- function(constant, proportional) {
-    constant <- .statistical_parameter_name(constant, "constant")
-    proportional <- .statistical_parameter_name(proportional, "proportional")
-    if (identical(constant, proportional)) {
+    constant <- .process_nse_arg(substitute(constant), envir = parent.frame())
+    proportional <- .process_nse_arg(substitute(proportional), envir = parent.frame())
+    constant <- .statistical_value_spec(constant, "constant")
+    proportional <- .statistical_value_spec(proportional, "proportional")
+    if (is.character(constant) && identical(constant, proportional)) {
         stop("Combined constant and proportional parameters must be distinct.", call. = FALSE)
     }
     structure(
@@ -51,26 +59,28 @@ combined <- function(constant, proportional) {
 
 #' Statistical distribution specifications
 #'
-#' `normal()` uses a mean and a standard-deviation specification. A bare name in
-#' `sd` denotes a constant standard deviation; [proportional()] and [combined()]
-#' describe mean-dependent standard deviations.
+#' `normal()` uses a mean and a standard-deviation specification. A bare name or
+#' fixed scalar in `sd` denotes a constant standard deviation; [proportional()]
+#' and [combined()] describe mean-dependent standard deviations. Locations and
+#' scale components may likewise be statistical-parameter names or fixed scalar
+#' values, including unit-bearing values where appropriate.
 #'
 #' `lognormal()` uses the median (equivalently, the geometric mean) as its
 #' location. It intentionally does not accept arithmetic-mean or raw log-mean
-#' parameterizations. `sdlog` names a dimensionless log-scale standard
-#' deviation.
+#' parameterizations. `sdlog` is a dimensionless log-scale standard deviation.
 #'
-#' Missing locations are resolved by [validate_statistical_model()]: an
-#' observable uses its model prediction, while a structural parameter requires
-#' an explicit location.
+#' Missing locations are resolved internally when the statistical model is
+#' checked against a dynamic model: an observable uses its model prediction,
+#' while a structural parameter requires an explicit location.
 #'
-#' @param mean Name of the normal location parameter, or `NULL` for an
-#'   observable prediction default.
-#' @param sd Name of a constant standard-deviation parameter, or a specification
-#'   from [proportional()] or [combined()].
-#' @param median Name of the log-normal median parameter, or `NULL` for an
-#'   observable prediction default.
-#' @param sdlog Name of a dimensionless log-scale standard-deviation parameter.
+#' @param mean Name or fixed scalar value of the normal location, or `NULL` for
+#'   an observable prediction default.
+#' @param sd Name or fixed scalar value of a constant standard deviation, or a
+#'   specification from [proportional()] or [combined()].
+#' @param median Name or fixed scalar value of the log-normal median, or `NULL`
+#'   for an observable prediction default.
+#' @param sdlog Name or fixed dimensionless scalar value of the log-scale
+#'   standard deviation.
 #' @param level `NULL`, `"individual"`, or `"observation"`. `NULL` is inferred
 #'   from the target when validated against a dynamic model.
 #' @returns A `StatisticalDistribution` object.
@@ -80,13 +90,12 @@ NULL
 #' @rdname statistical_distributions
 #' @export
 normal <- function(mean = NULL, sd, level = NULL) {
-    if (!is.null(mean)) mean <- .statistical_parameter_name(mean, "mean")
+    mean <- .process_nse_arg(substitute(mean), envir = parent.frame())
+    if (!is.null(mean)) mean <- .statistical_value_spec(mean, "mean")
     if (missing(sd)) stop("sd must be supplied.", call. = FALSE)
-    if (is.character(sd)) {
-        sd <- .statistical_parameter_name(sd, "sd")
-    } else if (!inherits(sd, c("ProportionalSD", "CombinedSD"))) {
-        stop("sd must name a statistical parameter or use proportional() or combined().",
-             call. = FALSE)
+    sd <- .process_nse_arg(substitute(sd), envir = parent.frame())
+    if (!inherits(sd, c("ProportionalSD", "CombinedSD"))) {
+        sd <- .statistical_value_spec(sd, "sd")
     }
     structure(
         list(mean = mean, sd = sd, level = .statistical_level(level)),
@@ -97,9 +106,11 @@ normal <- function(mean = NULL, sd, level = NULL) {
 #' @rdname statistical_distributions
 #' @export
 lognormal <- function(median = NULL, sdlog, level = NULL) {
-    if (!is.null(median)) median <- .statistical_parameter_name(median, "median")
+    median <- .process_nse_arg(substitute(median), envir = parent.frame())
+    if (!is.null(median)) median <- .statistical_value_spec(median, "median")
     if (missing(sdlog)) stop("sdlog must be supplied.", call. = FALSE)
-    sdlog <- .statistical_parameter_name(sdlog, "sdlog")
+    sdlog <- .process_nse_arg(substitute(sdlog), envir = parent.frame())
+    sdlog <- .statistical_value_spec(sdlog, "sdlog")
     structure(
         list(median = median, sdlog = sdlog, level = .statistical_level(level)),
         class = c("LognormalDistribution", "StatisticalDistribution")
@@ -110,7 +121,7 @@ lognormal <- function(median = NULL, sdlog, level = NULL) {
 #'
 #' The left-hand-side name identifies the random quantity. Targets are resolved
 #' as unresolved structural parameters or model observables when the statistical
-#' model is passed to [validate_statistical_model()].
+#' model is resolved against a dynamic model by downstream statistical workflows.
 #'
 #' @param ... Named distribution specifications created by [normal()] or
 #'   [lognormal()].
@@ -148,34 +159,7 @@ statistical_model <- function(...) {
     structure(unclass(x)[i], class = c("StatisticalModel", "list"))
 }
 
-#' Validate and resolve a statistical model
-#'
-#' Missing levels are inferred from the dynamic model. Unresolved/free
-#' structural parameters resolve to `"individual"`; observables resolve to
-#' `"observation"`. A target matching both requires an explicit level, and an
-#' unknown target is rejected. Fixed structural parameters cannot be
-#' individual-level targets.
-#'
-#' Missing locations resolve to the dynamic-model prediction only for
-#' observation-level distributions. Individual-level distributions require an
-#' explicit `mean` or `median`.
-#'
-#' If `parameters` is supplied, referenced statistical parameters are checked
-#' for existence, scalar numeric values, and compatible units. The values must
-#' also supply any dynamic-model free parameters not represented by
-#' individual-level distributions so observable and structural target units can
-#' be evaluated.
-#'
-#' @param x A [StatisticalModel][statistical_model()].
-#' @param model A `CompartmentModel`, `ProcessModel`, `OdeModel`, or
-#'   `CompiledOdeModel`.
-#' @param parameters Optional [Parameters][parameters()] object containing
-#'   realized statistical-parameter values and any otherwise unresolved dynamic
-#'   parameters needed for unit evaluation.
-#' @returns A resolved `StatisticalModel` object with inferred levels and
-#'   observation-prediction locations.
-#' @export
-validate_statistical_model <- function(x, model, parameters = NULL) {
+.resolve_statistical_model <- function(x, model, parameters = NULL) {
     .check_class(x, "StatisticalModel")
     ode_model <- .statistical_ode_model(model)
     structural <- unique(c(names(ode_model$parameters), ode_model$freeParams))
@@ -241,12 +225,13 @@ validate_statistical_model <- function(x, model, parameters = NULL) {
          class(model)[[1]] %||% typeof(model), ".", call. = FALSE)
 }
 
-.statistical_parameter_value <- function(parameters, name) {
-    value <- parameters[[name]]
-    if (is.null(value)) stop("Missing statistical parameter: ", name, ".", call. = FALSE)
+.statistical_value <- function(spec, parameters, label) {
+    if (!is.character(spec)) return(spec)
+    value <- parameters[[spec]]
+    if (is.null(value)) stop("Missing statistical parameter: ", spec, ".", call. = FALSE)
     if (!is.numeric(value) || !is.null(dim(value)) || length(value) != 1L ||
         is.na(value) || !is.finite(value)) {
-        stop("Statistical parameter '", name, "' must be a finite numeric scalar.",
+        stop("Statistical parameter '", spec, "' must be a finite numeric scalar.",
              call. = FALSE)
     }
     value
@@ -276,12 +261,12 @@ validate_statistical_model <- function(x, model, parameters = NULL) {
     for (target in names(x)) {
         distribution <- x[[target]]
         if (!identical(distribution$level, "individual")) next
-        location_name <- if (inherits(distribution, "NormalDistribution")) {
+        location <- if (inherits(distribution, "NormalDistribution")) {
             distribution$mean
         } else {
             distribution$median
         }
-        runtime[[target]] <- .statistical_parameter_value(parameters, location_name)
+        runtime[[target]] <- .statistical_value(location, parameters, "location")
     }
     runtime <- structure(runtime, class = c("Parameters", "list"))
     missing <- setdiff(model$freeParams, names(runtime))
@@ -303,44 +288,49 @@ validate_statistical_model <- function(x, model, parameters = NULL) {
         }
         if (inherits(distribution, "NormalDistribution")) {
             if (!inherits(distribution$mean, "PredictionLocation")) {
-                mean_value <- .statistical_parameter_value(parameters, distribution$mean)
+                mean_value <- .statistical_value(distribution$mean, parameters, "mean")
                 .statistical_require_target_units(mean_value, target_value,
-                                                  distribution$mean, target)
+                    .statistical_spec_label(distribution$mean, "fixed mean"), target)
             }
-            if (is.character(distribution$sd)) {
-                sd_value <- .statistical_parameter_value(parameters, distribution$sd)
+            if (!inherits(distribution$sd, c("ProportionalSD", "CombinedSD"))) {
+                sd_value <- .statistical_value(distribution$sd, parameters, "sd")
                 .statistical_require_target_units(sd_value, target_value,
-                                                  distribution$sd, target)
+                    .statistical_spec_label(distribution$sd, "fixed sd"), target)
             } else if (inherits(distribution$sd, "ProportionalSD")) {
-                name <- distribution$sd$coefficient
+                spec <- distribution$sd$coefficient
                 .statistical_require_dimensionless(
-                    .statistical_parameter_value(parameters, name), name
+                    .statistical_value(spec, parameters, "coefficient"),
+                    .statistical_spec_label(spec, "fixed coefficient")
                 )
             } else {
                 constant <- distribution$sd$constant
-                proportional_name <- distribution$sd$proportional
+                proportional_spec <- distribution$sd$proportional
                 .statistical_require_target_units(
-                    .statistical_parameter_value(parameters, constant), target_value,
-                    constant, target
+                    .statistical_value(constant, parameters, "constant"), target_value,
+                    .statistical_spec_label(constant, "fixed constant"), target
                 )
                 .statistical_require_dimensionless(
-                    .statistical_parameter_value(parameters, proportional_name),
-                    proportional_name
+                    .statistical_value(proportional_spec, parameters, "proportional"),
+                    .statistical_spec_label(proportional_spec, "fixed proportional")
                 )
             }
         } else {
             if (!inherits(distribution$median, "PredictionLocation")) {
-                median_value <- .statistical_parameter_value(parameters, distribution$median)
+                median_value <- .statistical_value(distribution$median, parameters, "median")
                 .statistical_require_target_units(median_value, target_value,
-                                                  distribution$median, target)
+                    .statistical_spec_label(distribution$median, "fixed median"), target)
             }
             .statistical_require_dimensionless(
-                .statistical_parameter_value(parameters, distribution$sdlog),
-                distribution$sdlog
+                .statistical_value(distribution$sdlog, parameters, "sdlog"),
+                .statistical_spec_label(distribution$sdlog, "fixed sdlog")
             )
         }
     }
     invisible(NULL)
+}
+
+.statistical_spec_label <- function(spec, fixed) {
+    if (is.character(spec)) spec else fixed
 }
 
 #' Print a statistical model
@@ -360,7 +350,7 @@ print.StatisticalModel <- function(x, ...) {
         family <- if (inherits(d, "NormalDistribution")) "normal" else "lognormal"
         location <- if (inherits(d, "NormalDistribution")) d$mean else d$median
         location <- if (inherits(location, "PredictionLocation")) "prediction" else {
-            location %||% "<unresolved>"
+            if (is.null(location)) "<unresolved>" else paste(format(location), collapse = ", ")
         }
         level <- d$level %||% "<unresolved>"
         cat(sprintf("  (%s) %s: %s; location = %s; level = %s\n",

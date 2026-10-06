@@ -16,7 +16,7 @@ A \code{StatisticalModel} object.
 \description{
 The left-hand-side name identifies the random quantity. Targets are resolved
 as unresolved structural parameters or model observables when the statistical
-model is passed to \code{\link[=validate_statistical_model]{validate_statistical_model()}}.
+model is resolved against a dynamic model by downstream statistical workflows.
 }
 \examples{
 model <- statistical_model(

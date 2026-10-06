@@ -33,15 +33,32 @@ test_that("distribution constructors represent the unified vocabulary", {
 
 test_that("distribution constructors reject ambiguous specifications", {
     expect_error(normal(), "sd")
-    expect_error(normal(sd = 1), "name|proportional|combined")
-    expect_error(normal(sd = ""), "statistical parameter")
+    expect_error(normal(sd = c(1, 2)), "name|scalar")
+    expect_error(normal(sd = ""), "name|scalar")
     expect_error(normal(sd = "sigma", level = "population"), "level")
-    expect_error(proportional(""), "statistical parameter")
+    expect_error(proportional(""), "name|scalar")
     expect_error(combined("sigma", "sigma"), "distinct")
     expect_error(lognormal(), "sdlog")
-    expect_error(lognormal(sdlog = 1), "statistical parameter")
+    expect_error(lognormal(sdlog = c(0.1, 0.2)), "name|scalar")
     expect_error(lognormal(mean = "V_pop", sdlog = "omega"), "unused argument")
     expect_error(lognormal(logmean = "log_V", sdlog = "omega"), "unused argument")
+})
+
+test_that("distribution constructors accept fixed scalar specifications", {
+    fixed <- normal(mean = 2 [L/h], sd = 0.5 [L/h])
+    scaled <- normal(
+        mean = 2 [L/h],
+        sd = combined(constant = 0.1 [L/h], proportional = 0.2)
+    )
+    log_dist <- lognormal(median = 10 [L], sdlog = 0.3)
+
+    expect_equal(fixed$mean, with_units(2 [L/h]))
+    expect_equal(fixed$sd, with_units(0.5 [L/h]))
+    expect_equal(scaled$sd$constant, with_units(0.1 [L/h]))
+    expect_identical(scaled$sd$proportional, 0.2)
+    expect_equal(log_dist$median, with_units(10 [L]))
+    expect_identical(log_dist$sdlog, 0.3)
+    expect_s3_class(proportional(0.2), "ProportionalSD")
 })
 
 test_that("statistical_model uses names as random-quantity targets", {
@@ -70,7 +87,7 @@ test_that("validation infers levels and observable prediction locations", {
         C = lognormal(sdlog = "sigma")
     )
 
-    resolved <- validate_statistical_model(model, dynamic)
+    resolved <- .resolve_statistical_model(model, dynamic)
 
     expect_identical(resolved$CL$level, "individual")
     expect_identical(resolved$CL$mean, "CL_pop")
@@ -83,30 +100,30 @@ test_that("validation rejects unresolved and ambiguous targets", {
     dynamic <- statistical_test_model()
 
     expect_error(
-        validate_statistical_model(statistical_model(CL = normal(sd = "omega")), dynamic),
+        .resolve_statistical_model(statistical_model(CL = normal(sd = "omega")), dynamic),
         "requires an explicit mean"
     )
     expect_error(
-        validate_statistical_model(
+        .resolve_statistical_model(
             statistical_model(CL = lognormal(sdlog = "omega")), dynamic
         ),
         "requires an explicit median"
     )
     expect_error(
-        validate_statistical_model(
+        .resolve_statistical_model(
             statistical_model(unknown = normal(mean = "mu", sd = "sigma")), dynamic
         ),
         "Unknown.*unknown"
     )
     expect_error(
-        validate_statistical_model(
+        .resolve_statistical_model(
             statistical_model(C = normal(mean = "mu", sd = "sigma", level = "individual")),
             dynamic
         ),
         "not a structural parameter"
     )
     expect_error(
-        validate_statistical_model(
+        .resolve_statistical_model(
             statistical_model(CL = normal(mean = "mu", sd = "sigma")),
             statistical_test_model(fixed_cl = TRUE)
         ),
@@ -115,9 +132,9 @@ test_that("validation rejects unresolved and ambiguous targets", {
 
     both <- statistical_test_model(observable_cl = TRUE)
     ambiguous <- statistical_model(CL = normal(mean = "mu", sd = "sigma"))
-    expect_error(validate_statistical_model(ambiguous, both), "both.*explicitly")
+    expect_error(.resolve_statistical_model(ambiguous, both), "both.*explicitly")
     expect_identical(
-        validate_statistical_model(
+        .resolve_statistical_model(
             statistical_model(CL = normal(sd = "sigma", level = "observation")), both
         )$CL$level,
         "observation"
@@ -139,25 +156,46 @@ test_that("validation checks distribution parameter units", {
         sigma_prop = 0.1
     )
 
-    expect_no_error(validate_statistical_model(model, dynamic, values))
+    expect_no_error(.resolve_statistical_model(model, dynamic, values))
     expect_error(
-        validate_statistical_model(model, dynamic, c(values[setdiff(names(values), "CL_pop")],
+        .resolve_statistical_model(model, dynamic, c(values[setdiff(names(values), "CL_pop")],
             parameters(CL_pop = 1 [kg]))),
         "unit|units|right-hand side"
     )
     expect_error(
-        validate_statistical_model(model, dynamic, c(values[setdiff(names(values), "omega_CL")],
+        .resolve_statistical_model(model, dynamic, c(values[setdiff(names(values), "omega_CL")],
             parameters(omega_CL = 0.2 [kg]))),
         "dimensionless"
     )
     expect_error(
-        validate_statistical_model(model, dynamic, c(values[setdiff(names(values), "sigma_add")],
+        .resolve_statistical_model(model, dynamic, c(values[setdiff(names(values), "sigma_add")],
             parameters(sigma_add = 1 [kg]))),
         "units"
     )
     expect_error(
-        validate_statistical_model(model, dynamic, values[setdiff(names(values), "sigma_prop")]),
+        .resolve_statistical_model(model, dynamic, values[setdiff(names(values), "sigma_prop")]),
         "Missing statistical parameter: sigma_prop"
+    )
+})
+
+test_that("validation supports fully fixed distribution parameters", {
+    dynamic <- statistical_test_model()
+    model <- statistical_model(
+        CL = lognormal(median = 1 [L/h], sdlog = 0.2),
+        C = normal(sd = 1 [mg/L])
+    )
+
+    expect_no_error(.resolve_statistical_model(model, dynamic, parameters()))
+    expect_error(
+        .resolve_statistical_model(
+            statistical_model(
+                CL = lognormal(median = 1 [L/h], sdlog = 0.2),
+                C = normal(sd = 1)
+            ),
+            dynamic,
+            parameters()
+        ),
+        "units"
     )
 })
 
@@ -169,16 +207,16 @@ test_that("log-normal median uses target units and sdlog is dimensionless", {
     )
     values <- parameters(CL_pop = 1 [L/h], omega_CL = 0.2, sigma = 0.1)
 
-    expect_no_error(validate_statistical_model(model, dynamic, values))
+    expect_no_error(.resolve_statistical_model(model, dynamic, values))
     expect_error(
-        validate_statistical_model(
+        .resolve_statistical_model(
             model, dynamic,
             parameters(CL_pop = 1 [L/h], omega_CL = 0.2 [kg], sigma = 0.1)
         ),
         "dimensionless"
     )
     expect_error(
-        validate_statistical_model(
+        .resolve_statistical_model(
             model, dynamic,
             parameters(CL_pop = 1 [L/h], omega_CL = 0.2, sigma = 0.1 [mg/L])
         ),

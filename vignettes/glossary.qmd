@@ -375,9 +375,11 @@ distributions describe individual variability; observable distributions
 describe observation variability. The statistical model does not obtain a
 population location implicitly from a fixed structural-model value.
 
-The primary distribution families are `normal()` and `lognormal()`. A normal
+The primary distribution families are `normal()` and `lognormal()`. Locations
+and scale components may refer to statistical parameters by name or may be
+fixed scalar values. Unit-bearing fixed values are retained. A normal
 distribution has a mean and a standard-deviation specification. A bare
-standard-deviation parameter is constant, `proportional()` means the
+standard-deviation name or value is constant, `proportional()` means the
 coefficient times the absolute resolved mean, and `combined()` initially means
 the constant component plus the proportional component times the absolute
 resolved mean. This additive convention is explicit; a future quadrature
@@ -404,10 +406,10 @@ Consequently realized structural values retain structural target units and
 observations retain observable units.
 
 Implementation anchor: `statistical_model()` collects distribution
-specifications, and `validate_statistical_model()` resolves them against a
-dynamic model. Supplying realized statistical parameters to validation enables
-dimensional checks. Integration with `estimation_problem()` remains a later
-step; the existing observation-model estimation API is unchanged for now.
+specifications. Model-dependent resolution and dimensional checks are internal
+until a stable public workflow consumes statistical models. Integration with
+`estimation_problem()` remains a later step; the existing observation-model
+estimation API is unchanged for now.
 
 ## Experiment
 

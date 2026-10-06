@@ -11,35 +11,37 @@ normal(mean = NULL, sd, level = NULL)
 lognormal(median = NULL, sdlog, level = NULL)
 }
 \arguments{
-\item{mean}{Name of the normal location parameter, or \code{NULL} for an
-observable prediction default.}
+\item{mean}{Name or fixed scalar value of the normal location, or \code{NULL} for
+an observable prediction default.}
 
-\item{sd}{Name of a constant standard-deviation parameter, or a specification
-from \code{\link[=proportional]{proportional()}} or \code{\link[=combined]{combined()}}.}
+\item{sd}{Name or fixed scalar value of a constant standard deviation, or a
+specification from \code{\link[=proportional]{proportional()}} or \code{\link[=combined]{combined()}}.}
 
 \item{level}{\code{NULL}, \code{"individual"}, or \code{"observation"}. \code{NULL} is inferred
 from the target when validated against a dynamic model.}
 
-\item{median}{Name of the log-normal median parameter, or \code{NULL} for an
-observable prediction default.}
+\item{median}{Name or fixed scalar value of the log-normal median, or \code{NULL}
+for an observable prediction default.}
 
-\item{sdlog}{Name of a dimensionless log-scale standard-deviation parameter.}
+\item{sdlog}{Name or fixed dimensionless scalar value of the log-scale
+standard deviation.}
 }
 \value{
 A \code{StatisticalDistribution} object.
 }
 \description{
-\code{normal()} uses a mean and a standard-deviation specification. A bare name in
-\code{sd} denotes a constant standard deviation; \code{\link[=proportional]{proportional()}} and \code{\link[=combined]{combined()}}
-describe mean-dependent standard deviations.
+\code{normal()} uses a mean and a standard-deviation specification. A bare name or
+fixed scalar in \code{sd} denotes a constant standard deviation; \code{\link[=proportional]{proportional()}}
+and \code{\link[=combined]{combined()}} describe mean-dependent standard deviations. Locations and
+scale components may likewise be statistical-parameter names or fixed scalar
+values, including unit-bearing values where appropriate.
 }
 \details{
 \code{lognormal()} uses the median (equivalently, the geometric mean) as its
 location. It intentionally does not accept arithmetic-mean or raw log-mean
-parameterizations. \code{sdlog} names a dimensionless log-scale standard
-deviation.
+parameterizations. \code{sdlog} is a dimensionless log-scale standard deviation.
 
-Missing locations are resolved by \code{\link[=validate_statistical_model]{validate_statistical_model()}}: an
-observable uses its model prediction, while a structural parameter requires
-an explicit location.
+Missing locations are resolved internally when the statistical model is
+checked against a dynamic model: an observable uses its model prediction,
+while a structural parameter requires an explicit location.
 }

@@ -11,11 +11,12 @@ proportional(coefficient)
 combined(constant, proportional)
 }
 \arguments{
-\item{coefficient}{Name of a dimensionless statistical parameter.}
+\item{coefficient}{Name or fixed scalar value of a dimensionless coefficient.}
 
-\item{constant}{Name of a statistical parameter with the target's units.}
+\item{constant}{Name or fixed scalar value of a component with the target's
+units.}
 
-\item{proportional}{Name of a dimensionless statistical parameter.}
+\item{proportional}{Name or fixed scalar value of a dimensionless component.}
 }
 \value{
 A standard-deviation specification for use in \code{\link[=normal]{normal()}}.
