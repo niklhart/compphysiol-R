@@ -428,9 +428,11 @@ Omitted bounds depend on the transformation and inherit the initial value's
 units. Identity uses an unbounded interval, log uses zero as its lower bound and
 has no finite upper bound, and logit uses the interval from zero to one.
 
-An individual specification is a `ParameterEstimate`. Named specifications are
-combined with `c()` into a `ParameterEstimates` collection. Collections can be
+An individual specification is a `ParameterSpec`. Named specifications are
+combined with `c()` into a `ParameterSpecs` collection. Collections can be
 combined again; `[` retains a collection, while `[[` extracts one specification.
+`ParameterEstimate` and `ParameterEstimates` are reserved for future fitted
+results that contain parameter estimates and their uncertainty.
 
 Current estimation supports `CompartmentModel`, `ProcessModel`, `OdeModel`, and
 `CompiledOdeModel` inputs. Analytical and stochastic model representations are
@@ -444,7 +446,7 @@ Fitted values and residuals preserve the observation rows and their order.
 Rows with missing observed values have a fitted value and a missing residual.
 
 Implementation anchors: `estimation_problem()` creates an `EstimationProblem`,
-`parameter_estimate()` declares an individual estimate, `c()` combines estimates,
+`parameter_spec()` declares an individual specification, `c()` combines specifications,
 `optim_backend()` configures the optimizer, and `estimate()` returns an
 `EstimationResult`.
 

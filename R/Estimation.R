@@ -85,9 +85,9 @@ lognormal_error <- function(sigma = "sigma") {
 #' @param transform Internal optimizer transformation: `"identity"`, `"log"`,
 #'   or `"logit"`. Log transforms require a positive initial value. Logit
 #'   transforms require finite lower and upper bounds.
-#' @returns A `ParameterEstimate` object.
+#' @returns A `ParameterSpec` object.
 #' @export
-parameter_estimate <- function(
+parameter_spec <- function(
     initial,
     lower = NULL,
     upper = NULL,
@@ -134,7 +134,7 @@ parameter_estimate <- function(
     }
     structure(
         list(initial = initial, lower = lower, upper = upper, transform = transform),
-        class = "ParameterEstimate"
+        class = "ParameterSpec"
     )
 }
 
@@ -145,18 +145,18 @@ parameter_estimate <- function(
 
 #' Print an estimated-parameter specification
 #'
-#' @param x A `ParameterEstimate` object.
+#' @param x A `ParameterSpec` object.
 #' @param ... Unused.
 #' @returns `x`, invisibly.
 #' @export
-print.ParameterEstimate <- function(x, ...) {
+print.ParameterSpec <- function(x, ...) {
     unit <- if (inherits(x$initial, "units")) units::deparse_unit(x$initial) else NULL
     values <- c(
         initial = as.numeric(x$initial),
         lower = .estimation_bound_numeric(x$lower, x$initial, "lower"),
         upper = .estimation_bound_numeric(x$upper, x$initial, "upper")
     )
-    cat("ParameterEstimate:\n")
+    cat("ParameterSpec:\n")
     cat(" initial: ", format(values[["initial"]], trim = TRUE), "\n", sep = "")
     cat(" bounds: [", format(values[["lower"]], trim = TRUE), ", ",
         format(values[["upper"]], trim = TRUE), "]\n", sep = "")
@@ -194,93 +194,93 @@ print.ParameterEstimate <- function(x, ...) {
 
 #' Combine parameter-estimation specifications
 #'
-#' Named [parameter_estimate()] objects and existing `ParameterEstimates`
+#' Named [parameter_spec()] objects and existing `ParameterSpecs`
 #' collections can be combined with `c()`. Names identify the model or
 #' observation-model parameters being estimated.
 #'
-#' @param ... Named `ParameterEstimate` or `ParameterEstimates` objects.
+#' @param ... Named `ParameterSpec` or `ParameterSpecs` objects.
 #' @param recursive Unused.
-#' @returns A `ParameterEstimates` collection.
-#' @name parameter_estimates
+#' @returns A `ParameterSpecs` collection.
+#' @name parameter_specs
 NULL
 
-#' @rdname parameter_estimates
+#' @rdname parameter_specs
 #' @export
-c.ParameterEstimate <- function(..., recursive = FALSE) {
-    .combine_parameter_estimates(list(...))
+c.ParameterSpec <- function(..., recursive = FALSE) {
+    .combine_parameter_specs(list(...))
 }
 
-#' @rdname parameter_estimates
+#' @rdname parameter_specs
 #' @export
-c.ParameterEstimates <- function(..., recursive = FALSE) {
-    .combine_parameter_estimates(list(...))
+c.ParameterSpecs <- function(..., recursive = FALSE) {
+    .combine_parameter_specs(list(...))
 }
 
-.combine_parameter_estimates <- function(x) {
+.combine_parameter_specs <- function(x) {
     labels <- names(x)
     if (is.null(labels)) labels <- rep("", length(x))
     out <- list()
     for (i in seq_along(x)) {
         item <- x[[i]]
         label <- labels[[i]]
-        if (inherits(item, "ParameterEstimate")) {
+        if (inherits(item, "ParameterSpec")) {
             if (is.na(label) || !nzchar(label)) {
-                stop("Every parameter estimate must be named.", call. = FALSE)
+                stop("Every parameter specification must be named.", call. = FALSE)
             }
             part <- setNames(list(item), label)
-        } else if (inherits(item, "ParameterEstimates")) {
+        } else if (inherits(item, "ParameterSpecs")) {
             part <- unclass(item)
             if (!is.na(label) && nzchar(label)) {
                 names(part) <- paste(label, names(part), sep = ".")
             }
         } else {
-            stop("c() can only combine ParameterEstimate and ParameterEstimates objects.",
+            stop("c() can only combine ParameterSpec and ParameterSpecs objects.",
                  call. = FALSE)
         }
         out <- append(out, part)
     }
-    .new_parameter_estimates(out)
+    .new_parameter_specs(out)
 }
 
-.new_parameter_estimates <- function(x = list()) {
+.new_parameter_specs <- function(x = list()) {
     nm <- names(x)
     if (length(x) && (is.null(nm) || anyNA(nm) || any(!nzchar(nm)))) {
-        stop("Every parameter estimate must be named.", call. = FALSE)
+        stop("Every parameter specification must be named.", call. = FALSE)
     }
     if (anyDuplicated(nm)) {
-        stop("Parameter estimate names must be unique; duplicated names are not allowed.",
+        stop("Parameter specification names must be unique; duplicated names are not allowed.",
              call. = FALSE)
     }
-    if (!all(vapply(x, inherits, logical(1), "ParameterEstimate"))) {
-        stop("Every parameter estimate must be a ParameterEstimate object.", call. = FALSE)
+    if (!all(vapply(x, inherits, logical(1), "ParameterSpec"))) {
+        stop("Every parameter specification must be a ParameterSpec object.", call. = FALSE)
     }
-    structure(x, class = c("ParameterEstimates", "list"))
+    structure(x, class = c("ParameterSpecs", "list"))
 }
 
 #' Subset parameter-estimation specifications
 #'
-#' @param x A `ParameterEstimates` collection.
-#' @param i Indices or names of estimates to retain.
+#' @param x A `ParameterSpecs` collection.
+#' @param i Indices or names of specifications to retain.
 #' @param ... Unused.
-#' @returns A `ParameterEstimates` collection.
+#' @returns A `ParameterSpecs` collection.
 #' @export
-`[.ParameterEstimates` <- function(x, i, ...) {
+`[.ParameterSpecs` <- function(x, i, ...) {
     if (missing(i)) return(x)
-    .new_parameter_estimates(unclass(x)[i])
+    .new_parameter_specs(unclass(x)[i])
 }
 
 #' Print parameter-estimation specifications
 #'
-#' @param x A `ParameterEstimates` collection.
+#' @param x A `ParameterSpecs` collection.
 #' @param ... Unused.
 #' @returns `x`, invisibly.
 #' @export
-print.ParameterEstimates <- function(x, ...) {
+print.ParameterSpecs <- function(x, ...) {
     if (!length(x)) {
-        cat(" Parameter estimates: (none)\n")
+        cat(" Parameter specifications: (none)\n")
         return(invisible(x))
     }
-    cat(" Parameter estimates:\n")
+    cat(" Parameter specifications:\n")
     for (i in seq_along(x)) {
         estimate <- x[[i]]
         values <- c(
@@ -331,8 +331,8 @@ optim_backend <- function(
 #'   `CompiledOdeModel`.
 #' @param experiments An [Experiment][experiment()] or
 #'   [Experiments][experiments()] collection containing `ObservationData`.
-#' @param parameters Named [parameter_estimate()] objects combined with `c()`
-#'   into a `ParameterEstimates` collection.
+#' @param parameters Named [parameter_spec()] objects combined with `c()`
+#'   into a `ParameterSpecs` collection.
 #' @param observation An observation model from [observation_model()].
 #' @returns An `EstimationProblem` object.
 #' @export
@@ -344,7 +344,7 @@ estimation_problem <- function(model, experiments, parameters, observation) {
         stop(supplied, " is not supported for estimation. Supported models are ",
              paste(supported, collapse = ", "), ".", call. = FALSE)
     }
-    .check_class(parameters, "ParameterEstimates")
+    .check_class(parameters, "ParameterSpecs")
     .check_class(observation, "ObservationModel")
     if (inherits(experiments, "Experiment")) experiments <- .new_experiments(list(experiments))
     .check_class(experiments, "Experiments")

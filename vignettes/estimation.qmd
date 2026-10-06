@@ -115,18 +115,18 @@ interval, log uses a zero lower bound, and logit uses the interval from zero to 
 
 ```{r}
 #| label: estimated-parameters
-estimates <- c(
-    k = parameter_estimate(
+specs <- c(
+    k = parameter_spec(
         initial = 0.1 [1/h],
         transform = "log"
     ),
-    sigma = parameter_estimate(
+    sigma = parameter_spec(
         initial = 1 [mg/L],
         transform = "log"
     )
 )
 
-estimates
+specs
 ```
 
 The transformation affects only the optimizer coordinates. Returned estimates
@@ -143,7 +143,7 @@ with another estimation backend.
 problem <- estimation_problem(
     model = model,
     experiments = study,
-    parameters = estimates,
+    parameters = specs,
     observation = error_model
 )
 
@@ -238,7 +238,7 @@ remains unchanged.
 compiled_problem <- estimation_problem(
     model = to_compiled_ode_model(model),
     experiments = study,
-    parameters = estimates,
+    parameters = specs,
     observation = error_model
 )
 

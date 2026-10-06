@@ -13,8 +13,8 @@ estimation_problem(model, experiments, parameters, observation)
 \item{experiments}{An \link[=experiment]{Experiment} or
 \link[=experiments]{Experiments} collection containing \code{ObservationData}.}
 
-\item{parameters}{Named \code{\link[=parameter_estimate]{parameter_estimate()}} objects combined with \code{c()}
-into a \code{ParameterEstimates} collection.}
+\item{parameters}{Named \code{\link[=parameter_spec]{parameter_spec()}} objects combined with \code{c()}
+into a \code{ParameterSpecs} collection.}
 
 \item{observation}{An observation model from \code{\link[=observation_model]{observation_model()}}.}
 }
