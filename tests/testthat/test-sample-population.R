@@ -57,6 +57,28 @@ test_that("sample_population validates its sampling boundary", {
         sample_population(unresolved, parameters(CL_pop = 1, omega_CL = 0.2), 2),
         "explicit or resolved levels"
     )
+    selected <- sample_population(
+        unresolved, parameters(CL_pop = 1, omega_CL = 0), 2, targets = "CL"
+    )
+    expect_named(selected[[1]], "CL")
+    expect_equal(selected[[1]]$CL, 1)
+    expect_error(
+        sample_population(unresolved, parameters(CL_pop = 1, omega_CL = 0), 2,
+                          targets = "unknown"),
+        "Unknown statistical-model target"
+    )
+    expect_error(
+        sample_population(unresolved, parameters(CL_pop = 1, omega_CL = 0), 2,
+                          targets = c("CL", "CL")),
+        "duplicate"
+    )
+    expect_error(
+        sample_population(
+            statistical_model(C = normal(sd = 1, level = "observation")),
+            parameters(), 2, targets = "C"
+        ),
+        "Observation-level"
+    )
     expect_error(
         sample_population(
             statistical_model(CL = normal(mean = 1, sd = -1, level = "individual")),
@@ -80,6 +102,22 @@ test_that("sample_population validates its sampling boundary", {
         ),
         "positive whole number"
     )
+})
+
+test_that("explicit targets select exactly the requested unresolved entries", {
+    statistics <- statistical_model(
+        CL = normal(mean = "CL_pop", sd = 0),
+        V = lognormal(median = "V_pop", sdlog = 0),
+        C = normal(sd = "sigma")
+    )
+    values <- parameters(CL_pop = 1, V_pop = 10, sigma = 2)
+
+    population <- sample_population(statistics, values, n = 2, targets = c("V", "CL"))
+
+    expect_named(population[[1]], c("V", "CL"))
+    expect_equal(population[[1]]$V, 10)
+    expect_equal(population[[1]]$CL, 1)
+    expect_false("C" %in% names(population[[1]]))
 })
 
 test_that("sample_population returns empty parameter sets for observation-only models", {

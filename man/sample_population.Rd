@@ -4,7 +4,7 @@
 \alias{sample_population}
 \title{Sample a realized population}
 \usage{
-sample_population(statistics, parameters, n)
+sample_population(statistics, parameters, n, targets = NULL)
 }
 \arguments{
 \item{statistics}{A \code{StatisticalModel} with resolved or explicit levels.}
@@ -13,6 +13,10 @@ sample_population(statistics, parameters, n)
 parameters referenced by the individual-level distributions.}
 
 \item{n}{Positive whole number of individuals to sample.}
+
+\item{targets}{Optional character vector of statistical-model targets to
+sample. \code{NULL} samples all resolved individual-level entries. Explicit
+targets may have unresolved levels but must not be observation-level.}
 }
 \value{
 A named \code{ParameterSets} collection with names \code{individual_1},
@@ -26,19 +30,22 @@ parameters used as distribution locations or scales are not copied into the
 individual parameter sets.
 }
 \details{
-Because this operation has no dynamic-model argument, every statistical-model
-entry must have an explicit or previously resolved \code{level}.
+With \code{targets = NULL}, every statistical-model entry must have an explicit or
+previously resolved \code{level}, and all individual-level entries are sampled.
+Supplying \code{targets} explicitly selects exactly those entries and resolves an
+unspecified level as individual for this operation. An entry already marked
+as observation-level cannot be selected.
 }
 \examples{
 statistics <- statistical_model(
-    CL = lognormal(
-        median = "CL_pop", sdlog = "omega_CL", level = "individual"
-    ),
-    C = normal(sd = "sigma", level = "observation")
+    CL = lognormal(median = "CL_pop", sdlog = "omega_CL"),
+    C = normal(sd = "sigma")
 )
 population_parameters <- parameters(
     CL_pop = 1 [L/h], omega_CL = 0.2, sigma = 1 [mg/L]
 )
-population <- sample_population(statistics, population_parameters, n = 3)
+population <- sample_population(
+    statistics, population_parameters, n = 3, targets = "CL"
+)
 population
 }

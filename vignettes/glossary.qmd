@@ -404,6 +404,13 @@ parameters are inputs to sampling but are not copied into each realized
 individual. Observation-level entries are ignored. Correlated random effects
 are outside the current sampling contract.
 
+By default, sampling requires levels to have been made explicit or resolved and
+selects every individual-level entry. An explicit `targets` vector can instead
+identify exactly which statistical-model entries represent structural
+parameters to sample. This resolves missing levels for those entries without
+guessing from the availability of their population parameters; entries already
+marked observation-level cannot be selected.
+
 ## Experiment
 
 One experiment represents one independent individual simulation or estimation

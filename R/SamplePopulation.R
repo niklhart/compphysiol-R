@@ -6,29 +6,35 @@
 #' parameters used as distribution locations or scales are not copied into the
 #' individual parameter sets.
 #'
-#' Because this operation has no dynamic-model argument, every statistical-model
-#' entry must have an explicit or previously resolved `level`.
+#' With `targets = NULL`, every statistical-model entry must have an explicit or
+#' previously resolved `level`, and all individual-level entries are sampled.
+#' Supplying `targets` explicitly selects exactly those entries and resolves an
+#' unspecified level as individual for this operation. An entry already marked
+#' as observation-level cannot be selected.
 #'
 #' @param statistics A `StatisticalModel` with resolved or explicit levels.
 #' @param parameters A [Parameters][parameters()] object containing population
 #'   parameters referenced by the individual-level distributions.
 #' @param n Positive whole number of individuals to sample.
+#' @param targets Optional character vector of statistical-model targets to
+#'   sample. `NULL` samples all resolved individual-level entries. Explicit
+#'   targets may have unresolved levels but must not be observation-level.
 #' @returns A named `ParameterSets` collection with names `individual_1`,
 #'   `individual_2`, and so on.
 #' @examples
 #' statistics <- statistical_model(
-#'     CL = lognormal(
-#'         median = "CL_pop", sdlog = "omega_CL", level = "individual"
-#'     ),
-#'     C = normal(sd = "sigma", level = "observation")
+#'     CL = lognormal(median = "CL_pop", sdlog = "omega_CL"),
+#'     C = normal(sd = "sigma")
 #' )
 #' population_parameters <- parameters(
 #'     CL_pop = 1 [L/h], omega_CL = 0.2, sigma = 1 [mg/L]
 #' )
-#' population <- sample_population(statistics, population_parameters, n = 3)
+#' population <- sample_population(
+#'     statistics, population_parameters, n = 3, targets = "CL"
+#' )
 #' population
 #' @export
-sample_population <- function(statistics, parameters, n) {
+sample_population <- function(statistics, parameters, n, targets = NULL) {
     .check_class(statistics, "StatisticalModel")
     .check_class(parameters, "Parameters")
     if (!is.numeric(n) || length(n) != 1L || is.na(n) || !is.finite(n) ||
@@ -37,14 +43,39 @@ sample_population <- function(statistics, parameters, n) {
     }
     n <- as.integer(n)
 
-    unresolved <- names(statistics)[vapply(statistics, function(x) is.null(x$level), logical(1))]
-    if (length(unresolved)) {
-        stop("sample_population() requires explicit or resolved levels; unresolved target(s): ",
-             paste(unresolved, collapse = ", "), ".", call. = FALSE)
+    if (is.null(targets)) {
+        unresolved <- names(statistics)[vapply(
+            statistics, function(x) is.null(x$level), logical(1)
+        )]
+        if (length(unresolved)) {
+            stop("sample_population() requires explicit or resolved levels when targets is NULL; ",
+                 "supply targets for unresolved entries: ",
+                 paste(unresolved, collapse = ", "), ".", call. = FALSE)
+        }
+        targets <- names(statistics)[vapply(
+            statistics, function(x) identical(x$level, "individual"), logical(1)
+        )]
+    } else {
+        if (!is.character(targets) || anyNA(targets) || any(!nzchar(targets))) {
+            stop("targets must be NULL or a character vector of target names.", call. = FALSE)
+        }
+        if (anyDuplicated(targets)) {
+            stop("targets must not contain duplicate names.", call. = FALSE)
+        }
+        unknown <- setdiff(targets, names(statistics))
+        if (length(unknown)) {
+            stop("Unknown statistical-model target(s): ",
+                 paste(unknown, collapse = ", "), ".", call. = FALSE)
+        }
+        observation <- targets[vapply(statistics[targets], function(x) {
+            identical(x$level, "observation")
+        }, logical(1))]
+        if (length(observation)) {
+            stop("Observation-level target(s) cannot be sampled as individual parameters: ",
+                 paste(observation, collapse = ", "), ".", call. = FALSE)
+        }
     }
-    individual <- statistics[vapply(
-        statistics, function(x) identical(x$level, "individual"), logical(1)
-    )]
+    individual <- statistics[targets]
     sampled <- lapply(individual, .sample_individual_distribution,
                       parameters = parameters, n = n)
 
