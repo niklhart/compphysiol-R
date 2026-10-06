@@ -93,7 +93,30 @@ test_that("validation infers levels and observable prediction locations", {
     expect_identical(resolved$CL$mean, "CL_pop")
     expect_identical(resolved$C$level, "observation")
     expect_s3_class(resolved$C$median, "PredictionLocation")
-    expect_output(print(resolved), "C: lognormal; location = prediction")
+    expect_output(
+        print(resolved),
+        "CL: normal; location = CL_pop; sd = proportional(omega_CL)",
+        fixed = TRUE
+    )
+    expect_output(
+        print(resolved),
+        "C: lognormal; location = prediction; sdlog = sigma",
+        fixed = TRUE
+    )
+})
+
+test_that("statistical model printing expands combined and fixed scales", {
+    model <- statistical_model(
+        C = normal(sd = combined(constant = 1 [mg/L], proportional = 0.1)),
+        biomarker = lognormal(median = 2 [mg/L], sdlog = 0.2)
+    )
+
+    expect_output(
+        print(model),
+        "sd = combined(constant = 1 [mg/L], proportional = 0.1)",
+        fixed = TRUE
+    )
+    expect_output(print(model), "sdlog = 0.2", fixed = TRUE)
 })
 
 test_that("validation rejects unresolved and ambiguous targets", {

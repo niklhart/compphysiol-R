@@ -333,6 +333,24 @@ statistical_model <- function(...) {
     if (is.character(spec)) spec else fixed
 }
 
+.statistical_format_value_spec <- function(x) {
+    paste(format(x), collapse = ", ")
+}
+
+.statistical_format_sd <- function(x) {
+    if (inherits(x, "ProportionalSD")) {
+        return(paste0("proportional(",
+                      .statistical_format_value_spec(x$coefficient), ")"))
+    }
+    if (inherits(x, "CombinedSD")) {
+        return(paste0(
+            "combined(constant = ", .statistical_format_value_spec(x$constant),
+            ", proportional = ", .statistical_format_value_spec(x$proportional), ")"
+        ))
+    }
+    .statistical_format_value_spec(x)
+}
+
 #' Print a statistical model
 #'
 #' @param x A `StatisticalModel` object.
@@ -352,9 +370,15 @@ print.StatisticalModel <- function(x, ...) {
         location <- if (inherits(location, "PredictionLocation")) "prediction" else {
             if (is.null(location)) "<unresolved>" else paste(format(location), collapse = ", ")
         }
+        scale_name <- if (inherits(d, "NormalDistribution")) "sd" else "sdlog"
+        scale <- if (inherits(d, "NormalDistribution")) {
+            .statistical_format_sd(d$sd)
+        } else {
+            .statistical_format_value_spec(d$sdlog)
+        }
         level <- d$level %||% "<unresolved>"
-        cat(sprintf("  (%s) %s: %s; location = %s; level = %s\n",
-                    i, names(x)[[i]], family, location, level))
+        cat(sprintf("  (%s) %s: %s; location = %s; %s = %s; level = %s\n",
+                    i, names(x)[[i]], family, location, scale_name, scale, level))
     }
     invisible(x)
 }
