@@ -1,7 +1,7 @@
 
 #' Simulate a covariate distribution in human adults
 #'
-#' Experimental internal prototype for future physiology support.
+#' Experimental internal prototype for realized human populations.
 #'
 #' Generate pairs of body height (BH) and body weight (BW) values for a specified number of individuals.
 #' 
@@ -14,13 +14,14 @@
 #'
 #' @param N Number of individuals (positive integer)
 #' @param sex Character, either "male" or "female"
-#' @returns A length `N` list of `Physiology` objects
+#' @returns An unnamed length `N` `ParameterSets` collection.
 #' @examples
 #' humans <- humancovdistrib(5, "female")
 #' @noRd
 humancovdistrib <- function(N, sex) {
-    if (!is.numeric(N) || length(N) != 1 || N <= 0 || N != as.integer(N)) {
-        stop("N must be a positive integer")
+    if (!is.numeric(N) || length(N) != 1L || is.na(N) || !is.finite(N) ||
+        N <= 0 || N != as.integer(N)) {
+        stop("N must be a positive integer", call. = FALSE)
     }
     sex <- match.arg(sex, c("male", "female"))
 
@@ -46,17 +47,18 @@ humancovdistrib <- function(N, sex) {
     species <- "human"
     type <- "Caucasian"
 
-    # Create list of Physiology objects
+    # Create realized parameter sets without attaching generation metadata.
     humans <- vector("list", N)
     for (i in seq_len(N)) {
-        humans[[i]] <- physiology() |>
-            add_scalar("species", species) |>
-            add_scalar("type", type) |>
-            add_scalar("sex", sex) |>
-            add_scalar("age", age, "year") |>
-            add_scalar("BW", BW[i], "kg") |>
-            add_scalar("BH", BH[i], "m")
+        humans[[i]] <- parameters(
+            species = species,
+            type = type,
+            sex = sex,
+            age = units::set_units(age, "year", mode = "standard"),
+            BW = units::set_units(BW[[i]], "kg", mode = "standard"),
+            BH = units::set_units(BH[[i]], "m", mode = "standard")
+        )
     }
 
-    humans
+    .new_parameter_sets(humans, check_units = FALSE)
 }

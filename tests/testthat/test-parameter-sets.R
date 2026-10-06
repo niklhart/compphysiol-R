@@ -63,6 +63,21 @@ test_that("shared parameter names require compatible units", {
     }
 })
 
+test_that("trusted construction can skip only unit validation", {
+    incompatible <- list(parameters(x = 1), parameters(x = 1 [kg]))
+    trusted <- .new_parameter_sets(incompatible, check_units = FALSE)
+
+    expect_s3_class(trusted, "ParameterSets")
+    expect_s3_class(trusted[1], "ParameterSets")
+    expect_error(.new_parameter_sets(incompatible), "parameter 'x'.*units")
+    expect_error(.new_parameter_sets(list(parameters(), 1), check_units = FALSE),
+                 "Parameters")
+    expect_error(
+        .new_parameter_sets(list(a = parameters(), a = parameters()), check_units = FALSE),
+        "unique"
+    )
+})
+
 test_that("ParameterSets print a compact summary", {
     population <- parameter_sets(
         individual_1 = parameters(BW = 65 [kg], sex = "female"),

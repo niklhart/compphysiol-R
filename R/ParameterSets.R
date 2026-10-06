@@ -25,7 +25,7 @@ parameter_sets <- function(...) {
     .new_parameter_sets(list(...))
 }
 
-.new_parameter_sets <- function(x) {
+.new_parameter_sets <- function(x, check_units = TRUE) {
     if (!all(vapply(x, inherits, logical(1), "Parameters"))) {
         stop("All elements must be Parameters objects.", call. = FALSE)
     }
@@ -34,7 +34,7 @@ parameter_sets <- function(...) {
     if (anyDuplicated(labels[named])) {
         stop("Parameter set names must be unique.", call. = FALSE)
     }
-    .parameter_sets_check_units(x)
+    if (check_units) .parameter_sets_check_units(x)
     structure(x, class = c("ParameterSets", "list"))
 }
 
@@ -64,7 +64,7 @@ parameter_sets <- function(...) {
 #' @returns A `ParameterSets` object.
 #' @export
 `[.ParameterSets` <- function(x, i, ...) {
-    .new_parameter_sets(unclass(x)[i])
+    .new_parameter_sets(unclass(x)[i], check_units = FALSE)
 }
 
 #' Extract one realized parameter set
