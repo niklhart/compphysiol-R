@@ -398,6 +398,12 @@ the dynamic model and validates their dimensions. The optim engine currently
 supports observation-level entries only; individual-level entries require a
 mixed-effects-capable engine.
 
+`sample_population()` independently realizes the individual-level entries as a
+named `ParameterSets` population. Population locations and variability
+parameters are inputs to sampling but are not copied into each realized
+individual. Observation-level entries are ignored. Correlated random effects
+are outside the current sampling contract.
+
 ## Experiment
 
 One experiment represents one independent individual simulation or estimation
