@@ -73,7 +73,7 @@ observed <- observation_data(
 )
 
 study <- experiments(
-    subject_1 = experiment(
+    individual_1 = experiment(
         observations = observed,
         start = 0 [h]
     )
@@ -82,9 +82,11 @@ study <- experiments(
 study
 ```
 
-An experiment may also contain known parameters or a dosing schedule. Known
-experiment parameters are fixed for that experiment and cannot simultaneously
-be declared as shared estimated parameters.
+Each experiment is one independent individual estimation unit. Its collection
+name is the individual identifier. An experiment may also contain known
+parameters or a dosing schedule. Individual covariates belong in these known
+parameters and cannot simultaneously be declared as shared estimated
+parameters. Relationships derived from covariates belong in model equations.
 
 ## Observation model
 

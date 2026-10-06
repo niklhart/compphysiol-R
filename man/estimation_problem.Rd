@@ -11,7 +11,9 @@ estimation_problem(model, experiments, parameters, observation)
 \code{CompiledOdeModel}.}
 
 \item{experiments}{An \link[=experiment]{Experiment} or
-\link[=experiments]{Experiments} collection containing \code{ObservationData}.}
+\link[=experiments]{Experiments} collection containing \code{ObservationData}.
+Each experiment is one independent individual estimation unit, and
+collection names are individual identifiers.}
 
 \item{parameters}{Named \code{\link[=parameter_spec]{parameter_spec()}} objects combined with \code{c()}
 into a \code{ParameterSpecs} collection.}

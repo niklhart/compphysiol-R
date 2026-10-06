@@ -152,7 +152,7 @@ test_that("ParameterSpec prints its unit once", {
 
 test_that("estimation_problem is the backend-neutral estimation specification", {
     model <- estimation_test_model()
-    study <- experiments(subject_1 = estimation_test_experiment())
+    study <- experiments(individual_1 = estimation_test_experiment())
     estimates <- c(
         k = parameter_spec(0.1 [1/h], lower = 0 [1/h], transform = "log"),
         sigma = parameter_spec(1 [mg/L], lower = 0 [mg/L], transform = "log")

@@ -331,6 +331,8 @@ optim_backend <- function(
 #'   `CompiledOdeModel`.
 #' @param experiments An [Experiment][experiment()] or
 #'   [Experiments][experiments()] collection containing `ObservationData`.
+#'   Each experiment is one independent individual estimation unit, and
+#'   collection names are individual identifiers.
 #' @param parameters Named [parameter_spec()] objects combined with `c()`
 #'   into a `ParameterSpecs` collection.
 #' @param observation An observation model from [observation_model()].

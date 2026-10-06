@@ -63,7 +63,9 @@ to \code{time}, \code{unit}, and \code{parameters}. Currently supported for the 
 and \code{OdeModel}/\code{CompiledOdeModel} inputs. Known parameters override model
 defaults; experiment dosing replaces model dosing, including when empty.
 Simulation starts at the experiment's initial time and evaluates only its
-scheduled observable-time pairs. Collections return a list in input order.}
+scheduled observable-time pairs. Each experiment is one independent
+individual simulation unit. Collections return a list in input order, with
+experiment names serving as individual identifiers.}
 }
 \value{
 A \code{SimulationResult} with rectangular \code{states} and long-format
@@ -71,7 +73,9 @@ A \code{SimulationResult} with rectangular \code{states} and long-format
 replicates). Direct \code{time} input requests all observables at every output
 time. Values are numeric, \code{units}, or \code{mixed_units} depending on their units.
 Without observables the component is \code{NULL}. An \code{Experiments} input returns
-a named list of results. See \code{\link[=as_observables_long]{as_observables_long()}} and
+a list of results named by individual identifier when the collection is
+named. Results are not automatically bound into a population table. See
+\code{\link[=as_observables_long]{as_observables_long()}} and
 \code{\link[=as_observables_wide]{as_observables_wide()}} for a storage-independent processing interface.
 }
 \description{

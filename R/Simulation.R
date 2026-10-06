@@ -43,7 +43,9 @@
 #'   and `OdeModel`/`CompiledOdeModel` inputs. Known parameters override model
 #'   defaults; experiment dosing replaces model dosing, including when empty.
 #'   Simulation starts at the experiment's initial time and evaluates only its
-#'   scheduled observable-time pairs. Collections return a list in input order.
+#'   scheduled observable-time pairs. Each experiment is one independent
+#'   individual simulation unit. Collections return a list in input order, with
+#'   experiment names serving as individual identifiers.
 #' @param max_events Maximum number of stochastic reaction events allowed per
 #'   realization. The default `Inf` imposes no limit.
 #' @param ... Additional arguments passed to [deSolve::ode()].
@@ -52,7 +54,9 @@
 #'   replicates). Direct `time` input requests all observables at every output
 #'   time. Values are numeric, `units`, or `mixed_units` depending on their units.
 #'   Without observables the component is `NULL`. An `Experiments` input returns
-#'   a named list of results. See [as_observables_long()] and
+#'   a list of results named by individual identifier when the collection is
+#'   named. Results are not automatically bound into a population table. See
+#'   [as_observables_long()] and
 #'   [as_observables_wide()] for a storage-independent processing interface.
 #' @examples
 #' M <- multiCompModel(ncomp = 1, type = "micro", unit = "mg") |>

@@ -1,8 +1,10 @@
 #' Collect experiments
 #'
-#' Creates a list-like collection of experiments. Optional names, order, and
-#' duplicates are preserved. Each element retains its own parameters and units.
-#' Use `[` to obtain a collection and `[[` to extract a single experiment.
+#' Creates a list-like collection of independent individual simulation or
+#' estimation units. Element names are individual identifiers; unnamed inputs
+#' remain supported. Names, order, and duplicates are preserved. Each element
+#' retains its own parameters and units. Use `[` to obtain a collection and
+#' `[[` to extract a single experiment.
 #'
 #' All experiments must use the same time unit mode (unit-free or unit-bearing).
 #' Parameters with the same name and dose amounts for the same molecule and
@@ -12,8 +14,8 @@
 #' omitted targets; resolving them against explicit targets requires a model
 #' and is deferred to model preparation.
 #'
-#' @param ... `Experiment` objects, optionally named. For a list of experiments,
-#'   use `do.call(experiments, x)`.
+#' @param ... `Experiment` objects, optionally named with their individual
+#'   identifiers. For a list of experiments, use `do.call(experiments, x)`.
 #' @returns An `Experiments` object.
 #' @examples
 #' x <- experiments(control = experiment(), treatment = experiment())

@@ -115,6 +115,11 @@ selected <- simulate(model, experiment = e)
 as_observables_wide(selected)
 ```
 
+One `Experiment` represents one independent individual simulation unit. For an
+`Experiments` collection, element names are individual identifiers and
+`simulate()` returns a corresponding list of results. The results remain
+separate rather than being bound automatically into a population table.
+
 The observable table can also be processed independently of its simulation
 result. For example, filter predictions before widening:
 

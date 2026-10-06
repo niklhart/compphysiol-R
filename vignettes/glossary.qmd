@@ -368,13 +368,16 @@ objects created with `observation_model()` and error constructors such as
 
 ## Experiment
 
-An experiment specifies known parameters, a fixed dosing schedule, and either
-an observation schedule or observation data for a model. It is separate from
-the biological model:
-several experiments can describe different administrations or experimental
-settings for the same system. Covariates such as body weight are ordinary
-experiment parameters. Derived quantities remain model equations, which may
-depend on both experimental parameters and shared model parameters.
+One experiment represents one independent individual simulation or estimation
+unit. It specifies known parameters, a fixed dosing schedule, and either an
+observation schedule or observation data for a model. It is separate from the
+biological model. Several experiments can describe different individuals,
+administrations, or experimental settings for the same system.
+
+Covariates such as body weight and sex are ordinary values in
+`experiment$parameters`; there is no separate subject-metadata component.
+Relationships derived from covariates belong in model `Equation`s, which may
+depend on both experiment parameters and shared model parameters.
 
 The `observations` component contains either an `ObservationSchedule` or
 `ObservationData`. Because observation data inherit from observation schedules,
@@ -412,10 +415,12 @@ Implementation anchor: experiments are represented by `Experiment` objects
 created with `experiment()` and checked with `validate_experiment()`.
 
 An `Experiments` collection, created with `experiments()`, holds several
-experiments with optional names. Subsetting with `[` retains a collection;
-`[[` extracts an individual `Experiment`. Collections can be combined with
-`c()`. Printing a collection shows one summary per experiment, while printing
-an individual experiment shows its parameters, dosing, and observations.
+independent individual units. The element name is the individual identifier;
+unnamed elements remain accepted for workflows that do not yet assign one.
+Subsetting with `[` retains a collection; `[[` extracts an individual
+`Experiment`. Collections can be combined with `c()`. Printing a collection
+shows one summary per experiment, while printing an individual experiment shows
+its parameters, dosing, and observations.
 
 Collections require a common time unit mode across experiments, including their
 initial times: all unit-free or all in compatible time units. Parameters shared
@@ -433,6 +438,14 @@ the individual parameters for one resulting `Experiment`. Protocol and
 individual parameter names must not overlap. This explicit transformation
 produces an `Experiments` collection before simulation rather than adding a
 population concept to `simulate()`.
+
+Simulating an `Experiments` collection returns a list of simulation results in
+collection order, named by the individual identifiers when present. Results are
+not automatically bound into one population-scale table. A future binding
+helper may add an `experiment` identifier if that analysis pattern is needed.
+
+Repeated occasions within an individual and state-reset semantics are outside
+the current experiment contract.
 
 ## Estimation problem
 

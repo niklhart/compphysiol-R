@@ -1,11 +1,15 @@
 #' Describe an experiment
 #'
-#' An experiment stores known parameters (including covariates), a fixed dosing
-#' schedule, and observations represented by either an observation schedule or
-#' observation data. It does not store a model or an observation error model.
-#' Pass it to [simulate()] through
-#' the `experiment` argument for ODE simulation. Estimation integration is not
-#' yet provided.
+#' One experiment represents one independent individual simulation or
+#' estimation unit. It stores known parameters (including covariates), a fixed
+#' dosing schedule, and observations represented by either an observation
+#' schedule or observation data. Derived covariate relationships belong in
+#' model equations rather than in separate subject metadata. An experiment does
+#' not store a model or an observation error model. Repeated occasions and state
+#' resets are outside the current contract.
+#'
+#' Pass an experiment to [simulate()] through the `experiment` argument for ODE
+#' simulation, or include observation data when using it for estimation.
 #'
 #' Observation rows retain their order, duplicates, additional columns, and
 #' units. `ObservationData` inherits from `ObservationSchedule`, so simulation
@@ -16,8 +20,9 @@
 #' Compatible units need not be identical. Doses and observations cannot precede
 #' `start`. Empty observations do not impose a time unit.
 #'
-#' @param parameters A [Parameters][parameters()] object containing known experimental values.
-#'   `NULL` creates an empty parameter collection.
+#' @param parameters A [Parameters][parameters()] object containing known
+#'   individual and experimental values, including covariates. `NULL` creates
+#'   an empty parameter collection.
 #' @param dosing A [Dosing][dosing()] object. `NULL` creates an empty dosing schedule.
 #' @param observations An [ObservationSchedule][observation_schedule()] or
 #'   [ObservationData][observation_data()]. `NULL` creates an empty schedule.
