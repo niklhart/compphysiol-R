@@ -366,6 +366,49 @@ Implementation anchor: observation models are represented by `ObservationModel`
 objects created with `observation_model()` and error constructors such as
 `additive_error()`.
 
+## Statistical model
+
+A statistical model assigns probability distributions to named random
+quantities. The left-hand-side name identifies either an unresolved structural
+parameter in the dynamic model or a model observable. Structural-parameter
+distributions describe individual variability; observable distributions
+describe observation variability. The statistical model does not obtain a
+population location implicitly from a fixed structural-model value.
+
+The primary distribution families are `normal()` and `lognormal()`. A normal
+distribution has a mean and a standard-deviation specification. A bare
+standard-deviation parameter is constant, `proportional()` means the
+coefficient times the absolute resolved mean, and `combined()` initially means
+the constant component plus the proportional component times the absolute
+resolved mean. This additive convention is explicit; a future quadrature
+convention would require a separate option.
+
+A log-normal distribution is parameterized by its median and `sdlog`. The
+median is also its geometric mean. It is not the arithmetic mean, and the API
+does not accept `mean` or a raw `logmean`. For an individual parameter `CL`,
+`lognormal(median = "CL_pop", sdlog = "omega_CL")` means that `log(CL)` is
+normal with location `log(CL_pop)` and standard deviation `omega_CL`.
+
+Missing locations are context-sensitive. For an observable, a missing normal
+mean or log-normal median resolves to the dynamic-model prediction; in the
+log-normal case the prediction is explicitly the conditional median. An
+individual-level structural parameter always requires an explicit location.
+Levels are otherwise inferred during validation: unresolved structural
+parameters are individual-level and observables are observation-level. A name
+that identifies both requires an explicit level, and fixed structural
+parameters cannot initially be replaced by individual distributions.
+
+Normal locations and constant standard deviations use the target's units.
+Proportional coefficients and log-normal `sdlog` values are dimensionless.
+Consequently realized structural values retain structural target units and
+observations retain observable units.
+
+Implementation anchor: `statistical_model()` collects distribution
+specifications, and `validate_statistical_model()` resolves them against a
+dynamic model. Supplying realized statistical parameters to validation enables
+dimensional checks. Integration with `estimation_problem()` remains a later
+step; the existing observation-model estimation API is unchanged for now.
+
 ## Experiment
 
 One experiment represents one independent individual simulation or estimation
