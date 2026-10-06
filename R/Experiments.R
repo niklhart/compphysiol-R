@@ -42,12 +42,11 @@ experiments <- function(...) {
     for (i in seq_along(x)) {
         e <- x[[i]]
         context <- paste0(" in experiment ", i)
-        .experiments_check_compatible_units(x[[1]]$start, e$start,
-                                            paste0("time", context))
+        .check_compatible_units(x[[1]]$start, e$start, paste0("time", context))
         for (nm in names(e$parameters)) {
             value <- e$parameters[[nm]]
             if (nm %in% names(parameter_values)) {
-                .experiments_check_compatible_units(parameter_values[[nm]], value,
+                .check_compatible_units(parameter_values[[nm]], value,
                     paste0("parameter '", nm, "'", context))
             } else {
                 parameter_values[nm] <- list(value)
@@ -59,7 +58,7 @@ experiments <- function(...) {
             value <- e$dosing$amount[[j]]
             if (length(match)) {
                 label <- ifelse(is.na(target), "<unspecified>", target)
-                .experiments_check_compatible_units(amounts[[match]], value,
+                .check_compatible_units(amounts[[match]], value,
                     paste0("dosing target '", label[1], " in ", label[2], "'", context))
             } else {
                 targets[[length(targets) + 1L]] <- target
@@ -70,7 +69,7 @@ experiments <- function(...) {
     invisible(NULL)
 }
 
-.experiments_check_compatible_units <- function(reference, value, label) {
+.check_compatible_units <- function(reference, value, label) {
     reference_has_units <- inherits(reference, "units")
     value_has_units <- inherits(value, "units")
     compatible <- identical(reference_has_units, value_has_units)

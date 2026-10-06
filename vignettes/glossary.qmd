@@ -290,6 +290,22 @@ parameter values use the general unit shorthand described above.
 Implementation anchor: parameters are represented by `Parameters` objects
 created with `parameters()` or added with `add_parameter()`.
 
+## Parameter set
+
+A parameter set is one realized collection of parameter values. Several sets
+can represent a realized population, such as individual-specific body weights,
+sexes, physiological values, or compound parameters. Numeric and categorical
+covariates are ordinary parameters rather than a separate component type.
+
+A `ParameterSets` collection contains only `Parameters` objects and carries no
+metadata about individuals or about how their values were generated. It
+therefore represents a realized population, not a population distribution or
+sampling model. Parameter names shared across sets must have compatible units.
+
+Implementation anchor: realized parameter sets are represented by
+`ParameterSets` objects created with `parameter_sets()`. Subsetting with `[`
+retains the collection, while `[[` extracts one `Parameters` object.
+
 ## Dosing
 
 Dosing describes external input into the model, such as a bolus dose or an
