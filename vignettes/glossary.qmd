@@ -352,27 +352,14 @@ model, provided their observable names and units are compatible.
 Implementation anchor: observation data are represented by `ObservationData`
 data-frame-like objects created with `observation_data()`.
 
-## Observation model
-
-An observation model describes the probabilistic relationship between model
-predictions and values stored in `ObservationData`. It is separate from the
-dynamic model and from the experiment protocol. Each observed model observable
-is assigned a residual-error specification. Current specifications cover
-additive, proportional, combined additive-plus-proportional, and log-normal
-errors. Their scale parameters are explicit estimated parameters and may be
-unit-aware where appropriate.
-
-Implementation anchor: observation models are represented by `ObservationModel`
-objects created with `observation_model()` and error constructors such as
-`additive_error()`.
-
 ## Statistical model
 
 A statistical model assigns probability distributions to named random
 quantities. The left-hand-side name identifies either an unresolved structural
 parameter in the dynamic model or a model observable. Structural-parameter
 distributions describe individual variability; observable distributions
-describe observation variability. The statistical model does not obtain a
+describe the probabilistic relationship between predictions and values in
+`ObservationData`. The statistical model does not obtain a
 population location implicitly from a fixed structural-model value.
 
 The primary distribution families are `normal()` and `lognormal()`. Locations
@@ -405,11 +392,11 @@ Proportional coefficients and log-normal `sdlog` values are dimensionless.
 Consequently realized structural values retain structural target units and
 observations retain observable units.
 
-Implementation anchor: `statistical_model()` collects distribution
-specifications. Model-dependent resolution and dimensional checks are internal
-until a stable public workflow consumes statistical models. Integration with
-`estimation_problem()` remains a later step; the existing observation-model
-estimation API is unchanged for now.
+Implementation anchor: `statistical_model()` collects unresolved distribution
+specifications. `estimation_problem()` resolves their targets and levels against
+the dynamic model and validates their dimensions. The optim engine currently
+supports observation-level entries only; individual-level entries require a
+mixed-effects-capable engine.
 
 ## Experiment
 
@@ -427,8 +414,8 @@ depend on both experiment parameters and shared model parameters.
 The `observations` component contains either an `ObservationSchedule` or
 `ObservationData`. Because observation data inherit from observation schedules,
 simulation can use either representation directly. Estimation additionally
-requires the stored observations to contain values. Observation error is not
-part of the experiment and belongs to a separate observation model used during
+requires the stored observations to contain values. Observation variability is
+not part of the experiment and belongs to the statistical model used during
 estimation.
 
 An experiment has an explicit initial time, at which the model's initial
@@ -496,7 +483,7 @@ the current experiment contract.
 
 An estimation problem combines a deterministic dynamic model, one or more
 experiments containing observation data, explicit estimated-parameter
-specifications, and an observation model. It is backend-neutral: the same
+specifications, and a statistical model. It is backend-neutral: the same
 scientific estimation specification can be evaluated by different estimation
 backends without moving statistical assumptions into the compartment model.
 

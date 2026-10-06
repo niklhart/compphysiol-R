@@ -4,7 +4,7 @@
 \alias{estimation_problem}
 \title{Create a backend-neutral estimation problem}
 \usage{
-estimation_problem(model, experiments, parameters, observation)
+estimation_problem(model, experiments, parameters, statistics)
 }
 \arguments{
 \item{model}{A \code{CompartmentModel}, \code{ProcessModel}, \code{OdeModel}, or
@@ -18,7 +18,8 @@ collection names are individual identifiers.}
 \item{parameters}{Named \code{\link[=parameter_spec]{parameter_spec()}} objects combined with \code{c()}
 into a \code{ParameterSpecs} collection.}
 
-\item{observation}{An observation model from \code{\link[=observation_model]{observation_model()}}.}
+\item{statistics}{A \link[=statistical_model]{StatisticalModel} describing the
+distributions of observed and individual-level quantities.}
 }
 \value{
 An \code{EstimationProblem} object.

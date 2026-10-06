@@ -16,7 +16,7 @@ The workflow keeps four concerns separate:
 
 - the compartment model describes the dynamics;
 - experiments hold known parameters, dosing, and observation data;
-- the observation model describes residual error;
+- the statistical model describes observation variability;
 - the estimation backend controls the numerical optimizer.
 
 All physical quantities retain their units at the model and observation
@@ -88,24 +88,26 @@ parameters or a dosing schedule. Individual covariates belong in these known
 parameters and cannot simultaneously be declared as shared estimated
 parameters. Relationships derived from covariates belong in model equations.
 
-## Observation model
+## Statistical model
 
-The observation model is compositional and independent of the dynamic model.
-Here, concentration measurements have independent normal additive error with
-standard deviation `sigma`. Because the observable is a concentration,
-`sigma` is estimated in concentration units.
+The statistical model is independent of the dynamic model and stores unresolved
+distribution specifications. Here, concentration measurements have independent
+normal error around the model prediction with standard deviation `sigma`.
+Because the observable is a concentration, `sigma` is estimated in concentration
+units.
 
 ```{r}
-#| label: observation-model
-error_model <- observation_model(
-    C = additive_error(sigma = "sigma")
+#| label: statistical-model
+statistics <- statistical_model(
+    C = normal(sd = "sigma")
 )
 ```
 
-Other available specifications are `proportional_error()`, `combined_error()`,
-and `lognormal_error()`. Proportional and log-normal scale parameters are
-dimensionless; the additive part of a combined error model has the observable's
-units.
+`normal(sd = proportional("sigma"))` describes proportional error,
+`normal(sd = combined(...))` describes combined error, and `lognormal()`
+describes log-normal variability. Proportional and log-normal scale parameters
+are dimensionless; the constant part of a combined specification has the
+observable's units.
 
 ## Estimated parameters
 
@@ -146,7 +148,7 @@ problem <- estimation_problem(
     model = model,
     experiments = study,
     parameters = specs,
-    observation = error_model
+    statistics = statistics
 )
 
 backend <- optim_backend(
@@ -241,7 +243,7 @@ compiled_problem <- estimation_problem(
     model = to_compiled_ode_model(model),
     experiments = study,
     parameters = specs,
-    observation = error_model
+    statistics = statistics
 )
 
 compiled_fit <- estimate(compiled_problem, backend = backend)

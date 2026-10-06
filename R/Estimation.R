@@ -1,80 +1,3 @@
-#' Describe an observation error model
-#'
-#' Observation models map model observables to compositional residual-error
-#' specifications. Observation values always come from the canonical `value`
-#' column of [ObservationData][observation_data()].
-#'
-#' @param ... Named residual-error objects created by [additive_error()] and
-#'   related constructors, one per model observable.
-#' @returns An `ObservationModel` object.
-#' @export
-observation_model <- function(...) {
-    x <- list(...)
-    nm <- names(x)
-    if (length(x) && (is.null(nm) || anyNA(nm) || any(!nzchar(nm)))) {
-        stop("Observation error models must be named by observable.", call. = FALSE)
-    }
-    if (anyDuplicated(nm)) {
-        stop("Observation model names must be unique; duplicated observable names are not allowed.",
-             call. = FALSE)
-    }
-    if (!all(vapply(x, inherits, logical(1), "ObservationError"))) {
-        stop("Every observation model entry must be an ObservationError object.", call. = FALSE)
-    }
-    structure(x, class = c("ObservationModel", "list"))
-}
-
-.observation_error_parameter <- function(x, label) {
-    if (!is.character(x) || length(x) != 1L || is.na(x) || !nzchar(trimws(x))) {
-        stop(label, " must name a statistical parameter.", call. = FALSE)
-    }
-    x
-}
-
-#' Construct residual-error specifications
-#'
-#' @param sigma Name of the residual standard-deviation parameter.
-#' @param additive Name of the additive standard-deviation parameter.
-#' @param proportional Name of the proportional standard-deviation parameter.
-#' @returns An `ObservationError` object of the corresponding subclass.
-#' @name observation_errors
-NULL
-
-#' @rdname observation_errors
-#' @export
-additive_error <- function(sigma = "sigma") {
-    sigma <- .observation_error_parameter(sigma, "sigma")
-    structure(list(sigma = sigma), class = c("AdditiveError", "ObservationError"))
-}
-
-#' @rdname observation_errors
-#' @export
-proportional_error <- function(sigma = "sigma") {
-    sigma <- .observation_error_parameter(sigma, "sigma")
-    structure(list(sigma = sigma), class = c("ProportionalError", "ObservationError"))
-}
-
-#' @rdname observation_errors
-#' @export
-combined_error <- function(additive = "sigma_add", proportional = "sigma_prop") {
-    additive <- .observation_error_parameter(additive, "additive")
-    proportional <- .observation_error_parameter(proportional, "proportional")
-    if (identical(additive, proportional)) {
-        stop("Combined-error additive and proportional parameters must be distinct.", call. = FALSE)
-    }
-    structure(
-        list(additive = additive, proportional = proportional),
-        class = c("CombinedError", "ObservationError")
-    )
-}
-
-#' @rdname observation_errors
-#' @export
-lognormal_error <- function(sigma = "sigma") {
-    sigma <- .observation_error_parameter(sigma, "sigma")
-    structure(list(sigma = sigma), class = c("LognormalError", "ObservationError"))
-}
-
 #' Describe one parameter to estimate
 #'
 #' @param initial Finite numeric scalar initial estimate, optionally with units.
@@ -335,10 +258,11 @@ optim_backend <- function(
 #'   collection names are individual identifiers.
 #' @param parameters Named [parameter_spec()] objects combined with `c()`
 #'   into a `ParameterSpecs` collection.
-#' @param observation An observation model from [observation_model()].
+#' @param statistics A [StatisticalModel][statistical_model()] describing the
+#'   distributions of observed and individual-level quantities.
 #' @returns An `EstimationProblem` object.
 #' @export
-estimation_problem <- function(model, experiments, parameters, observation) {
+estimation_problem <- function(model, experiments, parameters, statistics) {
     supported <- c("CompartmentModel", "ProcessModel", "OdeModel", "CompiledOdeModel")
     model_class <- supported[vapply(supported, inherits, logical(1), x = model)]
     if (!length(model_class)) {
@@ -347,7 +271,7 @@ estimation_problem <- function(model, experiments, parameters, observation) {
              paste(supported, collapse = ", "), ".", call. = FALSE)
     }
     .check_class(parameters, "ParameterSpecs")
-    .check_class(observation, "ObservationModel")
+    .check_class(statistics, "StatisticalModel")
     if (inherits(experiments, "Experiment")) experiments <- .new_experiments(list(experiments))
     .check_class(experiments, "Experiments")
     if (!length(experiments)) stop("Estimation requires at least one experiment.", call. = FALSE)
@@ -378,22 +302,56 @@ estimation_problem <- function(model, experiments, parameters, observation) {
                  paste(overlap, collapse = ", "), ".", call. = FALSE)
         }
     }
-    missing_error <- setdiff(observed_names, names(observation))
-    if (length(missing_error)) {
-        stop("Observation model is missing observable(s): ",
-             paste(missing_error, collapse = ", "), ".", call. = FALSE)
+    resolved_statistics <- .resolve_statistical_model(statistics, model)
+    observation_targets <- names(resolved_statistics)[vapply(
+        resolved_statistics, function(x) identical(x$level, "observation"), logical(1)
+    )]
+    missing_distribution <- setdiff(observed_names, observation_targets)
+    if (length(missing_distribution)) {
+        stop("Statistical model is missing observable(s): ",
+             paste(missing_distribution, collapse = ", "), ".", call. = FALSE)
     }
-    error_parameters <- unique(unlist(lapply(observation[observed_names], unclass), use.names = FALSE))
-    missing_parameters <- setdiff(error_parameters, estimated_names)
+    statistical_parameters <- .estimation_statistical_parameter_names(resolved_statistics)
+    missing_parameters <- setdiff(statistical_parameters, estimated_names)
     if (length(missing_parameters)) {
-        stop("Observation model parameter(s) are not declared for estimation: ",
+        stop("Statistical model parameter(s) are not declared for estimation: ",
              paste(missing_parameters, collapse = ", "), ".", call. = FALSE)
+    }
+    initial_values <- structure(
+        lapply(parameters, `[[`, "initial"), class = c("Parameters", "list")
+    )
+    for (e in unclass(experiments)) {
+        validation_values <- .merge_ode_parameters(e$parameters, initial_values)
+        .resolve_statistical_model(statistics, model, validation_values)
     }
     structure(
         list(model = model, experiments = experiments, parameters = parameters,
-             observation = observation),
+             statistics = resolved_statistics),
         class = "EstimationProblem"
     )
+}
+
+.estimation_statistical_parameter_names <- function(statistics) {
+    specs <- unlist(lapply(statistics, function(distribution) {
+        location <- if (inherits(distribution, "NormalDistribution")) {
+            distribution$mean
+        } else {
+            distribution$median
+        }
+        scale <- if (inherits(distribution, "NormalDistribution")) {
+            if (inherits(distribution$sd, "ProportionalSD")) {
+                distribution$sd$coefficient
+            } else if (inherits(distribution$sd, "CombinedSD")) {
+                unclass(distribution$sd)
+            } else {
+                distribution$sd
+            }
+        } else {
+            distribution$sdlog
+        }
+        c(if (is.character(location)) location, unlist(scale, use.names = FALSE))
+    }), use.names = FALSE)
+    unique(specs[vapply(specs, is.character, logical(1))])
 }
 
 #' Print an estimation problem
@@ -411,7 +369,7 @@ print.EstimationProblem <- function(x, ...) {
     cat(" experiments: ", length(x$experiments), "\n", sep = "")
     cat(" observations: ", observations, "\n", sep = "")
     cat(" estimated parameters: ", .estimation_format_names(names(x$parameters)), "\n", sep = "")
-    cat(" observation models: ", .estimation_format_names(names(x$observation)), "\n", sep = "")
+    cat(" statistical targets: ", .estimation_format_names(names(x$statistics)), "\n", sep = "")
     invisible(x)
 }
 
@@ -456,6 +414,14 @@ estimate.EstimationProblem <- function(
 }
 
 .estimate_optim <- function(problem, backend, dimensions = NULL, ...) {
+    individual <- names(problem$statistics)[vapply(
+        problem$statistics, function(x) identical(x$level, "individual"), logical(1)
+    )]
+    if (length(individual)) {
+        stop("Mixed-effects estimation requires a supporting estimation engine; ",
+             "the optim backend only supports observation-level statistical entries.",
+             call. = FALSE)
+    }
     specs <- problem$parameters
     coordinates <- .estimation_coordinates(specs)
     simulation_model <- if (inherits(problem$model, "ProcessModel")) {
@@ -484,7 +450,7 @@ estimate.EstimationProblem <- function(
         .estimation_likelihood(
             problem$experiments,
             simulated,
-            problem$observation,
+            problem$statistics,
             values,
             diagnostics = diagnostics
         )
@@ -615,7 +581,7 @@ print.EstimationResult <- function(x, ...) {
     setNames(out, names(specs))
 }
 
-.estimation_likelihood <- function(experiments, simulated, observation, parameters,
+.estimation_likelihood <- function(experiments, simulated, statistics, parameters,
                                    diagnostics = FALSE) {
     if (!inherits(simulated, "list") || inherits(simulated, "SimulationResult")) {
         simulated <- list(simulated)
@@ -639,8 +605,10 @@ print.EstimationResult <- function(x, ...) {
         for (j in seq_len(nrow(observed))) {
             obs <- observed$value[[j]]
             pred <- predicted$value[[j]]
+            distribution <- statistics[[observed$observable[[j]]]]
             if (diagnostics) {
-                aligned <- .estimation_align_values(obs, pred, "observed value")
+                location <- .estimation_distribution_location(distribution, pred, parameters)
+                aligned <- .estimation_align_values(obs, location, "observed value")
                 prediction_rows[[length(prediction_rows) + 1L]] <- list(
                     experiment = label, time = observed$time[[j]],
                     observable = observed$observable[[j]],
@@ -655,8 +623,7 @@ print.EstimationResult <- function(x, ...) {
                 )
             }
             if (length(obs) != 1L || is.na(obs)) next
-            error <- observation[[observed$observable[[j]]]]
-            contribution <- .estimation_error_nll(obs, pred, error, parameters)
+            contribution <- .estimation_distribution_nll(obs, pred, distribution, parameters)
             objective <- objective + contribution$nll
         }
     }
@@ -711,34 +678,87 @@ print.EstimationResult <- function(x, ...) {
     units::mixed_units(numeric, ifelse(nzchar(labels), labels, "1"))
 }
 
-.estimation_error_nll <- function(observed, predicted, error, parameters) {
-    aligned <- .estimation_align_values(observed, predicted, "observed value")
+.estimation_distribution_nll <- function(observed, predicted, distribution, parameters) {
+    location_value <- .estimation_distribution_location(distribution, predicted, parameters)
+    aligned <- .estimation_align_values(observed, location_value, "observed value")
     obs <- aligned$observed
-    pred <- aligned$predicted
+    location <- aligned$predicted
     unit <- aligned$unit
-    if (inherits(error, "AdditiveError")) {
-        sd <- .estimation_scale_parameter(parameters[[error$sigma]], predicted, error$sigma)
-        nll <- .estimation_normal_nll(obs, pred, sd)
-    } else if (inherits(error, "ProportionalError")) {
-        prop <- .estimation_dimensionless_parameter(parameters[[error$sigma]], error$sigma)
-        sd <- prop * abs(pred)
-        nll <- .estimation_normal_nll(obs, pred, sd)
-    } else if (inherits(error, "CombinedError")) {
-        add <- .estimation_scale_parameter(parameters[[error$additive]], predicted, error$additive)
-        prop <- .estimation_dimensionless_parameter(
-            parameters[[error$proportional]], error$proportional
-        )
-        sd <- add + prop * abs(pred)
-        nll <- .estimation_normal_nll(obs, pred, sd)
-    } else if (inherits(error, "LognormalError")) {
-        sigma <- .estimation_dimensionless_parameter(parameters[[error$sigma]], error$sigma)
-        if (obs <= 0 || pred <= 0 || sigma <= 0) return(list(nll = Inf))
+    if (inherits(distribution, "NormalDistribution")) {
+        sd <- .estimation_normal_sd(distribution$sd, location, unit, parameters)
+        nll <- .estimation_normal_nll(obs, location, sd)
+    } else if (inherits(distribution, "LognormalDistribution")) {
+        sigma <- .estimation_dimensionless_spec(distribution$sdlog, parameters, "sdlog")
+        if (obs <= 0 || location <= 0 || sigma <= 0) return(list(nll = Inf))
         nll <- log(obs) + log(sigma) + 0.5 * log(2 * pi) +
-            0.5 * ((log(obs) - log(pred)) / sigma)^2
+            0.5 * ((log(obs) - log(location)) / sigma)^2
     } else {
-        stop("Unsupported observation error model.", call. = FALSE)
+        stop("Unsupported statistical distribution.", call. = FALSE)
     }
-    list(nll = nll, predicted = pred, residual = obs - pred, unit = unit)
+    list(nll = nll, predicted = location, residual = obs - location, unit = unit)
+}
+
+.estimation_distribution_location <- function(distribution, predicted, parameters) {
+    location_spec <- if (inherits(distribution, "NormalDistribution")) {
+        distribution$mean
+    } else {
+        distribution$median
+    }
+    if (inherits(location_spec, "PredictionLocation")) {
+        predicted
+    } else {
+        .estimation_spec_value(location_spec, parameters, "location")
+    }
+}
+
+.estimation_normal_sd <- function(spec, mean, unit, parameters) {
+    if (inherits(spec, "ProportionalSD")) {
+        return(.estimation_dimensionless_spec(
+            spec$coefficient, parameters, "proportional coefficient"
+        ) * abs(mean))
+    }
+    if (inherits(spec, "CombinedSD")) {
+        constant <- .estimation_target_scale_spec(spec$constant, unit, parameters, "constant")
+        proportional <- .estimation_dimensionless_spec(
+            spec$proportional, parameters, "proportional coefficient"
+        )
+        return(constant + proportional * abs(mean))
+    }
+    .estimation_target_scale_spec(spec, unit, parameters, "sd")
+}
+
+.estimation_spec_value <- function(spec, parameters, label) {
+    if (!is.character(spec)) return(spec)
+    value <- parameters[[spec]]
+    if (is.null(value)) stop("Missing statistical parameter: ", spec, ".", call. = FALSE)
+    value
+}
+
+.estimation_target_scale_spec <- function(spec, unit, parameters, label) {
+    value <- .estimation_spec_value(spec, parameters, label)
+    if (!nzchar(unit)) {
+        if (inherits(value, "units")) {
+            value <- tryCatch(units::set_units(value, "1", mode = "standard"),
+                error = function(e) stop(label, " must be dimensionless.", call. = FALSE))
+        }
+        return(as.numeric(value))
+    }
+    if (!inherits(value, "units")) {
+        stop(label, " must have units compatible with the observable.", call. = FALSE)
+    }
+    value <- tryCatch(units::set_units(value, unit, mode = "standard"),
+        error = function(e) stop(label, " has units incompatible with the observable.",
+                                 call. = FALSE))
+    as.numeric(value)
+}
+
+.estimation_dimensionless_spec <- function(spec, parameters, label) {
+    value <- .estimation_spec_value(spec, parameters, label)
+    if (inherits(value, "units")) {
+        value <- tryCatch(units::set_units(value, "1", mode = "standard"),
+            error = function(e) stop(label, " must be dimensionless.", call. = FALSE))
+    }
+    as.numeric(value)
 }
 
 .estimation_align_values <- function(observed, predicted, label) {
@@ -756,36 +776,6 @@ print.EstimationResult <- function(x, ...) {
         )
     }
     list(observed = as.numeric(observed), predicted = as.numeric(predicted), unit = unit)
-}
-
-.estimation_scale_parameter <- function(x, predicted, name) {
-    if (is.null(x)) stop("Missing observation error parameter: ", name, ".", call. = FALSE)
-    x_units <- inherits(x, "units")
-    pred_units <- inherits(predicted, "units")
-    if (x_units != pred_units) {
-        stop("Observation error parameter '", name,
-             "' must have the same unit mode as its observable.", call. = FALSE)
-    }
-    if (pred_units) {
-        x <- tryCatch(
-            units::set_units(x, units::deparse_unit(predicted), mode = "standard"),
-            error = function(e) stop("Observation error parameter '", name,
-                "' has incompatible units.", call. = FALSE)
-        )
-    }
-    as.numeric(x)
-}
-
-.estimation_dimensionless_parameter <- function(x, name) {
-    if (is.null(x)) stop("Missing observation error parameter: ", name, ".", call. = FALSE)
-    if (inherits(x, "units")) {
-        x <- tryCatch(
-            units::set_units(x, "1", mode = "standard"),
-            error = function(e) stop("Observation error parameter '", name,
-                "' must be dimensionless.", call. = FALSE)
-        )
-    }
-    as.numeric(x)
 }
 
 .estimation_normal_nll <- function(observed, predicted, sd) {

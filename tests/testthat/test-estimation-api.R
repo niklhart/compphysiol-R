@@ -16,40 +16,8 @@ estimation_test_experiment <- function(observable = "C") {
     experiment(observations = data, start = 0 [h])
 }
 
-test_that("observation_model composes named error models", {
-    observation <- observation_model(
-        C = combined_error(
-            additive = "sigma_add",
-            proportional = "sigma_prop"
-        ),
-        biomarker = additive_error(sigma = "sigma_biomarker")
-    )
-
-    expect_s3_class(observation, "ObservationModel")
-    expect_named(observation, c("C", "biomarker"))
-    expect_s3_class(observation[["C"]], "ObservationError")
-    expect_s3_class(observation[["C"]], "CombinedError")
-    expect_identical(observation[["C"]]$additive, "sigma_add")
-    expect_identical(observation[["C"]]$proportional, "sigma_prop")
-})
-
-test_that("observation error constructors validate their public contract", {
-    expect_s3_class(additive_error(sigma = "sigma"), "AdditiveError")
-    expect_s3_class(proportional_error(sigma = "sigma"), "ProportionalError")
-    expect_s3_class(lognormal_error(sigma = "sigma"), "LognormalError")
-
-    expect_error(observation_model(additive_error()), "named|observable")
-    expect_error(
-        observation_model(C = additive_error(), C = proportional_error()),
-        "unique|duplicated"
-    )
-    expect_error(additive_error(sigma = ""), "sigma")
-    expect_error(combined_error(additive = "sigma", proportional = "sigma"),
-                 "distinct|parameter")
-})
-
 test_that("parameter specifications combine into a named collection", {
-    estimates <- c(
+    spec <- c(
         k = parameter_spec(
             initial = 0.1 [1/h],
             lower = 0 [1/h],
@@ -63,13 +31,13 @@ test_that("parameter specifications combine into a named collection", {
         )
     )
 
-    expect_s3_class(estimates, "ParameterSpecs")
-    expect_named(estimates, c("k", "sigma"))
-    expect_s3_class(estimates[["k"]], "ParameterSpec")
-    expect_equal(estimates[["k"]]$initial, with_units(0.1 [1/h]))
-    expect_equal(estimates[["k"]]$lower, with_units(0 [1/h]))
-    expect_equal(estimates[["k"]]$upper, with_units(2 [1/h]))
-    expect_identical(estimates[["k"]]$transform, "log")
+    expect_s3_class(spec, "ParameterSpecs")
+    expect_named(spec, c("k", "sigma"))
+    expect_s3_class(spec[["k"]], "ParameterSpec")
+    expect_equal(spec[["k"]]$initial, with_units(0.1 [1/h]))
+    expect_equal(spec[["k"]]$lower, with_units(0 [1/h]))
+    expect_equal(spec[["k"]]$upper, with_units(2 [1/h]))
+    expect_identical(spec[["k"]]$transform, "log")
 })
 
 test_that("ParameterSpecs compose, subset, and print by row", {
@@ -79,20 +47,20 @@ test_that("ParameterSpecs compose, subset, and print by row", {
         )
     )
     errors <- c(sigma = parameter_spec(initial = 0.5, lower = 0))
-    estimates <- c(rates, errors)
+    spec <- c(rates, errors)
 
-    expect_s3_class(estimates, "ParameterSpecs")
-    expect_named(estimates, c("k", "sigma"))
-    expect_s3_class(estimates["k"], "ParameterSpecs")
-    expect_named(estimates["k"], "k")
-    expect_s3_class(estimates[["k"]], "ParameterSpec")
-    expect_identical(estimates[], estimates)
-    expect_error(c(estimates, k = parameter_spec(1)), "unique|duplicated")
-    expect_error(c(estimates, invalid = 1), "ParameterSpec")
+    expect_s3_class(spec, "ParameterSpecs")
+    expect_named(spec, c("k", "sigma"))
+    expect_s3_class(spec["k"], "ParameterSpecs")
+    expect_named(spec["k"], "k")
+    expect_s3_class(spec[["k"]], "ParameterSpec")
+    expect_identical(spec[], spec)
+    expect_error(c(spec, k = parameter_spec(1)), "unique|duplicated")
+    expect_error(c(spec, invalid = 1), "ParameterSpec")
 
-    output <- capture.output(returned <- print(estimates))
+    output <- capture.output(returned <- print(spec))
     output <- paste(output, collapse = "\n")
-    expect_identical(returned, estimates)
+    expect_identical(returned, spec)
     expect_match(
         output,
         "k: initial = 1, bounds = [0, 2], transform = log, unit [1/h]",
@@ -153,25 +121,27 @@ test_that("ParameterSpec prints its unit once", {
 test_that("estimation_problem is the backend-neutral estimation specification", {
     model <- estimation_test_model()
     study <- experiments(individual_1 = estimation_test_experiment())
-    estimates <- c(
+    spec <- c(
         k = parameter_spec(0.1 [1/h], lower = 0 [1/h], transform = "log"),
         sigma = parameter_spec(1 [mg/L], lower = 0 [mg/L], transform = "log")
     )
-    observation <- observation_model(C = additive_error(sigma = "sigma"))
+    statistics <- statistical_model(C = normal(sd = "sigma"))
 
     problem <- estimation_problem(
         model = model,
         experiments = study,
-        parameters = estimates,
-        observation = observation
+        parameters = spec,
+        statistics = statistics
     )
 
     expect_s3_class(problem, "EstimationProblem")
     expect_identical(problem$model, model)
     expect_identical(problem$experiments, study)
     expect_s3_class(problem$experiments[[1]]$observations, "ObservationData")
-    expect_identical(problem$parameters, estimates)
-    expect_identical(problem$observation, observation)
+    expect_identical(problem$parameters, spec)
+    expect_s3_class(problem$statistics, "StatisticalModel")
+    expect_identical(problem$statistics$C$level, "observation")
+    expect_s3_class(problem$statistics$C$mean, "PredictionLocation")
 })
 
 test_that("estimation_problem normalizes one experiment to a collection", {
@@ -182,7 +152,7 @@ test_that("estimation_problem normalizes one experiment to a collection", {
             k = parameter_spec(0.1 [1/h]),
             sigma = parameter_spec(1 [mg/L], lower = 0 [mg/L], transform = "log")
         ),
-        observation = observation_model(C = additive_error(sigma = "sigma"))
+        statistics = statistical_model(C = normal(sd = "sigma"))
     )
 
     expect_s3_class(problem$experiments, "Experiments")
@@ -197,7 +167,7 @@ test_that("EstimationProblem has a concise print method", {
             k = parameter_spec(0.1 [1/h]),
             sigma = parameter_spec(1 [mg/L], lower = 0 [mg/L], transform = "log")
         ),
-        observation_model(C = additive_error(sigma = "sigma"))
+        statistical_model(C = normal(sd = "sigma"))
     )
 
     output <- capture.output(returned <- print(problem))
@@ -209,7 +179,7 @@ test_that("EstimationProblem has a concise print method", {
     expect_match(output, "experiments: 1", fixed = TRUE)
     expect_match(output, "observations: 3", fixed = TRUE)
     expect_match(output, "estimated parameters: k, sigma", fixed = TRUE)
-    expect_match(output, "observation models: C", fixed = TRUE)
+    expect_match(output, "statistical targets: C", fixed = TRUE)
 })
 
 test_that("estimation problems accept deterministic lowered representations", {
@@ -229,7 +199,7 @@ test_that("estimation problems accept deterministic lowered representations", {
                 k = parameter_spec(0.1 [1/h]),
                 sigma = parameter_spec(1 [mg/L], lower = 0 [mg/L], transform = "log")
             ),
-            observation_model(C = additive_error(sigma = "sigma"))
+            statistical_model(C = normal(sd = "sigma"))
         )
         expect_s3_class(problem, "EstimationProblem")
         expect_identical(problem$model, representation)
@@ -241,7 +211,7 @@ test_that("estimation problems reject unsupported model representations", {
     common <- list(
         experiments = estimation_test_experiment(),
         parameters = c(k = parameter_spec(0.1 [1/h])),
-        observation = observation_model(C = additive_error(sigma = "sigma"))
+        statistics = statistical_model(C = normal(sd = "sigma"))
     )
 
     expect_error(
@@ -256,7 +226,7 @@ test_that("estimation problems reject unsupported model representations", {
 
 test_that("estimation problems require observation data and validate it against the model", {
     model <- estimation_test_model()
-    estimates <- c(
+    spec <- c(
         k = parameter_spec(0.1 [1/h]),
         sigma = parameter_spec(1 [mg/L], lower = 0 [mg/L], transform = "log")
     )
@@ -265,8 +235,8 @@ test_that("estimation problems require observation data and validate it against 
         estimation_problem(
             model,
             experiment(observations = observation_schedule(c(1, 2) [h], "C")),
-            estimates,
-            observation_model(C = additive_error(sigma = "sigma"))
+            spec,
+            statistical_model(C = normal(sd = "sigma"))
         ),
         "ObservationData|data"
     )
@@ -274,8 +244,8 @@ test_that("estimation problems require observation data and validate it against 
         estimation_problem(
             model,
             estimation_test_experiment(observable = "unknown"),
-            estimates,
-            observation_model(unknown = additive_error(sigma = "sigma"))
+            spec,
+            statistical_model(unknown = normal(sd = "sigma"))
         ),
         "observable|unknown"
     )
@@ -283,11 +253,47 @@ test_that("estimation problems require observation data and validate it against 
         estimation_problem(
             model,
             estimation_test_experiment(),
-            estimates,
-            observation_model(other = additive_error(sigma = "sigma"))
+            spec,
+            statistical_model(other = normal(sd = "sigma"))
         ),
-        "observation model|C"
+        "statistical-model target|Statistical model|C"
     )
+})
+
+test_that("estimation problems resolve individual entries but optim rejects them", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = 1 [L]) |>
+        add_molecule("drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+        add_transport("Central", NULL, molec = "drug", const = "k") |>
+        add_observable(C = c[drug, Central])
+    specs <- c(
+        k_pop = parameter_spec(0.2 [1/h]),
+        omega_k = parameter_spec(0.1, lower = 0),
+        sigma = parameter_spec(1 [mg/L], lower = 0 [mg/L])
+    )
+    statistics <- statistical_model(
+        k = normal(mean = "k_pop", sd = proportional("omega_k")),
+        C = normal(sd = "sigma")
+    )
+
+    problem <- estimation_problem(model, estimation_test_experiment(), specs, statistics)
+
+    expect_identical(problem$statistics$k$level, "individual")
+    expect_identical(problem$statistics$C$level, "observation")
+    expect_false("k_pop" %in% names(to_ode_model(model)$parameters))
+    expect_error(estimate(problem), "Mixed-effects|supporting estimation engine")
+})
+
+test_that("fixed observation scales need no parameter specification", {
+    problem <- estimation_problem(
+        estimation_test_model(),
+        estimation_test_experiment(),
+        c(k = parameter_spec(0.1 [1/h])),
+        statistical_model(C = normal(sd = 1 [mg/L]))
+    )
+
+    expect_s3_class(problem, "EstimationProblem")
+    expect_named(problem$parameters, "k")
 })
 
 test_that("known experiment parameters cannot also be estimated", {
@@ -302,7 +308,7 @@ test_that("known experiment parameters cannot also be estimated", {
                 k = parameter_spec(0.1 [1/h]),
                 sigma = parameter_spec(1 [mg/L])
             ),
-            observation_model(C = additive_error(sigma = "sigma"))
+            statistical_model(C = normal(sd = "sigma"))
         ),
         "known|experiment|k"
     )
@@ -330,7 +336,7 @@ test_that("estimate consumes an EstimationProblem and returns a stable result", 
             k = parameter_spec(0.1 [1/h], lower = 0 [1/h], transform = "log"),
             sigma = parameter_spec(1 [mg/L], lower = 0 [mg/L], transform = "log")
         ),
-        observation_model(C = additive_error(sigma = "sigma"))
+        statistical_model(C = normal(sd = "sigma"))
     )
 
     fit <- estimate(
@@ -376,7 +382,7 @@ test_that("estimation diagnostics retain rows with missing observations", {
             k = parameter_spec(0.1 [1/h], lower = 0 [1/h], transform = "log"),
             sigma = parameter_spec(1 [mg/L], lower = 0 [mg/L], transform = "log")
         ),
-        observation_model(C = additive_error(sigma = "sigma"))
+        statistical_model(C = normal(sd = "sigma"))
     )
 
     fit <- estimate(problem, backend = optim_backend(control = list(maxit = 50)))
@@ -402,7 +408,7 @@ test_that("estimate runs lowered deterministic representations", {
                 k = parameter_spec(0.1 [1/h], lower = 0 [1/h], transform = "log"),
                 sigma = parameter_spec(1 [mg/L], lower = 0 [mg/L], transform = "log")
             ),
-            observation_model(C = additive_error(sigma = "sigma"))
+            statistical_model(C = normal(sd = "sigma"))
         )
         fit <- estimate(problem, backend = optim_backend(control = list(maxit = 50)))
         expect_s3_class(fit, "EstimationResult")
