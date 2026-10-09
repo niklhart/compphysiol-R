@@ -7,8 +7,9 @@
 sample_observations(x, statistics, parameters)
 }
 \arguments{
-\item{x}{An \code{ObservationData} object containing conditional predictions, or
-one \code{SimulationResult} whose \code{observables} component contains them.}
+\item{x}{An \code{ObservationData} object containing conditional predictions.
+Extract predictions from a \code{SimulationResult} explicitly with
+\code{\link[=as_observables_long]{as_observables_long()}}.}
 
 \item{statistics}{A \link[=statistical_model]{StatisticalModel} containing a
 distribution for every observable represented in \code{x}.}

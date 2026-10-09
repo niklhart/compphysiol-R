@@ -30,19 +30,22 @@ test_that("sample_observations preserves prediction rows and is reproducible", {
     expect_false(isTRUE(all.equal(first$value, predictions$value)))
 })
 
-test_that("sample_observations accepts one SimulationResult", {
+test_that("SimulationResult predictions require explicit extraction", {
     predictions <- sample_observation_predictions()
     result <- structure(
         list(states = data.frame(time = 0), observables = predictions),
         class = "SimulationResult"
     )
 
-    sampled <- sample_observations(
-        result,
-        statistical_model(C = normal(sd = 0 [mg/L])),
-        parameters()
+    statistics <- statistical_model(C = normal(sd = 0 [mg/L]))
+    expect_error(
+        sample_observations(result, statistics, parameters()),
+        "ObservationData.*as_observables_long"
     )
 
+    sampled <- result |>
+        as_observables_long() |>
+        sample_observations(statistics, parameters())
     expect_identical(sampled, predictions)
 })
 
@@ -151,13 +154,7 @@ test_that("sample_observations validates distributions and inputs", {
     )
     expect_error(
         sample_observations(list(predictions), statistical_model(), parameters()),
-        "one ObservationData or SimulationResult"
-    )
-    empty_result <- structure(list(states = data.frame(), observables = NULL),
-                              class = "SimulationResult")
-    expect_error(
-        sample_observations(empty_result, statistical_model(), parameters()),
-        "does not contain observable predictions"
+        "ObservationData"
     )
     missing_prediction <- predictions
     missing_prediction$value[[1]] <- NA_real_ * missing_prediction$value[[1]]

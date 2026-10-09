@@ -13,8 +13,9 @@
 #' explicit observation locations are not supported because this operation is
 #' always conditional on the input prediction.
 #'
-#' @param x An `ObservationData` object containing conditional predictions, or
-#'   one `SimulationResult` whose `observables` component contains them.
+#' @param x An `ObservationData` object containing conditional predictions.
+#'   Extract predictions from a `SimulationResult` explicitly with
+#'   [as_observables_long()].
 #' @param statistics A [StatisticalModel][statistical_model()] containing a
 #'   distribution for every observable represented in `x`.
 #' @param parameters A [Parameters][parameters()] object containing referenced
@@ -36,14 +37,9 @@
 #' )
 #' @export
 sample_observations <- function(x, statistics, parameters) {
-    if (inherits(x, "SimulationResult")) {
-        if (is.null(x$observables)) {
-            stop("SimulationResult does not contain observable predictions.", call. = FALSE)
-        }
-        x <- x$observables
-    }
     if (!inherits(x, "ObservationData")) {
-        stop("x must be one ObservationData or SimulationResult object.", call. = FALSE)
+        stop("x must be an ObservationData object; extract SimulationResult predictions ",
+             "with as_observables_long().", call. = FALSE)
     }
     x <- .new_observation_data(x)
     .check_class(statistics, "StatisticalModel")
