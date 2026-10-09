@@ -540,6 +540,14 @@ parameters.
 Omitted bounds depend on the transformation and inherit the initial value's
 units. Identity uses an unbounded interval, log uses zero as its lower bound and
 has no finite upper bound, and logit uses the interval from zero to one.
+Bounds are part of the parameter specification rather than the optimization
+engine's control list. `L-BFGS-B` accepts effective box constraints. `Brent`
+requires exactly one identity-transformed parameter with finite bounds.
+Methods without native bound support accept log and logit transformations, but
+reject finite optimizer-coordinate bounds not already enforced by the
+transformation. Thus a log parameter with its natural `(0, Inf)` domain and a
+logit parameter with its declared interval are unconstrained in optimizer
+coordinates, whereas an additional finite bound requires `L-BFGS-B`.
 
 An individual specification is a `ParameterSpec`. Named specifications are
 combined with `c()` into a `ParameterSpecs` collection. Collections can be

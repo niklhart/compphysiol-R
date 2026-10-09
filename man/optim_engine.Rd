@@ -11,7 +11,10 @@ optim_engine(
 )
 }
 \arguments{
-\item{method}{Optimization method passed to \code{\link[stats:optim]{stats::optim()}}.}
+\item{method}{Optimization method passed to \code{\link[stats:optim]{stats::optim()}}. \code{"L-BFGS-B"}
+supports effective box constraints. \code{"Brent"} requires exactly one
+identity-transformed parameter with finite bounds. Other methods require
+optimizer-coordinate bounds to be unbounded after transformation.}
 
 \item{control}{Control list passed to \code{\link[stats:optim]{stats::optim()}}.}
 

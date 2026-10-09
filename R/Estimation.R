@@ -228,7 +228,10 @@ print.ParameterSpecs <- function(x, ...) {
 
 #' Configure the stats optim estimation engine
 #'
-#' @param method Optimization method passed to [stats::optim()].
+#' @param method Optimization method passed to [stats::optim()]. `"L-BFGS-B"`
+#'   supports effective box constraints. `"Brent"` requires exactly one
+#'   identity-transformed parameter with finite bounds. Other methods require
+#'   optimizer-coordinate bounds to be unbounded after transformation.
 #' @param control Control list passed to [stats::optim()].
 #' @param simulation A simulation engine, currently [deSolve_engine()].
 #' @returns An `OptimEngine` object.
@@ -433,6 +436,7 @@ estimate.EstimationProblem <- function(
     }
     specs <- problem$parameters
     coordinates <- .estimation_coordinates(specs)
+    .estimation_validate_optim_method(engine$method, specs, coordinates)
     simulation_model <- .simulation_model_for_engine(problem$model, engine$simulation)
     model_parameters <- .estimation_model_parameter_names(problem$model)
 
@@ -485,8 +489,8 @@ estimate.EstimationProblem <- function(
         optim_args$upper <- coordinates$upper
     }
     raw <- do.call(stats::optim, optim_args)
+    coefficients <- .estimation_validate_optim_result(raw$par, coordinates, specs)
     diagnostics <- evaluate(raw$par, diagnostics = TRUE)
-    coefficients <- .estimation_decode(raw$par, specs)
     coefficients <- structure(coefficients, class = c("Parameters", "list"))
     structure(
         list(
@@ -536,6 +540,58 @@ print.EstimationResult <- function(x, ...) {
 
 .estimation_coordinates_within_bounds <- function(par, coordinates) {
     all(par >= coordinates$lower & par <= coordinates$upper)
+}
+
+.estimation_validate_optim_method <- function(method, specs, coordinates) {
+    if (identical(method, "L-BFGS-B")) return(invisible(NULL))
+    if (identical(method, "Brent")) {
+        if (length(specs) != 1L) {
+            stop("The Brent method requires exactly one estimated parameter.", call. = FALSE)
+        }
+        if (!identical(specs[[1]]$transform, "identity")) {
+            stop("The Brent method requires an identity-transformed parameter.", call. = FALSE)
+        }
+        if (!is.finite(coordinates$lower[[1]]) || !is.finite(coordinates$upper[[1]])) {
+            stop("The Brent method requires finite lower and upper parameter bounds.",
+                 call. = FALSE)
+        }
+        return(invisible(NULL))
+    }
+    constrained <- is.finite(coordinates$lower) | is.finite(coordinates$upper)
+    if (any(constrained)) {
+        stop(
+            "The ", method, " method does not support the effective bound(s) for parameter(s): ",
+            paste(names(specs)[constrained], collapse = ", "),
+            ". Use L-BFGS-B or a transformation that enforces the parameter domain.",
+            call. = FALSE
+        )
+    }
+    invisible(NULL)
+}
+
+.estimation_validate_optim_result <- function(par, coordinates, specs) {
+    if (!is.numeric(par) || length(par) != length(specs) || any(!is.finite(par))) {
+        stop("The optimization engine returned invalid parameter coordinates.", call. = FALSE)
+    }
+    if (!.estimation_coordinates_within_bounds(par, coordinates)) {
+        stop("The optimization engine returned parameter coordinates outside their bounds.",
+             call. = FALSE)
+    }
+    values <- .estimation_decode(par, specs)
+    valid <- vapply(seq_along(values), function(i) {
+        value <- as.numeric(values[[i]])
+        lower <- .estimation_bound_numeric(specs[[i]]$lower, specs[[i]]$initial, "lower")
+        upper <- .estimation_bound_numeric(specs[[i]]$upper, specs[[i]]$initial, "upper")
+        length(value) == 1L && is.finite(value) && value >= lower && value <= upper
+    }, logical(1))
+    if (!all(valid)) {
+        stop(
+            "The optimization engine returned invalid value(s) for parameter(s): ",
+            paste(names(specs)[!valid], collapse = ", "), ".",
+            call. = FALSE
+        )
+    }
+    values
 }
 
 .estimation_model_parameter_names <- function(model) {

@@ -347,6 +347,63 @@ test_that("deSolve_engine configures the representation used by estimation", {
     expect_error(deSolve_engine(compiled = NA), "TRUE or FALSE")
 })
 
+test_that("optim methods accept only bounds supported in optimizer coordinates", {
+    identity_unbounded <- c(x = parameter_spec(0))
+    identity_bounded <- c(x = parameter_spec(0.5, lower = 0, upper = 1))
+    log_natural <- c(x = parameter_spec(1, transform = "log"))
+    log_bounded <- c(x = parameter_spec(1, upper = 2, transform = "log"))
+    logit <- c(x = parameter_spec(0.5, transform = "logit"))
+
+    validate <- function(method, specs) {
+        .estimation_validate_optim_method(method, specs, .estimation_coordinates(specs))
+    }
+
+    expect_no_error(validate("BFGS", identity_unbounded))
+    expect_no_error(validate("BFGS", log_natural))
+    expect_no_error(validate("BFGS", logit))
+    expect_error(validate("BFGS", identity_bounded), "does not support.*x")
+    expect_error(validate("BFGS", log_bounded), "does not support.*x")
+    expect_no_error(validate("L-BFGS-B", identity_bounded))
+})
+
+test_that("Brent requires one bounded identity-transformed parameter", {
+    bounded <- c(x = parameter_spec(0.5, lower = 0, upper = 1))
+    unbounded <- c(x = parameter_spec(0.5))
+    logit <- c(x = parameter_spec(0.5, transform = "logit"))
+    two <- c(x = parameter_spec(0, lower = -1, upper = 1),
+             y = parameter_spec(0, lower = -1, upper = 1))
+
+    validate <- function(specs) {
+        .estimation_validate_optim_method("Brent", specs, .estimation_coordinates(specs))
+    }
+
+    expect_no_error(validate(bounded))
+    expect_error(validate(unbounded), "finite lower and upper")
+    expect_error(validate(logit), "identity-transformed")
+    expect_error(validate(two), "exactly one")
+})
+
+test_that("optimization results are validated before decoding", {
+    bounded <- c(x = parameter_spec(0.5, lower = 0, upper = 1))
+    coordinates <- .estimation_coordinates(bounded)
+
+    expect_equal(.estimation_validate_optim_result(0.75, coordinates, bounded)$x, 0.75)
+    expect_error(
+        .estimation_validate_optim_result(1.1, coordinates, bounded),
+        "outside their bounds"
+    )
+    expect_error(
+        .estimation_validate_optim_result(Inf, coordinates, bounded),
+        "invalid parameter coordinates"
+    )
+
+    log_spec <- c(x = parameter_spec(1, transform = "log"))
+    expect_error(
+        .estimation_validate_optim_result(1000, .estimation_coordinates(log_spec), log_spec),
+        "invalid value.*x"
+    )
+})
+
 test_that("estimate consumes an EstimationProblem and returns a stable result", {
     problem <- estimation_problem(
         estimation_test_model(),

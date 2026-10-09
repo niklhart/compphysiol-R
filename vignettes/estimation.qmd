@@ -157,6 +157,12 @@ engine <- optim_engine(
 )
 ```
 
+Parameter bounds come only from `ParameterSpecs`. `L-BFGS-B` supports their
+effective box constraints directly. `Brent` requires one identity-transformed
+parameter with finite bounds. The remaining `optim()` methods accept domains
+enforced by log and logit transformations, but not additional finite bounds in
+optimizer coordinates.
+
 ## Fit and inspect the result
 
 ```{r}

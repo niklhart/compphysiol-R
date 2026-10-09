@@ -1,3 +1,9 @@
+# compphysiol (development version)
+
+* Optimization methods now validate that effective parameter bounds are
+  supported, and fitted coordinates and back-transformed values are checked
+  before results are constructed.
+
 # compphysiol 0.4.3
 
 * Added engine-neutral `EstimationProblem` specifications and `estimate()` with
