@@ -349,6 +349,12 @@ simulation output uses the same `ObservationData` representation, allowing one
 model's predictions to be supplied directly as data when calibrating another
 model, provided their observable names and units are compatible.
 
+A conditional prediction is the deterministic observable value returned by
+`simulate()`. A sampled observation is a random value drawn conditionally from
+an observation-level distribution around such a prediction. Both use
+`ObservationData`; the class deliberately remains neutral about whether values
+are measured, predicted, or synthetically sampled.
+
 Implementation anchor: observation data are represented by `ObservationData`
 data-frame-like objects created with `observation_data()`.
 
@@ -410,6 +416,13 @@ identify exactly which statistical-model entries represent structural
 parameters to sample. This resolves missing levels for those entries without
 guessing from the availability of their population parameters; entries already
 marked observation-level cannot be selected.
+
+`sample_observations()` performs the complementary observation-level step. The
+observable names represented in its prediction rows act as its internal target
+set. Matching entries with unresolved levels are treated as observation-level,
+entries explicitly marked individual-level are rejected, and unrelated
+statistical entries are ignored. Every input row must have a matching
+distribution; sampling replaces values without filtering or reordering rows.
 
 ## Experiment
 

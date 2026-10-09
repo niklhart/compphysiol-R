@@ -89,15 +89,15 @@ sample_population <- function(statistics, parameters, n, targets = NULL) {
 
 .sample_individual_distribution <- function(distribution, parameters, n) {
     if (inherits(distribution, "NormalDistribution")) {
-        mean <- .sample_population_value(distribution$mean, parameters, "mean")
-        sd <- .sample_population_normal_sd(distribution$sd, mean, parameters)
+        mean <- .sampling_value(distribution$mean, parameters, "mean")
+        sd <- .sampling_normal_sd(distribution$sd, mean, parameters)
         if (sd < 0) stop("Normal standard deviations must be non-negative.", call. = FALSE)
         draws <- stats::rnorm(n, mean = as.numeric(mean), sd = sd)
-        return(.sample_population_restore_units(draws, mean))
+        return(.sampling_restore_units(draws, mean))
     }
     if (inherits(distribution, "LognormalDistribution")) {
-        median <- .sample_population_value(distribution$median, parameters, "median")
-        sdlog <- .sample_population_dimensionless(
+        median <- .sampling_value(distribution$median, parameters, "median")
+        sdlog <- .sampling_dimensionless(
             distribution$sdlog, parameters, "sdlog"
         )
         if (as.numeric(median) <= 0) {
@@ -107,39 +107,39 @@ sample_population <- function(statistics, parameters, n, targets = NULL) {
             stop("Log-normal sdlog values must be non-negative.", call. = FALSE)
         }
         draws <- stats::rlnorm(n, meanlog = log(as.numeric(median)), sdlog = sdlog)
-        return(.sample_population_restore_units(draws, median))
+        return(.sampling_restore_units(draws, median))
     }
     stop("Unsupported individual-level statistical distribution.", call. = FALSE)
 }
 
-.sample_population_normal_sd <- function(spec, mean, parameters) {
+.sampling_normal_sd <- function(spec, mean, parameters) {
     if (inherits(spec, "ProportionalSD")) {
-        coefficient <- .sample_population_dimensionless(
+        coefficient <- .sampling_dimensionless(
             spec$coefficient, parameters, "proportional coefficient"
         )
         return(coefficient * abs(as.numeric(mean)))
     }
     if (inherits(spec, "CombinedSD")) {
-        constant <- .sample_population_target_scale(
+        constant <- .sampling_target_scale(
             spec$constant, mean, parameters, "constant"
         )
-        proportional <- .sample_population_dimensionless(
+        proportional <- .sampling_dimensionless(
             spec$proportional, parameters, "proportional coefficient"
         )
         return(constant + proportional * abs(as.numeric(mean)))
     }
-    .sample_population_target_scale(spec, mean, parameters, "sd")
+    .sampling_target_scale(spec, mean, parameters, "sd")
 }
 
-.sample_population_value <- function(spec, parameters, label) {
+.sampling_value <- function(spec, parameters, label) {
     if (inherits(spec, "PredictionLocation") || is.null(spec)) {
         stop("Individual-level distributions require an explicit location.", call. = FALSE)
     }
     .statistical_value(spec, parameters, label)
 }
 
-.sample_population_target_scale <- function(spec, target, parameters, label) {
-    value <- .sample_population_value(spec, parameters, label)
+.sampling_target_scale <- function(spec, target, parameters, label) {
+    value <- .sampling_value(spec, parameters, label)
     tryCatch(
         .check_compatible_units(target, value, label),
         error = function(e) stop(conditionMessage(e), call. = FALSE)
@@ -152,8 +152,8 @@ sample_population <- function(statistics, parameters, n, targets = NULL) {
     as.numeric(value)
 }
 
-.sample_population_dimensionless <- function(spec, parameters, label) {
-    value <- .sample_population_value(spec, parameters, label)
+.sampling_dimensionless <- function(spec, parameters, label) {
+    value <- .sampling_value(spec, parameters, label)
     if (inherits(value, "units")) {
         value <- tryCatch(
             units::set_units(value, "1", mode = "standard"),
@@ -163,7 +163,7 @@ sample_population <- function(statistics, parameters, n, targets = NULL) {
     as.numeric(value)
 }
 
-.sample_population_restore_units <- function(x, template) {
+.sampling_restore_units <- function(x, template) {
     if (!inherits(template, "units")) return(x)
     units::set_units(x, units::deparse_unit(template), mode = "standard")
 }
