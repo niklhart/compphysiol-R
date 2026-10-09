@@ -4,6 +4,8 @@
   a `stats::optim()` backend, explicit parameter bounds and transformations,
   compositional observation-error models, unit-aware likelihood evaluation,
   and deterministic compartment, process, ODE, and compiled ODE model support.
+* Added `sample_population()` and `sample_observations()` methods for creating 
+  virtual populations.
 
 # compphysiol 0.4.2
 
