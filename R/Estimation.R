@@ -351,7 +351,13 @@ estimation_problem <- function(model, experiments, parameters, statistics) {
         }
         c(if (is.character(location)) location, unlist(scale, use.names = FALSE))
     }), use.names = FALSE)
-    unique(specs[vapply(specs, is.character, logical(1))])
+    correlation_specs <- vapply(
+        .statistical_correlations(statistics),
+        function(pair) if (is.character(pair$value)) pair$value else NA_character_,
+        character(1)
+    )
+    correlation_specs <- correlation_specs[!is.na(correlation_specs)]
+    unique(c(specs[vapply(specs, is.character, logical(1))], correlation_specs))
 }
 
 #' Print an estimation problem

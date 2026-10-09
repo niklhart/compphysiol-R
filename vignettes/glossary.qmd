@@ -404,11 +404,24 @@ the dynamic model and validates their dimensions. The optim engine currently
 supports observation-level entries only; individual-level entries require a
 mixed-effects-capable engine.
 
-`sample_population()` independently realizes the individual-level entries as a
-named `ParameterSets` population. Population locations and variability
-parameters are inputs to sampling but are not copied into each realized
-individual. Observation-level entries are ignored. Correlated random effects
-are outside the current sampling contract.
+`correlated()` declares pairwise correlations between individual-level
+parameter distributions in the same statistical model. Each declaration names
+two random quantities and a fixed correlation or statistical-parameter name.
+The correlation applies to the latent normal variables underlying normal and
+log-normal marginals; unspecified pairs are uncorrelated. Normal marginals in a
+correlated structure require a constant standard deviation rather than a
+proportional or combined specification. Correlations cannot be attached to
+observation-level error distributions. Because target levels are inferred from
+the dynamic model, this restriction is fully checked when the statistical model
+is resolved.
+
+`sample_population()` realizes the individual-level entries as a named
+`ParameterSets` population. Population locations, variability parameters, and
+correlation parameters are inputs to sampling but are not copied into each
+realized individual. Symbolic correlations are resolved at this boundary, the
+completed correlation matrix is checked for positive semidefiniteness, and
+correlated latent normal draws are transformed through their marginal
+distributions. Observation-level entries are ignored.
 
 By default, sampling requires levels to have been made explicit or resolved and
 selects every individual-level entry. An explicit `targets` vector can instead

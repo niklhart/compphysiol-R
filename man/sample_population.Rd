@@ -10,7 +10,8 @@ sample_population(statistics, parameters, n, targets = NULL)
 \item{statistics}{A \code{StatisticalModel} with resolved or explicit levels.}
 
 \item{parameters}{A \link[=parameters]{Parameters} object containing population
-parameters referenced by the individual-level distributions.}
+parameters referenced by the individual-level distributions and their
+correlations.}
 
 \item{n}{Positive whole number of individuals to sample.}
 
@@ -23,11 +24,12 @@ A named \code{ParameterSets} collection with names \code{individual_1},
 \code{individual_2}, and so on.
 }
 \description{
-Samples structural parameters independently from the individual-level
-distributions in a \link[=statistical_model]{StatisticalModel}. Observation-level
-entries are ignored. The result contains only the sampled targets; population
-parameters used as distribution locations or scales are not copied into the
-individual parameter sets.
+Samples structural parameters from the individual-level distributions in a
+\link[=statistical_model]{StatisticalModel}, respecting dependencies declared by
+\code{\link[=correlated]{correlated()}}. Observation-level entries are ignored. The result contains
+only the sampled targets; population parameters used as distribution
+locations, scales, or correlations are not copied into the individual
+parameter sets.
 }
 \details{
 With \code{targets = NULL}, every statistical-model entry must have an explicit or

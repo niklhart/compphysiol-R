@@ -8,7 +8,8 @@ statistical_model(...)
 }
 \arguments{
 \item{...}{Named distribution specifications created by \code{\link[=normal]{normal()}} or
-\code{\link[=lognormal]{lognormal()}}.}
+\code{\link[=lognormal]{lognormal()}}, plus optional unnamed specifications created by
+\code{correlated()}.}
 }
 \value{
 A \code{StatisticalModel} object.

@@ -1,10 +1,11 @@
 #' Sample a realized population
 #'
-#' Samples structural parameters independently from the individual-level
-#' distributions in a [StatisticalModel][statistical_model()]. Observation-level
-#' entries are ignored. The result contains only the sampled targets; population
-#' parameters used as distribution locations or scales are not copied into the
-#' individual parameter sets.
+#' Samples structural parameters from the individual-level distributions in a
+#' [StatisticalModel][statistical_model()], respecting dependencies declared by
+#' [correlated()]. Observation-level entries are ignored. The result contains
+#' only the sampled targets; population parameters used as distribution
+#' locations, scales, or correlations are not copied into the individual
+#' parameter sets.
 #'
 #' With `targets = NULL`, every statistical-model entry must have an explicit or
 #' previously resolved `level`, and all individual-level entries are sampled.
@@ -14,7 +15,8 @@
 #'
 #' @param statistics A `StatisticalModel` with resolved or explicit levels.
 #' @param parameters A [Parameters][parameters()] object containing population
-#'   parameters referenced by the individual-level distributions.
+#'   parameters referenced by the individual-level distributions and their
+#'   correlations.
 #' @param n Positive whole number of individuals to sample.
 #' @param targets Optional character vector of statistical-model targets to
 #'   sample. `NULL` samples all resolved individual-level entries. Explicit
@@ -76,8 +78,19 @@ sample_population <- function(statistics, parameters, n, targets = NULL) {
         }
     }
     individual <- statistics[targets]
-    sampled <- lapply(individual, .sample_individual_distribution,
-                      parameters = parameters, n = n)
+    .statistical_validate_correlated_distributions(individual)
+    correlation_matrix <- .statistical_correlation_matrix(
+        individual, parameters = parameters, targets = names(individual)
+    )
+    .statistical_validate_correlation_matrix(correlation_matrix)
+    latent <- .sample_correlated_standard_normals(correlation_matrix, n)
+    sampled <- lapply(seq_along(individual), function(j) {
+        .sample_individual_distribution(
+            individual[[j]], parameters = parameters, n = n,
+            latent = latent[, j]
+        )
+    })
+    names(sampled) <- names(individual)
 
     people <- lapply(seq_len(n), function(i) {
         values <- lapply(sampled, `[[`, i)
@@ -87,12 +100,21 @@ sample_population <- function(statistics, parameters, n, targets = NULL) {
     .new_parameter_sets(people, check_units = FALSE)
 }
 
-.sample_individual_distribution <- function(distribution, parameters, n) {
+.sample_correlated_standard_normals <- function(correlation, n) {
+    if (!ncol(correlation)) return(matrix(numeric(), nrow = n, ncol = 0L))
+    decomposition <- eigen(correlation, symmetric = TRUE)
+    root <- decomposition$vectors %*%
+        diag(sqrt(pmax(decomposition$values, 0)), nrow = ncol(correlation))
+    matrix(stats::rnorm(n * ncol(correlation)), nrow = n) %*% t(root)
+}
+
+.sample_individual_distribution <- function(distribution, parameters, n, latent = NULL) {
+    if (is.null(latent)) latent <- stats::rnorm(n)
     if (inherits(distribution, "NormalDistribution")) {
         mean <- .sampling_value(distribution$mean, parameters, "mean")
         sd <- .sampling_normal_sd(distribution$sd, mean, parameters)
         if (sd < 0) stop("Normal standard deviations must be non-negative.", call. = FALSE)
-        draws <- stats::rnorm(n, mean = as.numeric(mean), sd = sd)
+        draws <- as.numeric(mean) + sd * latent
         return(.sampling_restore_units(draws, mean))
     }
     if (inherits(distribution, "LognormalDistribution")) {
@@ -106,7 +128,7 @@ sample_population <- function(statistics, parameters, n, targets = NULL) {
         if (sdlog < 0) {
             stop("Log-normal sdlog values must be non-negative.", call. = FALSE)
         }
-        draws <- stats::rlnorm(n, meanlog = log(as.numeric(median)), sdlog = sdlog)
+        draws <- exp(log(as.numeric(median)) + sdlog * latent)
         return(.sampling_restore_units(draws, median))
     }
     stop("Unsupported individual-level statistical distribution.", call. = FALSE)

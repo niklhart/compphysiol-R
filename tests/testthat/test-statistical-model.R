@@ -80,6 +80,82 @@ test_that("statistical_model uses names as random-quantity targets", {
     expect_error(statistical_model(C = 1), "StatisticalDistribution")
 })
 
+test_that("correlated declares pairwise dependence between model targets", {
+    dependence <- correlated(
+        list("CL", "V", 0.5),
+        list("CL", "Q", "rho_CL_Q")
+    )
+    model <- statistical_model(
+        CL = lognormal(median = "CL_pop", sdlog = "omega_CL"),
+        V = lognormal(median = "V_pop", sdlog = "omega_V"),
+        Q = normal(mean = "Q_pop", sd = "omega_Q"),
+        dependence
+    )
+
+    expect_s3_class(dependence, "Correlated")
+    expect_named(model, c("CL", "V", "Q"))
+    expect_length(.statistical_correlations(model), 2)
+    expect_length(.statistical_correlations(model[c("CL", "V")]), 1)
+    expect_length(.statistical_correlations(model["V"]), 0)
+    expect_output(print(model), "Correlations (latent normal scale)", fixed = TRUE)
+    expect_output(print(model), "rho_CL_Q", fixed = TRUE)
+    expect_output(print(model), "0.5", fixed = TRUE)
+})
+
+test_that("correlated validates triplets and enclosing targets", {
+    expect_error(correlated(list("CL", "V")), "list\\(first_target")
+    expect_error(correlated(pair = list("CL", "V", 0.5)), "unnamed")
+    expect_error(correlated(list("CL", "CL", 0.5)), "distinct")
+    expect_error(correlated(list("CL", "V", 1.1)), "between -1 and 1")
+    expect_error(
+        correlated(list("CL", "V", 0.5), list("V", "CL", 0.4)),
+        "only once"
+    )
+    expect_error(
+        statistical_model(
+            CL = lognormal(median = 1, sdlog = 0.2),
+            correlated(list("CL", "V", 0.5))
+        ),
+        "Unknown correlated.*V"
+    )
+    expect_error(
+        statistical_model(
+            CL = lognormal(median = 1, sdlog = 0.2),
+            C = normal(sd = 1, level = "observation"),
+            correlated(list("CL", "C", 0.5))
+        ),
+        "only between individual-level"
+    )
+})
+
+test_that("correlation level and marginal restrictions are resolved contextually", {
+    dynamic <- statistical_test_model()
+    observation_correlation <- statistical_model(
+        CL = lognormal(median = "CL_pop", sdlog = "omega_CL"),
+        C = normal(sd = "sigma"),
+        correlated(list("CL", "C", 0.5))
+    )
+    expect_error(
+        .resolve_statistical_model(observation_correlation, dynamic),
+        "observation-level.*C"
+    )
+
+    unsupported_scale <- statistical_model(
+        CL = normal(mean = "CL_pop", sd = proportional("omega_CL"),
+                    level = "individual"),
+        V = lognormal(median = "V_pop", sdlog = "omega_V", level = "individual"),
+        correlated(list("CL", "V", 0.5))
+    )
+    expect_error(
+        sample_population(
+            unsupported_scale,
+            parameters(CL_pop = 1, omega_CL = 0.2, V_pop = 2, omega_V = 0.3),
+            n = 2
+        ),
+        "constant standard deviation"
+    )
+})
+
 test_that("validation infers levels and observable prediction locations", {
     dynamic <- statistical_test_model()
     model <- statistical_model(

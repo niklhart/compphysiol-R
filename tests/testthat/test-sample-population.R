@@ -130,3 +130,74 @@ test_that("sample_population returns empty parameter sets for observation-only m
     expect_named(population, c("individual_1", "individual_2"))
     expect_true(all(lengths(population) == 0L))
 })
+
+test_that("sample_population realizes latent-normal correlations", {
+    statistics <- statistical_model(
+        CL = lognormal(
+            median = "CL_pop", sdlog = "omega_CL", level = "individual"
+        ),
+        V = lognormal(
+            median = "V_pop", sdlog = "omega_V", level = "individual"
+        ),
+        Q = normal(mean = "Q_pop", sd = "omega_Q", level = "individual"),
+        correlated(
+            list("CL", "V", 0.6),
+            list("CL", "Q", "rho_CL_Q")
+        )
+    )
+    values <- parameters(
+        CL_pop = 1, omega_CL = 0.2,
+        V_pop = 10, omega_V = 0.3,
+        Q_pop = 5, omega_Q = 0.5,
+        rho_CL_Q = -0.25
+    )
+
+    set.seed(2026)
+    population <- sample_population(statistics, values, n = 20000)
+    draws <- vapply(population, function(x) c(
+        CL = log(x$CL), V = log(x$V), Q = x$Q
+    ), numeric(3))
+    observed <- stats::cor(t(draws))
+
+    expect_equal(unname(observed["CL", "V"]), 0.6, tolerance = 0.03)
+    expect_equal(unname(observed["CL", "Q"]), -0.25, tolerance = 0.03)
+    expect_equal(unname(observed["V", "Q"]), 0, tolerance = 0.03)
+})
+
+test_that("sample_population validates resolved correlation matrices", {
+    statistics <- statistical_model(
+        A = normal(mean = 0, sd = 1, level = "individual"),
+        B = normal(mean = 0, sd = 1, level = "individual"),
+        C = normal(mean = 0, sd = 1, level = "individual"),
+        correlated(
+            list("A", "B", "rho_AB"),
+            list("A", "C", "rho_AC"),
+            list("B", "C", "rho_BC")
+        )
+    )
+
+    expect_error(
+        sample_population(
+            statistics,
+            parameters(rho_AB = 0.9, rho_AC = 0.9, rho_BC = -0.9),
+            n = 2
+        ),
+        "positive semidefinite"
+    )
+    expect_error(
+        sample_population(
+            statistics,
+            parameters(rho_AB = 1.2, rho_AC = 0, rho_BC = 0),
+            n = 2
+        ),
+        "between -1 and 1"
+    )
+    expect_error(
+        sample_population(
+            statistics,
+            parameters(rho_AB = 0.2 [kg], rho_AC = 0, rho_BC = 0),
+            n = 2
+        ),
+        "dimensionless"
+    )
+})
