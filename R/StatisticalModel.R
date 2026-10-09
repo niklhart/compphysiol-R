@@ -577,8 +577,12 @@ print.StatisticalModel <- function(x, ...) {
             matrix[pair$first, pair$second] <- value
             matrix[pair$second, pair$first] <- value
         }
-        cat(" Correlations (latent normal scale):\n")
-        output <- capture.output(print(noquote(matrix)))
+        all_normal <- all(vapply(x[targets], inherits, logical(1), "NormalDistribution"))
+        heading <- if (all_normal) " Correlations:\n" else {
+            " Correlations (latent normal scale):\n"
+        }
+        cat(heading)
+        output <- utils::capture.output(print(noquote(matrix)))
         cat(paste0("  ", output, collapse = "\n"), "\n", sep = "")
     }
     invisible(x)

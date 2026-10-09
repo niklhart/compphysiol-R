@@ -100,6 +100,15 @@ test_that("correlated declares pairwise dependence between model targets", {
     expect_output(print(model), "Correlations (latent normal scale)", fixed = TRUE)
     expect_output(print(model), "rho_CL_Q", fixed = TRUE)
     expect_output(print(model), "0.5", fixed = TRUE)
+
+    normal_model <- statistical_model(
+        CL = normal(mean = "CL_pop", sd = "omega_CL"),
+        V = normal(mean = "V_pop", sd = "omega_V"),
+        correlated(list("CL", "V", 0.5))
+    )
+    printed <- utils::capture.output(print(normal_model))
+    expect_true(any(grepl("Correlations:", printed, fixed = TRUE)))
+    expect_false(any(grepl("latent normal scale", printed, fixed = TRUE)))
 })
 
 test_that("correlated validates triplets and enclosing targets", {
