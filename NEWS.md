@@ -1,11 +1,12 @@
-# compphysiol (development version)
+# compphysiol 0.4.3
 
 * Added backend-neutral `EstimationProblem` specifications and `estimate()` with
   a `stats::optim()` backend, explicit parameter bounds and transformations,
   compositional observation-error models, unit-aware likelihood evaluation,
   and deterministic compartment, process, ODE, and compiled ODE model support.
+  `statistical_model()` describes the underlying distributional assumptions.
 * Added `sample_population()` and `sample_observations()` methods for creating 
-  virtual populations.
+  virtual populations. Correlations between parameters are supported during sampling.
 
 # compphysiol 0.4.2
 
