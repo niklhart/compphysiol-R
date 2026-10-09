@@ -527,9 +527,9 @@ the current experiment contract.
 
 An estimation problem combines a deterministic dynamic model, one or more
 experiments containing observation data, explicit estimated-parameter
-specifications, and a statistical model. It is backend-neutral: the same
+specifications, and a statistical model. It is engine-neutral: the same
 scientific estimation specification can be evaluated by different estimation
-backends without moving statistical assumptions into the compartment model.
+engines without moving statistical assumptions into the compartment model.
 
 Estimated parameters declare an initial value, optional bounds, and an internal
 identity, log, or logit transformation. Units are retained at the model and
@@ -548,19 +548,35 @@ combined again; `[` retains a collection, while `[[` extracts one specification.
 results that contain parameter estimates and their uncertainty.
 
 Current estimation supports `CompartmentModel`, `ProcessModel`, `OdeModel`, and
-`CompiledOdeModel` inputs. Analytical and stochastic model representations are
-outside the current estimation contract. The first backend uses `stats::optim()`
-to minimize the joint negative log-likelihood across experiments. An
+`CompiledOdeModel` inputs. These are model representations, not engines.
+Analytical and stochastic model representations are outside the current
+estimation contract. An estimation engine owns the fitting workflow and may
+contain a simulation engine. The first estimation engine uses `stats::optim()`
+to minimize the joint negative log-likelihood across experiments and delegates
+ODE evaluation to a deSolve simulation engine. The latter can prepare either an
+`OdeModel` or a `CompiledOdeModel`; compilation changes the representation
+consumed by the same deSolve path rather than selecting another estimation
+engine. An
 `EstimationResult` exposes coefficients, the negative log-likelihood as
 `neg_log_lik`, convergence
-information, fitted values, residuals, and the raw backend result.
+information, fitted values, residuals, and the raw engine result.
+
+An engine that integrates mixed effects, such as a future `nlmixr2` engine,
+owns more than an outer optimization algorithm: ODE evaluation, residual
+likelihoods, random-effect approximation or integration, and the estimation
+algorithm belong to that engine. The public `simulate()` API does not yet take
+an engine because ODE, analytical, SSA, and hybrid simulation types describe
+different semantics rather than interchangeable implementations of one
+algorithm. A public simulation-engine choice becomes useful when another ODE
+implementation is supported.
 
 Fitted values and residuals preserve the observation rows and their order.
 Rows with missing observed values have a fitted value and a missing residual.
 
 Implementation anchors: `estimation_problem()` creates an `EstimationProblem`,
 `parameter_spec()` declares an individual specification, `c()` combines specifications,
-`optim_backend()` configures the optimizer, and `estimate()` returns an
+`optim_engine()` configures the optimizer and its `deSolve_engine()`, and
+`estimate()` returns an
 `EstimationResult`.
 
 ## Source and sink
@@ -699,7 +715,7 @@ This step prepares numeric initial conditions, substitutes equations and
 parameters where needed, checks that all required numerical values are
 available, handles dosing events, and builds the generated derivative function.
 
-Conceptually, this is the point where the backend-neutral ODE description
+Conceptually, this is the point where the solver-neutral ODE description
 becomes a solver-facing dynamical system. The amount-preferred state
 representation policy described under State has already been applied when
 creating the `OdeModel`.
@@ -719,7 +735,7 @@ rather than the toolbox-level simulation convention.
 
 Implementation anchor: solver-specific ODE export is handled internally.
 Users should call `simulate()` for solver output or `to_ode_model()` for the
-backend-neutral ODE representation.
+solver-neutral ODE representation.
 
 Compiled ODE export is a cached form of solver-specific ODE export. A
 `CompiledOdeModel` stores the original `OdeModel` together with a compiled

@@ -2,7 +2,7 @@
 % Please edit documentation in R/Estimation.R
 \name{estimation_problem}
 \alias{estimation_problem}
-\title{Create a backend-neutral estimation problem}
+\title{Create an engine-neutral estimation problem}
 \usage{
 estimation_problem(model, experiments, parameters, statistics)
 }
@@ -25,5 +25,5 @@ distributions of observed and individual-level quantities.}
 An \code{EstimationProblem} object.
 }
 \description{
-Create a backend-neutral estimation problem
+Create an engine-neutral estimation problem
 }

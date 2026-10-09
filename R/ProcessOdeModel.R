@@ -1,6 +1,6 @@
 #' Create a process model representation
 #'
-#' `to_process_model()` lowers a `CompartmentModel` to a backend-neutral process
+#' `to_process_model()` lowers a `CompartmentModel` to a solver-neutral process
 #' representation with explicit states, process rates, and process
 #' stoichiometry.
 #'
@@ -177,7 +177,7 @@ to_process_model.CompartmentModel <- function(model) {
 #' Create an ODE model representation
 #'
 #' `to_ode_model()` lowers a `CompartmentModel` or `ProcessModel` to a
-#' backend-neutral ODE representation with indexed one-dimensional states.
+#' solver-neutral ODE representation with indexed one-dimensional states.
 #'
 #' @param model A `CompartmentModel` or `ProcessModel` object.
 #' @returns An `OdeModel` object.
@@ -274,7 +274,7 @@ to_compiled_ode_model.OdeModel <- function(model) {
 #' Create an analytical model representation
 #'
 #' `to_analytical_model()` lowers a `CompartmentModel` or `ProcessModel` to a
-#' backend-neutral linear analytical representation of the form `dx/dt = A x + b`.
+#' solver-neutral linear analytical representation of the form `dx/dt = A x + b`.
 #'
 #' The first implementation supports homogeneous first-order linear systems.
 #' The constant source term `b` is part of the representation, but nonzero

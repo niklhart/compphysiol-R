@@ -7,14 +7,14 @@
 \usage{
 estimate(object, ...)
 
-\method{estimate}{EstimationProblem}(object, backend = optim_backend(), dimensions = NULL, ...)
+\method{estimate}{EstimationProblem}(object, engine = optim_engine(), dimensions = NULL, ...)
 }
 \arguments{
 \item{object}{An \code{EstimationProblem}.}
 
 \item{...}{Additional method arguments.}
 
-\item{backend}{An estimation backend, currently \code{\link[=optim_backend]{optim_backend()}}.}
+\item{engine}{An estimation engine, currently \code{\link[=optim_engine]{optim_engine()}}.}
 
 \item{dimensions}{Optional solver-facing unit dimensions passed to simulation.}
 }

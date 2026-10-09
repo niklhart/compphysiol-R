@@ -13,7 +13,7 @@ to_process_model(model)
 A \code{ProcessModel} object.
 }
 \description{
-\code{to_process_model()} lowers a \code{CompartmentModel} to a backend-neutral process
+\code{to_process_model()} lowers a \code{CompartmentModel} to a solver-neutral process
 representation with explicit states, process rates, and process
 stoichiometry.
 }

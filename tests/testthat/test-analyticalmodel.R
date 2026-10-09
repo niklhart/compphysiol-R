@@ -16,7 +16,7 @@ eval_expr_vector <- function(x, env = list()) {
     }, numeric(1)))
 }
 
-test_that("to_analytical_model returns a backend-neutral AnalyticalModel", {
+test_that("to_analytical_model returns a solver-neutral AnalyticalModel", {
     model <- compartment_model() |>
         add_compartment("Central", volume = NA_real_) |>
         add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>

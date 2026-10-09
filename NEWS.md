@@ -1,7 +1,7 @@
 # compphysiol 0.4.3
 
-* Added backend-neutral `EstimationProblem` specifications and `estimate()` with
-  a `stats::optim()` backend, explicit parameter bounds and transformations,
+* Added engine-neutral `EstimationProblem` specifications and `estimate()` with
+  a `stats::optim()` engine, explicit parameter bounds and transformations,
   compositional observation-error models, unit-aware likelihood evaluation,
   and deterministic compartment, process, ODE, and compiled ODE model support.
   `statistical_model()` describes the underlying distributional assumptions.

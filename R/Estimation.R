@@ -226,15 +226,17 @@ print.ParameterSpecs <- function(x, ...) {
     invisible(x)
 }
 
-#' Configure the stats optim estimation backend
+#' Configure the stats optim estimation engine
 #'
 #' @param method Optimization method passed to [stats::optim()].
 #' @param control Control list passed to [stats::optim()].
-#' @returns An `OptimBackend` object.
+#' @param simulation A simulation engine, currently [deSolve_engine()].
+#' @returns An `OptimEngine` object.
 #' @export
-optim_backend <- function(
+optim_engine <- function(
     method = "L-BFGS-B",
-    control = list()
+    control = list(),
+    simulation = deSolve_engine()
 ) {
     methods <- c("Nelder-Mead", "BFGS", "CG", "L-BFGS-B", "SANN", "Brent")
     if (!is.character(method) || length(method) != 1L || is.na(method) ||
@@ -242,13 +244,14 @@ optim_backend <- function(
         stop("Unknown optim method.", call. = FALSE)
     }
     if (!is.list(control)) stop("optim control must be a list.", call. = FALSE)
+    .check_class(simulation, "SimulationEngine")
     structure(
-        list(method = method, control = control),
-        class = c("OptimBackend", "EstimationBackend")
+        list(method = method, control = control, simulation = simulation),
+        class = c("OptimEngine", "EstimationEngine")
     )
 }
 
-#' Create a backend-neutral estimation problem
+#' Create an engine-neutral estimation problem
 #'
 #' @param model A `CompartmentModel`, `ProcessModel`, `OdeModel`, or
 #'   `CompiledOdeModel`.
@@ -402,39 +405,35 @@ estimate.default <- function(object, ...) {
          paste(class(object), collapse = "/"), ".", call. = FALSE)
 }
 
-#' @param backend An estimation backend, currently [optim_backend()].
+#' @param engine An estimation engine, currently [optim_engine()].
 #' @param dimensions Optional solver-facing unit dimensions passed to simulation.
 #' @rdname estimate
 #' @export
 estimate.EstimationProblem <- function(
     object,
-    backend = optim_backend(),
+    engine = optim_engine(),
     dimensions = NULL,
     ...
 ) {
-    .check_class(backend, "EstimationBackend")
-    if (!inherits(backend, "OptimBackend")) {
-        stop("Unsupported estimation backend: ", class(backend)[1], ".", call. = FALSE)
+    .check_class(engine, "EstimationEngine")
+    if (!inherits(engine, "OptimEngine")) {
+        stop("Unsupported estimation engine: ", class(engine)[1], ".", call. = FALSE)
     }
-    .estimate_optim(object, backend, dimensions = dimensions, ...)
+    .estimate_optim(object, engine, dimensions = dimensions, ...)
 }
 
-.estimate_optim <- function(problem, backend, dimensions = NULL, ...) {
+.estimate_optim <- function(problem, engine, dimensions = NULL, ...) {
     individual <- names(problem$statistics)[vapply(
         problem$statistics, function(x) identical(x$level, "individual"), logical(1)
     )]
     if (length(individual)) {
         stop("Mixed-effects estimation requires a supporting estimation engine; ",
-             "the optim backend only supports observation-level statistical entries.",
+             "the optim engine only supports observation-level statistical entries.",
              call. = FALSE)
     }
     specs <- problem$parameters
     coordinates <- .estimation_coordinates(specs)
-    simulation_model <- if (inherits(problem$model, "ProcessModel")) {
-        to_ode_model(problem$model)
-    } else {
-        problem$model
-    }
+    simulation_model <- .simulation_model_for_engine(problem$model, engine$simulation)
     model_parameters <- .estimation_model_parameter_names(problem$model)
 
     evaluate <- function(par, diagnostics = FALSE) {
@@ -478,10 +477,10 @@ estimate.EstimationProblem <- function(
     optim_args <- list(
         par = coordinates$initial,
         fn = objective,
-        method = backend$method,
-        control = backend$control
+        method = engine$method,
+        control = engine$control
     )
-    if (backend$method %in% c("L-BFGS-B", "Brent")) {
+    if (engine$method %in% c("L-BFGS-B", "Brent")) {
         optim_args$lower <- coordinates$lower
         optim_args$upper <- coordinates$upper
     }
@@ -496,8 +495,8 @@ estimate.EstimationProblem <- function(
             convergence = list(code = raw$convergence, message = raw$message %||% NULL),
             predictions = diagnostics$predictions,
             residuals = diagnostics$residuals,
-            backend = backend,
-            backend_result = raw,
+            engine = engine,
+            engine_result = raw,
             problem = problem
         ),
         class = "EstimationResult"
@@ -527,11 +526,11 @@ print.EstimationResult <- function(x, ...) {
     if (!is.null(x$convergence$message)) {
         cat(" convergence message: ", x$convergence$message, "\n", sep = "")
     }
-    backend <- class(x$backend)[[1]]
-    if (inherits(x$backend, "OptimBackend")) {
-        backend <- paste0(backend, " (", x$backend$method, ")")
+    engine <- class(x$engine)[[1]]
+    if (inherits(x$engine, "OptimEngine")) {
+        engine <- paste0(engine, " (", x$engine$method, ")")
     }
-    cat(" backend: ", backend, "\n", sep = "")
+    cat(" engine: ", engine, "\n", sep = "")
     invisible(x)
 }
 

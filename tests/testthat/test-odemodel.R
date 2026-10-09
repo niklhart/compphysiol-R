@@ -1,4 +1,4 @@
-test_that("to_ode_model returns a backend-neutral OdeModel", {
+test_that("to_ode_model returns a solver-neutral OdeModel", {
     model <- compartment_model() |>
         add_compartment("Central", volume = "V") |>
         add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>

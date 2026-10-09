@@ -14,7 +14,7 @@ An \code{AnalyticalModel} object.
 }
 \description{
 \code{to_analytical_model()} lowers a \code{CompartmentModel} or \code{ProcessModel} to a
-backend-neutral linear analytical representation of the form \verb{dx/dt = A x + b}.
+solver-neutral linear analytical representation of the form \verb{dx/dt = A x + b}.
 }
 \details{
 The first implementation supports homogeneous first-order linear systems.

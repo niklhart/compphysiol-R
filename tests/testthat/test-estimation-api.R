@@ -118,7 +118,7 @@ test_that("ParameterSpec prints its unit once", {
     expect_match(output, "unit: L", fixed = TRUE)
 })
 
-test_that("estimation_problem is the backend-neutral estimation specification", {
+test_that("estimation_problem is the engine-neutral estimation specification", {
     model <- estimation_test_model()
     study <- experiments(individual_1 = estimation_test_experiment())
     spec <- c(
@@ -314,18 +314,37 @@ test_that("known experiment parameters cannot also be estimated", {
     )
 })
 
-test_that("optim_backend keeps optimizer configuration out of estimate", {
-    backend <- optim_backend(
+test_that("optim_engine keeps optimizer configuration out of estimate", {
+    engine <- optim_engine(
         method = "L-BFGS-B",
         control = list(maxit = 250, reltol = 1e-8)
     )
 
-    expect_s3_class(backend, "EstimationBackend")
-    expect_s3_class(backend, "OptimBackend")
-    expect_identical(backend$method, "L-BFGS-B")
-    expect_identical(backend$control, list(maxit = 250, reltol = 1e-8))
-    expect_error(optim_backend(method = "not-an-optim-method"), "method")
-    expect_error(optim_backend(control = 1), "control")
+    expect_s3_class(engine, "EstimationEngine")
+    expect_s3_class(engine, "OptimEngine")
+    expect_identical(engine$method, "L-BFGS-B")
+    expect_identical(engine$control, list(maxit = 250, reltol = 1e-8))
+    expect_s3_class(engine$simulation, "SimulationEngine")
+    expect_s3_class(engine$simulation, "DeSolveEngine")
+    expect_false(engine$simulation$compiled)
+    expect_error(optim_engine(method = "not-an-optim-method"), "method")
+    expect_error(optim_engine(control = 1), "control")
+    expect_error(optim_engine(simulation = list()), "SimulationEngine")
+})
+
+test_that("deSolve_engine configures the representation used by estimation", {
+    interpreted <- deSolve_engine()
+    compiled <- deSolve_engine(compiled = TRUE)
+
+    expect_s3_class(interpreted, "SimulationEngine")
+    expect_s3_class(interpreted, "DeSolveEngine")
+    expect_false(interpreted$compiled)
+    expect_true(compiled$compiled)
+    expect_s3_class(
+        .simulation_model_for_engine(estimation_test_model(), compiled),
+        "CompiledOdeModel"
+    )
+    expect_error(deSolve_engine(compiled = NA), "TRUE or FALSE")
 })
 
 test_that("estimate consumes an EstimationProblem and returns a stable result", {
@@ -341,11 +360,11 @@ test_that("estimate consumes an EstimationProblem and returns a stable result", 
 
     fit <- estimate(
         problem,
-        backend = optim_backend(method = "L-BFGS-B", control = list(maxit = 200))
+        engine = optim_engine(method = "L-BFGS-B", control = list(maxit = 200))
     )
 
     expect_s3_class(fit, "EstimationResult")
-    expect_s3_class(fit$backend, "OptimBackend")
+    expect_s3_class(fit$engine, "OptimEngine")
     expect_named(coef(fit), c("k", "sigma"))
     expect_true(is.numeric(fit$neg_log_lik) && length(fit$neg_log_lik) == 1L)
     expect_null(fit$objective)
@@ -360,7 +379,7 @@ test_that("estimate consumes an EstimationProblem and returns a stable result", 
     expect_identical(units::deparse_unit(fitted(fit)$value), "mg L-1")
     expect_identical(names(fitted(fit)), c("time", "observable", "value", "experiment"))
     expect_identical(names(residuals(fit)), c("time", "observable", "value", "experiment"))
-    expect_true(is.list(fit$backend_result))
+    expect_true(is.list(fit$engine_result))
     expect_equal(as.numeric(coef(fit)$k), 0.197, tolerance = 0.01)
     expect_identical(fit$convergence$code, 0L)
 
@@ -369,7 +388,7 @@ test_that("estimate consumes an EstimationProblem and returns a stable result", 
     expect_identical(returned, fit)
     expect_match(output, "EstimationResult", fixed = TRUE)
     expect_match(output, "negative log-likelihood", fixed = TRUE)
-    expect_match(output, "OptimBackend (L-BFGS-B)", fixed = TRUE)
+    expect_match(output, "OptimEngine (L-BFGS-B)", fixed = TRUE)
 })
 
 test_that("estimation diagnostics retain rows with missing observations", {
@@ -385,7 +404,7 @@ test_that("estimation diagnostics retain rows with missing observations", {
         statistical_model(C = normal(sd = "sigma"))
     )
 
-    fit <- estimate(problem, backend = optim_backend(control = list(maxit = 50)))
+    fit <- estimate(problem, engine = optim_engine(control = list(maxit = 50)))
 
     expect_equal(nrow(fitted(fit)), nrow(study$observations))
     expect_equal(nrow(residuals(fit)), nrow(study$observations))
@@ -410,7 +429,7 @@ test_that("estimate runs lowered deterministic representations", {
             ),
             statistical_model(C = normal(sd = "sigma"))
         )
-        fit <- estimate(problem, backend = optim_backend(control = list(maxit = 50)))
+        fit <- estimate(problem, engine = optim_engine(control = list(maxit = 50)))
         expect_s3_class(fit, "EstimationResult")
         expect_identical(fit$convergence$code, 0L)
         expect_equal(as.numeric(coef(fit)$k), 0.197, tolerance = 0.01)
@@ -419,7 +438,7 @@ test_that("estimate runs lowered deterministic representations", {
 
 test_that("estimate does not accept the model in place of an EstimationProblem", {
     expect_error(
-        estimate(estimation_test_model(), backend = optim_backend()),
+        estimate(estimation_test_model(), engine = optim_engine()),
         "EstimationProblem|method"
     )
 })

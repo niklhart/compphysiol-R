@@ -14,5 +14,5 @@ An \code{OdeModel} object.
 }
 \description{
 \code{to_ode_model()} lowers a \code{CompartmentModel} or \code{ProcessModel} to a
-backend-neutral ODE representation with indexed one-dimensional states.
+solver-neutral ODE representation with indexed one-dimensional states.
 }

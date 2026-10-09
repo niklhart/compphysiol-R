@@ -1,3 +1,33 @@
+#' Configure the deSolve simulation engine
+#'
+#' This object describes how a consumer such as an estimation engine prepares
+#' models for the existing deSolve simulation path. It is not yet a public
+#' argument to [simulate()].
+#'
+#' @param compiled Whether to prepare a `CompiledOdeModel` before simulation.
+#' @returns A `DeSolveEngine` object.
+#' @export
+deSolve_engine <- function(compiled = FALSE) {
+    if (!is.logical(compiled) || length(compiled) != 1L || is.na(compiled)) {
+        stop("compiled must be TRUE or FALSE.", call. = FALSE)
+    }
+    structure(
+        list(compiled = compiled),
+        class = c("DeSolveEngine", "SimulationEngine")
+    )
+}
+
+.simulation_model_for_engine <- function(model, engine) {
+    if (!inherits(engine, "DeSolveEngine")) {
+        stop("Unsupported simulation engine: ", class(engine)[1], ".", call. = FALSE)
+    }
+    if (isTRUE(engine$compiled) && !inherits(model, "CompiledOdeModel")) {
+        return(to_compiled_ode_model(model))
+    }
+    if (inherits(model, "ProcessModel")) return(to_ode_model(model))
+    model
+}
+
 #' Simulate a compartment model
 #'
 #' `simulate()` solves a `CompartmentModel` and returns toolbox-level output.
