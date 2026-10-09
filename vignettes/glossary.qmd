@@ -423,6 +423,9 @@ set. Matching entries with unresolved levels are treated as observation-level,
 entries explicitly marked individual-level are rejected, and unrelated
 statistical entries are ignored. Every input row must have a matching
 distribution; sampling replaces values without filtering or reordering rows.
+The input prediction is always the distribution location, so explicit
+observation locations are rejected. The function requires prediction-bearing
+`ObservationData` (directly or from one `SimulationResult`).
 
 ## Experiment
 

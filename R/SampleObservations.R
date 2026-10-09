@@ -9,6 +9,9 @@
 #' The observables represented in `x` act as the sampling targets. A matching
 #' statistical entry with an unresolved level is treated as observation-level
 #' for this operation. An entry explicitly marked individual-level is rejected.
+#' The distribution location must be missing or a resolved prediction location;
+#' explicit observation locations are not supported because this operation is
+#' always conditional on the input prediction.
 #'
 #' @param x An `ObservationData` object containing conditional predictions, or
 #'   one `SimulationResult` whose `observables` component contains them.
@@ -16,7 +19,6 @@
 #'   distribution for every observable represented in `x`.
 #' @param parameters A [Parameters][parameters()] object containing referenced
 #'   observation-distribution parameters.
-#' @param seed Optional numeric random seed.
 #' @returns An `ObservationData` object whose `value` column contains sampled
 #'   observations.
 #' @examples
@@ -26,14 +28,14 @@
 #' statistics <- statistical_model(
 #'     C = normal(sd = combined("sigma_add", "sigma_prop"))
 #' )
+#' set.seed(123)
 #' sample_observations(
 #'     predictions,
 #'     statistics,
-#'     parameters(sigma_add = 0.1 [mg/L], sigma_prop = 0.2),
-#'     seed = 123
+#'     parameters(sigma_add = 0.1 [mg/L], sigma_prop = 0.2)
 #' )
 #' @export
-sample_observations <- function(x, statistics, parameters, seed = NULL) {
+sample_observations <- function(x, statistics, parameters) {
     if (inherits(x, "SimulationResult")) {
         if (is.null(x$observables)) {
             stop("SimulationResult does not contain observable predictions.", call. = FALSE)
@@ -46,7 +48,6 @@ sample_observations <- function(x, statistics, parameters, seed = NULL) {
     x <- .new_observation_data(x)
     .check_class(statistics, "StatisticalModel")
     .check_class(parameters, "Parameters")
-    .sample_observations_seed(seed)
 
     predictions <- lapply(seq_len(nrow(x)), function(i) x$value[[i]])
     invalid <- vapply(predictions, function(value) {
@@ -72,7 +73,20 @@ sample_observations <- function(x, statistics, parameters, seed = NULL) {
              paste(individual, collapse = ", "), ".", call. = FALSE)
     }
 
-    if (!is.null(seed)) set.seed(seed)
+    explicit_location <- targets[vapply(selected, function(distribution) {
+        location <- if (inherits(distribution, "NormalDistribution")) {
+            distribution$mean
+        } else {
+            distribution$median
+        }
+        !is.null(location) && !inherits(location, "PredictionLocation")
+    }, logical(1))]
+    if (length(explicit_location)) {
+        stop("Observation sampling requires the conditional prediction as location; ",
+             "explicit location(s) are not supported for: ",
+             paste(explicit_location, collapse = ", "), ".", call. = FALSE)
+    }
+
     sampled <- lapply(seq_len(nrow(x)), function(i) {
         distribution <- statistics[[x$observable[[i]]]]
         .sample_observation_distribution(distribution, predictions[[i]], parameters)
@@ -81,29 +95,11 @@ sample_observations <- function(x, statistics, parameters, seed = NULL) {
     .new_observation_data(x)
 }
 
-.sample_observations_seed <- function(seed) {
-    if (is.null(seed)) return(invisible(NULL))
-    if (!is.numeric(seed) || length(seed) != 1L || is.na(seed) || !is.finite(seed) ||
-        seed < 0 || seed > .Machine$integer.max || seed != floor(seed)) {
-        stop("seed must be NULL or a non-negative whole number.", call. = FALSE)
-    }
-    invisible(NULL)
-}
-
 .sample_observation_distribution <- function(distribution, prediction, parameters) {
-    location_spec <- if (inherits(distribution, "NormalDistribution")) {
-        distribution$mean
-    } else if (inherits(distribution, "LognormalDistribution")) {
-        distribution$median
-    } else {
+    if (!inherits(distribution, c("NormalDistribution", "LognormalDistribution"))) {
         stop("Unsupported observation-level statistical distribution.", call. = FALSE)
     }
-    location <- if (is.null(location_spec) || inherits(location_spec, "PredictionLocation")) {
-        prediction
-    } else {
-        .sampling_value(location_spec, parameters, "location")
-    }
-    location <- .sample_observation_align_location(location, prediction)
+    location <- prediction
 
     if (inherits(distribution, "NormalDistribution")) {
         sd <- .sampling_normal_sd(distribution$sd, location, parameters)
@@ -122,17 +118,4 @@ sample_observations <- function(x, statistics, parameters, seed = NULL) {
         draw <- stats::rlnorm(1L, meanlog = log(as.numeric(location)), sdlog = sdlog)
     }
     .sampling_restore_units(draw, prediction)
-}
-
-.sample_observation_align_location <- function(location, prediction) {
-    tryCatch(
-        .check_compatible_units(prediction, location, "observation location"),
-        error = function(e) stop(conditionMessage(e), call. = FALSE)
-    )
-    if (inherits(prediction, "units")) {
-        location <- units::set_units(
-            location, units::deparse_unit(prediction), mode = "standard"
-        )
-    }
-    location
 }

@@ -15,8 +15,10 @@ test_that("sample_observations preserves prediction rows and is reproducible", {
     )
     values <- parameters(sigma_add = 0.1 [mg/L], sigma_prop = 0.2)
 
-    first <- sample_observations(predictions, statistics, values, seed = 123)
-    second <- sample_observations(predictions, statistics, values, seed = 123)
+    set.seed(123)
+    first <- sample_observations(predictions, statistics, values)
+    set.seed(123)
+    second <- sample_observations(predictions, statistics, values)
 
     expect_s3_class(first, "ObservationData")
     expect_equal(first, second)
@@ -38,26 +40,26 @@ test_that("sample_observations accepts one SimulationResult", {
     sampled <- sample_observations(
         result,
         statistical_model(C = normal(sd = 0 [mg/L])),
-        parameters(),
-        seed = 1
+        parameters()
     )
 
     expect_identical(sampled, predictions)
 })
 
-test_that("explicit observation locations replace conditional predictions", {
+test_that("explicit observation locations are rejected", {
     predictions <- sample_observation_predictions()
     statistics <- statistical_model(
         C = normal(mean = "assay_mean", sd = "assay_sd")
     )
 
-    sampled <- sample_observations(
-        predictions,
-        statistics,
-        parameters(assay_mean = 7 [mg/L], assay_sd = 0 [mg/L])
+    expect_error(
+        sample_observations(
+            predictions,
+            statistics,
+            parameters(assay_mean = 7 [mg/L], assay_sd = 0 [mg/L])
+        ),
+        "conditional prediction as location.*C"
     )
-
-    expect_equal(sampled$value, rep(with_units(7 [mg/L]), nrow(predictions)))
 })
 
 test_that("sample_observations supports log-normal distributions", {
@@ -66,9 +68,8 @@ test_that("sample_observations supports log-normal distributions", {
     )
     statistics <- statistical_model(C = lognormal(sdlog = "sigma"))
 
-    sampled <- sample_observations(
-        predictions, statistics, parameters(sigma = 0), seed = 9
-    )
+    set.seed(9)
+    sampled <- sample_observations(predictions, statistics, parameters(sigma = 0))
 
     expect_equal(sampled$value, predictions$value)
     expect_true(all(as.numeric(sampled$value) > 0))
@@ -138,18 +139,15 @@ test_that("sample_observations validates distributions and inputs", {
                             parameters()),
         "non-negative"
     )
+    nonpositive <- predictions
+    nonpositive$value[[1]] <- 0 * nonpositive$value[[1]]
     expect_error(
         sample_observations(
-            predictions,
-            statistical_model(C = lognormal(median = 0 [mg/L], sdlog = 0.1)),
+            nonpositive,
+            statistical_model(C = lognormal(sdlog = 0.1)),
             parameters()
         ),
         "medians must be positive"
-    )
-    expect_error(
-        sample_observations(predictions, statistical_model(C = normal(sd = 1 [mg/L])),
-                            parameters(), seed = -1),
-        "seed"
     )
     expect_error(
         sample_observations(list(predictions), statistical_model(), parameters()),
@@ -175,7 +173,7 @@ test_that("sample_observations validates distributions and inputs", {
 
 test_that("sample_observations handles empty prediction data", {
     predictions <- observation_data()
-    sampled <- sample_observations(predictions, statistical_model(), parameters(), seed = 1)
+    sampled <- sample_observations(predictions, statistical_model(), parameters())
 
     expect_identical(sampled, predictions)
 })

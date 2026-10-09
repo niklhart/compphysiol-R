@@ -4,7 +4,7 @@
 \alias{sample_observations}
 \title{Sample observations conditional on model predictions}
 \usage{
-sample_observations(x, statistics, parameters, seed = NULL)
+sample_observations(x, statistics, parameters)
 }
 \arguments{
 \item{x}{An \code{ObservationData} object containing conditional predictions, or
@@ -15,8 +15,6 @@ distribution for every observable represented in \code{x}.}
 
 \item{parameters}{A \link[=parameters]{Parameters} object containing referenced
 observation-distribution parameters.}
-
-\item{seed}{Optional numeric random seed.}
 }
 \value{
 An \code{ObservationData} object whose \code{value} column contains sampled
@@ -33,6 +31,9 @@ observable.
 The observables represented in \code{x} act as the sampling targets. A matching
 statistical entry with an unresolved level is treated as observation-level
 for this operation. An entry explicitly marked individual-level is rejected.
+The distribution location must be missing or a resolved prediction location;
+explicit observation locations are not supported because this operation is
+always conditional on the input prediction.
 }
 \examples{
 predictions <- observation_data(
@@ -41,10 +42,10 @@ predictions <- observation_data(
 statistics <- statistical_model(
     C = normal(sd = combined("sigma_add", "sigma_prop"))
 )
+set.seed(123)
 sample_observations(
     predictions,
     statistics,
-    parameters(sigma_add = 0.1 [mg/L], sigma_prop = 0.2),
-    seed = 123
+    parameters(sigma_add = 0.1 [mg/L], sigma_prop = 0.2)
 )
 }
