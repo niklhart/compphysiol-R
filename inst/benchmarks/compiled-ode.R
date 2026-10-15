@@ -1,4 +1,4 @@
-# Benchmark compiled ODE simulation for the 12-CMT PBPK model.
+# Benchmark executable ODE simulation for the 12-CMT PBPK model.
 #
 # This script is intentionally not part of the automated test suite. Timings are
 # machine-, BLAS-, compiler-, and solver-dependent, so treat the numbers as a
@@ -22,7 +22,8 @@ read_replicates <- function(name, default) {
 n_compartment <- read_replicates("COMPPHYSIOL_BENCH_N_COMPARTMENT", 100)
 n_ode <- read_replicates("COMPPHYSIOL_BENCH_N_ODE", 100)
 n_compiled <- read_replicates("COMPPHYSIOL_BENCH_N_COMPILED", 1000)
-n_max <- max(n_compartment, n_ode, n_compiled)
+n_rxode2 <- read_replicates("COMPPHYSIOL_BENCH_N_RXODE2", 1000)
+n_max <- max(n_compartment, n_ode, n_compiled, n_rxode2)
 
 times <- seq(0, 24, by = 0.25)
 
@@ -74,22 +75,33 @@ parameter_sets <- lapply(seq_len(n_max), function(i) {
 
 ode_model <- to_ode_model(model)
 compiled_model <- to_compiled_ode_model(ode_model)
+rxode2_model <- to_rxode2_model(ode_model)
 
-cat("Compiled ODE benchmark: sMD_PBPK_12CMT_wellstirred\n")
+cat("Executable ODE benchmark: sMD_PBPK_12CMT_wellstirred\n")
 cat("Repeated simulations:\n")
 cat("  CompartmentModel:", n_compartment, "\n")
 cat("  OdeModel:", n_ode, "\n")
 cat("  CompiledOdeModel cached:", n_compiled, "\n")
+cat("  rxode2 model cached:", n_rxode2, "\n")
 cat("Output times:", length(times), "\n\n")
 
-cat("Warming compiled model cache...\n")
-warmup_time <- system.time({
+cat("Warming executable model caches...\n")
+compiled_warmup_time <- system.time({
     compiled_warmup <- simulate(compiled_model, time = times, parameters = parameter_sets[[1]])
+})
+rxode2_warmup_time <- system.time({
+    rxode2_warmup <- simulate(rxode2_model, time = times, parameters = parameter_sets[[1]])
 })
 
 reference <- simulate(ode_model, time = times, parameters = parameter_sets[[1]])
 stopifnot(isTRUE(all.equal(
     compiled_warmup$states,
+    reference$states,
+    tolerance = 1e-6,
+    check.attributes = FALSE
+)))
+stopifnot(isTRUE(all.equal(
+    rxode2_warmup$states,
     reference$states,
     tolerance = 1e-6,
     check.attributes = FALSE
@@ -116,32 +128,43 @@ time_one <- function(label, n, expr) {
     )
 }
 
-results <- rbind(
+warmup_row <- function(label, timing) {
     data.frame(
-        route = "CompiledOdeModel warm-up",
+        route = label,
         replicates = 1L,
-        user = unname(warmup_time[["user.self"]]),
-        system = unname(warmup_time[["sys.self"]]),
-        elapsed = unname(warmup_time[["elapsed"]]),
-        seconds_per_simulation = unname(warmup_time[["elapsed"]]),
+        user = unname(timing[["user.self"]]),
+        system = unname(timing[["sys.self"]]),
+        elapsed = unname(timing[["elapsed"]]),
+        seconds_per_simulation = unname(timing[["elapsed"]]),
         stringsAsFactors = FALSE
-    ),
+    )
+}
+
+results <- rbind(
+    warmup_row("CompiledOdeModel warm-up", compiled_warmup_time),
+    warmup_row("rxode2 model warm-up", rxode2_warmup_time),
     time_one("CompartmentModel", n_compartment, run_many(model, n_compartment)),
     time_one("OdeModel", n_ode, run_many(ode_model, n_ode)),
-    time_one("CompiledOdeModel cached", n_compiled, run_many(compiled_model, n_compiled))
+    time_one("CompiledOdeModel cached", n_compiled, run_many(compiled_model, n_compiled)),
+    time_one("rxode2 model cached", n_rxode2, run_many(rxode2_model, n_rxode2))
 )
 
 results$speedup_vs_ode_model <- NA_real_
 ode_seconds <- results$seconds_per_simulation[results$route == "OdeModel"]
-compiled_seconds <- results$seconds_per_simulation[results$route == "CompiledOdeModel cached"]
-if (length(ode_seconds) == 1L && length(compiled_seconds) == 1L && compiled_seconds > 0) {
-    results$speedup_vs_ode_model[results$route == "CompiledOdeModel cached"] <-
-        ode_seconds / compiled_seconds
+cached_routes <- c("CompiledOdeModel cached", "rxode2 model cached")
+if (length(ode_seconds) == 1L) {
+    for (route in cached_routes) {
+        route_seconds <- results$seconds_per_simulation[results$route == route]
+        if (length(route_seconds) == 1L && route_seconds > 0) {
+            results$speedup_vs_ode_model[results$route == route] <- ode_seconds / route_seconds
+        }
+    }
 }
 
 print(results, row.names = FALSE, digits = 4)
 
 cat("\nNotes:\n")
-cat("- The warm-up row includes C source generation, R CMD SHLIB, dyn.load(), and one simulation.\n")
-cat("- The cached compiled row measures repeated simulations after compilation.\n")
-cat("- Set COMPPHYSIOL_BENCH_N_COMPARTMENT, COMPPHYSIOL_BENCH_N_ODE, or COMPPHYSIOL_BENCH_N_COMPILED to change route-specific replicate counts.\n")
+cat("- The CompiledOdeModel warm-up includes C source generation, R CMD SHLIB, dyn.load(), and one simulation.\n")
+cat("- The rxode2 warm-up includes source rendering, rxode2 compilation, and one simulation.\n")
+cat("- Cached rows measure repeated simulations after backend compilation.\n")
+cat("- Set COMPPHYSIOL_BENCH_N_COMPARTMENT, COMPPHYSIOL_BENCH_N_ODE, COMPPHYSIOL_BENCH_N_COMPILED, or COMPPHYSIOL_BENCH_N_RXODE2 to change route-specific replicate counts.\n")
