@@ -31,9 +31,9 @@ test_that("parameter specifications combine into a named collection", {
         )
     )
 
-    expect_s3_class(spec, "ParameterSpecs")
+    expect_s3_class(spec, "compphysiol_parameter_specs")
     expect_named(spec, c("k", "sigma"))
-    expect_s3_class(spec[["k"]], "ParameterSpec")
+    expect_s3_class(spec[["k"]], "compphysiol_parameter_spec")
     expect_equal(spec[["k"]]$initial, with_units(0.1 [1/h]))
     expect_equal(spec[["k"]]$lower, with_units(0 [1/h]))
     expect_equal(spec[["k"]]$upper, with_units(2 [1/h]))
@@ -49,11 +49,11 @@ test_that("ParameterSpecs compose, subset, and print by row", {
     errors <- c(sigma = parameter_spec(initial = 0.5, lower = 0))
     spec <- c(rates, errors)
 
-    expect_s3_class(spec, "ParameterSpecs")
+    expect_s3_class(spec, "compphysiol_parameter_specs")
     expect_named(spec, c("k", "sigma"))
-    expect_s3_class(spec["k"], "ParameterSpecs")
+    expect_s3_class(spec["k"], "compphysiol_parameter_specs")
     expect_named(spec["k"], "k")
-    expect_s3_class(spec[["k"]], "ParameterSpec")
+    expect_s3_class(spec[["k"]], "compphysiol_parameter_spec")
     expect_identical(spec[], spec)
     expect_error(c(spec, k = parameter_spec(1)), "unique|duplicated")
     expect_error(c(spec, invalid = 1), "ParameterSpec")
@@ -134,14 +134,14 @@ test_that("estimation_problem is the engine-neutral estimation specification", {
         statistics = statistics
     )
 
-    expect_s3_class(problem, "EstimationProblem")
+    expect_s3_class(problem, "compphysiol_estimation_problem")
     expect_identical(problem$model, model)
     expect_identical(problem$experiments, study)
-    expect_s3_class(problem$experiments[[1]]$observations, "ObservationData")
+    expect_s3_class(problem$experiments[[1]]$observations, "compphysiol_observation_data")
     expect_identical(problem$parameters, spec)
-    expect_s3_class(problem$statistics, "StatisticalModel")
+    expect_s3_class(problem$statistics, "compphysiol_statistical_model")
     expect_identical(problem$statistics$C$level, "observation")
-    expect_s3_class(problem$statistics$C$mean, "PredictionLocation")
+    expect_s3_class(problem$statistics$C$mean, "compphysiol_prediction_location")
 })
 
 test_that("estimation_problem normalizes one experiment to a collection", {
@@ -155,7 +155,7 @@ test_that("estimation_problem normalizes one experiment to a collection", {
         statistics = statistical_model(C = normal(sd = "sigma"))
     )
 
-    expect_s3_class(problem$experiments, "Experiments")
+    expect_s3_class(problem$experiments, "compphysiol_experiments")
     expect_length(problem$experiments, 1L)
 })
 
@@ -201,7 +201,7 @@ test_that("estimation problems accept deterministic lowered representations", {
             ),
             statistical_model(C = normal(sd = "sigma"))
         )
-        expect_s3_class(problem, "EstimationProblem")
+        expect_s3_class(problem, "compphysiol_estimation_problem")
         expect_identical(problem$model, representation)
     }
 })
@@ -219,7 +219,7 @@ test_that("estimation problems reject unsupported model representations", {
         "AnalyticalModel|not supported"
     )
     expect_error(
-        do.call(estimation_problem, c(list(model = structure(list(), class = "StochasticModel")), common)),
+        do.call(estimation_problem, c(list(model = structure(list(), class = "compphysiol_stochastic_model")), common)),
         "StochasticModel|not supported"
     )
 })
@@ -292,7 +292,7 @@ test_that("fixed observation scales need no parameter specification", {
         statistical_model(C = normal(sd = 1 [mg/L]))
     )
 
-    expect_s3_class(problem, "EstimationProblem")
+    expect_s3_class(problem, "compphysiol_estimation_problem")
     expect_named(problem$parameters, "k")
 })
 
@@ -320,12 +320,12 @@ test_that("optim_engine keeps optimizer configuration out of estimate", {
         control = list(maxit = 250, reltol = 1e-8)
     )
 
-    expect_s3_class(engine, "EstimationEngine")
-    expect_s3_class(engine, "OptimEngine")
+    expect_s3_class(engine, "compphysiol_estimation_engine")
+    expect_s3_class(engine, "compphysiol_optim_engine")
     expect_identical(engine$method, "L-BFGS-B")
     expect_identical(engine$control, list(maxit = 250, reltol = 1e-8))
-    expect_s3_class(engine$simulation, "SimulationEngine")
-    expect_s3_class(engine$simulation, "DeSolveEngine")
+    expect_s3_class(engine$simulation, "compphysiol_simulation_engine")
+    expect_s3_class(engine$simulation, "compphysiol_desolve_engine")
     expect_false(engine$simulation$compiled)
     expect_error(optim_engine(method = "not-an-optim-method"), "method")
     expect_error(optim_engine(control = 1), "control")
@@ -336,13 +336,13 @@ test_that("deSolve_engine configures the representation used by estimation", {
     interpreted <- deSolve_engine()
     compiled <- deSolve_engine(compiled = TRUE)
 
-    expect_s3_class(interpreted, "SimulationEngine")
-    expect_s3_class(interpreted, "DeSolveEngine")
+    expect_s3_class(interpreted, "compphysiol_simulation_engine")
+    expect_s3_class(interpreted, "compphysiol_desolve_engine")
     expect_false(interpreted$compiled)
     expect_true(compiled$compiled)
     expect_s3_class(
         .simulation_model_for_engine(estimation_test_model(), compiled),
-        "CompiledOdeModel"
+        "compphysiol_desolve_compiled_model"
     )
     expect_error(deSolve_engine(compiled = NA), "TRUE or FALSE")
 })
@@ -420,14 +420,14 @@ test_that("estimate consumes an EstimationProblem and returns a stable result", 
         engine = optim_engine(method = "L-BFGS-B", control = list(maxit = 200))
     )
 
-    expect_s3_class(fit, "EstimationResult")
-    expect_s3_class(fit$engine, "OptimEngine")
+    expect_s3_class(fit, "compphysiol_estimation_result")
+    expect_s3_class(fit$engine, "compphysiol_optim_engine")
     expect_named(coef(fit), c("k", "sigma"))
     expect_true(is.numeric(fit$neg_log_lik) && length(fit$neg_log_lik) == 1L)
     expect_null(fit$objective)
     expect_true(is.list(fit$convergence))
-    expect_s3_class(fitted(fit), "ObservationData")
-    expect_s3_class(residuals(fit), "ObservationData")
+    expect_s3_class(fitted(fit), "compphysiol_observation_data")
+    expect_s3_class(residuals(fit), "compphysiol_observation_data")
     expect_s3_class(fitted(fit)$time, "units")
     expect_s3_class(fitted(fit)$value, "units")
     expect_s3_class(residuals(fit)$time, "units")
@@ -487,7 +487,7 @@ test_that("estimate runs lowered deterministic representations", {
             statistical_model(C = normal(sd = "sigma"))
         )
         fit <- estimate(problem, engine = optim_engine(control = list(maxit = 50)))
-        expect_s3_class(fit, "EstimationResult")
+        expect_s3_class(fit, "compphysiol_estimation_result")
         expect_identical(fit$convergence$code, 0L)
         expect_equal(as.numeric(coef(fit)$k), 0.197, tolerance = 0.01)
     }

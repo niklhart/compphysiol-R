@@ -2,13 +2,13 @@
 % Please edit documentation in R/Estimation.R
 \name{parameter_specs}
 \alias{parameter_specs}
-\alias{c.ParameterSpec}
-\alias{c.ParameterSpecs}
+\alias{c.compphysiol_parameter_spec}
+\alias{c.compphysiol_parameter_specs}
 \title{Combine parameter-estimation specifications}
 \usage{
-\method{c}{ParameterSpec}(..., recursive = FALSE)
+\method{c}{compphysiol_parameter_spec}(..., recursive = FALSE)
 
-\method{c}{ParameterSpecs}(..., recursive = FALSE)
+\method{c}{compphysiol_parameter_specs}(..., recursive = FALSE)
 }
 \arguments{
 \item{...}{Named \code{ParameterSpec} or \code{ParameterSpecs} objects.}

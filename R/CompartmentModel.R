@@ -29,7 +29,7 @@ compartment_model <- function() {
                 )
             )
         ),
-        class = "CompartmentModel"
+        class = .class_compphysiol_model()
     )
 }
 
@@ -40,7 +40,7 @@ compartment_model <- function() {
 #' @param ... ignored
 #' @returns The `CompartmentModel` object (invisibly).
 #' @export
-print.CompartmentModel <- function(x, ...) {
+print.compphysiol_model <- function(x, ...) {
     cat("CompartmentModel:\n")
 
     print(x$compartments)
@@ -90,7 +90,7 @@ print.CompartmentModel <- function(x, ...) {
 #'   wire(what = "cmt")
 #' @export
 wire <- function(model, what = c("molec", "cmt")) {
-        .check_class(model, "CompartmentModel")
+        .check_class(model, "compphysiol_model")
 
         if (is.null(model$metadata)) model$metadata <- list()
         if (is.null(model$metadata$auto_placeholder)) {
@@ -199,7 +199,9 @@ wire <- function(model, what = c("molec", "cmt")) {
                     if (!any(unresolved)) {
                         return(rebuild_df_like_row(
                             m,
-                            class = "Reactions",
+                            class = .compphysiol_class(
+                                "compphysiol_reactions"
+                            ),
                             list_cols = c("rate", "const", "participants")
                         ))
                     }
@@ -295,7 +297,13 @@ wire <- function(model, what = c("molec", "cmt")) {
                     }
                     return(tr)
                 }) |>
-                lapply(rebuild_df_like_row, class = "Transports", list_cols = c("rate", "const")) |>
+                lapply(
+                    rebuild_df_like_row,
+                    class = .compphysiol_class(
+                        "compphysiol_transports"
+                    ),
+                    list_cols = c("rate", "const")
+                ) |>
                 do.call(what = "c")  %||% transports()
 
             # process reaction participants with wildcard molecules
@@ -343,7 +351,13 @@ wire <- function(model, what = c("molec", "cmt")) {
                     }
                     return(m)
                 }) |>
-                lapply(rebuild_df_like_row, class = "Molecules", list_cols = "init") |>
+                lapply(
+                    rebuild_df_like_row,
+                    class = .compphysiol_class(
+                        "compphysiol_molecules"
+                    ),
+                    list_cols = "init"
+                ) |>
                 do.call(what = "c")
 
             # process reaction participants with wildcard compartments
@@ -387,7 +401,7 @@ wire <- function(model, what = c("molec", "cmt")) {
 #' @export
 initials <- function(model, type = c("a[] or c[]", "c[] or a[]", "a[] only", "c[] only")) {
     # input checking
-    .check_class(model, "CompartmentModel")
+    .check_class(model, "compphysiol_model")
     type <- match.arg(type)
 
     # Early return for empty compartments and molecules: return empty named list
@@ -627,10 +641,10 @@ make_depot <- function(model) {
     dimensions = NULL,
     backend = "deSolve"
 ) {
-    if (inherits(model, "OdeModel")) {
+    if (inherits(model, "compphysiol_ode_model")) {
         return(.to_deSolve(model, dimensions = dimensions))
     }
-    .check_class(model, "CompartmentModel")
+    .check_class(model, "compphysiol_model")
 
     if (
         length(model$compartments) == 0 &&
@@ -680,7 +694,7 @@ make_depot <- function(model) {
 #' @returns A list with a single element `data`, which is a data.frame with columns `var`, `time`, `value`, and `method` (add or replace).
 #' @noRd
 .dosing_to_events <- function(model) {
-    .check_class(model, "CompartmentModel")
+    .check_class(model, "compphysiol_model")
     doses <- model$doses
 
     if (length(doses) == 0) {
@@ -714,7 +728,7 @@ make_depot <- function(model) {
 #' @return The model (invisibly) if all units are consistent, otherwise an error is raised.
 #' @noRd
 .check_unit_consistency <- function(model) {
-    .check_class(model, "CompartmentModel")
+    .check_class(model, "compphysiol_model")
 
     # Available variables for unit checking: compartment volumes, initial amounts/concentrations, and parameters
     inits <- initials(model) |>

@@ -15,7 +15,7 @@ as_observables_long <- function(x) {
     if (is.data.frame(x)) {
         return(.new_observation_data(x))
     }
-    .check_class(x, "SimulationResult")
+    .check_class(x, "compphysiol_simulation_result")
     if (!is.null(x$observables)) return(x$observables)
     out <- x$states[FALSE, intersect(c("time", "rep"), names(x$states)), drop = FALSE]
     out$observable <- character()
@@ -47,7 +47,7 @@ as_observables_wide <- function(x) {
     long <- as_observables_long(x)
     ids <- intersect(c("time", "rep"), names(long))
     if (!nrow(long)) {
-        if (inherits(x, "SimulationResult")) return(x$states[, ids, drop = FALSE])
+        if (inherits(x, "compphysiol_simulation_result")) return(x$states[, ids, drop = FALSE])
         out <- long[, ids, drop = FALSE]
         class(out) <- "data.frame"
         return(out)

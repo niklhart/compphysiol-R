@@ -16,7 +16,7 @@ test_that("hybrid simulation returns requested times by default", {
         seed = 1
     )
 
-    expect_s3_class(out, "SimulationResult")
+    expect_s3_class(out, "compphysiol_simulation_result")
     expect_named(out, c("states", "observables"))
     expect_named(out$states, c("time", "a_A_cyt"))
     expect_equal(out$states$time, time)
@@ -35,7 +35,7 @@ test_that("hybrid simulation accepts a precompiled StochasticModel", {
         seed = 1
     )
 
-    expect_s3_class(out, "SimulationResult")
+    expect_s3_class(out, "compphysiol_simulation_result")
     expect_equal(out$states$time, time)
 })
 

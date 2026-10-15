@@ -2,7 +2,7 @@
 
 test_that("Molecules object is created correctly", {
     molec <- molecules("NFkB", cmt = "cytoplasm", initial = 100)
-    expect_s3_class(molec, "Molecules")
+    expect_s3_class(molec, "compphysiol_molecules")
 })
 
 test_that("Length and names methods work for Molecules", {

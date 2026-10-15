@@ -2,12 +2,12 @@
 % Please edit documentation in R/Estimation.R
 \name{estimate}
 \alias{estimate}
-\alias{estimate.EstimationProblem}
+\alias{estimate.compphysiol_estimation_problem}
 \title{Estimate model parameters}
 \usage{
 estimate(object, ...)
 
-\method{estimate}{EstimationProblem}(object, engine = optim_engine(), dimensions = NULL, ...)
+\method{estimate}{compphysiol_estimation_problem}(object, engine = optim_engine(), dimensions = NULL, ...)
 }
 \arguments{
 \item{object}{An \code{EstimationProblem}.}

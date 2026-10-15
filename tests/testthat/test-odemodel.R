@@ -8,16 +8,16 @@ test_that("to_ode_model returns a solver-neutral OdeModel", {
 
     ode_model <- to_ode_model(model)
 
-    expect_s3_class(ode_model, "OdeModel")
+    expect_s3_class(ode_model, "compphysiol_ode_model")
     expect_null(attr(ode_model, "source_model"))
     expect_null(attr(ode_model, "auto_placeholder"))
     expect_named(
         ode_model,
         c("states", "initials", "rhs", "equations", "observables", "parameters", "dosing", "freeParams")
     )
-    expect_s3_class(ode_model$equations, "Equations")
-    expect_s3_class(ode_model$observables, "Observables")
-    expect_s3_class(ode_model$parameters, "Parameters")
+    expect_s3_class(ode_model$equations, "compphysiol_equations")
+    expect_s3_class(ode_model$observables, "compphysiol_observables")
+    expect_s3_class(ode_model$parameters, "compphysiol_parameters")
 
     expect_s3_class(ode_model$states, "data.frame")
     expect_named(ode_model$states, c("index", "dsl_name", "output_name", "type"), ignore.order = TRUE)
@@ -45,8 +45,8 @@ test_that("to_compiled_ode_model returns a compiled-backend representation", {
     ode_model <- to_ode_model(model)
     compiled_model <- to_compiled_ode_model(ode_model)
 
-    expect_s3_class(compiled_model, "CompiledOdeModel")
-    expect_false(inherits(compiled_model, "OdeModel"))
+    expect_s3_class(compiled_model, "compphysiol_desolve_compiled_model")
+    expect_false(inherits(compiled_model, "compphysiol_ode_model"))
     expect_named(
         compiled_model,
         c(
@@ -77,8 +77,8 @@ test_that("to_compiled_ode_model accepts CompartmentModel and ProcessModel input
     from_compartment_model <- to_compiled_ode_model(model)
     from_process_model <- to_compiled_ode_model(process_model)
 
-    expect_s3_class(from_compartment_model, "CompiledOdeModel")
-    expect_s3_class(from_process_model, "CompiledOdeModel")
+    expect_s3_class(from_compartment_model, "compphysiol_desolve_compiled_model")
+    expect_s3_class(from_process_model, "compphysiol_desolve_compiled_model")
     expect_equal(from_compartment_model$ode_model, ode_model)
     expect_equal(from_process_model$ode_model, ode_model)
 })
@@ -265,7 +265,7 @@ test_that("to_ode_model expands infusion depots before creating ODE states", {
 
     expect_true("a[drug, Depot_drug_Central]" %in% ode_model$states$dsl_name)
     expect_true("a[drug, ReleaseRate_drug_Central]" %in% ode_model$states$dsl_name)
-    expect_s3_class(ode_model$dosing, "OdeDosing")
+    expect_s3_class(ode_model$dosing, "compphysiol_ode_dosing")
     expect_equal(length(ode_model$dosing$state), 3)
     expect_equal(ode_model$freeParams, "ke")
 })

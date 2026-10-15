@@ -5,7 +5,7 @@ test_that("Observables object is created correctly", {
         name = c("Cblo", "Cpla"),
         expr = c("c[blo]", "c[blo]/BP")
     )
-    expect_s3_class(obs, "Observables")
+    expect_s3_class(obs, "compphysiol_observables")
 })
 
 test_that("Length and names methods work for Observables", {
@@ -27,7 +27,7 @@ test_that("Subsetting Observables object works", {
     obs_subset <- obs[1:2]
     expect_equal(length(obs_subset), 2)
     expect_equal(names(obs_subset), c("Cpla", "Cblo"))
-    expect_s3_class(obs_subset, "Observables")
+    expect_s3_class(obs_subset, "compphysiol_observables")
 })
 
 test_that("Concatenating Observables objects works", {
@@ -37,7 +37,7 @@ test_that("Concatenating Observables objects works", {
 
     expect_equal(length(combined_obs), 3)
     expect_equal(names(combined_obs), c("Cpla", "Cblo", "Cper"))
-    expect_s3_class(combined_obs, "Observables")
+    expect_s3_class(combined_obs, "compphysiol_observables")
 })
 
 test_that("Observables with mismatched name and expr lengths throw error", {

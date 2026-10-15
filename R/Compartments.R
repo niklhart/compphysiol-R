@@ -77,7 +77,9 @@ compartments <- function(name = character(0), volume = "V{name}", unit = NULL) {
 
     structure(
         data.frame(name = name, volume = I(volume)),
-        class = "Compartments"
+        class = .compphysiol_class(
+            "compphysiol_compartments"
+        )
     )
 }
 
@@ -107,7 +109,7 @@ add_compartment <- function(
     unit = NULL,
     comp
 ) {
-    .check_class(model, "CompartmentModel")
+    .check_class(model, "compphysiol_model")
 
     call <- match.call()
 
@@ -118,7 +120,7 @@ add_compartment <- function(
         parent_env = parent.frame()
     )
 
-    .check_class(comp, "Compartments")
+    .check_class(comp, "compphysiol_compartments")
 
     model$compartments <- c(model$compartments, comp)
     model
@@ -130,7 +132,7 @@ add_compartment <- function(
 #' @param ... Additional arguments (not used)
 #' @return A data frame representation of the `Compartments` object
 #' @export
-as.data.frame.Compartments <- function(x, ...) {
+as.data.frame.compphysiol_compartments <- function(x, ...) {
     class(x) <- "data.frame"
     x
 }
@@ -141,7 +143,7 @@ as.data.frame.Compartments <- function(x, ...) {
 #' @param x A `Compartments` object
 #' @return The number of compartments
 #' @export
-length.Compartments <- function(x) {
+length.compphysiol_compartments <- function(x) {
     nrow(as.data.frame(x))
 }
 
@@ -151,7 +153,7 @@ length.Compartments <- function(x) {
 #' @param x A `Compartments` object
 #' @return A character vector of compartment names
 #' @export
-names.Compartments <- function(x) x$name
+names.compphysiol_compartments <- function(x) x$name
 
 
 #' Print a `Compartments` object
@@ -162,7 +164,7 @@ names.Compartments <- function(x) x$name
 #' @param ... ignored
 #' @return The `Compartments` object (invisibly).
 #' @export
-print.Compartments <- function(x, ...) {
+print.compphysiol_compartments <- function(x, ...) {
 
     vol_str <- vapply(x$volume, format, character(1))
 
@@ -183,7 +185,7 @@ print.Compartments <- function(x, ...) {
 #' @param ... Multiple `Compartments` objects to combine
 #' @return A combined `Compartments` object
 #' @export
-c.Compartments <- function(...) .combine_df_like(...)
+c.compphysiol_compartments <- function(...) .combine_df_like(...)
 
 #' Subset a `Compartments` object
 #'
@@ -192,7 +194,7 @@ c.Compartments <- function(...) .combine_df_like(...)
 #' @param ... Additional arguments (not used)
 #' @return A subsetted `Compartments` object
 #' @export
-`[.Compartments` <- function(x, i, ...) .subset_df_like(x, i, byname = TRUE)
+`[.compphysiol_compartments` <- function(x, i, ...) .subset_df_like(x, i, byname = TRUE)
 
 #' Extraction method for `Compartments` class
 #'
@@ -205,4 +207,4 @@ c.Compartments <- function(...) .combine_df_like(...)
 #' @param ... Additional arguments (not used)
 #' @return Nothing (errors)
 #' @export
-`[[.Compartments` <- function(x, i, ...) .extract_df_like(x, i)
+`[[.compphysiol_compartments` <- function(x, i, ...) .extract_df_like(x, i)

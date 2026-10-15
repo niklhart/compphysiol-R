@@ -10,9 +10,9 @@ output_test_model <- function() {
 test_that("direct simulation returns long observables and rectangular states", {
     m <- output_test_model()
     out <- simulate(m, time = c(0, 1, 2) [h])
-    expect_s3_class(out, "SimulationResult")
-    expect_s3_class(out$observables, "ObservationData")
-    expect_s3_class(out$observables, "ObservationSchedule")
+    expect_s3_class(out, "compphysiol_simulation_result")
+    expect_s3_class(out$observables, "compphysiol_observation_data")
+    expect_s3_class(out$observables, "compphysiol_observation_schedule")
     expect_named(out$observables, c("time", "observable", "value"))
     expect_equal(nrow(out$observables), 6L)
     expect_s3_class(out$observables$value, "mixed_units")
@@ -48,8 +48,8 @@ test_that("simulation predictions plug into another experiment as observation da
     predictions <- simulate(output_test_model(), experiment = design)$observables
     calibration <- experiment(observations = predictions)
 
-    expect_s3_class(predictions, "ObservationData")
-    expect_s3_class(predictions, "ObservationSchedule")
+    expect_s3_class(predictions, "compphysiol_observation_data")
+    expect_s3_class(predictions, "compphysiol_observation_schedule")
     expect_identical(calibration$observations, predictions)
     expect_equal(
         simulate(output_test_model(), experiment = calibration)$observables,
@@ -174,7 +174,7 @@ test_that("compiled experiments retain defaults and do not modify direct dosing"
 test_that("wide output keeps replicate keys and dimensionless mixed observables", {
     out <- structure(list(states = data.frame(time = 0:1), observables = data.frame(
         time = c(0, 1, 0, 1), rep = c(1L, 1L, 2L, 2L), observable = "A")),
-        class = "SimulationResult")
+        class = "compphysiol_simulation_result")
     out$observables$value <- with_units((1:4) [mg])
     wide <- as_observables_wide(out)
     expect_equal(wide$rep, c(1L, 1L, 2L, 2L))

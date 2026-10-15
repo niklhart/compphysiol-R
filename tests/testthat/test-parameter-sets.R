@@ -3,12 +3,12 @@ test_that("ParameterSets hold named and unnamed Parameters objects", {
     b <- parameters(BW = 82 [kg], sex = "male")
     population <- parameter_sets(individual_1 = a, b)
 
-    expect_s3_class(population, "ParameterSets")
+    expect_s3_class(population, "compphysiol_parameter_sets")
     expect_length(population, 2)
     expect_named(population, c("individual_1", ""))
     expect_identical(population[[1]], a)
     expect_identical(population[[2]], b)
-    expect_s3_class(population[[1]], "Parameters")
+    expect_s3_class(population[[1]], "compphysiol_parameters")
     expect_null(population[["missing"]])
     expect_error(population[[3]], "out of bounds")
     expect_error(population[[c(1, 1)]], "single parameter set")
@@ -24,9 +24,9 @@ test_that("ParameterSets subsetting preserves the collection", {
     )
 
     expect_identical(population[], population)
-    expect_s3_class(population["a"], "ParameterSets")
+    expect_s3_class(population["a"], "compphysiol_parameter_sets")
     expect_identical(population["a"][[1]], population[["a"]])
-    expect_s3_class(population[integer()], "ParameterSets")
+    expect_s3_class(population[integer()], "compphysiol_parameter_sets")
     expect_length(population[integer()], 0)
     expect_error(population[NA_integer_], "Parameters")
     expect_error(population["missing"], "Parameters")
@@ -67,8 +67,8 @@ test_that("trusted construction can skip only unit validation", {
     incompatible <- list(parameters(x = 1), parameters(x = 1 [kg]))
     trusted <- .new_parameter_sets(incompatible, check_units = FALSE)
 
-    expect_s3_class(trusted, "ParameterSets")
-    expect_s3_class(trusted[1], "ParameterSets")
+    expect_s3_class(trusted, "compphysiol_parameter_sets")
+    expect_s3_class(trusted[1], "compphysiol_parameter_sets")
     expect_error(.new_parameter_sets(incompatible), "parameter 'x'.*units")
     expect_error(.new_parameter_sets(list(parameters(), 1), check_units = FALSE),
                  "Parameters")

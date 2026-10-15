@@ -56,7 +56,10 @@ observation_schedule <- function(time = numeric(), observable = character(), ...
         any(!nzchar(trimws(x$observable)))) {
         stop("Observation schedule observable names must be nonempty character values.", call. = FALSE)
     }
-    class(x) <- unique(c("ObservationSchedule", class(x)))
+    class(x) <- unique(c(
+        "compphysiol_observation_schedule",
+        class(x)
+    ))
     x
 }
 
@@ -108,7 +111,11 @@ observation_data <- function(time = numeric(), observable = character(), value =
     if ((!is.numeric(value) && !inherits(value, "mixed_units")) || !is.null(dim(value))) {
         stop("Observation data values must be numeric, units, or mixed_units values.", call. = FALSE)
     }
-    class(x) <- unique(c("ObservationData", "ObservationSchedule", class(x)))
+    class(x) <- unique(c(
+        "compphysiol_observation_data",
+        "compphysiol_observation_schedule",
+        class(x)
+    ))
     x
 }
 
@@ -125,7 +132,7 @@ observation_data <- function(time = numeric(), observable = character(), value =
 #' @param ... Unused.
 #' @returns A validated observation object when its required columns remain.
 #' @export
-`[.ObservationSchedule` <- function(x, i, j, ..., drop = FALSE) {
+`[.compphysiol_observation_schedule` <- function(x, i, j, ..., drop = FALSE) {
     out <- NextMethod("[")
     if (!is.data.frame(out)) return(out)
     class(out) <- "data.frame"
@@ -144,7 +151,7 @@ observation_data <- function(time = numeric(), observable = character(), value =
 #' @returns An `ObservationSchedule` without the `value` column.
 #' @export
 as_observation_schedule <- function(x) {
-    if (!inherits(x, "ObservationSchedule")) {
+    if (!inherits(x, "compphysiol_observation_schedule")) {
         stop("x must be an ObservationSchedule or ObservationData object.", call. = FALSE)
     }
     out <- x[, setdiff(names(x), "value"), drop = FALSE]

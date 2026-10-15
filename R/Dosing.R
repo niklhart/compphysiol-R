@@ -70,7 +70,9 @@ dosing <- function(
                 molec = character(0),
                 cmt = character(0)
             ),
-            class = "Dosing"
+            class = .compphysiol_class(
+                "compphysiol_dosing"
+            )
         ))
     }
 
@@ -109,7 +111,9 @@ dosing <- function(
                 molec = molec,
                 cmt = cmt
             ),
-            class = "Dosing"
+            class = .compphysiol_class(
+                "compphysiol_dosing"
+            )
         ))
     }
 
@@ -135,7 +139,9 @@ dosing <- function(
             molec = molec,
             cmt = cmt
         ),
-        class = "Dosing"
+        class = .compphysiol_class(
+            "compphysiol_dosing"
+        )
     )
 }
 
@@ -197,7 +203,7 @@ add_dosing <- function(
     duration = NULL,
     dose
 ) {
-    .check_class(model, "CompartmentModel")
+    .check_class(model, "compphysiol_model")
 
     call <- match.call()
 
@@ -208,7 +214,7 @@ add_dosing <- function(
         parent_env = parent.frame()
     )
 
-    .check_class(dose, "Dosing")
+    .check_class(dose, "compphysiol_dosing")
 
     model$doses <- c(model$doses, dose)
     model
@@ -219,7 +225,7 @@ add_dosing <- function(
 #' @return A logical vector in which the i-th entry is `TRUE` if the i-th dosing is a bolus and `FALSE` otherwise
 #' @export
 is_bolus <- function(dose) {
-    .check_class(dose, "Dosing")
+    .check_class(dose, "compphysiol_dosing")
     .dosing_is_na_col(dose$rate) & is.na(dose$duration)
 }
 
@@ -228,7 +234,7 @@ is_bolus <- function(dose) {
 #' @return A logical vector in which the i-th entry is `TRUE` if the i-th dosing is an infusion and `FALSE` otherwise
 #' @export
 is_infusion <- function(dose) {
-    .check_class(dose, "Dosing")
+    .check_class(dose, "compphysiol_dosing")
     !is_bolus(dose)
 }
 
@@ -239,7 +245,7 @@ is_infusion <- function(dose) {
 #' @param x A `Dosing` object
 #' @return The number of dosing events (number of rows in the data frame)
 #' @export
-length.Dosing <- function(x) {
+length.compphysiol_dosing <- function(x) {
     nrow(as.data.frame(x))
 }
 
@@ -251,7 +257,7 @@ length.Dosing <- function(x) {
 #' @param ... ignored
 #' @return The `Dosing` object (invisibly)
 #' @export
-print.Dosing <- function(x, ...) {
+print.compphysiol_dosing <- function(x, ...) {
 
     n <- length(x)
     if (n > 0) {
@@ -317,9 +323,11 @@ print.Dosing <- function(x, ...) {
 #' @param ... ignored
 #' @return A subsetted `Dosing` object
 #' @export
-`[.Dosing` <- function(x, i, ...) {
+`[.compphysiol_dosing` <- function(x, i, ...) {
     x_subset <- as.data.frame(x)[i, , drop = FALSE]
-    structure(x_subset, class = "Dosing")
+    structure(x_subset, class = .compphysiol_class(
+        "compphysiol_dosing"
+    ))
 }
 
 #' Combine multiple `Dosing` objects into one
@@ -330,9 +338,9 @@ print.Dosing <- function(x, ...) {
 #' @param ... One or more `Dosing` objects to combine.
 #' @return A single `Dosing` object containing all dosing events from the inputs, sorted by time.
 #' @export
-c.Dosing <- function(...) {
+c.compphysiol_dosing <- function(...) {
     objs <- list(...)
-    if (!all(sapply(objs, function(o) inherits(o, "Dosing")))) {
+    if (!all(sapply(objs, function(o) inherits(o, "compphysiol_dosing")))) {
         stop("All inputs must be Dosing objects.")
     }
 
@@ -343,7 +351,9 @@ c.Dosing <- function(...) {
     combined_df <- combined_df[order(combined_df$time), ]
 
     # output as object of class Dosing
-    structure(combined_df, class = "Dosing")
+    structure(combined_df, class = .compphysiol_class(
+        "compphysiol_dosing"
+    ))
 }
 
 #' Convert a `Dosing` object to a data frame
@@ -355,7 +365,7 @@ c.Dosing <- function(...) {
 #' @param ... ignored
 #' @return A data frame representation of the `Dosing` object
 #' @export
-as.data.frame.Dosing <- function(x, ...) {
+as.data.frame.compphysiol_dosing <- function(x, ...) {
     class(x) <- "data.frame"
     x
 }

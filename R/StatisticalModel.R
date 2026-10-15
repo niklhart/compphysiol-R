@@ -38,7 +38,10 @@ NULL
 proportional <- function(coefficient) {
     coefficient <- .process_nse_arg(substitute(coefficient), envir = parent.frame())
     coefficient <- .statistical_value_spec(coefficient, "coefficient")
-    structure(list(coefficient = coefficient), class = "ProportionalSD")
+    structure(
+        list(coefficient = coefficient),
+        class = .compphysiol_class("compphysiol_proportional_sd")
+    )
 }
 
 #' @rdname sd_specifications
@@ -53,7 +56,7 @@ combined <- function(constant, proportional) {
     }
     structure(
         list(constant = constant, proportional = proportional),
-        class = "CombinedSD"
+        class = .compphysiol_class("compphysiol_combined_sd")
     )
 }
 
@@ -94,12 +97,15 @@ normal <- function(mean = NULL, sd, level = NULL) {
     if (!is.null(mean)) mean <- .statistical_value_spec(mean, "mean")
     if (missing(sd)) stop("sd must be supplied.", call. = FALSE)
     sd <- .process_nse_arg(substitute(sd), envir = parent.frame())
-    if (!inherits(sd, c("ProportionalSD", "CombinedSD"))) {
+    if (!inherits(sd, c("compphysiol_proportional_sd", "compphysiol_combined_sd"))) {
         sd <- .statistical_value_spec(sd, "sd")
     }
     structure(
         list(mean = mean, sd = sd, level = .statistical_level(level)),
-        class = c("NormalDistribution", "StatisticalDistribution")
+        class = .compphysiol_class(
+            "compphysiol_normal_distribution",
+            parents = "compphysiol_statistical_distribution"
+        )
     )
 }
 
@@ -113,7 +119,10 @@ lognormal <- function(median = NULL, sdlog, level = NULL) {
     sdlog <- .statistical_value_spec(sdlog, "sdlog")
     structure(
         list(median = median, sdlog = sdlog, level = .statistical_level(level)),
-        class = c("LognormalDistribution", "StatisticalDistribution")
+        class = .compphysiol_class(
+            "compphysiol_lognormal_distribution",
+            parents = "compphysiol_statistical_distribution"
+        )
     )
 }
 
@@ -180,7 +189,9 @@ correlated <- function(...) {
     if (anyDuplicated(keys)) {
         stop("Each unordered target pair may be correlated only once.", call. = FALSE)
     }
-    structure(normalized, class = c("Correlated", "list"))
+    structure(normalized, class = .compphysiol_class(
+        "compphysiol_correlations", base = "list"
+    ))
 }
 
 #' Construct a statistical model
@@ -204,7 +215,7 @@ statistical_model <- function(...) {
     nm <- names(entries)
     if (is.null(nm)) nm <- rep("", length(entries))
     nm[is.na(nm)] <- ""
-    is_correlated <- vapply(entries, inherits, logical(1), "Correlated")
+    is_correlated <- vapply(entries, inherits, logical(1), "compphysiol_correlations")
     if (any(is_correlated & nzchar(nm))) {
         stop("correlated() specifications must be unnamed in statistical_model().",
              call. = FALSE)
@@ -217,7 +228,7 @@ statistical_model <- function(...) {
     if (anyDuplicated(names(x))) {
         stop("Statistical-model target names must be unique.", call. = FALSE)
     }
-    if (!all(vapply(x, inherits, logical(1), "StatisticalDistribution"))) {
+    if (!all(vapply(x, inherits, logical(1), "compphysiol_statistical_distribution"))) {
         stop("Every statistical-model entry must be a StatisticalDistribution object.",
              call. = FALSE)
     }
@@ -250,7 +261,9 @@ statistical_model <- function(...) {
 }
 
 .new_statistical_model <- function(x, correlations = list()) {
-    structure(x, correlations = correlations, class = c("StatisticalModel", "list"))
+    structure(x, correlations = correlations, class = .compphysiol_class(
+        "compphysiol_statistical_model", base = "list"
+    ))
 }
 
 .statistical_correlations <- function(x) {
@@ -264,7 +277,7 @@ statistical_model <- function(...) {
 #' @param ... Unused.
 #' @returns A `StatisticalModel` object.
 #' @export
-`[.StatisticalModel` <- function(x, i, ...) {
+`[.compphysiol_statistical_model` <- function(x, i, ...) {
     distributions <- unclass(x)
     attr(distributions, "correlations") <- NULL
     selected <- distributions[i]
@@ -276,7 +289,7 @@ statistical_model <- function(...) {
 }
 
 .resolve_statistical_model <- function(x, model, parameters = NULL) {
-    .check_class(x, "StatisticalModel")
+    .check_class(x, "compphysiol_statistical_model")
     ode_model <- .statistical_ode_model(model)
     structural <- unique(c(names(ode_model$parameters), ode_model$freeParams))
     free <- ode_model$freeParams
@@ -311,13 +324,18 @@ statistical_model <- function(...) {
                  "' must be an unresolved/free structural parameter.", call. = FALSE)
         }
         distribution$level <- level
-        location <- if (inherits(distribution, "NormalDistribution")) "mean" else "median"
+        location <- if (inherits(distribution, "compphysiol_normal_distribution")) "mean" else "median"
         if (is.null(distribution[[location]])) {
             if (identical(level, "individual")) {
                 stop("Individual-level ", class(distribution)[[1]], " target '", target,
                      "' requires an explicit ", location, ".", call. = FALSE)
             }
-            distribution[[location]] <- structure(list(), class = "PredictionLocation")
+            distribution[[location]] <- structure(
+                list(),
+                class = .compphysiol_class(
+                    "compphysiol_prediction_location"
+                )
+            )
         }
         distribution
     })
@@ -326,7 +344,7 @@ statistical_model <- function(...) {
     .statistical_validate_correlated_distributions(resolved)
 
     if (!is.null(parameters)) {
-        .check_class(parameters, "Parameters")
+        .check_class(parameters, "compphysiol_parameters")
         .statistical_validate_units(resolved, ode_model, parameters)
     }
     resolved
@@ -347,8 +365,8 @@ statistical_model <- function(...) {
              paste(observation, collapse = ", "), ".", call. = FALSE)
     }
     unsupported <- targets[vapply(x[targets], function(distribution) {
-        inherits(distribution, "NormalDistribution") &&
-            inherits(distribution$sd, c("ProportionalSD", "CombinedSD"))
+        inherits(distribution, "compphysiol_normal_distribution") &&
+            inherits(distribution$sd, c("compphysiol_proportional_sd", "compphysiol_combined_sd"))
     }, logical(1))]
     if (length(unsupported)) {
         stop("Correlated normal distributions require a constant standard deviation; ",
@@ -398,9 +416,9 @@ statistical_model <- function(...) {
 }
 
 .statistical_ode_model <- function(model) {
-    if (inherits(model, "CompiledOdeModel")) return(model$ode_model)
-    if (inherits(model, "OdeModel")) return(model)
-    if (inherits(model, "ProcessModel") || inherits(model, "CompartmentModel")) {
+    if (inherits(model, "compphysiol_desolve_compiled_model")) return(model$ode_model)
+    if (inherits(model, "compphysiol_ode_model")) return(model)
+    if (inherits(model, "compphysiol_process_model") || inherits(model, "compphysiol_model")) {
         return(to_ode_model(model))
     }
     stop("Unsupported dynamic model for statistical validation: ",
@@ -443,14 +461,14 @@ statistical_model <- function(...) {
     for (target in names(x)) {
         distribution <- x[[target]]
         if (!identical(distribution$level, "individual")) next
-        location <- if (inherits(distribution, "NormalDistribution")) {
+        location <- if (inherits(distribution, "compphysiol_normal_distribution")) {
             distribution$mean
         } else {
             distribution$median
         }
         runtime[[target]] <- .statistical_value(location, parameters, "location")
     }
-    runtime <- structure(runtime, class = c("Parameters", "list"))
+    runtime <- structure(runtime, class = .class_parameters())
     missing <- setdiff(model$freeParams, names(runtime))
     if (length(missing)) {
         stop("Cannot validate statistical-model units; missing dynamic-model free parameter(s): ",
@@ -468,17 +486,17 @@ statistical_model <- function(...) {
         } else {
             observable_values[[target]]
         }
-        if (inherits(distribution, "NormalDistribution")) {
-            if (!inherits(distribution$mean, "PredictionLocation")) {
+        if (inherits(distribution, "compphysiol_normal_distribution")) {
+            if (!inherits(distribution$mean, "compphysiol_prediction_location")) {
                 mean_value <- .statistical_value(distribution$mean, parameters, "mean")
                 .statistical_require_target_units(mean_value, target_value,
                     .statistical_spec_label(distribution$mean, "fixed mean"), target)
             }
-            if (!inherits(distribution$sd, c("ProportionalSD", "CombinedSD"))) {
+            if (!inherits(distribution$sd, c("compphysiol_proportional_sd", "compphysiol_combined_sd"))) {
                 sd_value <- .statistical_value(distribution$sd, parameters, "sd")
                 .statistical_require_target_units(sd_value, target_value,
                     .statistical_spec_label(distribution$sd, "fixed sd"), target)
-            } else if (inherits(distribution$sd, "ProportionalSD")) {
+            } else if (inherits(distribution$sd, "compphysiol_proportional_sd")) {
                 spec <- distribution$sd$coefficient
                 .statistical_require_dimensionless(
                     .statistical_value(spec, parameters, "coefficient"),
@@ -497,7 +515,7 @@ statistical_model <- function(...) {
                 )
             }
         } else {
-            if (!inherits(distribution$median, "PredictionLocation")) {
+            if (!inherits(distribution$median, "compphysiol_prediction_location")) {
                 median_value <- .statistical_value(distribution$median, parameters, "median")
                 .statistical_require_target_units(median_value, target_value,
                     .statistical_spec_label(distribution$median, "fixed median"), target)
@@ -522,11 +540,11 @@ statistical_model <- function(...) {
 }
 
 .statistical_format_sd <- function(x) {
-    if (inherits(x, "ProportionalSD")) {
+    if (inherits(x, "compphysiol_proportional_sd")) {
         return(paste0("proportional(",
                       .statistical_format_value_spec(x$coefficient), ")"))
     }
-    if (inherits(x, "CombinedSD")) {
+    if (inherits(x, "compphysiol_combined_sd")) {
         return(paste0(
             "combined(constant = ", .statistical_format_value_spec(x$constant),
             ", proportional = ", .statistical_format_value_spec(x$proportional), ")"
@@ -541,7 +559,7 @@ statistical_model <- function(...) {
 #' @param ... Unused.
 #' @returns `x`, invisibly.
 #' @export
-print.StatisticalModel <- function(x, ...) {
+print.compphysiol_statistical_model <- function(x, ...) {
     if (!length(x)) {
         cat(" Statistical model: (none)\n")
         return(invisible(x))
@@ -549,13 +567,13 @@ print.StatisticalModel <- function(x, ...) {
     cat(" Statistical model:\n")
     for (i in seq_along(x)) {
         d <- x[[i]]
-        family <- if (inherits(d, "NormalDistribution")) "normal" else "lognormal"
-        location <- if (inherits(d, "NormalDistribution")) d$mean else d$median
-        location <- if (inherits(location, "PredictionLocation")) "prediction" else {
+        family <- if (inherits(d, "compphysiol_normal_distribution")) "normal" else "lognormal"
+        location <- if (inherits(d, "compphysiol_normal_distribution")) d$mean else d$median
+        location <- if (inherits(location, "compphysiol_prediction_location")) "prediction" else {
             if (is.null(location)) "<unresolved>" else paste(format(location), collapse = ", ")
         }
-        scale_name <- if (inherits(d, "NormalDistribution")) "sd" else "sdlog"
-        scale <- if (inherits(d, "NormalDistribution")) {
+        scale_name <- if (inherits(d, "compphysiol_normal_distribution")) "sd" else "sdlog"
+        scale <- if (inherits(d, "compphysiol_normal_distribution")) {
             .statistical_format_sd(d$sd)
         } else {
             .statistical_format_value_spec(d$sdlog)
@@ -577,7 +595,9 @@ print.StatisticalModel <- function(x, ...) {
             matrix[pair$first, pair$second] <- value
             matrix[pair$second, pair$first] <- value
         }
-        all_normal <- all(vapply(x[targets], inherits, logical(1), "NormalDistribution"))
+        all_normal <- all(vapply(
+            x[targets], inherits, logical(1), "compphysiol_normal_distribution"
+        ))
         heading <- if (all_normal) " Correlations:\n" else {
             " Correlations (latent normal scale):\n"
         }

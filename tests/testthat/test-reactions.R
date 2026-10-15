@@ -1,7 +1,7 @@
 # Test for reaction-related functions
 
 expect_states <- function(x, molec, cmt) {
-    expect_s3_class(x, "States")
+    expect_s3_class(x, "compphysiol_states")
     expect_equal(
         as.data.frame(x),
         data.frame(

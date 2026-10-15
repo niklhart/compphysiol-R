@@ -6,7 +6,7 @@ test_that("to_process_model returns explicit states and process stoichiometry", 
 
     process_model <- to_process_model(model)
 
-    expect_s3_class(process_model, "ProcessModel")
+    expect_s3_class(process_model, "compphysiol_process_model")
     required <- c(
         "states", "initials", "processes", "stoichiometry", "equations",
         "observables", "parameters", "dosing", "freeParams"

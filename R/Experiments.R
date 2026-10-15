@@ -29,12 +29,14 @@ experiments <- function(...) {
 }
 
 .new_experiments <- function(x) {
-    if (!all(vapply(x, inherits, logical(1), "Experiment"))) {
+    if (!all(vapply(x, inherits, logical(1), "compphysiol_experiment"))) {
         stop("All elements must be Experiment objects.", call. = FALSE)
     }
     invisible(lapply(x, validate_experiment))
     .experiments_check_units(x)
-    structure(x, class = "Experiments")
+    structure(x, class = .compphysiol_class(
+        "compphysiol_experiments", base = "list"
+    ))
 }
 
 .experiments_check_units <- function(x) {
@@ -95,7 +97,7 @@ experiments <- function(...) {
 #' @param ... Unused.
 #' @returns An `Experiments` object.
 #' @export
-`[.Experiments` <- function(x, i, ...) {
+`[.compphysiol_experiments` <- function(x, i, ...) {
     .new_experiments(unclass(x)[i])
 }
 
@@ -106,7 +108,7 @@ experiments <- function(...) {
 #' @param exact Whether character indices must match exactly, as for lists.
 #' @returns An `Experiment` object; unknown names return `NULL`, as for lists.
 #' @export
-`[[.Experiments` <- function(x, i, ..., exact = TRUE) {
+`[[.compphysiol_experiments` <- function(x, i, ..., exact = TRUE) {
     if (length(i) != 1L) stop("Select a single experiment with [[.", call. = FALSE)
     unclass(x)[[i, exact = exact]]
 }
@@ -115,9 +117,9 @@ experiments <- function(...) {
 #' @param ... `Experiments` objects to combine.
 #' @returns An `Experiments` object, preserving order and names.
 #' @export
-c.Experiments <- function(...) {
+c.compphysiol_experiments <- function(...) {
     objects <- list(...)
-    if (!all(vapply(objects, inherits, logical(1), "Experiments"))) {
+    if (!all(vapply(objects, inherits, logical(1), "compphysiol_experiments"))) {
         stop("All arguments must be Experiments objects.", call. = FALSE)
     }
     combined <- do.call(c, unname(lapply(objects, unclass)))
@@ -129,7 +131,7 @@ c.Experiments <- function(...) {
 #' @param ... Unused.
 #' @returns `x`, invisibly.
 #' @export
-print.Experiments <- function(x, ...) {
+print.compphysiol_experiments <- function(x, ...) {
     if (!length(x)) {
         cat(" Experiments: (none)\n")
         return(invisible(x))
@@ -144,7 +146,7 @@ print.Experiments <- function(x, ...) {
         cat(sprintf(
             "  (%s) %sstart = %s; %s parameters; %s dosing events; %s observations%s\n",
             i, label, format(e$start), length(e$parameters), length(e$dosing),
-            nrow(e$observations), if (inherits(e$observations, "ObservationData")) {
+            nrow(e$observations), if (inherits(e$observations, "compphysiol_observation_data")) {
                 " with data"
             } else {
                 " scheduled"

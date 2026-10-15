@@ -6,7 +6,7 @@
 #' @returns A list with entries `internal`, `incoming`, `outgoing`, `elimination`, each a `Transports` object
 #' @noRd
 .classify_transports <- function(trans, scc) {
-    .check_class(trans, "Transports")
+    .check_class(trans, "compphysiol_transports")
     list(
         internal = trans$from %in% scc & !is.na(trans$to) & trans$to %in% scc,
         incoming = !(trans$from %in% scc) & trans$to %in% scc,

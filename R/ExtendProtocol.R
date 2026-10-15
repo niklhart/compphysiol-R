@@ -26,8 +26,8 @@
 #' extend_protocol(protocol, population)
 #' @export
 extend_protocol <- function(protocol, population) {
-    .check_class(protocol, "Experiment")
-    .check_class(population, "ParameterSets")
+    .check_class(protocol, "compphysiol_experiment")
+    .check_class(population, "compphysiol_parameter_sets")
 
     if (!length(population)) return(experiments())
 

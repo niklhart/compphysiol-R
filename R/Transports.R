@@ -58,7 +58,9 @@ transports <- function(from, to, molec = NA_character_, ..., rate = NULL, const 
                 type = character(),
                 stringsAsFactors = FALSE
             ),
-            class = "Transports"
+            class = .compphysiol_class(
+                "compphysiol_transports"
+            )
         ))
     }
 
@@ -159,7 +161,9 @@ transports <- function(from, to, molec = NA_character_, ..., rate = NULL, const 
             type = type,
             stringsAsFactors = FALSE
         ),
-        class = "Transports"
+        class = .compphysiol_class(
+            "compphysiol_transports"
+        )
     )
 }
 
@@ -197,7 +201,7 @@ add_transport <- function(
     const = NULL,
     trans
 ) {
-    .check_class(model, "CompartmentModel")
+    .check_class(model, "compphysiol_model")
 
     call <- match.call()
 
@@ -208,7 +212,7 @@ add_transport <- function(
         parent_env = parent.frame()
     )
 
-    .check_class(trans, "Transports")
+    .check_class(trans, "compphysiol_transports")
 
     model$transports <- c(model$transports, trans)
     return(model)
@@ -221,7 +225,7 @@ add_transport <- function(
 #' @param ... Additional arguments (not used)
 #' @return The `Transports` object (invisible)
 #' @export
-print.Transports = function(x, ...) {
+print.compphysiol_transports = function(x, ...) {
 
     from <- x$from
     to <- x$to
@@ -260,7 +264,7 @@ print.Transports = function(x, ...) {
 #' @param x A `Transports` object
 #' @return The number of transports in the object
 #' @export
-length.Transports <- function(x) {
+length.compphysiol_transports <- function(x) {
     nrow(as.data.frame(x))
 }
 
@@ -270,7 +274,7 @@ length.Transports <- function(x) {
 #' @param ... Additional arguments (not used)
 #' @return A data frame representation of the `Transports` object
 #' @export
-as.data.frame.Transports <- function(x, ...) {
+as.data.frame.compphysiol_transports <- function(x, ...) {
     class(x) <- "data.frame"
     x
 }
@@ -286,7 +290,7 @@ as.data.frame.Transports <- function(x, ...) {
 #' @param ... Additional arguments (not used)
 #' @return A list of `Transport` objects, where each component is a list of the form `list(from, to, molec, rate, const, type)`
 #' @export
-as.list.Transports <- function(x, ...) {
+as.list.compphysiol_transports <- function(x, ...) {
     lst <- do.call(
         what = Map, 
         args = c(
@@ -296,7 +300,7 @@ as.list.Transports <- function(x, ...) {
         )
     )
     lapply(lst, function(l) {
-        class(l) <- "Transport"
+        class(l) <- "compphysiol_transport"
         l
     })
 }
@@ -308,14 +312,14 @@ as.list.Transports <- function(x, ...) {
 #' @param ... Additional arguments (not used)
 #' @return A subsetted `Transports` object
 #' @export
-`[.Transports` <- function(x, i, ...) .subset_df_like(x, i, byname = FALSE)
+`[.compphysiol_transports` <- function(x, i, ...) .subset_df_like(x, i, byname = FALSE)
 
 #' Combine multiple `Transports` objects into one
 #' 
 #' @param ... Multiple `Transports` objects to combine
 #' @return A combined `Transports` object
 #' @export
-c.Transports <- function(...) .combine_df_like(...)
+c.compphysiol_transports <- function(...) .combine_df_like(...)
 
 #' Access an element in a `Transports` object
 #' 
@@ -323,7 +327,7 @@ c.Transports <- function(...) .combine_df_like(...)
 #' @param i Row index to access
 #' @returns A `Transport` object, which is a list with entries `from`, `to`, `molec`, `rate`, `const`, and `type`.
 #' @export
-`[[.Transports` <- function(x, i) {
+`[[.compphysiol_transports` <- function(x, i) {
     if (!is.numeric(i) || length(i) != 1) stop("Index must be a single numeric value.")
     if (i < 1 || i > length(x)) stop("Index out of bounds.")
 
@@ -336,7 +340,9 @@ c.Transports <- function(...) .combine_df_like(...)
             const = x$const[[i]],
             type = x$type[i]
         ),
-        class = "Transport"
+        class = .compphysiol_class(
+            "compphysiol_transport"
+        )
     )
 }
 
@@ -346,7 +352,7 @@ c.Transports <- function(...) .combine_df_like(...)
 #' @param ... Additional arguments (not used)
 #' @return The `Transport` object (invisible)
 #' @export
-print.Transport <- function(x, ...) {
+print.compphysiol_transport <- function(x, ...) {
     empty_symbol <- "\u2205" # empty set symbol for source/sink compartments
     from <- if (is.na(x$from)) empty_symbol else x$from
     to <- if (is.na(x$to)) empty_symbol else x$to
@@ -368,9 +374,9 @@ print.Transport <- function(x, ...) {
 #' @param ... Multiple `Transport` objects to combine
 #' @return A combined `Transports` object
 #' @export
-c.Transport <- function(...) {
+c.compphysiol_transport <- function(...) {
     objs <- list(...)
-    if (!all(sapply(objs, function(o) inherits(o, "Transport")))) {
+    if (!all(sapply(objs, function(o) inherits(o, "compphysiol_transport")))) {
         stop("All inputs must be Transport objects.")
     }
     
@@ -393,6 +399,8 @@ c.Transport <- function(...) {
             type = type,
             stringsAsFactors = FALSE
         ),
-        class = "Transports"
+        class = .compphysiol_class(
+            "compphysiol_transports"
+        )
     )
 }

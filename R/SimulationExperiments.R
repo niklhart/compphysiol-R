@@ -1,18 +1,18 @@
 .simulate_experiments <- function(object, experiment, dimensions = NULL, ...) {
-    multiple <- inherits(experiment, "Experiments")
+    multiple <- inherits(experiment, "compphysiol_experiments")
     experiments <- if (multiple) unclass(.new_experiments(unclass(experiment))) else {
-        .check_class(experiment, "Experiment")
+        .check_class(experiment, "compphysiol_experiment")
         list(experiment)
     }
     for (e in experiments) {
         validate_experiment(e)
         if (!nrow(e$observations)) stop("Experiment simulation requires nonempty observations.", call. = FALSE)
-        model <- if (inherits(object, "CompiledOdeModel")) object$ode_model else object
+        model <- if (inherits(object, "compphysiol_desolve_compiled_model")) object$ode_model else object
         unknown <- setdiff(e$observations$observable, names(model$observables))
         if (length(unknown)) stop("Unknown observable(s): ", paste(unknown, collapse = ", "), call. = FALSE)
     }
     prepared_doses <- NULL
-    if (inherits(object, "CompartmentModel") && length(experiments)) {
+    if (inherits(object, "compphysiol_model") && length(experiments)) {
         # Wire each protocol before adding auxiliaries, then prepare their union.
         prepared <- lapply(experiments, function(e) {
             m <- object
@@ -27,7 +27,7 @@
     out <- lapply(seq_along(experiments), function(i) {
         e <- experiments[[i]]
         model <- object
-        if (inherits(model, "CompartmentModel")) {
+        if (inherits(model, "compphysiol_model")) {
             model$doses <- prepared_doses[[i]]
         } else {
             attr(model, "experiment_dosing") <- e$dosing

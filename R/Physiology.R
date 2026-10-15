@@ -25,7 +25,9 @@ physiology <- function(params = NULL, meta = NULL) {
             param_table = rbind(param_default, params), 
             meta = as.list(meta)
         ), 
-        class = "Physiology"
+        class = .compphysiol_class(
+            "compphysiol_physiology"
+        )
     )
 }
 
@@ -120,7 +122,7 @@ add_meta <- function(phys, ...) {
 #' @param ... Additional arguments (not used)
 #' @return The `Physiology` object (invisible)
 #' @noRd
-print.Physiology <- function(x, ...) {
+print.compphysiol_physiology <- function(x, ...) {
     # ---- 1. Header with metadata ----
     meta_str <- ""
     if (length(x$meta) > 0) {
@@ -168,7 +170,7 @@ print.Physiology <- function(x, ...) {
  #' @param ... Additional arguments (not used)
  #' @return A summary string
  #' @noRd
-summary.Physiology <- function(object, ...) {
+summary.compphysiol_physiology <- function(object, ...) {
     paste0("Physiology: ", nrow(object$param_table), " parameters")
 }
 

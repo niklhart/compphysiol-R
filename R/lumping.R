@@ -10,7 +10,7 @@
 lump_model <- function(M, partitioning = list(), normalize = list()) {
 
     # --- validate model ------------------------------------------------------
-    .check_class(M, "CompartmentModel")
+    .check_class(M, "compphysiol_model")
     M <- wire(M)
     if (!.is_linear(M)) stop("Lumping is only supported for linear models.")
     if (length(M$reactions) > 0) {

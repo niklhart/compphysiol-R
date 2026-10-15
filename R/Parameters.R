@@ -52,7 +52,7 @@ parameters <- function(..., name = NULL, value = NULL, unit = NULL) {
 
     structure(
         value %||% list(),
-        class = c("Parameters", "list")
+        class = .class_parameters()
     )
 }
 
@@ -127,7 +127,7 @@ add_parameter <- function(
     unit = NULL,
     param
 ) {
-    .check_class(model, "CompartmentModel")
+    .check_class(model, "compphysiol_model")
 
     call <- match.call()
 
@@ -138,7 +138,7 @@ add_parameter <- function(
         parent_env = parent.frame()
     )
 
-    .check_class(param, "Parameters")
+    .check_class(param, "compphysiol_parameters")
 
     model$parameters <- c(model$parameters, param)
     return(model)
@@ -149,7 +149,7 @@ add_parameter <- function(
 #' @param x A `Parameters` object
 #' @returns The names of the parameters
 #' @export
-names.Parameters <- function(x) names(unclass(x))
+names.compphysiol_parameters <- function(x) names(unclass(x))
 
 #' Subset a `Parameters` object
 #' @param x A `Parameters` object
@@ -157,10 +157,10 @@ names.Parameters <- function(x) names(unclass(x))
 #' @param ... Additional arguments (not used)
 #' @returns A subset of the `Parameters` object
 #' @export
-`[.Parameters` <- function(x, i, ...) {
+`[.compphysiol_parameters` <- function(x, i, ...) {
     structure(
         unclass(x)[i],
-        class = c("Parameters", "list")
+        class = .class_parameters()
     )
 }
 
@@ -170,14 +170,14 @@ names.Parameters <- function(x) names(unclass(x))
 #' @param value Another `Parameters` object with the new values to insert
 #' @returns The modified `Parameters` object
 #' @export
-`[<-.Parameters` <- function(x, i, value) {
+`[<-.compphysiol_parameters` <- function(x, i, value) {
     x <- unclass(x)
     x[i] <- unclass(value)
     if (is.character(i)) i <- match(i, names(x))
     names(x)[i] <- names(value)
     structure(
         x,
-        class = c("Parameters", "list")
+        class = .class_parameters()
     )
 }
 
@@ -185,9 +185,9 @@ names.Parameters <- function(x) names(unclass(x))
 #' @param ... `Parameters` objects to combine
 #' @returns A combined `Parameters` object
 #' @export
-c.Parameters <- function(...) {
+c.compphysiol_parameters <- function(...) {
     params_list <- list(...)
-    if (!all(sapply(params_list, inherits, "Parameters"))) {
+    if (!all(sapply(params_list, inherits, "compphysiol_parameters"))) {
         stop("All arguments must be of class 'Parameters'")
     }
     params <- params_list |>
@@ -195,7 +195,7 @@ c.Parameters <- function(...) {
         do.call(what = "c")
     .check_parameter_names(names(params))
     params |>
-        structure(class = c("Parameters", "list"))
+        structure(class = .class_parameters())
 }
 
 #' Print a `Parameters` object
@@ -203,7 +203,7 @@ c.Parameters <- function(...) {
 #' @param ... Additional arguments (not used)
 #' @returns The `Parameters` object (invisible)
 #' @export
-print.Parameters <- function(x, ...) {
+print.compphysiol_parameters <- function(x, ...) {
     if (length(x) > 0) {
         cat(" Parameters:\n")
         cat(
@@ -228,12 +228,12 @@ print.Parameters <- function(x, ...) {
 #' @param x A `Parameters` object
 #' @param ... Additional arguments (not used)
 #' @returns An unlisted `Parameters` object
-#' @method unlist Parameters
+#' @method unlist compphysiol_parameters
 #' @export
-unlist.Parameters <- function(x, ...) {
+unlist.compphysiol_parameters <- function(x, ...) {
     unlisted <- unlist(unclass(x), recursive = FALSE, use.names = TRUE)
     structure(
         as.list(unlisted),
-        class = c("Parameters", "list")
+        class = .class_parameters()
     )
 }

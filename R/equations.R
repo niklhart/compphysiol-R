@@ -42,7 +42,9 @@ equations <- function(..., name = character(0), expr = character(0)) {
 
     structure(
         expr,
-        class = "Equations"
+        class = .compphysiol_class(
+            "compphysiol_equations"
+        )
     )
 }
 
@@ -66,7 +68,7 @@ equations <- function(..., name = character(0), expr = character(0)) {
 #'     add_equation(eq = eq)
 #' @export
 add_equation <- function(model, ..., name = character(0), expr = character(0), eq) {
-    .check_class(model, "CompartmentModel")
+    .check_class(model, "compphysiol_model")
     
     call <- match.call()
 
@@ -77,7 +79,7 @@ add_equation <- function(model, ..., name = character(0), expr = character(0), e
         parent_env = parent.frame()
     )
     
-    .check_class(eq, "Equations")
+    .check_class(eq, "compphysiol_equations")
 
     model$equations <- c(model$equations, eq)
     return(model)
@@ -87,14 +89,14 @@ add_equation <- function(model, ..., name = character(0), expr = character(0), e
 #' @param x An `Equations` object
 #' @returns The names of the equations
 #' @export
-names.Equations <- function(x) names(unclass(x))
+names.compphysiol_equations <- function(x) names(unclass(x))
 
 #' Print an `Equations` object
 #' @param x An `Equations` object
 #' @param ... Additional arguments (not used)
 #' @returns The `Equations` object (invisible)
 #' @export
-print.Equations <- function(x, ...) {
+print.compphysiol_equations <- function(x, ...) {
 
     if (length(x) > 0) {
         cat(" Equations:\n")
@@ -118,10 +120,12 @@ print.Equations <- function(x, ...) {
 #' @param ... Additional arguments (not used)
 #' @returns A subset of the `Equations` object
 #' @export
-`[.Equations` <- function(x, i, ...) {
+`[.compphysiol_equations` <- function(x, i, ...) {
     structure(
         unclass(x)[i],
-        class = "Equations"
+        class = .compphysiol_class(
+            "compphysiol_equations"
+        )
     )
 }
 
@@ -129,13 +133,15 @@ print.Equations <- function(x, ...) {
 #' @param ... `Equations` objects to combine
 #' @returns A combined `Equations` object
 #' @export
-c.Equations <- function(...) {
+c.compphysiol_equations <- function(...) {
     eq_list <- list(...)
-    if (!all(sapply(eq_list, inherits, "Equations"))) {
+    if (!all(sapply(eq_list, inherits, "compphysiol_equations"))) {
         stop("All arguments must be of class 'Equations'")
     }
     eq_list |> 
          lapply(FUN = unclass) |> 
          do.call(what = "c") |>
-         structure(class = "Equations")
+         structure(class = .compphysiol_class(
+             "compphysiol_equations"
+         ))
 }

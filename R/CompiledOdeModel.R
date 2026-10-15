@@ -11,9 +11,9 @@
 #' @param ... ignored
 #' @returns The `CompiledOdeModel` object (invisibly).
 #' @export
-print.CompiledOdeModel <- function(x, ...) {
+print.compphysiol_desolve_compiled_model <- function(x, ...) {
     ode_model <- x$ode_model
-    .check_class(ode_model, "OdeModel")
+    .check_class(ode_model, "compphysiol_ode_model")
 
     cat("CompiledOdeModel (", .compiled_ode_model_status(x), "):\n", sep = "")
     cat(" ODE model:\n")
@@ -85,9 +85,9 @@ print.CompiledOdeModel <- function(x, ...) {
 }
 
 .to_deSolve_compiled <- function(model, parameters = list(), dimensions = NULL, merged_parameters = NULL, validate = TRUE) {
-    .check_class(model, "CompiledOdeModel")
+    .check_class(model, "compphysiol_desolve_compiled_model")
     ode_model <- model$ode_model
-    .check_class(ode_model, "OdeModel")
+    .check_class(ode_model, "compphysiol_ode_model")
 
     parameters <- .simulation_parameters_object(parameters)
     if (isTRUE(validate)) .compiled_ode_model_check_parameter_names(names(parameters), model$parameterNames)

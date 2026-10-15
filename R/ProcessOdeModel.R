@@ -12,7 +12,7 @@ to_process_model <- function(model) {
 }
 
 #' @export
-to_process_model.CompartmentModel <- function(model) {
+to_process_model.compphysiol_model <- function(model) {
     model <- model |> wire() |> make_depot()
     .ode_model_check_transport_compartments(model)
 
@@ -132,8 +132,12 @@ to_process_model.CompartmentModel <- function(model) {
         ))
     }
 
-    lowered_equations <- lapply(model$equations, lower) |> structure(class = "Equations")
-    lowered_observables <- lapply(model$observables, lower) |> structure(class = "Observables")
+    lowered_equations <- lapply(model$equations, lower) |> structure(
+        class = .compphysiol_class("compphysiol_equations")
+    )
+    lowered_observables <- lapply(model$observables, lower) |> structure(
+        class = .compphysiol_class("compphysiol_observables")
+    )
     dosing <- .ode_model_dosing(model, name2idx)
     process_rates <- lapply(process_list, `[[`, "rate")
     process_consts <- lapply(process_list, `[[`, "const")
@@ -170,7 +174,7 @@ to_process_model.CompartmentModel <- function(model) {
                 param_names = names(model$parameters)
             )
         ),
-        class = "ProcessModel"
+        class = .class_process_model()
     )
 }
 
@@ -187,12 +191,12 @@ to_ode_model <- function(model) {
 }
 
 #' @export
-to_ode_model.CompartmentModel <- function(model) {
+to_ode_model.compphysiol_model <- function(model) {
     model |> to_process_model() |> to_ode_model()
 }
 
 #' @export
-to_ode_model.ProcessModel <- function(model) {
+to_ode_model.compphysiol_process_model <- function(model) {
     rhs <- lapply(seq_len(nrow(model$stoichiometry)), function(i) {
         terms <- lapply(seq_len(ncol(model$stoichiometry)), function(j) {
             coeff <- model$stoichiometry[[i, j]]
@@ -221,7 +225,7 @@ to_ode_model.ProcessModel <- function(model) {
                 param_names = names(model$parameters)
             )
         ),
-        class = "OdeModel"
+        class = .class_ode_model()
     )
 }
 
@@ -240,17 +244,17 @@ to_compiled_ode_model <- function(model) {
 }
 
 #' @export
-to_compiled_ode_model.CompartmentModel <- function(model) {
+to_compiled_ode_model.compphysiol_model <- function(model) {
     model |> to_ode_model() |> to_compiled_ode_model()
 }
 
 #' @export
-to_compiled_ode_model.ProcessModel <- function(model) {
+to_compiled_ode_model.compphysiol_process_model <- function(model) {
     model |> to_ode_model() |> to_compiled_ode_model()
 }
 
 #' @export
-to_compiled_ode_model.OdeModel <- function(model) {
+to_compiled_ode_model.compphysiol_ode_model <- function(model) {
     parameter_names <- sort(unique(c(names(model$parameters), model$freeParams)))
 
     structure(
@@ -267,7 +271,7 @@ to_compiled_ode_model.OdeModel <- function(model) {
                 y0func = "init_y"
             )
         ),
-        class = "CompiledOdeModel"
+        class = .class_desolve_compiled_model()
     )
 }
 
@@ -288,12 +292,12 @@ to_analytical_model <- function(model) {
 }
 
 #' @export
-to_analytical_model.CompartmentModel <- function(model) {
+to_analytical_model.compphysiol_model <- function(model) {
     model |> to_process_model() |> to_analytical_model()
 }
 
 #' @export
-to_analytical_model.ProcessModel <- function(model) {
+to_analytical_model.compphysiol_process_model <- function(model) {
     .analytical_model_check_compatibility(model)
 
     system <- .analytical_model_linear_system(model)
@@ -315,7 +319,7 @@ to_analytical_model.ProcessModel <- function(model) {
                 param_names = names(model$parameters)
             )
         ),
-        class = "AnalyticalModel"
+        class = .class_analytical_model()
     )
 }
 
@@ -336,12 +340,12 @@ to_stochastic_model <- function(model) {
 }
 
 #' @export
-to_stochastic_model.CompartmentModel <- function(model) {
+to_stochastic_model.compphysiol_model <- function(model) {
     model |> to_process_model() |> to_stochastic_model()
 }
 
 #' @export
-to_stochastic_model.ProcessModel <- function(model) {
+to_stochastic_model.compphysiol_process_model <- function(model) {
     .stochastic_model_check_compatibility(model)
 
     propensities <- lapply(seq_len(nrow(model$processes)), function(i) {
@@ -368,7 +372,7 @@ to_stochastic_model.ProcessModel <- function(model) {
                 param_names = names(model$parameters)
             )
         ),
-        class = "StochasticModel"
+        class = .class_stochastic_model()
     )
 }
 
@@ -379,7 +383,7 @@ to_stochastic_model.ProcessModel <- function(model) {
 #' @param ... ignored
 #' @returns The `ProcessModel` object (invisibly).
 #' @export
-print.ProcessModel <- function(x, ...) {
+print.compphysiol_process_model <- function(x, ...) {
     cat("ProcessModel:\n")
 
     if (nrow(x$states) > 0) {
@@ -464,7 +468,7 @@ print.ProcessModel <- function(x, ...) {
 #' @param ... ignored
 #' @returns The `StochasticModel` object (invisibly).
 #' @export
-print.StochasticModel <- function(x, ...) {
+print.compphysiol_stochastic_model <- function(x, ...) {
     cat("StochasticModel:\n")
 
     if (nrow(x$states) > 0) {
@@ -536,7 +540,7 @@ print.StochasticModel <- function(x, ...) {
 #' @param ... ignored
 #' @returns The `AnalyticalModel` object (invisibly).
 #' @export
-print.AnalyticalModel <- function(x, ...) {
+print.compphysiol_analytical_model <- function(x, ...) {
     cat("AnalyticalModel:\n")
 
     if (nrow(x$states) > 0) {
@@ -611,7 +615,7 @@ print.AnalyticalModel <- function(x, ...) {
 #' @param ... ignored
 #' @returns The `OdeModel` object (invisibly).
 #' @export
-print.OdeModel <- function(x, ...) {
+print.compphysiol_ode_model <- function(x, ...) {
     cat("OdeModel:\n")
 
     if (nrow(x$states) > 0) {
@@ -687,8 +691,8 @@ print.OdeModel <- function(x, ...) {
 }
 
 .to_analytical <- function(model, parameters = list(), dimensions = NULL) {
-    if (!inherits(model, "AnalyticalModel")) {
-        .check_class(model, "CompartmentModel")
+    if (!inherits(model, "compphysiol_analytical_model")) {
+        .check_class(model, "compphysiol_model")
         model <- to_analytical_model(model)
     }
     parameters <- .simulation_parameters_object(parameters)
@@ -725,7 +729,7 @@ print.OdeModel <- function(x, ...) {
 }
 
 .to_deSolve <- function(model, parameters = list(), dimensions = NULL, merged_parameters = NULL) {
-    .check_class(model, "OdeModel")
+    .check_class(model, "compphysiol_ode_model")
     parameters <- .simulation_parameters_object(parameters)
     params <- merged_parameters %||% .merge_ode_parameters(model$parameters, parameters)
     param_values <- .to_dimensions_vec(params, dimensions)
@@ -1785,7 +1789,9 @@ print.OdeModel <- function(x, ...) {
     if (nrow(events) == 0) {
         return(structure(
             data.frame(state = integer(), time = I(list()), value = I(list()), operation = character()),
-            class = c("OdeDosing", "data.frame")
+            class = .compphysiol_class(
+                "compphysiol_ode_dosing", base = "data.frame"
+            )
         ))
     }
 
@@ -1799,7 +1805,9 @@ print.OdeModel <- function(x, ...) {
             operation = events$method,
             stringsAsFactors = FALSE
         ),
-        class = c("OdeDosing", "data.frame")
+        class = .compphysiol_class(
+            "compphysiol_ode_dosing", base = "data.frame"
+        )
     )
 }
 

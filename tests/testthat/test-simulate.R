@@ -56,7 +56,7 @@ test_that("simulate returns a SimulationResult with ODE states", {
 
     out <- simulate(model, time = seq(0, 10, by = 1))
 
-    expect_s3_class(out, "SimulationResult")
+    expect_s3_class(out, "compphysiol_simulation_result")
     expect_named(out, c("states", "observables"))
     expect_s3_class(out$states, "data.frame")
     expect_null(out$observables)
@@ -188,11 +188,11 @@ test_that("simulate supports SSA and hybrid simulation types", {
 
     expect_s3_class(
         simulate(model, time = seq(0, 1, by = 1), simulation_type = "ssa", seed = 1),
-        "SimulationResult"
+        "compphysiol_simulation_result"
     )
     expect_s3_class(
         simulate(model, time = seq(0, 1, by = 1), simulation_type = "hybrid", partition = FALSE, seed = 1),
-        "SimulationResult"
+        "compphysiol_simulation_result"
     )
 })
 
@@ -224,7 +224,7 @@ test_that("SimulationResult print truncates long state and observable lists", {
                 check.names = FALSE
             )
         ),
-        class = "SimulationResult"
+        class = "compphysiol_simulation_result"
     )
 
     expect_snapshot(print(out))
@@ -241,7 +241,7 @@ test_that("SimulationResult print summarizes repeated stochastic simulations", {
             ),
             observables = NULL
         ),
-        class = "SimulationResult"
+        class = "compphysiol_simulation_result"
     )
 
     expect_snapshot(print(out))
@@ -252,7 +252,7 @@ test_that("simulate accepts time units through the time DSL", {
 
     out <- simulate(model, time = seq(0, 10, by = 1) [h])
 
-    expect_s3_class(out, "SimulationResult")
+    expect_s3_class(out, "compphysiol_simulation_result")
     expect_s3_class(out$states, "data.frame")
     expect_equal(out$states$time, units::set_units(seq(0, 10, by = 1), "h", mode = "standard"))
     expect_equal(
@@ -275,7 +275,7 @@ test_that("simulate wires scalar dosing targets before ODE export", {
 
     out <- simulate(model, time = seq(0, 24, by = 0.5) [h])
 
-    expect_s3_class(out, "SimulationResult")
+    expect_s3_class(out, "compphysiol_simulation_result")
     expect_named(out$states, c("time", "a_drug_cen", "a_drug_per"))
     expect_equal(out$states$time, units::set_units(seq(0, 24, by = 0.5), "h", mode = "standard"))
     expect_equal(out$states$a_drug_cen[[1]], units::set_units(100, "mg", mode = "standard"))
@@ -286,7 +286,7 @@ test_that("simulate accepts time units through the unit argument", {
 
     out <- simulate(model, time = seq(0, 10, by = 1), unit = "h")
 
-    expect_s3_class(out, "SimulationResult")
+    expect_s3_class(out, "compphysiol_simulation_result")
     expect_equal(out$states$time, units::set_units(seq(0, 10, by = 1), "h", mode = "standard"))
     expect_equal(
         out$states$a_drug_Central,
@@ -321,7 +321,7 @@ test_that("simulate accepts time units for static models without processes", {
 
     out <- simulate(model, time = seq(0 [h], 1 [h], by = 1 [h]))
 
-    expect_s3_class(out, "SimulationResult")
+    expect_s3_class(out, "compphysiol_simulation_result")
     expect_equal(out$states$time, units::set_units(c(0, 1), "h", mode = "standard"))
     expect_equal(out$states$a_D_ex, units::set_units(c(0, 0), "mol", mode = "standard"))
 })
@@ -390,7 +390,7 @@ test_that("simulate accepts a precompiled OdeModel with different parameter valu
         parameters = parameters(A0 = 100, ke = 0.1)
     )
 
-    expect_s3_class(out_fast, "SimulationResult")
+    expect_s3_class(out_fast, "compphysiol_simulation_result")
     expect_equal(out_fast$states$a_drug_Central, 100 * exp(-0.4 * time), tolerance = 1e-6)
     expect_equal(out_slow$states$a_drug_Central, 100 * exp(-0.1 * time), tolerance = 1e-6)
     expect_true(out_fast$states$a_drug_Central[[length(time)]] < out_slow$states$a_drug_Central[[length(time)]])
@@ -415,7 +415,7 @@ test_that("simulate accepts a CompiledOdeModel with different parameter values",
         parameters = parameters(A0 = 100, ke = 0.1)
     )
 
-    expect_s3_class(out_fast, "SimulationResult")
+    expect_s3_class(out_fast, "compphysiol_simulation_result")
     expect_equal(out_fast$states$a_drug_Central, 100 * exp(-0.4 * time), tolerance = 1e-6)
     expect_equal(out_slow$states$a_drug_Central, 100 * exp(-0.1 * time), tolerance = 1e-6)
     expect_true(out_fast$states$a_drug_Central[[length(time)]] < out_slow$states$a_drug_Central[[length(time)]])
@@ -648,7 +648,7 @@ test_that("simulate accepts a precompiled AnalyticalModel", {
     analytical <- simulate(analytical_model, time = time, parameters = parameters)
     numerical <- simulate(ode_model, time = time, parameters = parameters)
 
-    expect_s3_class(analytical, "SimulationResult")
+    expect_s3_class(analytical, "compphysiol_simulation_result")
     expect_equal(analytical$states, numerical$states, tolerance = 1e-5)
     expect_equal(analytical$observables, numerical$observables, tolerance = 1e-5)
 })
@@ -901,7 +901,7 @@ test_that("simulate returns observable trajectories", {
 
     out <- simulate(model, time = seq(0, 10, by = 1))
 
-    expect_s3_class(out, "SimulationResult")
+    expect_s3_class(out, "compphysiol_simulation_result")
     expect_s3_class(out$observables, "data.frame")
     expect_named(out$observables, c("time", "observable", "value"))
     expect_equal(out$observables$time, out$states$time)

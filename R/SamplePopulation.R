@@ -37,8 +37,8 @@
 #' population
 #' @export
 sample_population <- function(statistics, parameters, n, targets = NULL) {
-    .check_class(statistics, "StatisticalModel")
-    .check_class(parameters, "Parameters")
+    .check_class(statistics, "compphysiol_statistical_model")
+    .check_class(parameters, "compphysiol_parameters")
     if (!is.numeric(n) || length(n) != 1L || is.na(n) || !is.finite(n) ||
         n < 1 || n > .Machine$integer.max || n != floor(n)) {
         stop("n must be a positive whole number.", call. = FALSE)
@@ -94,7 +94,7 @@ sample_population <- function(statistics, parameters, n, targets = NULL) {
 
     people <- lapply(seq_len(n), function(i) {
         values <- lapply(sampled, `[[`, i)
-        structure(values, class = c("Parameters", "list"))
+        structure(values, class = .class_parameters())
     })
     names(people) <- paste0("individual_", seq_len(n))
     .new_parameter_sets(people, check_units = FALSE)
@@ -110,14 +110,14 @@ sample_population <- function(statistics, parameters, n, targets = NULL) {
 
 .sample_individual_distribution <- function(distribution, parameters, n, latent = NULL) {
     if (is.null(latent)) latent <- stats::rnorm(n)
-    if (inherits(distribution, "NormalDistribution")) {
+    if (inherits(distribution, "compphysiol_normal_distribution")) {
         mean <- .sampling_value(distribution$mean, parameters, "mean")
         sd <- .sampling_normal_sd(distribution$sd, mean, parameters)
         if (sd < 0) stop("Normal standard deviations must be non-negative.", call. = FALSE)
         draws <- as.numeric(mean) + sd * latent
         return(.sampling_restore_units(draws, mean))
     }
-    if (inherits(distribution, "LognormalDistribution")) {
+    if (inherits(distribution, "compphysiol_lognormal_distribution")) {
         median <- .sampling_value(distribution$median, parameters, "median")
         sdlog <- .sampling_dimensionless(
             distribution$sdlog, parameters, "sdlog"
@@ -135,13 +135,13 @@ sample_population <- function(statistics, parameters, n, targets = NULL) {
 }
 
 .sampling_normal_sd <- function(spec, mean, parameters) {
-    if (inherits(spec, "ProportionalSD")) {
+    if (inherits(spec, "compphysiol_proportional_sd")) {
         coefficient <- .sampling_dimensionless(
             spec$coefficient, parameters, "proportional coefficient"
         )
         return(coefficient * abs(as.numeric(mean)))
     }
-    if (inherits(spec, "CombinedSD")) {
+    if (inherits(spec, "compphysiol_combined_sd")) {
         constant <- .sampling_target_scale(
             spec$constant, mean, parameters, "constant"
         )
@@ -154,7 +154,7 @@ sample_population <- function(statistics, parameters, n, targets = NULL) {
 }
 
 .sampling_value <- function(spec, parameters, label) {
-    if (inherits(spec, "PredictionLocation") || is.null(spec)) {
+    if (inherits(spec, "compphysiol_prediction_location") || is.null(spec)) {
         stop("Individual-level distributions require an explicit location.", call. = FALSE)
     }
     .statistical_value(spec, parameters, label)

@@ -61,7 +61,7 @@ test_that("Print output for infusion dosing", {
 test_that("Vectorized dosing times with recycled amounts work", {
     doses <- dosing( time = c(0, 24, 48), amount = 100)
 
-    expect_s3_class(doses, "Dosing")
+    expect_s3_class(doses, "compphysiol_dosing")
     expect_equal(length(doses), 3)
     expect_equal(dosing_col_values(doses$amount), rep(100, 3))
 })
@@ -104,7 +104,7 @@ test_that("Concatenating dosing objects works", {
     d2 <- dosing(time = 24, amount = 100)
 
     doses_combined <- c(d1, d2)
-    expect_s3_class(doses_combined, "Dosing")
+    expect_s3_class(doses_combined, "compphysiol_dosing")
     expect_equal(length(doses_combined), 2)
     expect_equal(doses_combined$time, c(0, 24))
     expect_equal(dosing_col_values(doses_combined$amount), c(100, 100))
@@ -116,7 +116,7 @@ test_that("Concatenating dosing objects preserves incompatible amount units", {
 
     doses_combined <- c(d1, d2)
 
-    expect_s3_class(doses_combined, "Dosing")
+    expect_s3_class(doses_combined, "compphysiol_dosing")
     expect_equal(length(doses_combined), 2)
     expect_true(is.list(doses_combined$amount))
     expect_equal(doses_combined$amount[[1]], units::set_units(100, "mg", mode = "standard"))
@@ -127,7 +127,7 @@ test_that("Subsetting dosing objects works", {
     doses <- dosing(time = c(0, 24, 48), amount = c(100, 200, 300))
     doses_subset <- doses[1:2]
 
-    expect_s3_class(doses_subset, "Dosing")
+    expect_s3_class(doses_subset, "compphysiol_dosing")
     expect_equal(length(doses_subset), 2)
     expect_equal(doses_subset$time, c(0, 24))
     expect_equal(dosing_col_values(doses_subset$amount), c(100, 200))

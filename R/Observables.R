@@ -101,7 +101,9 @@ observables <- function(..., name = character(0), expr = character(0), cmt = NUL
 
     structure(
         expr,
-        class = "Observables"
+        class = .compphysiol_class(
+            "compphysiol_observables"
+        )
     )
 }
 
@@ -136,7 +138,7 @@ add_observable <- function(
     molec = NULL,
     obs
 ) {
-    .check_class(model, "CompartmentModel")
+    .check_class(model, "compphysiol_model")
 
     call <- match.call()
 
@@ -147,7 +149,7 @@ add_observable <- function(
         parent_env = parent.frame()
     )
 
-    .check_class(obs, "Observables")
+    .check_class(obs, "compphysiol_observables")
 
     model$observables <- c(model$observables, obs)
     return(model)
@@ -158,14 +160,14 @@ add_observable <- function(
 #' @param x An `Observables` object
 #' @returns The names of the observables
 #' @export
-names.Observables <- function(x) names(unclass(x))
+names.compphysiol_observables <- function(x) names(unclass(x))
 
 #' Print an `Observables` object
 #' @param x An `Observables` object
 #' @param ... Additional arguments (not used)
 #' @returns The `Observables` object (invisible)
 #' @export
-print.Observables <- function(x, ...) {
+print.compphysiol_observables <- function(x, ...) {
 
     if (length(x) > 0) {
         cat(" Observables:\n")
@@ -189,10 +191,12 @@ print.Observables <- function(x, ...) {
 #' @param ... Additional arguments (not used)
 #' @returns A subset of the `Observables` object
 #' @export
-`[.Observables` <- function(x, i, ...) {
+`[.compphysiol_observables` <- function(x, i, ...) {
     structure(
         unclass(x)[i],
-        class = "Observables"
+        class = .compphysiol_class(
+            "compphysiol_observables"
+        )
     )
 }
 
@@ -200,13 +204,15 @@ print.Observables <- function(x, ...) {
 #' @param ... `Observables` objects to combine
 #' @returns A combined `Observables` object
 #' @export
-c.Observables <- function(...) {
+c.compphysiol_observables <- function(...) {
     obs_list <- list(...)
-    if (!all(sapply(obs_list, inherits, "Observables"))) {
+    if (!all(sapply(obs_list, inherits, "compphysiol_observables"))) {
         stop("All arguments must be of class 'Observables'")
     }
     obs_list |> 
          lapply(FUN = unclass) |> 
          do.call(what = "c") |>
-         structure(class = "Observables")
+         structure(class = .compphysiol_class(
+             "compphysiol_observables"
+         ))
 }

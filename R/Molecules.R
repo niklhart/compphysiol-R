@@ -91,12 +91,14 @@ molecules <- function(name = character(0), cmt = NULL, initial = 0, unit = NULL,
                     type = character(),
                     stringsAsFactors = FALSE
                 ),
-                class = "Molecules"
+                class = .compphysiol_class(
+                    "compphysiol_molecules"
+                )
             )
         )
     }
 
-    # Construct the Molecules object as a data frame with class "Molecules"
+    # Construct the molecules object as a data frame with its package class.
     molec <- data.frame(
         name = name,
         cmt = cmt %||% NA_character_,
@@ -104,7 +106,9 @@ molecules <- function(name = character(0), cmt = NULL, initial = 0, unit = NULL,
         type = type,
         stringsAsFactors = FALSE
     )
-    structure(molec, class = "Molecules")
+    structure(molec, class = .compphysiol_class(
+        "compphysiol_molecules"
+    ))
 }
 
 #' Add one or several molecules to a `CompartmentModel` object.
@@ -125,7 +129,7 @@ add_molecule <- function(
     type = c("concentration","amount"), 
     molec = NULL
 ) {
-    .check_class(model, "CompartmentModel")
+    .check_class(model, "compphysiol_model")
 
     call <- match.call()
 
@@ -146,7 +150,7 @@ add_molecule <- function(
 #' @param ... Multiple `Molecules` objects to combine
 #' @return A combined `Molecules` object
 #' @export
-c.Molecules <- function(...) .combine_df_like(...)
+c.compphysiol_molecules <- function(...) .combine_df_like(...)
 
 #' Subset a `Molecules` object
 #'
@@ -155,7 +159,7 @@ c.Molecules <- function(...) .combine_df_like(...)
 #' @param ... Additional arguments (not used)
 #' @return A subsetted `Molecules` object
 #' @export
-`[.Molecules` <- function(x, i, ...) .subset_df_like(x, i, byname = TRUE)
+`[.compphysiol_molecules` <- function(x, i, ...) .subset_df_like(x, i, byname = TRUE)
 
 #' Extraction method for `Molecules` class
 #'
@@ -168,7 +172,7 @@ c.Molecules <- function(...) .combine_df_like(...)
 #' @param ... Additional arguments (not used)
 #' @return Nothing (errors)
 #' @export
-`[[.Molecules` <- function(x, i, ...) .extract_df_like(x, i)
+`[[.compphysiol_molecules` <- function(x, i, ...) .extract_df_like(x, i)
 
 #' Convert a `Molecules` object to a data frame
 #'
@@ -176,7 +180,7 @@ c.Molecules <- function(...) .combine_df_like(...)
 #' @param ... Additional arguments (not used)
 #' @return A data frame representation of the `Molecules` object
 #' @export
-as.data.frame.Molecules <- function(x, ...) {
+as.data.frame.compphysiol_molecules <- function(x, ...) {
     class(x) <- "data.frame"
     x
 }
@@ -189,7 +193,7 @@ as.data.frame.Molecules <- function(x, ...) {
 #' @param ... Additional arguments (not used)
 #' @return The `Molecules` object (invisible)
 #' @export
-print.Molecules <- function(x, ...) {
+print.compphysiol_molecules <- function(x, ...) {
 
     cmt <- ifelse(is.na(x$cmt), "<all cmt>", x$cmt)
     init_str <- vapply(x$init, format, character(1))
@@ -220,7 +224,7 @@ print.Molecules <- function(x, ...) {
 #' @param ... Additional arguments (not used)
 #' @return A character vector of molecule names
 #' @export
-names.Molecules <- function(x, ...) {
+names.compphysiol_molecules <- function(x, ...) {
     x$name
 }
 
@@ -230,7 +234,7 @@ names.Molecules <- function(x, ...) {
 #' @param ... Additional arguments (not used)
 #' @return The number of molecules in the object
 #' @export
-length.Molecules <- function(x, ...) {
+length.compphysiol_molecules <- function(x, ...) {
     nrow(as.data.frame(x))
 }
 
@@ -240,7 +244,7 @@ length.Molecules <- function(x, ...) {
 #' @param ... Additional arguments (not used)
 #' @return A list of lists, where each inner list represents a molecule with its properties
 #' @export
-as.list.Molecules <- function(x, ...) .listify_df_like(x)
+as.list.compphysiol_molecules <- function(x, ...) .listify_df_like(x)
 
 # ---- Code snippet for retrieving initial conditions from when they were defined in Compartments objects, for potential later use ----
 #  
@@ -259,7 +263,7 @@ as.list.Molecules <- function(x, ...) .listify_df_like(x)
 # #' @return A vector of initial amounts for each compartment (see Details)
 # #' @export
 # initials <- function(comp, named = FALSE) {
-#     .check_class(comp, "Compartments")
+#     .check_class(comp, "compphysiol_compartments")
 #     y0 <- comp$initial
 
 #     # Allow mixed units in initial conditions if required by temporarily setting allow_mixed = TRUE

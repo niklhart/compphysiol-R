@@ -2,10 +2,10 @@ test_that("humancovdistrib returns realized parameter sets", {
     set.seed(42)
     humans <- humancovdistrib(3, "female")
 
-    expect_s3_class(humans, "ParameterSets")
+    expect_s3_class(humans, "compphysiol_parameter_sets")
     expect_length(humans, 3)
     expect_null(names(humans))
-    expect_true(all(vapply(humans, inherits, logical(1), "Parameters")))
+    expect_true(all(vapply(humans, inherits, logical(1), "compphysiol_parameters")))
     expect_true(all(vapply(
         humans,
         function(x) identical(names(x), c("species", "type", "sex", "age", "BW", "BH")),

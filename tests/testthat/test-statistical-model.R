@@ -17,16 +17,16 @@ test_that("distribution constructors represent the unified vocabulary", {
     ))
     log_dist <- lognormal(median = "V_pop", sdlog = "omega_V")
 
-    expect_s3_class(constant, "NormalDistribution")
+    expect_s3_class(constant, "compphysiol_normal_distribution")
     expect_identical(constant$mean, "CL_pop")
     expect_identical(constant$sd, "omega_CL")
     expect_null(constant$level)
-    expect_s3_class(prop$sd, "ProportionalSD")
+    expect_s3_class(prop$sd, "compphysiol_proportional_sd")
     expect_identical(prop$sd$coefficient, "omega_CL")
-    expect_s3_class(combo$sd, "CombinedSD")
+    expect_s3_class(combo$sd, "compphysiol_combined_sd")
     expect_identical(combo$sd$constant, "sigma_add")
     expect_identical(combo$sd$proportional, "sigma_prop")
-    expect_s3_class(log_dist, "LognormalDistribution")
+    expect_s3_class(log_dist, "compphysiol_lognormal_distribution")
     expect_identical(log_dist$median, "V_pop")
     expect_identical(log_dist$sdlog, "omega_V")
 })
@@ -58,7 +58,7 @@ test_that("distribution constructors accept fixed scalar specifications", {
     expect_identical(scaled$sd$proportional, 0.2)
     expect_equal(log_dist$median, with_units(10 [L]))
     expect_identical(log_dist$sdlog, 0.3)
-    expect_s3_class(proportional(0.2), "ProportionalSD")
+    expect_s3_class(proportional(0.2), "compphysiol_proportional_sd")
 })
 
 test_that("statistical_model uses names as random-quantity targets", {
@@ -68,10 +68,10 @@ test_that("statistical_model uses names as random-quantity targets", {
         C = normal(sd = "sigma")
     )
 
-    expect_s3_class(model, "StatisticalModel")
+    expect_s3_class(model, "compphysiol_statistical_model")
     expect_named(model, c("CL", "V", "C"))
-    expect_s3_class(model["CL"], "StatisticalModel")
-    expect_s3_class(model[["CL"]], "NormalDistribution")
+    expect_s3_class(model["CL"], "compphysiol_statistical_model")
+    expect_s3_class(model[["CL"]], "compphysiol_normal_distribution")
     expect_error(statistical_model(normal(sd = "sigma")), "named|random quantity")
     expect_error(
         statistical_model(C = normal(sd = "a"), C = normal(sd = "b")),
@@ -92,7 +92,7 @@ test_that("correlated declares pairwise dependence between model targets", {
         dependence
     )
 
-    expect_s3_class(dependence, "Correlated")
+    expect_s3_class(dependence, "compphysiol_correlations")
     expect_named(model, c("CL", "V", "Q"))
     expect_length(.statistical_correlations(model), 2)
     expect_length(.statistical_correlations(model[c("CL", "V")]), 1)
@@ -177,7 +177,7 @@ test_that("validation infers levels and observable prediction locations", {
     expect_identical(resolved$CL$level, "individual")
     expect_identical(resolved$CL$mean, "CL_pop")
     expect_identical(resolved$C$level, "observation")
-    expect_s3_class(resolved$C$median, "PredictionLocation")
+    expect_s3_class(resolved$C$median, "compphysiol_prediction_location")
     expect_output(
         print(resolved),
         "CL: normal; location = CL_pop; sd = proportional(omega_CL)",

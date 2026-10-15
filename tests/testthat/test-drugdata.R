@@ -3,7 +3,7 @@
 test_that("Drug object are created successfully", {
     # Empty drug() case
     empty_drug <- drug()
-    expect_s3_class(empty_drug, "Drug")
+    expect_s3_class(empty_drug, "compphysiol_drug")
     expect_true(length(names(empty_drug$param)) == 0)
 
     # Drug with parameters
@@ -24,11 +24,11 @@ test_that("Drug and Drugs objects interact correctly", {
     drug2 <- drug(MW = 100[g / mol])
     drugs <- c(drug1, drug2)
 
-    expect_s3_class(drugs, "Drugs")
+    expect_s3_class(drugs, "compphysiol_drugs")
     expect_equal(length(drugs), 2)
-    expect_s3_class(drugs[1], "Drugs")
-    expect_s3_class(drugs[[1]], "Drug")
-    expect_s3_class(drugs[[2]], "Drug")
+    expect_s3_class(drugs[1], "compphysiol_drugs")
+    expect_s3_class(drugs[[1]], "compphysiol_drug")
+    expect_s3_class(drugs[[2]], "compphysiol_drug")
 
     skip("Subsetting Drugs objects not yet functional.")
     

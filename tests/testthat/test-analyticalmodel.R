@@ -24,7 +24,7 @@ test_that("to_analytical_model returns a solver-neutral AnalyticalModel", {
 
     analytical_model <- to_analytical_model(model)
 
-    expect_s3_class(analytical_model, "AnalyticalModel")
+    expect_s3_class(analytical_model, "compphysiol_analytical_model")
     expect_named(
         analytical_model,
         c("states", "initials", "A", "b", "equations", "observables", "parameters", "freeParams")
@@ -96,8 +96,8 @@ test_that("AnalyticalModel keeps equations and observables in lowered state form
 
     analytical_model <- to_analytical_model(model)
 
-    expect_s3_class(analytical_model$equations, "Equations")
-    expect_s3_class(analytical_model$observables, "Observables")
+    expect_s3_class(analytical_model$equations, "compphysiol_equations")
+    expect_s3_class(analytical_model$observables, "compphysiol_observables")
     expect_equal(deparse1(analytical_model$equations$ke), "base_ke * scale")
     expect_match(deparse1(analytical_model$observables$C), "y\\[1\\]", fixed = FALSE)
     expect_match(deparse1(analytical_model$observables$C), "/")

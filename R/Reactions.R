@@ -30,41 +30,45 @@ state <- function(..., molec, cmt) {
             cmt = cmt,
             stringsAsFactors = FALSE
         ),
-        class = c("States", "data.frame")
+        class = .compphysiol_class(
+            "compphysiol_states", base = "data.frame"
+        )
     )
 }
 
 #' @export
-as.data.frame.States <- function(x, ...) {
+as.data.frame.compphysiol_states <- function(x, ...) {
     class(x) <- "data.frame"
     x
 }
 
 #' @export
-length.States <- function(x) {
+length.compphysiol_states <- function(x) {
     nrow(as.data.frame(x))
 }
 
 #' @export
-c.States <- function(...) {
+c.compphysiol_states <- function(...) {
     objs <- list(...)
-    if (!all(vapply(objs, inherits, logical(1), what = "States"))) {
+    if (!all(vapply(objs, inherits, logical(1), what = "compphysiol_states"))) {
         stop("All inputs must be of class 'States'.", call. = FALSE)
     }
     structure(
         do.call(rbind, lapply(objs, as.data.frame)),
-        class = c("States", "data.frame")
+        class = .compphysiol_class(
+            "compphysiol_states", base = "data.frame"
+        )
     )
 }
 
 #' @export
-`[.States` <- function(x, i, ...) .subset_df_like(x, i, byname = FALSE)
+`[.compphysiol_states` <- function(x, i, ...) .subset_df_like(x, i, byname = FALSE)
 
 #' @export
-`[[.States` <- function(x, i, ...) .extract_df_like(x, i)
+`[[.compphysiol_states` <- function(x, i, ...) .extract_df_like(x, i)
 
 #' @export
-print.States <- function(x, ...) {
+print.compphysiol_states <- function(x, ...) {
     if (length(x) > 0) {
         molec <- ifelse(is.na(x$molec), "<all molec>", x$molec)
         cmt <- ifelse(is.na(x$cmt), "<all cmt>", x$cmt)
@@ -102,7 +106,7 @@ print.States <- function(x, ...) {
 }
 
 .states_to_reaction_participants <- function(x, role) {
-    if (inherits(x, "States")) {
+    if (inherits(x, "compphysiol_states")) {
         states <- as.data.frame(x)
         return(data.frame(
             role = role,
@@ -259,10 +263,10 @@ print.States <- function(x, ...) {
     uses_states <- input$has_localization || output$has_localization
 
     if (uses_states) {
-        if (!inherits(input$value, "States") && length(input$value) > 0) {
+        if (!inherits(input$value, "compphysiol_states") && length(input$value) > 0) {
             input$value <- state(molec = input$value, cmt = cmt)
         }
-        if (!inherits(output$value, "States") && length(output$value) > 0) {
+        if (!inherits(output$value, "compphysiol_states") && length(output$value) > 0) {
             output$value <- state(molec = output$value, cmt = cmt)
         }
     }
@@ -459,12 +463,15 @@ reactions <- function(
                     participants = I(list()),
                     stringsAsFactors = FALSE
                 ),
-                class = "Reactions"
+                class = .compphysiol_class(
+                    "compphysiol_reactions"
+                )
             )
         )
     }
 
-    uses_states <- inherits(input, "States") || inherits(output, "States")
+    uses_states <- inherits(input, "compphysiol_states") ||
+        inherits(output, "compphysiol_states")
     if (uses_states && !all(is.na(cmt))) {
         stop("Argument 'cmt' cannot be used with state() reaction participants.", call. = FALSE)
     }
@@ -576,7 +583,7 @@ reactions <- function(
 
     )
 
-    # Construct the Reactions object as a data frame with class "Reactions"
+    # Construct the reactions object as a data frame with its package class.
     return(
         structure(
             data.frame(
@@ -587,7 +594,9 @@ reactions <- function(
                 participants = I(reaction_participants),
                 stringsAsFactors = FALSE
             ),
-            class = "Reactions"
+            class = .compphysiol_class(
+                "compphysiol_reactions"
+            )
         )
     )
 }
@@ -613,7 +622,7 @@ add_reaction <- function(
     const = NULL,
     react = NULL
 ) {
-    .check_class(model, "CompartmentModel")
+    .check_class(model, "compphysiol_model")
 
     call <- match.call()
 
@@ -635,7 +644,7 @@ add_reaction <- function(
 #' @param ... Additional arguments (not used)
 #' @return A data frame representation of the `Reactions` object
 #' @export
-as.data.frame.Reactions <- function(x, ...) {
+as.data.frame.compphysiol_reactions <- function(x, ...) {
     class(x) <- "data.frame"
     x
 }
@@ -645,7 +654,7 @@ as.data.frame.Reactions <- function(x, ...) {
 #' @param x A `Reactions` object
 #' @return The number of reactions in the object
 #' @export
-length.Reactions <- function(x) {
+length.compphysiol_reactions <- function(x) {
     nrow(as.data.frame(x))
 }
 
@@ -654,7 +663,7 @@ length.Reactions <- function(x) {
 #' @param ... Multiple `Reactions` objects to combine
 #' @return A combined `Reactions` object
 #' @export
-c.Reactions <- function(...) .combine_df_like(...)
+c.compphysiol_reactions <- function(...) .combine_df_like(...)
 
 #' Subset a `Reactions` object
 #' 
@@ -664,7 +673,7 @@ c.Reactions <- function(...) .combine_df_like(...)
 #' @param ... Additional arguments (not used)
 #' @return A subsetted `Reactions` object
 #' @export
-`[.Reactions` <- function(x, i, ...) .subset_df_like(x, i, byname = FALSE)
+`[.compphysiol_reactions` <- function(x, i, ...) .subset_df_like(x, i, byname = FALSE)
 
 #' Extraction method for `Reactions` class
 #'
@@ -677,7 +686,7 @@ c.Reactions <- function(...) .combine_df_like(...)
 #' @param ... Additional arguments (not used)
 #' @return Nothing (errors)
 #' @export
-`[[.Reactions` <- function(x, i, ...) .extract_df_like(x, i)
+`[[.compphysiol_reactions` <- function(x, i, ...) .extract_df_like(x, i)
 
 #' Print a `Reactions` object
 #'
@@ -685,7 +694,7 @@ c.Reactions <- function(...) .combine_df_like(...)
 #' @param ... Additional arguments (not used)
 #' @return The `Reactions` object (invisible)
 #' @export
-print.Reactions = function(x, ...) {
+print.compphysiol_reactions = function(x, ...) {
 
     if (length(x) > 0) {
 
@@ -747,4 +756,4 @@ print.Reactions = function(x, ...) {
 #' @param ... Additional arguments (not used)
 #' @return A list of lists, where each inner list represents a reaction with its properties
 #' @export
-as.list.Reactions <- function(x, ...) .listify_df_like(x)
+as.list.compphysiol_reactions <- function(x, ...) .listify_df_like(x)

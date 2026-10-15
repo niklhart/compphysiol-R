@@ -37,13 +37,13 @@
 #' )
 #' @export
 sample_observations <- function(x, statistics, parameters) {
-    if (!inherits(x, "ObservationData")) {
+    if (!inherits(x, "compphysiol_observation_data")) {
         stop("x must be an ObservationData object; extract SimulationResult predictions ",
              "with as_observables_long().", call. = FALSE)
     }
     x <- .new_observation_data(x)
-    .check_class(statistics, "StatisticalModel")
-    .check_class(parameters, "Parameters")
+    .check_class(statistics, "compphysiol_statistical_model")
+    .check_class(parameters, "compphysiol_parameters")
 
     predictions <- lapply(seq_len(nrow(x)), function(i) x$value[[i]])
     invalid <- vapply(predictions, function(value) {
@@ -70,12 +70,12 @@ sample_observations <- function(x, statistics, parameters) {
     }
 
     explicit_location <- targets[vapply(selected, function(distribution) {
-        location <- if (inherits(distribution, "NormalDistribution")) {
+        location <- if (inherits(distribution, "compphysiol_normal_distribution")) {
             distribution$mean
         } else {
             distribution$median
         }
-        !is.null(location) && !inherits(location, "PredictionLocation")
+        !is.null(location) && !inherits(location, "compphysiol_prediction_location")
     }, logical(1))]
     if (length(explicit_location)) {
         stop("Observation sampling requires the conditional prediction as location; ",
@@ -92,12 +92,14 @@ sample_observations <- function(x, statistics, parameters) {
 }
 
 .sample_observation_distribution <- function(distribution, prediction, parameters) {
-    if (!inherits(distribution, c("NormalDistribution", "LognormalDistribution"))) {
+    if (!inherits(distribution, c(
+        "compphysiol_normal_distribution", "compphysiol_lognormal_distribution"
+    ))) {
         stop("Unsupported observation-level statistical distribution.", call. = FALSE)
     }
     location <- prediction
 
-    if (inherits(distribution, "NormalDistribution")) {
+    if (inherits(distribution, "compphysiol_normal_distribution")) {
         sd <- .sampling_normal_sd(distribution$sd, location, parameters)
         if (!is.finite(sd) || sd < 0) {
             stop("Normal standard deviations must be finite and non-negative.", call. = FALSE)

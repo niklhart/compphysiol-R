@@ -2,7 +2,7 @@
 
 test_that("Equations object is created correctly", {
     eq <- equations(name = "co", expr = "Qadi+Qbon+Qhea+Qkid+Qliv+Qmus+Qski")
-    expect_s3_class(eq, "Equations")
+    expect_s3_class(eq, "compphysiol_equations")
 })
 
 test_that("Length and names methods work for Equations", {
@@ -24,7 +24,7 @@ test_that("Subsetting Equations object works", {
     eq_subset <- eq[1]
     expect_equal(length(eq_subset), 1)
     expect_equal(names(eq_subset), "co")
-    expect_s3_class(eq_subset, "Equations")
+    expect_s3_class(eq_subset, "compphysiol_equations")
 })
 
 test_that("Concatenating Equations objects works", {
@@ -34,7 +34,7 @@ test_that("Concatenating Equations objects works", {
 
     expect_equal(length(combined_eq), 2)
     expect_equal(names(combined_eq), c("co", "Qliv"))
-    expect_s3_class(combined_eq, "Equations")
+    expect_s3_class(combined_eq, "compphysiol_equations")
 })
 
 test_that("Equations with mismatched name and expr lengths throw error", {

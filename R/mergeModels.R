@@ -26,8 +26,8 @@ mergeModels <- function(
     M2,
     mode = "overlay"
 ) {
-    .check_class(M1, "CompartmentModel")
-    .check_class(M2, "CompartmentModel")
+    .check_class(M1, "compphysiol_model")
+    .check_class(M2, "compphysiol_model")
     mode <- match.arg(mode, "overlay")
 
     same_or_error <- function(x, y, what) {
@@ -105,6 +105,6 @@ mergeModels <- function(
             doses = c(M1$doses, M2$doses),
             metadata = M1$metadata
         ),
-        class = "CompartmentModel"
+        class = .class_compphysiol_model()
     )
 }

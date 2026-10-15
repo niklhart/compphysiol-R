@@ -57,7 +57,9 @@ parameter_spec <- function(
     }
     structure(
         list(initial = initial, lower = lower, upper = upper, transform = transform),
-        class = "ParameterSpec"
+        class = .compphysiol_class(
+            "compphysiol_parameter_spec"
+        )
     )
 }
 
@@ -72,7 +74,7 @@ parameter_spec <- function(
 #' @param ... Unused.
 #' @returns `x`, invisibly.
 #' @export
-print.ParameterSpec <- function(x, ...) {
+print.compphysiol_parameter_spec <- function(x, ...) {
     unit <- if (inherits(x$initial, "units")) units::deparse_unit(x$initial) else NULL
     values <- c(
         initial = as.numeric(x$initial),
@@ -129,13 +131,13 @@ NULL
 
 #' @rdname parameter_specs
 #' @export
-c.ParameterSpec <- function(..., recursive = FALSE) {
+c.compphysiol_parameter_spec <- function(..., recursive = FALSE) {
     .combine_parameter_specs(list(...))
 }
 
 #' @rdname parameter_specs
 #' @export
-c.ParameterSpecs <- function(..., recursive = FALSE) {
+c.compphysiol_parameter_specs <- function(..., recursive = FALSE) {
     .combine_parameter_specs(list(...))
 }
 
@@ -146,12 +148,12 @@ c.ParameterSpecs <- function(..., recursive = FALSE) {
     for (i in seq_along(x)) {
         item <- x[[i]]
         label <- labels[[i]]
-        if (inherits(item, "ParameterSpec")) {
+        if (inherits(item, "compphysiol_parameter_spec")) {
             if (is.na(label) || !nzchar(label)) {
                 stop("Every parameter specification must be named.", call. = FALSE)
             }
             part <- setNames(list(item), label)
-        } else if (inherits(item, "ParameterSpecs")) {
+        } else if (inherits(item, "compphysiol_parameter_specs")) {
             part <- unclass(item)
             if (!is.na(label) && nzchar(label)) {
                 names(part) <- paste(label, names(part), sep = ".")
@@ -174,10 +176,12 @@ c.ParameterSpecs <- function(..., recursive = FALSE) {
         stop("Parameter specification names must be unique; duplicated names are not allowed.",
              call. = FALSE)
     }
-    if (!all(vapply(x, inherits, logical(1), "ParameterSpec"))) {
+    if (!all(vapply(x, inherits, logical(1), "compphysiol_parameter_spec"))) {
         stop("Every parameter specification must be a ParameterSpec object.", call. = FALSE)
     }
-    structure(x, class = c("ParameterSpecs", "list"))
+    structure(x, class = .compphysiol_class(
+        "compphysiol_parameter_specs", base = "list"
+    ))
 }
 
 #' Subset parameter-estimation specifications
@@ -187,7 +191,7 @@ c.ParameterSpecs <- function(..., recursive = FALSE) {
 #' @param ... Unused.
 #' @returns A `ParameterSpecs` collection.
 #' @export
-`[.ParameterSpecs` <- function(x, i, ...) {
+`[.compphysiol_parameter_specs` <- function(x, i, ...) {
     if (missing(i)) return(x)
     .new_parameter_specs(unclass(x)[i])
 }
@@ -198,7 +202,7 @@ c.ParameterSpecs <- function(..., recursive = FALSE) {
 #' @param ... Unused.
 #' @returns `x`, invisibly.
 #' @export
-print.ParameterSpecs <- function(x, ...) {
+print.compphysiol_parameter_specs <- function(x, ...) {
     if (!length(x)) {
         cat(" Parameter specifications: (none)\n")
         return(invisible(x))
@@ -247,10 +251,13 @@ optim_engine <- function(
         stop("Unknown optim method.", call. = FALSE)
     }
     if (!is.list(control)) stop("optim control must be a list.", call. = FALSE)
-    .check_class(simulation, "SimulationEngine")
+    .check_class(simulation, "compphysiol_simulation_engine")
     structure(
         list(method = method, control = control, simulation = simulation),
-        class = c("OptimEngine", "EstimationEngine")
+        class = .compphysiol_class(
+            "compphysiol_optim_engine",
+            parents = c("compphysiol_estimation_engine", "compphysiol_engine")
+        )
     )
 }
 
@@ -269,17 +276,24 @@ optim_engine <- function(
 #' @returns An `EstimationProblem` object.
 #' @export
 estimation_problem <- function(model, experiments, parameters, statistics) {
-    supported <- c("CompartmentModel", "ProcessModel", "OdeModel", "CompiledOdeModel")
+    supported <- c(
+        "compphysiol_model",
+        "compphysiol_process_model",
+        "compphysiol_ode_model",
+        "compphysiol_desolve_compiled_model"
+    )
     model_class <- supported[vapply(supported, inherits, logical(1), x = model)]
     if (!length(model_class)) {
         supplied <- class(model)[1] %||% typeof(model)
         stop(supplied, " is not supported for estimation. Supported models are ",
              paste(supported, collapse = ", "), ".", call. = FALSE)
     }
-    .check_class(parameters, "ParameterSpecs")
-    .check_class(statistics, "StatisticalModel")
-    if (inherits(experiments, "Experiment")) experiments <- .new_experiments(list(experiments))
-    .check_class(experiments, "Experiments")
+    .check_class(parameters, "compphysiol_parameter_specs")
+    .check_class(statistics, "compphysiol_statistical_model")
+    if (inherits(experiments, "compphysiol_experiment")) {
+        experiments <- .new_experiments(list(experiments))
+    }
+    .check_class(experiments, "compphysiol_experiments")
     if (!length(experiments)) stop("Estimation requires at least one experiment.", call. = FALSE)
 
     model_observables <- .estimation_model_observables(model)
@@ -288,7 +302,7 @@ estimation_problem <- function(model, experiments, parameters, statistics) {
     for (i in seq_along(experiments)) {
         e <- experiments[[i]]
         validate_experiment(e)
-        if (!inherits(e$observations, "ObservationData")) {
+        if (!inherits(e$observations, "compphysiol_observation_data")) {
             stop("Estimation requires ObservationData in every experiment.", call. = FALSE)
         }
         if (!nrow(e$observations)) stop("Estimation requires nonempty observation data.", call. = FALSE)
@@ -324,7 +338,7 @@ estimation_problem <- function(model, experiments, parameters, statistics) {
              paste(missing_parameters, collapse = ", "), ".", call. = FALSE)
     }
     initial_values <- structure(
-        lapply(parameters, `[[`, "initial"), class = c("Parameters", "list")
+        lapply(parameters, `[[`, "initial"), class = .class_parameters()
     )
     for (e in unclass(experiments)) {
         validation_values <- .merge_ode_parameters(e$parameters, initial_values)
@@ -333,21 +347,23 @@ estimation_problem <- function(model, experiments, parameters, statistics) {
     structure(
         list(model = model, experiments = experiments, parameters = parameters,
              statistics = resolved_statistics),
-        class = "EstimationProblem"
+        class = .compphysiol_class(
+            "compphysiol_estimation_problem"
+        )
     )
 }
 
 .estimation_statistical_parameter_names <- function(statistics) {
     specs <- unlist(lapply(statistics, function(distribution) {
-        location <- if (inherits(distribution, "NormalDistribution")) {
+        location <- if (inherits(distribution, "compphysiol_normal_distribution")) {
             distribution$mean
         } else {
             distribution$median
         }
-        scale <- if (inherits(distribution, "NormalDistribution")) {
-            if (inherits(distribution$sd, "ProportionalSD")) {
+        scale <- if (inherits(distribution, "compphysiol_normal_distribution")) {
+            if (inherits(distribution$sd, "compphysiol_proportional_sd")) {
                 distribution$sd$coefficient
-            } else if (inherits(distribution$sd, "CombinedSD")) {
+            } else if (inherits(distribution$sd, "compphysiol_combined_sd")) {
                 unclass(distribution$sd)
             } else {
                 distribution$sd
@@ -372,12 +388,12 @@ estimation_problem <- function(model, experiments, parameters, statistics) {
 #' @param ... Unused.
 #' @returns `x`, invisibly.
 #' @export
-print.EstimationProblem <- function(x, ...) {
+print.compphysiol_estimation_problem <- function(x, ...) {
     observations <- sum(vapply(
         unclass(x$experiments), function(e) nrow(e$observations), integer(1)
     ))
     cat("EstimationProblem:\n")
-    cat(" model: ", class(x$model)[[1]], "\n", sep = "")
+    cat(" model: ", .compphysiol_class_label(x$model), "\n", sep = "")
     cat(" experiments: ", length(x$experiments), "\n", sep = "")
     cat(" observations: ", observations, "\n", sep = "")
     cat(" estimated parameters: ", .estimation_format_names(names(x$parameters)), "\n", sep = "")
@@ -391,7 +407,7 @@ print.EstimationProblem <- function(x, ...) {
 }
 
 .estimation_model_observables <- function(model) {
-    if (inherits(model, "CompiledOdeModel")) model <- model$ode_model
+    if (inherits(model, "compphysiol_desolve_compiled_model")) model <- model$ode_model
     names(model$observables)
 }
 
@@ -412,14 +428,14 @@ estimate.default <- function(object, ...) {
 #' @param dimensions Optional solver-facing unit dimensions passed to simulation.
 #' @rdname estimate
 #' @export
-estimate.EstimationProblem <- function(
+estimate.compphysiol_estimation_problem <- function(
     object,
     engine = optim_engine(),
     dimensions = NULL,
     ...
 ) {
-    .check_class(engine, "EstimationEngine")
-    if (!inherits(engine, "OptimEngine")) {
+    .check_class(engine, "compphysiol_estimation_engine")
+    if (!inherits(engine, "compphysiol_optim_engine")) {
         stop("Unsupported estimation engine: ", class(engine)[1], ".", call. = FALSE)
     }
     .estimate_optim(object, engine, dimensions = dimensions, ...)
@@ -443,7 +459,7 @@ estimate.EstimationProblem <- function(
     evaluate <- function(par, diagnostics = FALSE) {
         values <- .estimation_decode(par, specs)
         runtime <- values[intersect(names(values), model_parameters)]
-        runtime <- structure(runtime, class = c("Parameters", "list"))
+        runtime <- structure(runtime, class = .class_parameters())
         estimation_experiments <- lapply(unclass(problem$experiments), function(e) {
             e$parameters <- .merge_ode_parameters(e$parameters, runtime)
             e
@@ -491,7 +507,7 @@ estimate.EstimationProblem <- function(
     raw <- do.call(stats::optim, optim_args)
     coefficients <- .estimation_validate_optim_result(raw$par, coordinates, specs)
     diagnostics <- evaluate(raw$par, diagnostics = TRUE)
-    coefficients <- structure(coefficients, class = c("Parameters", "list"))
+    coefficients <- structure(coefficients, class = .class_parameters())
     structure(
         list(
             coefficients = coefficients,
@@ -503,7 +519,9 @@ estimate.EstimationProblem <- function(
             engine_result = raw,
             problem = problem
         ),
-        class = "EstimationResult"
+        class = .compphysiol_class(
+            "compphysiol_estimation_result"
+        )
     )
 }
 
@@ -513,7 +531,7 @@ estimate.EstimationProblem <- function(
 #' @param ... Unused.
 #' @returns `x`, invisibly.
 #' @export
-print.EstimationResult <- function(x, ...) {
+print.compphysiol_estimation_result <- function(x, ...) {
     cat("EstimationResult:\n")
     cat(" Coefficients:\n")
     if (length(x$coefficients)) {
@@ -530,8 +548,8 @@ print.EstimationResult <- function(x, ...) {
     if (!is.null(x$convergence$message)) {
         cat(" convergence message: ", x$convergence$message, "\n", sep = "")
     }
-    engine <- class(x$engine)[[1]]
-    if (inherits(x$engine, "OptimEngine")) {
+    engine <- .compphysiol_class_label(x$engine)
+    if (inherits(x$engine, "compphysiol_optim_engine")) {
         engine <- paste0(engine, " (", x$engine$method, ")")
     }
     cat(" engine: ", engine, "\n", sep = "")
@@ -595,8 +613,8 @@ print.EstimationResult <- function(x, ...) {
 }
 
 .estimation_model_parameter_names <- function(model) {
-    if (inherits(model, "CompiledOdeModel")) return(model$parameterNames)
-    if (inherits(model, "CompartmentModel")) model <- to_ode_model(model)
+    if (inherits(model, "compphysiol_desolve_compiled_model")) return(model$parameterNames)
+    if (inherits(model, "compphysiol_model")) model <- to_ode_model(model)
     unique(c(names(model$parameters), model$freeParams))
 }
 
@@ -644,7 +662,8 @@ print.EstimationResult <- function(x, ...) {
 
 .estimation_likelihood <- function(experiments, simulated, statistics, parameters,
                                    diagnostics = FALSE) {
-    if (!inherits(simulated, "list") || inherits(simulated, "SimulationResult")) {
+    if (!inherits(simulated, "list") ||
+        inherits(simulated, "compphysiol_simulation_result")) {
         simulated <- list(simulated)
     }
     objective <- 0
@@ -745,10 +764,10 @@ print.EstimationResult <- function(x, ...) {
     obs <- aligned$observed
     location <- aligned$predicted
     unit <- aligned$unit
-    if (inherits(distribution, "NormalDistribution")) {
+    if (inherits(distribution, "compphysiol_normal_distribution")) {
         sd <- .estimation_normal_sd(distribution$sd, location, unit, parameters)
         nll <- .estimation_normal_nll(obs, location, sd)
-    } else if (inherits(distribution, "LognormalDistribution")) {
+    } else if (inherits(distribution, "compphysiol_lognormal_distribution")) {
         sigma <- .estimation_dimensionless_spec(distribution$sdlog, parameters, "sdlog")
         if (obs <= 0 || location <= 0 || sigma <= 0) return(list(nll = Inf))
         nll <- log(obs) + log(sigma) + 0.5 * log(2 * pi) +
@@ -760,12 +779,12 @@ print.EstimationResult <- function(x, ...) {
 }
 
 .estimation_distribution_location <- function(distribution, predicted, parameters) {
-    location_spec <- if (inherits(distribution, "NormalDistribution")) {
+    location_spec <- if (inherits(distribution, "compphysiol_normal_distribution")) {
         distribution$mean
     } else {
         distribution$median
     }
-    if (inherits(location_spec, "PredictionLocation")) {
+    if (inherits(location_spec, "compphysiol_prediction_location")) {
         predicted
     } else {
         .estimation_spec_value(location_spec, parameters, "location")
@@ -773,12 +792,12 @@ print.EstimationResult <- function(x, ...) {
 }
 
 .estimation_normal_sd <- function(spec, mean, unit, parameters) {
-    if (inherits(spec, "ProportionalSD")) {
+    if (inherits(spec, "compphysiol_proportional_sd")) {
         return(.estimation_dimensionless_spec(
             spec$coefficient, parameters, "proportional coefficient"
         ) * abs(mean))
     }
-    if (inherits(spec, "CombinedSD")) {
+    if (inherits(spec, "compphysiol_combined_sd")) {
         constant <- .estimation_target_scale_spec(spec$constant, unit, parameters, "constant")
         proportional <- .estimation_dimensionless_spec(
             spec$proportional, parameters, "proportional coefficient"
@@ -849,18 +868,18 @@ print.EstimationResult <- function(x, ...) {
 #' @param ... Unused.
 #' @returns Estimated coefficients as a `Parameters` object.
 #' @export
-coef.EstimationResult <- function(object, ...) object$coefficients
+coef.compphysiol_estimation_result <- function(object, ...) object$coefficients
 
 #' Extract fitted observable values
 #' @param object An `EstimationResult`.
 #' @param ... Unused.
 #' @returns Unit-aware `ObservationData` of fitted values in estimation-row order.
 #' @export
-fitted.EstimationResult <- function(object, ...) object$predictions
+fitted.compphysiol_estimation_result <- function(object, ...) object$predictions
 
 #' Extract estimation residuals
 #' @param object An `EstimationResult`.
 #' @param ... Unused.
 #' @returns Unit-aware `ObservationData` of observed-minus-fitted residuals.
 #' @export
-residuals.EstimationResult <- function(object, ...) object$residuals
+residuals.compphysiol_estimation_result <- function(object, ...) object$residuals

@@ -12,7 +12,7 @@ test_that("extend_protocol creates one experiment per individual", {
 
     result <- extend_protocol(protocol, population)
 
-    expect_s3_class(result, "Experiments")
+    expect_s3_class(result, "compphysiol_experiments")
     expect_length(result, 2)
     expect_named(result, c("alice", "bob"))
     expect_identical(result[[1]]$parameters, parameters(
@@ -22,7 +22,7 @@ test_that("extend_protocol creates one experiment per individual", {
         route = "oral", BW = 82 [kg], sex = "male"
     ))
     for (individual in result) {
-        expect_s3_class(individual, "Experiment")
+        expect_s3_class(individual, "compphysiol_experiment")
         expect_identical(individual$dosing, protocol$dosing)
         expect_identical(individual$observations, protocol$observations)
         expect_identical(individual$start, protocol$start)

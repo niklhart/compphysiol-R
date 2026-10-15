@@ -126,7 +126,10 @@
 #' @noRd
 .check_class <- function(x, class) {
     if (!inherits(x, class)) {
-        stop("Expected object of class '", class, "', got '", class(x)[1], "'.")
+        stop(
+            "Expected object of class '", .compphysiol_class_name_label(class),
+            "', got '", .compphysiol_class_name_label(class(x)[1]), "'."
+        )
     }
     invisible(x)
 }

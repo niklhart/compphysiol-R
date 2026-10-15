@@ -2,7 +2,7 @@
 
 test_that("Compartments object is created correctly", {
     cmt <- compartments(c("adi", "bon"), volume = c(10, 20))
-    expect_s3_class(cmt, "Compartments")
+    expect_s3_class(cmt, "compphysiol_compartments")
 })
 
 test_that("Length and names methods work for Compartments", {

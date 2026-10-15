@@ -20,7 +20,7 @@ test_that("sample_observations preserves prediction rows and is reproducible", {
     set.seed(123)
     second <- sample_observations(predictions, statistics, values)
 
-    expect_s3_class(first, "ObservationData")
+    expect_s3_class(first, "compphysiol_observation_data")
     expect_equal(first, second)
     expect_identical(first$time, predictions$time)
     expect_identical(first$observable, predictions$observable)
@@ -34,7 +34,7 @@ test_that("SimulationResult predictions require explicit extraction", {
     predictions <- sample_observation_predictions()
     result <- structure(
         list(states = data.frame(time = 0), observables = predictions),
-        class = "SimulationResult"
+        class = "compphysiol_simulation_result"
     )
 
     statistics <- statistical_model(C = normal(sd = 0 [mg/L]))

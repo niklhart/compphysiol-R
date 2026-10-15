@@ -13,18 +13,21 @@ deSolve_engine <- function(compiled = FALSE) {
     }
     structure(
         list(compiled = compiled),
-        class = c("DeSolveEngine", "SimulationEngine")
+        class = .compphysiol_class(
+            "compphysiol_desolve_engine",
+            parents = c("compphysiol_simulation_engine", "compphysiol_engine")
+        )
     )
 }
 
 .simulation_model_for_engine <- function(model, engine) {
-    if (!inherits(engine, "DeSolveEngine")) {
+    if (!inherits(engine, "compphysiol_desolve_engine")) {
         stop("Unsupported simulation engine: ", class(engine)[1], ".", call. = FALSE)
     }
-    if (isTRUE(engine$compiled) && !inherits(model, "CompiledOdeModel")) {
+    if (isTRUE(engine$compiled) && !inherits(model, "compphysiol_desolve_compiled_model")) {
         return(to_compiled_ode_model(model))
     }
-    if (inherits(model, "ProcessModel")) return(to_ode_model(model))
+    if (inherits(model, "compphysiol_process_model")) return(to_ode_model(model))
     model
 }
 
@@ -101,9 +104,9 @@ deSolve_engine <- function(compiled = FALSE) {
 #' out$states
 #' out$observables
 #' @importFrom stats simulate
-#' @method simulate CompartmentModel
+#' @method simulate compphysiol_model
 #' @export
-simulate.CompartmentModel <- function(
+simulate.compphysiol_model <- function(
     object,
     nsim = NULL,
     seed = NULL,
@@ -194,7 +197,7 @@ simulate.CompartmentModel <- function(
 }
 
 #' @export
-simulate.OdeModel <- function(
+simulate.compphysiol_ode_model <- function(
     object,
     nsim = NULL,
     seed = NULL,
@@ -226,7 +229,7 @@ simulate.OdeModel <- function(
 }
 
 #' @export
-simulate.CompiledOdeModel <- function(
+simulate.compphysiol_desolve_compiled_model <- function(
     object,
     nsim = NULL,
     seed = NULL,
@@ -247,7 +250,7 @@ simulate.CompiledOdeModel <- function(
     ode_model <- object$ode_model
     attr(ode_model, "observation_schedule") <- attr(object, "observation_schedule")
     attr(ode_model, "experiment_dosing") <- attr(object, "experiment_dosing")
-    .check_class(ode_model, "OdeModel")
+    .check_class(ode_model, "compphysiol_ode_model")
 
     time <- .process_nse_arg(substitute(time), envir = parent.frame())
     time <- .simulation_apply_time_unit(time, unit)
@@ -308,7 +311,7 @@ simulate.CompiledOdeModel <- function(
 }
 
 #' @export
-simulate.AnalyticalModel <- function(
+simulate.compphysiol_analytical_model <- function(
     object,
     nsim = NULL,
     seed = NULL,
@@ -366,12 +369,14 @@ simulate.AnalyticalModel <- function(
             states = states,
             observables = observables
         ),
-        class = "SimulationResult"
+        class = .compphysiol_class(
+            "compphysiol_simulation_result"
+        )
     )
 }
 
 #' @export
-simulate.StochasticModel <- function(
+simulate.compphysiol_stochastic_model <- function(
     object,
     nsim = NULL,
     seed = NULL,
@@ -487,7 +492,9 @@ simulate.StochasticModel <- function(
             states = states,
             observables = observables
         ),
-        class = "SimulationResult"
+        class = .compphysiol_class(
+            "compphysiol_simulation_result"
+        )
     )
 }
 
@@ -513,7 +520,7 @@ simulate.StochasticModel <- function(
     dimensions_resolver = .simulation_dimensions,
     ...
 ) {
-    .check_class(ode_model, "OdeModel")
+    .check_class(ode_model, "compphysiol_ode_model")
 
     time <- .process_nse_arg(time, envir = envir)
     time <- .simulation_apply_time_unit(time, unit)
@@ -622,7 +629,9 @@ simulate.StochasticModel <- function(
             states = states,
             observables = observables
         ),
-        class = "SimulationResult"
+        class = .compphysiol_class(
+            "compphysiol_simulation_result"
+        )
     )
 }
 
@@ -660,7 +669,7 @@ simulate.StochasticModel <- function(
 #' @param ... Additional arguments, currently ignored.
 #' @returns The `SimulationResult` object, invisibly.
 #' @export
-print.SimulationResult <- function(x, ...) {
+print.compphysiol_simulation_result <- function(x, ...) {
     has_replicates <- "rep" %in% names(x$states)
     n_rep <- if (has_replicates) length(unique(x$states$rep)) else 1L
     n_time <- if (has_replicates) {
@@ -778,16 +787,16 @@ print.SimulationResult <- function(x, ...) {
 }
 
 .simulation_has_time_dependent_process <- function(model) {
-    if (inherits(model, "OdeModel")) {
+    if (inherits(model, "compphysiol_ode_model")) {
         has_rhs <- any(vapply(model$rhs, function(expr) !identical(expr, 0), logical(1)))
         return(has_rhs || length(model$dosing$state) > 0)
     }
-    if (inherits(model, "AnalyticalModel")) {
+    if (inherits(model, "compphysiol_analytical_model")) {
         has_A <- any(!vapply(as.list(model$A), .analytical_model_is_zero, logical(1)))
         has_b <- any(!vapply(model$b, .analytical_model_is_zero, logical(1)))
         return(has_A || has_b)
     }
-    if (inherits(model, "StochasticModel")) {
+    if (inherits(model, "compphysiol_stochastic_model")) {
         return(length(model$propensities) > 0)
     }
     model <- model |> wire() |> make_depot()
@@ -884,7 +893,9 @@ print.SimulationResult <- function(x, ...) {
 }
 
 .simulation_observable_unit_values <- function(model, parameters = model$parameters) {
-    if (inherits(model, "OdeModel") || inherits(model, "StochasticModel") || inherits(model, "AnalyticalModel")) {
+    if (inherits(model, "compphysiol_ode_model") ||
+        inherits(model, "compphysiol_stochastic_model") ||
+        inherits(model, "compphysiol_analytical_model")) {
         return(.ode_model_observable_unit_values(model, parameters))
     }
     if (length(model$observables) == 0) return(list())
@@ -975,7 +986,9 @@ print.SimulationResult <- function(x, ...) {
 }
 
 .simulation_state_unit_values <- function(model, parameters = model$parameters) {
-    if (inherits(model, "OdeModel") || inherits(model, "StochasticModel") || inherits(model, "AnalyticalModel")) {
+    if (inherits(model, "compphysiol_ode_model") ||
+        inherits(model, "compphysiol_stochastic_model") ||
+        inherits(model, "compphysiol_analytical_model")) {
         return(.ode_model_state_unit_values(model, parameters))
     }
     model <- model |> wire() |> make_depot()
@@ -984,13 +997,13 @@ print.SimulationResult <- function(x, ...) {
 }
 
 .simulation_dimension_values <- function(model, parameters = model$parameters) {
-    if (inherits(model, "OdeModel")) {
+    if (inherits(model, "compphysiol_ode_model")) {
         return(.ode_model_dimension_values(model, parameters))
     }
-    if (inherits(model, "AnalyticalModel")) {
+    if (inherits(model, "compphysiol_analytical_model")) {
         return(.analytical_model_dimension_values(model, parameters))
     }
-    if (inherits(model, "StochasticModel")) {
+    if (inherits(model, "compphysiol_stochastic_model")) {
         return(.stochastic_model_dimension_values(model, parameters))
     }
     model <- model |> wire() |> make_depot()
@@ -1008,13 +1021,13 @@ print.SimulationResult <- function(x, ...) {
 }
 
 .simulation_parameters_object <- function(parameters) {
-    if (inherits(parameters, "Parameters")) {
+    if (inherits(parameters, "compphysiol_parameters")) {
         return(parameters)
     }
     if (!is.list(parameters)) {
         stop("Argument 'parameters' must be a named list or Parameters object.", call. = FALSE)
     }
-    structure(parameters, class = c("Parameters", "list"))
+    structure(parameters, class = .class_parameters())
 }
 
 .simulation_model_with_parameters <- function(model, parameters) {
@@ -1035,7 +1048,7 @@ print.SimulationResult <- function(x, ...) {
 }
 
 .simulation_solver_parameters <- function(parameters, dimensions) {
-    if (inherits(parameters, "Parameters")) {
+    if (inherits(parameters, "compphysiol_parameters")) {
         parameters <- unclass(parameters)
     }
     if (!is.list(parameters)) {

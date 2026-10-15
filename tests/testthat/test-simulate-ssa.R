@@ -9,7 +9,7 @@ test_that("simulate with SSA returns a SimulationResult at requested times", {
 
     out <- simulate(ssa_death_model, time = time, simulation_type = "ssa", seed = 1)
 
-    expect_s3_class(out, "SimulationResult")
+    expect_s3_class(out, "compphysiol_simulation_result")
     expect_named(out, c("states", "observables"))
     expect_s3_class(out$states, "data.frame")
     expect_null(out$observables)
@@ -23,7 +23,7 @@ test_that("simulate accepts a precompiled StochasticModel", {
 
     out <- simulate(stochastic_model, time = time, seed = 1)
 
-    expect_s3_class(out, "SimulationResult")
+    expect_s3_class(out, "compphysiol_simulation_result")
     expect_equal(out$states$time, time)
 })
 

@@ -17,9 +17,9 @@ test_that("sample_population realizes independent individual distributions", {
     set.seed(123)
     population <- sample_population(statistics, population_parameters, n = 4)
 
-    expect_s3_class(population, "ParameterSets")
+    expect_s3_class(population, "compphysiol_parameter_sets")
     expect_named(population, paste0("individual_", 1:4))
-    expect_true(all(vapply(population, inherits, logical(1), "Parameters")))
+    expect_true(all(vapply(population, inherits, logical(1), "compphysiol_parameters")))
     expect_true(all(vapply(population, function(x) identical(names(x), c("CL", "V")), logical(1))))
     expect_true(all(vapply(population, function(x) inherits(x$CL, "units"), logical(1))))
     expect_true(all(vapply(population, function(x) inherits(x$V, "units"), logical(1))))

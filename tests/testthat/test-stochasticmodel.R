@@ -6,7 +6,7 @@ test_that("to_stochastic_model returns a StochasticModel", {
 
     stochastic_model <- to_stochastic_model(model)
 
-    expect_s3_class(stochastic_model, "StochasticModel")
+    expect_s3_class(stochastic_model, "compphysiol_stochastic_model")
     expect_named(
         stochastic_model,
         c("states", "initials", "stoichiometry", "propensities", "processes",
@@ -30,7 +30,7 @@ test_that("to_stochastic_model accepts a ProcessModel", {
 
     stochastic_model <- to_stochastic_model(process_model)
 
-    expect_s3_class(stochastic_model, "StochasticModel")
+    expect_s3_class(stochastic_model, "compphysiol_stochastic_model")
     expect_equal(stochastic_model$states, process_model$states)
     expect_equal(stochastic_model$stoichiometry, process_model$stoichiometry)
 })
@@ -139,7 +139,7 @@ test_that("to_stochastic_model accepts dimensionless unit state initials", {
 
     stochastic_model <- to_stochastic_model(model)
 
-    expect_s3_class(stochastic_model, "StochasticModel")
+    expect_s3_class(stochastic_model, "compphysiol_stochastic_model")
 })
 
 test_that("to_stochastic_model rejects non-count state initials", {

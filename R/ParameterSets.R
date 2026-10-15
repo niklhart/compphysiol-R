@@ -26,7 +26,7 @@ parameter_sets <- function(...) {
 }
 
 .new_parameter_sets <- function(x, check_units = TRUE) {
-    if (!all(vapply(x, inherits, logical(1), "Parameters"))) {
+    if (!all(vapply(x, inherits, logical(1), "compphysiol_parameters"))) {
         stop("All elements must be Parameters objects.", call. = FALSE)
     }
     labels <- names(x)
@@ -35,7 +35,9 @@ parameter_sets <- function(...) {
         stop("Parameter set names must be unique.", call. = FALSE)
     }
     if (check_units) .parameter_sets_check_units(x)
-    structure(x, class = c("ParameterSets", "list"))
+    structure(x, class = .compphysiol_class(
+        "compphysiol_parameter_sets", base = "list"
+    ))
 }
 
 .parameter_sets_check_units <- function(x) {
@@ -63,7 +65,7 @@ parameter_sets <- function(...) {
 #' @param ... Unused.
 #' @returns A `ParameterSets` object.
 #' @export
-`[.ParameterSets` <- function(x, i, ...) {
+`[.compphysiol_parameter_sets` <- function(x, i, ...) {
     .new_parameter_sets(unclass(x)[i], check_units = FALSE)
 }
 
@@ -75,7 +77,7 @@ parameter_sets <- function(...) {
 #' @param exact Whether character indices must match exactly, as for lists.
 #' @returns A `Parameters` object; an unknown name returns `NULL`, as for lists.
 #' @export
-`[[.ParameterSets` <- function(x, i, ..., exact = TRUE) {
+`[[.compphysiol_parameter_sets` <- function(x, i, ..., exact = TRUE) {
     if (length(i) != 1L) stop("Select a single parameter set with [[.", call. = FALSE)
     unclass(x)[[i, exact = exact]]
 }
@@ -85,9 +87,9 @@ parameter_sets <- function(...) {
 #' @param ... `ParameterSets` objects to combine.
 #' @returns A `ParameterSets` object, preserving order and names.
 #' @export
-c.ParameterSets <- function(...) {
+c.compphysiol_parameter_sets <- function(...) {
     objects <- list(...)
-    if (!all(vapply(objects, inherits, logical(1), "ParameterSets"))) {
+    if (!all(vapply(objects, inherits, logical(1), "compphysiol_parameter_sets"))) {
         stop("All arguments must be ParameterSets objects.", call. = FALSE)
     }
     combined <- do.call(c, unname(lapply(objects, unclass)))
@@ -100,7 +102,7 @@ c.ParameterSets <- function(...) {
 #' @param ... Unused.
 #' @returns `x`, invisibly.
 #' @export
-print.ParameterSets <- function(x, ...) {
+print.compphysiol_parameter_sets <- function(x, ...) {
     if (!length(x)) {
         cat(" Parameter sets: (none)\n")
         return(invisible(x))

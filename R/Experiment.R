@@ -51,18 +51,20 @@ experiment <- function(
     if (is.null(parameters)) parameters <- parameters()
     if (is.null(dosing)) dosing <- dosing()
     if (is.null(observations)) observations <- observation_schedule()
-    .check_class(observations, "ObservationSchedule")
+    .check_class(observations, "compphysiol_observation_schedule")
     if (is.null(start)) start <- .experiment_default_start(dosing, observations)
     x <- structure(
         list(parameters = parameters, dosing = dosing, observations = observations, start = start),
-        class = "Experiment"
+        class = .compphysiol_class(
+            "compphysiol_experiment"
+        )
     )
     validate_experiment(x)
     x
 }
 
 .experiment_default_start <- function(dosing, observations) {
-    .check_class(dosing, "Dosing")
+    .check_class(dosing, "compphysiol_dosing")
     time <- dosing$time
     label <- "dosing time"
     if (!length(time)) {
@@ -89,15 +91,15 @@ experiment <- function(
 #' @returns `x`, invisibly, after successful validation.
 #' @export
 validate_experiment <- function(x, model = NULL) {
-    .check_class(x, "Experiment")
-    .check_class(x$parameters, "Parameters")
-    .check_class(x$dosing, "Dosing")
-    .check_class(x$observations, "ObservationSchedule")
+    .check_class(x, "compphysiol_experiment")
+    .check_class(x$parameters, "compphysiol_parameters")
+    .check_class(x$dosing, "compphysiol_dosing")
+    .check_class(x$observations, "compphysiol_observation_schedule")
     if (length(x$start) != 1L) stop("Experiment start must be a scalar.", call. = FALSE)
     .experiment_check_time(x$start, "start")
 
     observations <- x$observations
-    if (inherits(observations, "ObservationData")) {
+    if (inherits(observations, "compphysiol_observation_data")) {
         .new_observation_data(observations)
     } else {
         .new_observation_schedule(observations)
@@ -113,7 +115,7 @@ validate_experiment <- function(x, model = NULL) {
         }
     }
     if (!is.null(model)) {
-        .check_class(model, "CompartmentModel")
+        .check_class(model, "compphysiol_model")
         unknown <- setdiff(observations$observable, names(model$observables))
         if (length(unknown)) {
             stop("Unknown observable(s) in experiment observations: ",
@@ -148,13 +150,13 @@ validate_experiment <- function(x, model = NULL) {
 #' @param ... Unused.
 #' @returns `x`, invisibly.
 #' @export
-print.Experiment <- function(x, ...) {
+print.compphysiol_experiment <- function(x, ...) {
     cat("Experiment:\n")
     cat(" Start: ", format(x$start), "\n", sep = "")
     print(x$parameters)
     print(x$dosing)
     if (nrow(x$observations)) {
-        cat(if (inherits(x$observations, "ObservationData")) {
+        cat(if (inherits(x$observations, "compphysiol_observation_data")) {
             " Observation data:\n"
         } else {
             " Observation schedule:\n"
