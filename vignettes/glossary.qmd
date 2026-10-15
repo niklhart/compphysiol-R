@@ -897,10 +897,19 @@ Because the compiled cache fixes the solver dimensions and parameter interface,
 later simulations must use compatible parameter units and cannot introduce
 additional parameters or a different solver dimension set.
 
+An rxode2 executable model follows the same cache principle: its generated and
+compiled model, parameter interface, solver dimensions, observable functions,
+events, and unit/output metadata are reused after the first simulation. When an
+experiment collection is simulated with `rxode2_engine()`, each experiment is
+an independent individual and the collection is executed in one batched
+`rxSolve()` call. The returned value remains a named list of simulation results
+in experiment order. This is a simulation concern and does not require nlmixr2;
+nlmixr2 enters when population estimation semantics are requested.
+
 Implementation anchor: simulation is handled by `simulate()` methods for
 `compphysiol_compartment_model`, `compphysiol_ode_model`,
-`compphysiol_desolve_compiled_model`, `compphysiol_analytical_model`, and
-`compphysiol_stochastic_model` objects; results use
+`compphysiol_desolve_compiled_model`, `compphysiol_rxode2_model`,
+`compphysiol_analytical_model`, and `compphysiol_stochastic_model` objects; results use
 `compphysiol_simulation_result`.
 
 ## Lumping

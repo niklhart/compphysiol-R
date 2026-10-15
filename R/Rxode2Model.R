@@ -94,6 +94,12 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
 .rxode2_source <- function(model, dimensions) {
     ode <- model$ode_model
     lines <- character()
+    for (i in seq_along(ode$initials)) {
+        state <- model$identifiers$states[[i]]
+        lines <- c(lines, paste0(state, "(0) = ",
+            .rxode2_render_expr(ode$initials[[i]], model, dimensions,
+                                paste0("initial value for '", ode$states$dsl_name[[i]], "'")), ";"))
+    }
     for (i in seq_along(ode$equations)) {
         lines <- c(lines, paste0(model$identifiers$equations[[i]], " = ",
             .rxode2_render_expr(ode$equations[[i]], model, dimensions,
@@ -108,7 +114,7 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
     paste(lines, collapse = "\n")
 }
 
-.rxode2_artifact <- function(model, dimensions) {
+.rxode2_artifact <- function(model, dimensions, parameters = NULL, validate = TRUE) {
     if (!requireNamespace("rxode2", quietly = TRUE)) {
         stop("Package 'rxode2' is required for the rxode2 simulation engine.", call. = FALSE)
     }
@@ -117,12 +123,153 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
         if (!identical(artifact$dimensions, dimensions)) {
             stop("rxode2 model uses fixed solver dimensions; requested dimensions differ from the compiled model.", call. = FALSE)
         }
+        if (isTRUE(validate) && !is.null(parameters)) {
+            .compiled_ode_model_check_parameter_signature(artifact$parameterSignature, parameters)
+        }
         return(artifact)
     }
+    if (is.null(parameters)) stop("Parameters are required to initialize the rxode2 model cache.", call. = FALSE)
+    .ode_model_check_unit_consistency(model$ode_model, parameters)
     source <- .rxode2_source(model, dimensions)
-    artifact <- list(source = source, compiled = rxode2::rxode2(source), dimensions = dimensions)
+    ode <- model$ode_model
+    state_unit_values <- .compiled_ode_model_state_unit_values(ode, parameters, dimensions)
+    observable_unit_values <- .simulation_observable_unit_values(ode, parameters)
+    observable_export_unit_values <- lapply(observable_unit_values, function(x) {
+        if (inherits(x, "units")) do.call(.to_dimensions, c(list(x), dimensions)) else x
+    })
+    artifact <- list(
+        source = source,
+        compiled = rxode2::rxode2(source),
+        dimensions = dimensions,
+        parameterIndex = stats::setNames(seq_along(model$parameterNames), model$parameterNames),
+        defaultParms = .compiled_ode_model_parameter_values(model$parameterNames, parameters, dimensions),
+        parameterSignature = .compiled_ode_model_parameter_signature(model$parameterNames, parameters),
+        obsFuncs = .compiled_ode_model_observable_functions(ode, model$parameterNames, dimensions),
+        stateUnitValues = state_unit_values,
+        stateUnitScales = .compiled_ode_model_unit_scales(state_unit_values, state_unit_values),
+        observableUnitValues = observable_unit_values,
+        observableExportUnitValues = observable_export_unit_values,
+        observableUnitScales = .compiled_ode_model_unit_scales(observable_export_unit_values, observable_unit_values),
+        events = .compiled_ode_model_events(ode, dimensions),
+        modelUsesTime = any(vapply(.simulation_dimension_values(ode, parameters), .has_time_dimension, logical(1))),
+        modelHasTimeDependentProcess = .simulation_has_time_dependent_process(ode)
+    )
     assign("artifact", artifact, envir = model$cache)
     artifact
+}
+
+.rxode2_runtime_parameter_values <- function(artifact, parameters, dimensions) {
+    values <- artifact$defaultParms
+    if (!length(parameters)) return(values)
+    for (nm in names(parameters)) {
+        idx <- artifact$parameterIndex[[nm]]
+        value <- .to_dimensions_value(parameters[[nm]], dimensions)
+        if (is.null(idx) || !is.numeric(value) || length(value) != 1L) {
+            stop("rxode2 model parameter '", nm, "' must be a numeric scalar in the fixed interface.", call. = FALSE)
+        }
+        values[[idx]] <- as.numeric(value)
+    }
+    values
+}
+
+.rxode2_runtime_info <- function(model, artifact, parameter_values, events = artifact$events) {
+    list(
+        stateNames = model$stateNames,
+        dslStateNames = model$ode_model$states$dsl_name,
+        obsFuncs = artifact$obsFuncs,
+        obsParams = parameter_values,
+        stateUnitValues = artifact$stateUnitValues,
+        stateUnitScales = artifact$stateUnitScales,
+        observableUnitValues = artifact$observableUnitValues,
+        observableExportUnitValues = artifact$observableExportUnitValues,
+        observableUnitScales = artifact$observableUnitScales,
+        events = events
+    )
+}
+
+.rxode2_experiment_time <- function(experiment) {
+    start <- experiment$start
+    if (inherits(experiment$observations$time, "units")) {
+        start <- units::set_units(start, units::deparse_unit(experiment$observations$time), mode = "standard")
+    }
+    sort(unique(c(start, experiment$observations$time)))
+}
+
+.simulate_rxode2_experiments <- function(object, experiments, dimensions = NULL, engine, ...) {
+    ode <- object$ode_model
+    supplied <- lapply(experiments, function(e) .simulation_parameters_object(e$parameters))
+    unknown <- unique(unlist(lapply(supplied, function(x) setdiff(names(x), object$parameterNames))))
+    if (length(unknown)) stop("Unknown rxode2 model parameter(s): ", paste(unknown, collapse = ", "), ".", call. = FALSE)
+
+    times <- lapply(experiments, .rxode2_experiment_time)
+    cached <- if (exists("artifact", envir = object$cache, inherits = FALSE)) get("artifact", object$cache) else NULL
+    if (is.null(cached)) {
+        merged <- .merge_ode_parameters(ode$parameters, supplied[[1]])
+        .simulation_check_free_parameters_available(ode, merged)
+        .simulation_check_time_mode(ode, times[[1]], parameters = merged)
+        dimensions <- .simulation_dimensions(ode, times[[1]], dimensions, parameters = merged)
+        artifact <- .rxode2_artifact(object, dimensions, parameters = merged)
+    } else {
+        if (!is.null(dimensions) && !identical(dimensions, cached$dimensions)) {
+            stop("rxode2 model uses fixed solver dimensions; requested dimensions differ from the compiled model.", call. = FALSE)
+        }
+        dimensions <- cached$dimensions
+        artifact <- cached
+    }
+
+    parameter_values <- vector("list", length(experiments))
+    records <- vector("list", length(experiments))
+    for (i in seq_along(experiments)) {
+        .simulation_check_free_parameters_available(ode, .merge_ode_parameters(ode$parameters, supplied[[i]]))
+        .compiled_ode_model_check_runtime_parameter_signature(artifact$parameterSignature, supplied[[i]])
+        .compiled_ode_model_check_time_mode(artifact, times[[i]])
+        parameter_values[[i]] <- .rxode2_runtime_parameter_values(artifact, supplied[[i]], dimensions)
+        solver_time <- .simulation_numeric_time(times[[i]], dimensions)
+        events <- .simulation_experiment_events(ode, experiments[[i]]$dosing, dimensions, supplied[[i]])$data
+        events <- events[events$time >= min(solver_time) & events$time <= max(solver_time), , drop = FALSE]
+        observations <- data.frame(id = i, time = solver_time, evid = 0L, cmt = NA_character_, amt = NA_real_)
+        if (nrow(events)) {
+            doses <- data.frame(
+                id = i, time = events$time, evid = 1L,
+                cmt = unname(object$identifiers$states[events$var]), amt = events$value
+            )
+            observations <- rbind(doses, observations)
+        }
+        records[[i]] <- observations
+    }
+    records <- do.call(rbind, records)
+    records <- records[order(records$id, records$time, -records$evid), , drop = FALSE]
+
+    params <- as.data.frame(do.call(rbind, parameter_values), check.names = FALSE)
+    names(params) <- unname(object$identifiers$parameters[names(params)])
+    params <- cbind(id = seq_along(experiments), params)
+    args <- c(list(object = artifact$compiled, params = params, events = records,
+                   returnType = "data.frame"), engine$arguments, list(...))
+    solved <- as.data.frame(do.call(rxode2::rxSolve, args))
+
+    out <- lapply(seq_along(experiments), function(i) {
+        solver_time <- .simulation_numeric_time(times[[i]], dimensions)
+        rows <- solved$id == i & solved$time %in% solver_time
+        states <- solved[rows, c("time", unname(object$identifiers$states)), drop = FALSE]
+        states <- states[match(solver_time, states$time), , drop = FALSE]
+        rownames(states) <- NULL
+        names(states) <- c("time", object$stateNames)
+        matrix_out <- as.matrix(states)
+        parameter_values_i <- parameter_values[[i]]
+        info <- .rxode2_runtime_info(object, artifact, parameter_values_i)
+        ode_i <- ode
+        attr(ode_i, "observation_schedule") <- experiments[[i]]$observations
+        states <- .simulation_attach_state_units(states, ode_i, info, dimensions, parameters = supplied[[i]])
+        states$time <- .simulation_attach_time_units(states$time, times[[i]], dimensions)
+        observables <- .simulation_observables(
+            matrix_out, states$time, ode_i, info, solver_time, dimensions,
+            parameters = supplied[[i]]
+        )
+        structure(list(states = states, observables = observables),
+                  class = .compphysiol_class("compphysiol_simulation_result"))
+    })
+    names(out) <- names(experiments)
+    out
 }
 
 #' @export
@@ -155,15 +302,27 @@ simulate.compphysiol_rxode2_model <- function(
     supplied <- .simulation_parameters_object(parameters)
     unknown <- setdiff(names(supplied), object$parameterNames)
     if (length(unknown)) stop("Unknown rxode2 model parameter(s): ", paste(unknown, collapse = ", "), ".", call. = FALSE)
-    merged <- .merge_ode_parameters(ode$parameters, supplied)
-    .simulation_check_free_parameters_available(ode, merged)
-    .ode_model_check_unit_consistency(ode, merged)
-    .simulation_check_time_mode(ode, time, parameters = merged)
-    dimensions <- .simulation_dimensions(ode, time, dimensions, parameters = merged)
-    artifact <- .rxode2_artifact(object, dimensions)
-    info <- .to_deSolve(ode, parameters = supplied, dimensions = dimensions, merged_parameters = merged)
+    cached <- if (exists("artifact", envir = object$cache, inherits = FALSE)) get("artifact", object$cache) else NULL
+    if (is.null(cached)) {
+        merged <- .merge_ode_parameters(ode$parameters, supplied)
+        .simulation_check_free_parameters_available(ode, merged)
+        .simulation_check_time_mode(ode, time, parameters = merged)
+        dimensions <- .simulation_dimensions(ode, time, dimensions, parameters = merged)
+        artifact <- .rxode2_artifact(object, dimensions, parameters = merged)
+    } else {
+        .compiled_ode_model_check_runtime_parameter_signature(cached$parameterSignature, supplied)
+        .compiled_ode_model_check_time_mode(cached, time)
+        if (!is.null(dimensions) && !identical(dimensions, cached$dimensions)) {
+            stop("rxode2 model uses fixed solver dimensions; requested dimensions differ from the compiled model.", call. = FALSE)
+        }
+        dimensions <- cached$dimensions
+        artifact <- cached
+        merged <- supplied
+    }
+    parameter_values <- .rxode2_runtime_parameter_values(artifact, supplied, dimensions)
+    info <- .rxode2_runtime_info(object, artifact, parameter_values)
     if (!is.null(attr(ode, "experiment_dosing"))) {
-        info$events <- .simulation_experiment_events(ode, attr(ode, "experiment_dosing"), dimensions, merged)
+        info$events <- .simulation_experiment_events(ode, attr(ode, "experiment_dosing"), dimensions, supplied)
     }
     solver_time <- .simulation_numeric_time(time, dimensions)
     event_data <- info$events$data
@@ -175,14 +334,11 @@ simulate.compphysiol_rxode2_model <- function(
         records <- rbind(dose, data.frame(time = solver_time, evid = 0L, cmt = NA_character_, amt = NA_real_))
         records <- records[order(records$time, -records$evid), , drop = FALSE]
     }
-    numeric_params <- .simulation_solver_parameters(merged, dimensions)
-    numeric_params <- unlist(numeric_params[object$parameterNames], use.names = TRUE)
+    numeric_params <- parameter_values
     if (length(numeric_params)) {
         names(numeric_params) <- unname(object$identifiers$parameters[names(numeric_params)])
     }
-    inits <- info$y0
-    names(inits) <- unname(object$identifiers$states[names(inits)])
-    args <- c(list(object = artifact$compiled, params = numeric_params, inits = inits,
+    args <- c(list(object = artifact$compiled, params = numeric_params,
                    events = records, returnType = "data.frame"), engine$arguments, list(...))
     out <- do.call(rxode2::rxSolve, args)
     out <- as.data.frame(out)
@@ -190,8 +346,8 @@ simulate.compphysiol_rxode2_model <- function(
     out <- out[match(solver_time, out$time), , drop = FALSE]
     names(out) <- c("time", object$stateNames)
     matrix_out <- as.matrix(out)
-    states <- .simulation_attach_state_units(out, ode, info, dimensions, parameters = merged)
+    states <- .simulation_attach_state_units(out, ode, info, dimensions, parameters = supplied)
     states$time <- .simulation_attach_time_units(states$time, time, dimensions)
-    observables <- .simulation_observables(matrix_out, states$time, ode, info, solver_time, dimensions, parameters = merged)
+    observables <- .simulation_observables(matrix_out, states$time, ode, info, solver_time, dimensions, parameters = supplied)
     structure(list(states = states, observables = observables), class = .compphysiol_class("compphysiol_simulation_result"))
 }

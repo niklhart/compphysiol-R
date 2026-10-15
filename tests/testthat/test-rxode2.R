@@ -59,6 +59,15 @@ test_that("rxode2 handles bolus, infusion, experiments, and cache reuse", {
     expect_equal(first$states, expected$states, tolerance = 1e-5)
     expect_equal(first$observables, expected$observables, tolerance = 1e-5)
     expect_identical(get("artifact", executable$cache)$compiled, artifact$compiled)
+    expect_named(
+        artifact,
+        c(
+            "source", "compiled", "dimensions", "parameterIndex", "defaultParms",
+            "parameterSignature", "obsFuncs", "stateUnitValues", "stateUnitScales",
+            "observableUnitValues", "observableExportUnitValues", "observableUnitScales",
+            "events", "modelUsesTime", "modelHasTimeDependentProcess"
+        )
+    )
     expect_equal(second, first)
     expect_match(artifact$source, "d/dt\\(cp_state_")
 })
@@ -91,4 +100,37 @@ test_that("non-ODE routes reject the rxode2 engine", {
         simulate(model, time = 0:1, simulation_type = "analytical", engine = rxode2_engine()),
         "only supported.*ode"
     )
+})
+
+test_that("rxode2 batches experiment collections by individual", {
+    skip_if_not_installed("rxode2")
+    model <- compartment_model() |>
+        add_compartment("Central", volume = 10 [L]) |>
+        add_molecule("drug", initial = "A0", type = "amount") |>
+        add_transport("Central", "", const = "k") |>
+        add_observable(A = a[drug, Central], C = c[drug, Central])
+    schedule_a <- observation_schedule(c(0, 1, 2) [h], c("A", "C", "A"))
+    schedule_b <- observation_schedule(c(0, 0.5, 2) [h], c("C", "A", "C"))
+    designs <- experiments(
+        control = experiment(
+            parameters = parameters(A0 = 100 [mg], k = 0.2 [1/h]),
+            observations = schedule_a,
+            start = 0 [h]
+        ),
+        treated = experiment(
+            parameters = parameters(A0 = 50 [mg], k = 0.1 [1/h]),
+            dosing = dosing(time = 0.5 [h], amount = 20 [mg], duration = 0.5 [h]),
+            observations = schedule_b,
+            start = 0 [h]
+        )
+    )
+
+    expected <- simulate(model, experiment = designs)
+    actual <- simulate(model, experiment = designs, engine = rxode2_engine())
+
+    expect_named(actual, names(designs))
+    for (nm in names(designs)) {
+        expect_equal(actual[[nm]]$states, expected[[nm]]$states, tolerance = 1e-5)
+        expect_equal(actual[[nm]]$observables, expected[[nm]]$observables, tolerance = 1e-5)
+    }
 })

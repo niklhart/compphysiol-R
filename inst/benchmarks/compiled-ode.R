@@ -76,6 +76,14 @@ parameter_sets <- lapply(seq_len(n_max), function(i) {
 ode_model <- to_ode_model(model)
 compiled_model <- to_compiled_ode_model(ode_model)
 rxode2_model <- to_rxode2_model(ode_model)
+rxode2_experiments <- do.call(experiments, lapply(seq_len(n_rxode2), function(i) {
+    experiment(
+        parameters = parameter_sets[[i]],
+        dosing = dosing(time = 0, amount = 1, cmt = "ven"),
+        observations = observation_schedule(times, "Cpla"),
+        start = 0
+    )
+}))
 
 cat("Executable ODE benchmark: sMD_PBPK_12CMT_wellstirred\n")
 cat("Repeated simulations:\n")
@@ -83,6 +91,7 @@ cat("  CompartmentModel:", n_compartment, "\n")
 cat("  OdeModel:", n_ode, "\n")
 cat("  CompiledOdeModel cached:", n_compiled, "\n")
 cat("  rxode2 model cached:", n_rxode2, "\n")
+cat("  rxode2 model batched:", n_rxode2, "individuals\n")
 cat("Output times:", length(times), "\n\n")
 
 cat("Warming executable model caches...\n")
@@ -146,12 +155,16 @@ results <- rbind(
     time_one("CompartmentModel", n_compartment, run_many(model, n_compartment)),
     time_one("OdeModel", n_ode, run_many(ode_model, n_ode)),
     time_one("CompiledOdeModel cached", n_compiled, run_many(compiled_model, n_compiled)),
-    time_one("rxode2 model cached", n_rxode2, run_many(rxode2_model, n_rxode2))
+    time_one("rxode2 model cached", n_rxode2, run_many(rxode2_model, n_rxode2)),
+    time_one(
+        "rxode2 model batched", n_rxode2,
+        simulate(rxode2_model, experiment = rxode2_experiments)
+    )
 )
 
 results$speedup_vs_ode_model <- NA_real_
 ode_seconds <- results$seconds_per_simulation[results$route == "OdeModel"]
-cached_routes <- c("CompiledOdeModel cached", "rxode2 model cached")
+cached_routes <- c("CompiledOdeModel cached", "rxode2 model cached", "rxode2 model batched")
 if (length(ode_seconds) == 1L) {
     for (route in cached_routes) {
         route_seconds <- results$seconds_per_simulation[results$route == route]
@@ -167,4 +180,5 @@ cat("\nNotes:\n")
 cat("- The CompiledOdeModel warm-up includes C source generation, R CMD SHLIB, dyn.load(), and one simulation.\n")
 cat("- The rxode2 warm-up includes source rendering, rxode2 compilation, and one simulation.\n")
 cat("- Cached rows measure repeated simulations after backend compilation.\n")
+cat("- The batched rxode2 row solves all experiment individuals in one rxSolve() call and reports time per individual.\n")
 cat("- Set COMPPHYSIOL_BENCH_N_COMPARTMENT, COMPPHYSIOL_BENCH_N_ODE, COMPPHYSIOL_BENCH_N_COMPILED, or COMPPHYSIOL_BENCH_N_RXODE2 to change route-specific replicate counts.\n")

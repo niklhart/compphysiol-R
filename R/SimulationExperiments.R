@@ -1,4 +1,4 @@
-.simulate_experiments <- function(object, experiment, dimensions = NULL, ...) {
+.simulate_experiments <- function(object, experiment, dimensions = NULL, engine = NULL, ...) {
     multiple <- inherits(experiment, "compphysiol_experiments")
     experiments <- if (multiple) unclass(.new_experiments(unclass(experiment))) else {
         .check_class(experiment, "compphysiol_experiment")
@@ -24,6 +24,12 @@
         template$doses <- do.call(c, lapply(prepared, `[[`, "doses"))
         object <- make_depot(template)
     }
+    if (multiple && inherits(engine, "compphysiol_rxode2_engine")) {
+        executable <- if (inherits(object, "compphysiol_rxode2_model")) object else to_rxode2_model(object)
+        return(.simulate_rxode2_experiments(
+            executable, experiments, dimensions = dimensions, engine = engine, ...
+        ))
+    }
     out <- lapply(seq_along(experiments), function(i) {
         e <- experiments[[i]]
         model <- object
@@ -39,7 +45,11 @@
             start <- units::set_units(start, units::deparse_unit(e$observations$time), mode = "standard")
         }
         time <- sort(unique(c(start, e$observations$time)))
-        simulate(model, time = time, parameters = e$parameters, dimensions = dimensions, ...)
+        if (is.null(engine)) {
+            simulate(model, time = time, parameters = e$parameters, dimensions = dimensions, ...)
+        } else {
+            simulate(model, time = time, parameters = e$parameters, dimensions = dimensions, engine = engine, ...)
+        }
     })
     names(out) <- names(experiments)
     if (multiple) out else out[[1]]
