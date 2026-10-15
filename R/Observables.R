@@ -107,13 +107,13 @@ observables <- function(..., name = character(0), expr = character(0), cmt = NUL
     )
 }
 
-#' Add one or several observables to a `compphysiol_model` object.
+#' Add one or several observables to a `compphysiol_compartment_model` object.
 #'
 #' @inherit observables description details
-#' @param model A `compphysiol_model` object.
+#' @param model A `compphysiol_compartment_model` object.
 #' @inheritParams observables
 #' @param obs A `compphysiol_observables` object. Constructed from the other inputs if not provided.
-#' @returns The modified `compphysiol_model` object.
+#' @returns The modified `compphysiol_compartment_model` object.
 #' @examples
 #' ## Interactive path with name-expression pairs
 #' compartment_model() |>
@@ -138,7 +138,7 @@ add_observable <- function(
     molec = NULL,
     obs
 ) {
-    .check_class(model, "compphysiol_model")
+    .check_class(model, "compphysiol_compartment_model")
 
     call <- match.call()
 

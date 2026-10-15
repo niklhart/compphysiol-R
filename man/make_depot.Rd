@@ -2,15 +2,15 @@
 % Please edit documentation in R/CompartmentModel.R
 \name{make_depot}
 \alias{make_depot}
-\title{Make auxiliary structures in a \code{compphysiol_model} object for handling continuous inputs}
+\title{Make auxiliary structures in a \code{compphysiol_compartment_model} object for handling continuous inputs}
 \usage{
 make_depot(model)
 }
 \arguments{
-\item{model}{A \code{compphysiol_model} object}
+\item{model}{A \code{compphysiol_compartment_model} object}
 }
 \value{
-An updated \code{compphysiol_model} object with the auxiliary compartments and events added.
+An updated \code{compphysiol_compartment_model} object with the auxiliary compartments and events added.
 }
 \description{
 This function adds auxiliary compartments and events to the model to handle continuous inputs:

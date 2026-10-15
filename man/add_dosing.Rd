@@ -2,7 +2,7 @@
 % Please edit documentation in R/Dosing.R
 \name{add_dosing}
 \alias{add_dosing}
-\title{Add one or several dosing events (bolus or infusion) to a \code{compphysiol_model} object.}
+\title{Add one or several dosing events (bolus or infusion) to a \code{compphysiol_compartment_model} object.}
 \usage{
 add_dosing(
   model,
@@ -19,7 +19,7 @@ add_dosing(
 )
 }
 \arguments{
-\item{model}{A \code{compphysiol_model} object.}
+\item{model}{A \code{compphysiol_compartment_model} object.}
 
 \item{time}{compphysiol_dosing time(s) (numeric scalar or vector)}
 
@@ -45,7 +45,7 @@ as named arguments only, not positional}
 \item{dose}{A \code{compphysiol_dosing} object. Constructed from the other inputs if not provided.}
 }
 \value{
-The modified \code{compphysiol_model} object.
+The modified \code{compphysiol_compartment_model} object.
 }
 \description{
 This function allows the user to add dosing events to a compartment model.

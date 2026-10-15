@@ -1,6 +1,6 @@
 #' Create a `compphysiol_dosing` object
 #'
-#' Represents a dosing event for a `compphysiol_model`. A dose can be specified either as a bolus (instantaneous input) 
+#' Represents a dosing event for a `compphysiol_compartment_model`. A dose can be specified either as a bolus (instantaneous input)
 #' or as an infusion (continuous input over time).
 #'
 #' ## Bolus
@@ -172,7 +172,7 @@ dosing <- function(
     vapply(x, function(value) all(is.na(value)), logical(1))
 }
 
-#' Add one or several dosing events (bolus or infusion) to a `compphysiol_model` object.
+#' Add one or several dosing events (bolus or infusion) to a `compphysiol_compartment_model` object.
 #'
 #' This function allows the user to add dosing events to a compartment model.
 #' compphysiol_dosing events can be either bolus (instantaneous) or infusion (continuous over time).
@@ -182,10 +182,10 @@ dosing <- function(
 #' i.e., adding infusion bag and rate compartments, and creating the appropriate events for
 #' starting and stopping the infusion.
 #'
-#' @param model A `compphysiol_model` object.
+#' @param model A `compphysiol_compartment_model` object.
 #' @inheritParams dosing
 #' @param dose A `compphysiol_dosing` object. Constructed from the other inputs if not provided.
-#' @returns The modified `compphysiol_model` object.
+#' @returns The modified `compphysiol_compartment_model` object.
 #' @examples
 #' model <- compartment_model() |>
 #'     add_dosing(time = 0, amount = 100, duration = 5, cmt = "cen")
@@ -203,7 +203,7 @@ add_dosing <- function(
     duration = NULL,
     dose
 ) {
-    .check_class(model, "compphysiol_model")
+    .check_class(model, "compphysiol_compartment_model")
 
     call <- match.call()
 

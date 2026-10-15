@@ -7,7 +7,7 @@
 sMD_PBPK_12CMT_wellstirred()
 }
 \value{
-An object of class \code{compphysiol_model}
+An object of class \code{compphysiol_compartment_model}
 }
 \description{
 This model implements a 12-compartment PBPK model with well-stirred tissue distribution.

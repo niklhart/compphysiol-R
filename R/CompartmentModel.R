@@ -1,13 +1,13 @@
-#' Create a `compphysiol_model` object
+#' Create a `compphysiol_compartment_model` object
 #' 
 #' A compartment model consists of compartments, molecules, transports between compartments, 
 #' reactions between molecules, equations defining auxiliary variables, 
 #' observables defined as functions of the states and parameters, parameters, and dosing events. 
 #' This function initializes an empty model that can then be built up by adding these components using the `add_*` functions.
 #' 
-#' @returns A new `compphysiol_model` object.
+#' @returns A new `compphysiol_compartment_model` object.
 #' @seealso [add_compartment()], [add_molecule()], [add_transport()], [add_reaction()], [add_equation()], 
-#'   [add_observable()], [add_parameter()], [add_dosing()] for building up a `compphysiol_model` object, 
+#'   [add_observable()], [add_parameter()], [add_dosing()] for building up a `compphysiol_compartment_model` object,
 #'   and [to_process_model()], [to_ode_model()], [to_analytical_model()] for lowered model representations.
 #' @export
 compartment_model <- function() {
@@ -29,18 +29,18 @@ compartment_model <- function() {
                 )
             )
         ),
-        class = .class_compphysiol_model()
+        class = .class_compartment_model()
     )
 }
 
-#' Print method for `compphysiol_model` class
+#' Print method for `compphysiol_compartment_model` class
 #' 
-#' Pretty-prints a `compphysiol_model` object.
-#' @param x A `compphysiol_model` object.
+#' Pretty-prints a `compphysiol_compartment_model` object.
+#' @param x A `compphysiol_compartment_model` object.
 #' @param ... ignored
-#' @returns The `compphysiol_model` object (invisibly).
+#' @returns The `compphysiol_compartment_model` object (invisibly).
 #' @export
-print.compphysiol_model <- function(x, ...) {
+print.compphysiol_compartment_model <- function(x, ...) {
     cat("Compartment model:\n")
 
     print(x$compartments)
@@ -70,7 +70,7 @@ print.compphysiol_model <- function(x, ...) {
 #' In addition, rate expressions and observables that include statements of the form `[molec]` or `[cmt]` will be 
 #' expanded to include the implicit molecule and compartment names (i.e., into the form `[molec,cmt]`).
 #' 
-#' @param model A `compphysiol_model` object
+#' @param model A `compphysiol_compartment_model` object
 #' @param what What to wire: `"molec"` for molecules, `"cmt"` for compartments, or both (the default)
 #' @examples
 #' # wire "drug" into transport rate expressions, replacing the <all molec> wildcard
@@ -90,7 +90,7 @@ print.compphysiol_model <- function(x, ...) {
 #'   wire(what = "cmt")
 #' @export
 wire <- function(model, what = c("molec", "cmt")) {
-        .check_class(model, "compphysiol_model")
+        .check_class(model, "compphysiol_compartment_model")
 
         if (is.null(model$metadata)) model$metadata <- list()
         if (is.null(model$metadata$auto_placeholder)) {
@@ -387,9 +387,9 @@ wire <- function(model, what = c("molec", "cmt")) {
         model
 }
 
-#' Extract the initial states (with names) from a `compphysiol_model` object
+#' Extract the initial states (with names) from a `compphysiol_compartment_model` object
 #'
-#' @param model A `compphysiol_model` object
+#' @param model A `compphysiol_compartment_model` object
 #' @param type The type of initials to extract: the default `"a[] or c[]"` means amounts are attempted first, 
 #'   but concentrations given if amounts cannot be calculated. `"c[] or a[]"` does the opposite, 
 #'   while `"a[] only"` and `"c[] only"` will return an error if the respective type cannot be calculated.
@@ -401,7 +401,7 @@ wire <- function(model, what = c("molec", "cmt")) {
 #' @export
 initials <- function(model, type = c("a[] or c[]", "c[] or a[]", "a[] only", "c[] only")) {
     # input checking
-    .check_class(model, "compphysiol_model")
+    .check_class(model, "compphysiol_compartment_model")
     type <- match.arg(type)
 
     # Early return for empty compartments and molecules: return empty named list
@@ -519,7 +519,7 @@ initials <- function(model, type = c("a[] or c[]", "c[] or a[]", "a[] only", "c[
         setNames(names(inits))
 }
 
-#' Make auxiliary structures in a `compphysiol_model` object for handling continuous inputs
+#' Make auxiliary structures in a `compphysiol_compartment_model` object for handling continuous inputs
 #' 
 #' This function adds auxiliary compartments and events to the model to handle continuous inputs:
 #' - `Depot_{molec}_{cmt}` and `ReleaseRate_{molec}_{cmt}` compartments 
@@ -527,8 +527,8 @@ initials <- function(model, type = c("a[] or c[]", "c[] or a[]", "a[] only", "c[
 #' - transports from the depot to its target compartment, at rate `a[ReleaseRate_{molec}_{cmt}]`
 #' - 3 (instantaneous) dosing events per infusion (fill depot at infusion start, 
 #'   increase release rate at infusion start, decrease release rate at infusion end)
-#' @param model A `compphysiol_model` object
-#' @returns An updated `compphysiol_model` object with the auxiliary compartments and events added.
+#' @param model A `compphysiol_compartment_model` object
+#' @returns An updated `compphysiol_compartment_model` object with the auxiliary compartments and events added.
 make_depot <- function(model) {
 
     dose <- model$doses
@@ -604,9 +604,9 @@ make_depot <- function(model) {
 
 # ------------------------------------ `to_*` functions for CompartmentModel exporting ------------------------------------
 
-#' Generate ODE function, initial values, observables, and free parameters from a `compphysiol_model` object
+#' Generate ODE function, initial values, observables, and free parameters from a `compphysiol_compartment_model` object
 #'
-#' This function converts a `compphysiol_model` object into a format suitable for numerical ODE solvers,
+#' This function converts a `compphysiol_compartment_model` object into a format suitable for numerical ODE solvers,
 #' such as those in the `deSolve` package.
 #'
 #' ODE export is the step where the modular model description is made explicit.
@@ -624,7 +624,7 @@ make_depot <- function(model) {
 #' and included in the `freeParams` output. These parameters need to be passed to the ODE solver as a vector.
 #' They can be used for simulation or estimation purposes.
 #'
-#' @param model A `compphysiol_model` object
+#' @param model A `compphysiol_compartment_model` object
 #' @param dimensions Named list of unit dimensions used for inlining parameters in ODEs (default: SI units)
 #' @param backend Character scalar specifying the ODE solver backend. Currently
 #'   only `"deSolve"` is supported.
@@ -644,7 +644,7 @@ make_depot <- function(model) {
     if (inherits(model, "compphysiol_ode_model")) {
         return(.to_deSolve(model, dimensions = dimensions))
     }
-    .check_class(model, "compphysiol_model")
+    .check_class(model, "compphysiol_compartment_model")
 
     if (
         length(model$compartments) == 0 &&
@@ -677,11 +677,11 @@ make_depot <- function(model) {
 
 # ------------------------------------ Non-exported helper functions for CompartmentModel processing ------------------------------------
 
-#' Linearity check for compphysiol_model object.
+#' Linearity check for compphysiol_compartment_model object.
 #' 
 #' Checks if all transports in the model are linear with respect to the state variables.
 #' 
-#' @param model A `compphysiol_model` object.
+#' @param model A `compphysiol_compartment_model` object.
 #' @return `TRUE` if all transports are linear, `FALSE` otherwise.
 #' @noRd
 .is_linear <- function(model) all(model$transports$type == "linear")
@@ -690,11 +690,11 @@ make_depot <- function(model) {
 #'
 #' This unifies bolus and infusion dosing into a single events data.frame, which is then used in
 #' the `toODE` method to generate the final events list for `deSolve`.
-#' @param model A `compphysiol_model` object.
+#' @param model A `compphysiol_compartment_model` object.
 #' @returns A list with a single element `data`, which is a data.frame with columns `var`, `time`, `value`, and `method` (add or replace).
 #' @noRd
 .dosing_to_events <- function(model) {
-    .check_class(model, "compphysiol_model")
+    .check_class(model, "compphysiol_compartment_model")
     doses <- model$doses
 
     if (length(doses) == 0) {
@@ -720,15 +720,15 @@ make_depot <- function(model) {
     list(data = events)
 }
 
-#' Unit consistency check for compphysiol_model object.
+#' Unit consistency check for compphysiol_compartment_model object.
 #'
 #' Checks that all transports, observables, and equations in the model are dimensionally consistent with respect to the units of the compartments, parameters and dosing.
 #'
-#' @param model A `compphysiol_model` object.
+#' @param model A `compphysiol_compartment_model` object.
 #' @return The model (invisibly) if all units are consistent, otherwise an error is raised.
 #' @noRd
 .check_unit_consistency <- function(model) {
-    .check_class(model, "compphysiol_model")
+    .check_class(model, "compphysiol_compartment_model")
 
     # Available variables for unit checking: compartment volumes, initial amounts/concentrations, and parameters
     inits <- initials(model) |>

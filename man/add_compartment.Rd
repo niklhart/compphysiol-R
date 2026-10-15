@@ -2,7 +2,7 @@
 % Please edit documentation in R/Compartments.R
 \name{add_compartment}
 \alias{add_compartment}
-\title{Add one or several compartments to a \code{compphysiol_model} object.}
+\title{Add one or several compartments to a \code{compphysiol_compartment_model} object.}
 \usage{
 add_compartment(
   model,
@@ -13,7 +13,7 @@ add_compartment(
 )
 }
 \arguments{
-\item{model}{A \code{compphysiol_model} object.}
+\item{model}{A \code{compphysiol_compartment_model} object.}
 
 \item{name}{Compartment name(s), character scalar or vector}
 
@@ -30,7 +30,7 @@ The \code{unit} argument is ignored (with a warning) if the \code{volume} argume
 \item{comp}{A \code{compphysiol_compartments} object. Constructed from the other inputs if not provided.}
 }
 \value{
-The modified \code{compphysiol_model} object.
+The modified \code{compphysiol_compartment_model} object.
 }
 \description{
 compphysiol_compartments represent model compartments with names and fixed or parametrized volumes.

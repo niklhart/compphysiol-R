@@ -87,7 +87,7 @@ experiment <- function(
 #' not wire dosing targets, resolve model parameters, or check model equations.
 #'
 #' @param x A `compphysiol_experiment` object.
-#' @param model Optional `compphysiol_model` against which to check observable names.
+#' @param model Optional `compphysiol_compartment_model` against which to check observable names.
 #' @returns `x`, invisibly, after successful validation.
 #' @export
 validate_experiment <- function(x, model = NULL) {
@@ -115,7 +115,7 @@ validate_experiment <- function(x, model = NULL) {
         }
     }
     if (!is.null(model)) {
-        .check_class(model, "compphysiol_model")
+        .check_class(model, "compphysiol_compartment_model")
         unknown <- setdiff(observations$observable, names(model$observables))
         if (length(unknown)) {
             stop("Unknown observable(s) in experiment observations: ",

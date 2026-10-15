@@ -111,13 +111,13 @@ molecules <- function(name = character(0), cmt = NULL, initial = 0, unit = NULL,
     ))
 }
 
-#' Add one or several molecules to a `compphysiol_model` object.
+#' Add one or several molecules to a `compphysiol_compartment_model` object.
 #' 
 #' @inherit molecules description details
-#' @param model A `compphysiol_model` object.
+#' @param model A `compphysiol_compartment_model` object.
 #' @inheritParams molecules
 #' @param molec A `compphysiol_molecules` object. Constructed from the other inputs if not provided.
-#' @returns The modified `compphysiol_model` object.
+#' @returns The modified `compphysiol_compartment_model` object.
 #' @export
 #' @seealso [molecules()]
 add_molecule <- function(
@@ -129,7 +129,7 @@ add_molecule <- function(
     type = c("concentration","amount"), 
     molec = NULL
 ) {
-    .check_class(model, "compphysiol_model")
+    .check_class(model, "compphysiol_compartment_model")
 
     call <- match.call()
 

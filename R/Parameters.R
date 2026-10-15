@@ -111,13 +111,13 @@ parameters <- function(..., name = NULL, value = NULL, unit = NULL) {
     invisible(NULL)
 }
 
-#' Add one or several parameters to a `compphysiol_model` object.
+#' Add one or several parameters to a `compphysiol_compartment_model` object.
 #' 
 #' @inherit parameters description details
-#' @param model A `compphysiol_model` object.
+#' @param model A `compphysiol_compartment_model` object.
 #' @inheritParams parameters
 #' @param param A `compphysiol_parameters` object. Constructed from the other inputs if not provided.
-#' @returns The modified `compphysiol_model` object.
+#' @returns The modified `compphysiol_compartment_model` object.
 #' @export
 add_parameter <- function(
     model,
@@ -127,7 +127,7 @@ add_parameter <- function(
     unit = NULL,
     param
 ) {
-    .check_class(model, "compphysiol_model")
+    .check_class(model, "compphysiol_compartment_model")
 
     call <- match.call()
 

@@ -418,7 +418,7 @@ statistical_model <- function(...) {
 .statistical_ode_model <- function(model) {
     if (inherits(model, "compphysiol_desolve_compiled_model")) return(model$ode_model)
     if (inherits(model, "compphysiol_ode_model")) return(model)
-    if (inherits(model, "compphysiol_process_model") || inherits(model, "compphysiol_model")) {
+    if (inherits(model, "compphysiol_process_model") || inherits(model, "compphysiol_compartment_model")) {
         return(to_ode_model(model))
     }
     stop("Unsupported dynamic model for statistical validation: ",

@@ -7,7 +7,7 @@
 estimation_problem(model, experiments, parameters, statistics)
 }
 \arguments{
-\item{model}{A \code{compphysiol_model}, \code{compphysiol_process_model}, \code{compphysiol_ode_model}, or
+\item{model}{A \code{compphysiol_compartment_model}, \code{compphysiol_process_model}, \code{compphysiol_ode_model}, or
 \code{compphysiol_desolve_compiled_model}.}
 
 \item{experiments}{An \link[=experiment]{compphysiol_experiment} or

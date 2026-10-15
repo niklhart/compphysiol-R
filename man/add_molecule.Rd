@@ -2,7 +2,7 @@
 % Please edit documentation in R/Molecules.R
 \name{add_molecule}
 \alias{add_molecule}
-\title{Add one or several molecules to a \code{compphysiol_model} object.}
+\title{Add one or several molecules to a \code{compphysiol_compartment_model} object.}
 \usage{
 add_molecule(
   model,
@@ -15,7 +15,7 @@ add_molecule(
 )
 }
 \arguments{
-\item{model}{A \code{compphysiol_model} object.}
+\item{model}{A \code{compphysiol_compartment_model} object.}
 
 \item{name}{Molecule name(s), character scalar or vector}
 
@@ -37,7 +37,7 @@ and \code{unit}.}
 \item{molec}{A \code{compphysiol_molecules} object. Constructed from the other inputs if not provided.}
 }
 \value{
-The modified \code{compphysiol_model} object.
+The modified \code{compphysiol_compartment_model} object.
 }
 \description{
 compphysiol_molecules represent the modelled substances whose amounts or concentrations

@@ -263,7 +263,7 @@ optim_engine <- function(
 
 #' Create an engine-neutral estimation problem
 #'
-#' @param model A `compphysiol_model`, `compphysiol_process_model`, `compphysiol_ode_model`, or
+#' @param model A `compphysiol_compartment_model`, `compphysiol_process_model`, `compphysiol_ode_model`, or
 #'   `compphysiol_desolve_compiled_model`.
 #' @param experiments An [compphysiol_experiment][experiment()] or
 #'   [compphysiol_experiments][experiments()] collection containing `compphysiol_observation_data`.
@@ -277,7 +277,7 @@ optim_engine <- function(
 #' @export
 estimation_problem <- function(model, experiments, parameters, statistics) {
     supported <- c(
-        "compphysiol_model",
+        "compphysiol_compartment_model",
         "compphysiol_process_model",
         "compphysiol_ode_model",
         "compphysiol_desolve_compiled_model"
@@ -614,7 +614,7 @@ print.compphysiol_estimation_result <- function(x, ...) {
 
 .estimation_model_parameter_names <- function(model) {
     if (inherits(model, "compphysiol_desolve_compiled_model")) return(model$parameterNames)
-    if (inherits(model, "compphysiol_model")) model <- to_ode_model(model)
+    if (inherits(model, "compphysiol_compartment_model")) model <- to_ode_model(model)
     unique(c(names(model$parameters), model$freeParams))
 }
 

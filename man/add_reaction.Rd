@@ -2,7 +2,7 @@
 % Please edit documentation in R/Reactions.R
 \name{add_reaction}
 \alias{add_reaction}
-\title{Add one or several reactions to a \code{compphysiol_model} object.}
+\title{Add one or several reactions to a \code{compphysiol_compartment_model} object.}
 \usage{
 add_reaction(
   model,
@@ -18,7 +18,7 @@ add_reaction(
 )
 }
 \arguments{
-\item{model}{A \code{compphysiol_model} object.}
+\item{model}{A \code{compphysiol_compartment_model} object.}
 
 \item{input}{Character vector or \code{compphysiol_states} object representing the input of the reaction, e.g. \code{c("A", "B")}
 for a reaction where one molecule of \code{A} and one molecule of \code{B} are consumed.
@@ -52,7 +52,7 @@ column of the resulting \code{compphysiol_reactions} object.}
 \item{react}{A \code{compphysiol_reactions} object. Constructed from the other inputs if not provided.}
 }
 \value{
-The modified \code{compphysiol_model} object.
+The modified \code{compphysiol_compartment_model} object.
 }
 \description{
 The \code{compphysiol_reactions} class can hold several reactions, each with an input, output, rate/constant, and compartment.

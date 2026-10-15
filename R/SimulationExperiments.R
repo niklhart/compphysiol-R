@@ -12,7 +12,7 @@
         if (length(unknown)) stop("Unknown observable(s): ", paste(unknown, collapse = ", "), call. = FALSE)
     }
     prepared_doses <- NULL
-    if (inherits(object, "compphysiol_model") && length(experiments)) {
+    if (inherits(object, "compphysiol_compartment_model") && length(experiments)) {
         # Wire each protocol before adding auxiliaries, then prepare their union.
         prepared <- lapply(experiments, function(e) {
             m <- object
@@ -27,7 +27,7 @@
     out <- lapply(seq_along(experiments), function(i) {
         e <- experiments[[i]]
         model <- object
-        if (inherits(model, "compphysiol_model")) {
+        if (inherits(model, "compphysiol_compartment_model")) {
             model$doses <- prepared_doses[[i]]
         } else {
             attr(model, "experiment_dosing") <- e$dosing

@@ -2,7 +2,7 @@
 % Please edit documentation in R/Observables.R
 \name{add_observable}
 \alias{add_observable}
-\title{Add one or several observables to a \code{compphysiol_model} object.}
+\title{Add one or several observables to a \code{compphysiol_compartment_model} object.}
 \usage{
 add_observable(
   model,
@@ -15,7 +15,7 @@ add_observable(
 )
 }
 \arguments{
-\item{model}{A \code{compphysiol_model} object.}
+\item{model}{A \code{compphysiol_compartment_model} object.}
 
 \item{...}{Name-expression pairs defining the observables. The expressions can be provided as character strings or as R calls.}
 
@@ -33,7 +33,7 @@ Used for automatic generation of common observables like concentrations and amou
 \item{obs}{A \code{compphysiol_observables} object. Constructed from the other inputs if not provided.}
 }
 \value{
-The modified \code{compphysiol_model} object.
+The modified \code{compphysiol_compartment_model} object.
 }
 \description{
 compphysiol_observables are quantities of interest that are computed from parameters

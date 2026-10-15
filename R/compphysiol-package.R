@@ -9,7 +9,7 @@
 #' explicit model components.
 #' @details
 #' Core modelling concepts include:
-#' - `compphysiol_model`: Encapsulates the structure of a compartmental model,
+#' - `compphysiol_compartment_model`: Encapsulates the structure of a compartmental model,
 #'   including compartments, molecules, transports, reactions, equations,
 #'   observables, parameters, and dosing events.
 #' - `compphysiol_compartments`: Represent model spaces, tissues, organs, or abstract

@@ -2,7 +2,7 @@
 % Please edit documentation in R/Transports.R
 \name{add_transport}
 \alias{add_transport}
-\title{Add one or several transports to a \code{compphysiol_model} object.}
+\title{Add one or several transports to a \code{compphysiol_compartment_model} object.}
 \usage{
 add_transport(
   model,
@@ -16,7 +16,7 @@ add_transport(
 )
 }
 \arguments{
-\item{model}{A \code{compphysiol_model} object.}
+\item{model}{A \code{compphysiol_compartment_model} object.}
 
 \item{from}{The name of the source compartment(s) (character vector or NULL for source compartments)}
 
@@ -34,7 +34,7 @@ or unit-bearing value, optional, mutually exclusive with \code{rate})}
 \item{trans}{A \code{compphysiol_transports} object. Constructed from the other inputs if not provided.}
 }
 \value{
-The modified \code{compphysiol_model} object.
+The modified \code{compphysiol_compartment_model} object.
 }
 \description{
 compphysiol_transports represent mass/amount-preserving transports of molecules between two compartments in a compartment model.

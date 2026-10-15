@@ -10,30 +10,30 @@ test_that("model representations use the compphysiol hierarchy", {
 
     expect_identical(
         class(model)[1:2],
-        c("compphysiol_model", "compphysiol_model_representation")
+        c("compphysiol_compartment_model", "compphysiol_model")
     )
     expect_identical(
         class(process)[1:2],
-        c("compphysiol_process_model", "compphysiol_model_representation")
+        c("compphysiol_process_model", "compphysiol_model")
     )
     expect_identical(
         class(ode)[1:2],
-        c("compphysiol_ode_model", "compphysiol_model_representation")
+        c("compphysiol_ode_model", "compphysiol_model")
     )
     expect_identical(
         class(analytical)[1:2],
-        c("compphysiol_analytical_model", "compphysiol_model_representation")
+        c("compphysiol_analytical_model", "compphysiol_model")
     )
     expect_identical(
         class(stochastic)[1:2],
-        c("compphysiol_stochastic_model", "compphysiol_model_representation")
+        c("compphysiol_stochastic_model", "compphysiol_model")
     )
     expect_identical(
         class(compiled)[1:3],
         c(
             "compphysiol_desolve_compiled_model",
             "compphysiol_executable_model",
-            "compphysiol_model_representation"
+            "compphysiol_model"
         )
     )
     expect_false(inherits(compiled, "compphysiol_ode_model"))
@@ -187,7 +187,7 @@ test_that("model predicates follow concrete and abstract inheritance", {
     analytical <- to_analytical_model(process)
     stochastic <- to_stochastic_model(process)
 
-    expect_true(is_model(model))
+    expect_true(is_compartment_model(model))
     expect_true(is_process_model(process))
     expect_true(is_ode_model(ode))
     expect_true(is_desolve_compiled_model(compiled))
@@ -195,9 +195,10 @@ test_that("model predicates follow concrete and abstract inheritance", {
     expect_true(is_stochastic_model(stochastic))
     expect_true(all(vapply(
         list(model, process, ode, compiled, analytical, stochastic),
-        is_model_representation,
+        is_model,
         logical(1)
     )))
+    expect_false(is_compartment_model(process))
     expect_true(is_executable_model(compiled))
     expect_false(is_executable_model(ode))
     expect_true(is_engine(deSolve_engine()))

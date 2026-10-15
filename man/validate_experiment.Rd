@@ -9,7 +9,7 @@ validate_experiment(x, model = NULL)
 \arguments{
 \item{x}{A \code{compphysiol_experiment} object.}
 
-\item{model}{Optional \code{compphysiol_model} against which to check observable names.}
+\item{model}{Optional \code{compphysiol_compartment_model} against which to check observable names.}
 }
 \value{
 \code{x}, invisibly, after successful validation.

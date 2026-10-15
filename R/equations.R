@@ -48,13 +48,13 @@ equations <- function(..., name = character(0), expr = character(0)) {
     )
 }
 
-#' Add one or several equations to a `compphysiol_model` object.
+#' Add one or several equations to a `compphysiol_compartment_model` object.
 #' 
 #' @inherit equations description details
-#' @param model A `compphysiol_model` object.
+#' @param model A `compphysiol_compartment_model` object.
 #' @inheritParams equations
 #' @param eq A `compphysiol_equations` object. Constructed from the other inputs if not provided.
-#' @returns The modified `compphysiol_model` object.
+#' @returns The modified `compphysiol_compartment_model` object.
 #' @examples
 #' ## Interactive path with name-expression pairs
 #' compartment_model() |>
@@ -68,7 +68,7 @@ equations <- function(..., name = character(0), expr = character(0)) {
 #'     add_equation(eq = eq)
 #' @export
 add_equation <- function(model, ..., name = character(0), expr = character(0), eq) {
-    .check_class(model, "compphysiol_model")
+    .check_class(model, "compphysiol_compartment_model")
     
     call <- match.call()
 

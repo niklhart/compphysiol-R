@@ -19,7 +19,7 @@ is_model <- function(x) .inherits_compphysiol(x, "model")
 
 #' @rdname class_predicates
 #' @export
-is_model_representation <- function(x) .inherits_compphysiol(x, "model_representation")
+is_compartment_model <- function(x) .inherits_compphysiol(x, "compartment_model")
 
 #' @rdname class_predicates
 #' @export

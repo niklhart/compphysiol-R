@@ -601,13 +601,13 @@ reactions <- function(
     )
 }
 
-#' Add one or several reactions to a `compphysiol_model` object.
+#' Add one or several reactions to a `compphysiol_compartment_model` object.
 #'
 #' @inherit reactions description details
-#' @param model A `compphysiol_model` object.
+#' @param model A `compphysiol_compartment_model` object.
 #' @inheritParams reactions
 #' @param react A `compphysiol_reactions` object. Constructed from the other inputs if not provided.
-#' @returns The modified `compphysiol_model` object.
+#' @returns The modified `compphysiol_compartment_model` object.
 #' @export
 #' @seealso [reactions()]
 add_reaction <- function(
@@ -622,7 +622,7 @@ add_reaction <- function(
     const = NULL,
     react = NULL
 ) {
-    .check_class(model, "compphysiol_model")
+    .check_class(model, "compphysiol_compartment_model")
 
     call <- match.call()
 

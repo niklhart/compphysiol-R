@@ -2,12 +2,12 @@
 % Please edit documentation in R/CompartmentModel.R
 \name{compartment_model}
 \alias{compartment_model}
-\title{Create a \code{compphysiol_model} object}
+\title{Create a \code{compphysiol_compartment_model} object}
 \usage{
 compartment_model()
 }
 \value{
-A new \code{compphysiol_model} object.
+A new \code{compphysiol_compartment_model} object.
 }
 \description{
 A compartment model consists of compartments, molecules, transports between compartments,
@@ -17,6 +17,6 @@ This function initializes an empty model that can then be built up by adding the
 }
 \seealso{
 \code{\link[=add_compartment]{add_compartment()}}, \code{\link[=add_molecule]{add_molecule()}}, \code{\link[=add_transport]{add_transport()}}, \code{\link[=add_reaction]{add_reaction()}}, \code{\link[=add_equation]{add_equation()}},
-\code{\link[=add_observable]{add_observable()}}, \code{\link[=add_parameter]{add_parameter()}}, \code{\link[=add_dosing]{add_dosing()}} for building up a \code{compphysiol_model} object,
+\code{\link[=add_observable]{add_observable()}}, \code{\link[=add_parameter]{add_parameter()}}, \code{\link[=add_dosing]{add_dosing()}} for building up a \code{compphysiol_compartment_model} object,
 and \code{\link[=to_process_model]{to_process_model()}}, \code{\link[=to_ode_model]{to_ode_model()}}, \code{\link[=to_analytical_model]{to_analytical_model()}} for lowered model representations.
 }

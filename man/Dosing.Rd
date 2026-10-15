@@ -42,7 +42,7 @@ as named arguments only, not positional}
 A \code{compphysiol_dosing} object
 }
 \description{
-Represents a dosing event for a \code{compphysiol_model}. A dose can be specified either as a bolus (instantaneous input)
+Represents a dosing event for a \code{compphysiol_compartment_model}. A dose can be specified either as a bolus (instantaneous input)
 or as an infusion (continuous input over time).
 }
 \details{

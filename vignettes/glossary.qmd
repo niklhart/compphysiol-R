@@ -29,13 +29,16 @@ peripheral compartment can mean an ODE state, a physical space, an amount of
 drug in that space, or a mathematical abstraction that combines these ideas.
 
 In `compphysiol`, these concepts are separated more explicitly. The authored
-`compphysiol_model`, created by `compartment_model()`, is a container for model components such as compartments,
+compartment model, created by `compartment_model()`, is a container for model components such as compartments,
 molecules, transports, reactions, equations, observables, parameters, and
 dosing events. The dynamic ODE states are usually formed later from
 molecule-in-compartment combinations.
 
 This separation is closer to systems biology modelling, where the state is
 often a species in a location rather than the location alone.
+
+Implementation anchor: `compartment_model()` creates the authored
+`compphysiol_compartment_model` representation.
 
 ## Compartment
 
@@ -48,8 +51,8 @@ example, `liv` is the liver compartment, not "the amount of drug in the
 liver". The amount of a drug in the liver is represented by the combination of
 a molecule and a compartment.
 
-Implementation anchor: compartments are represented by `compphysiol_compartments` objects
-created with `compartments()` or added with `add_compartment()`.
+Implementation anchor: compartments are represented by `compphysiol_compartments`
+objects created with `compartments()` or added with `add_compartment()`.
 
 ## Molecule
 
@@ -57,12 +60,12 @@ A molecule is the entity whose amount or concentration can vary across
 compartments. It may be a drug, metabolite, protein, receptor, complex,
 biomarker, or other modelled substance.
 
-molecules can be defined for specific compartments or, when the compartment is
+Molecules can be defined for specific compartments or, when the compartment is
 omitted, for all compartments. This wildcard behavior is resolved by
 `wire()` before ODE generation.
 
-Implementation anchor: molecules are represented by `compphysiol_molecules` objects
-created with `molecules()` or added with `add_molecule()`.
+Implementation anchor: molecules are represented by `compphysiol_molecules`
+objects created with `molecules()` or added with `add_molecule()`.
 
 ## State
 
@@ -108,6 +111,9 @@ The `initials()` helper exposes this representation choice more flexibly. It
 can request amount initials, concentration initials, or fallback behavior in
 either direction. ODE export currently uses the amount-preferred fallback as
 its public default.
+
+Implementation anchor: programmatic state references use the
+`compphysiol_states` class and are created with `state()`.
 
 ## Domain-specific language
 
@@ -178,8 +184,8 @@ blood flow from arterial blood to an organ, venous return from tissue to blood,
 or clearance from a compartment to a sink. A transport can be linear, through a
 first-order rate constant, or nonlinear, through an explicit rate expression.
 
-Implementation anchor: transports are represented by `compphysiol_transports` objects
-created with `transports()` or added with `add_transport()`. transport rates
+Implementation anchor: transports are represented by `compphysiol_transports`
+objects created with `transports()` or added with `add_transport()`. Transport rates
 may use parameters, states, and equations; during ODE export, equations can be
 used to define reusable transport rate constants or rate expressions.
 
@@ -208,7 +214,7 @@ used when the reacting participants are localized in different compartments,
 such as ligand in plasma binding to receptor in a membrane compartment to form
 a membrane-localized complex.
 
-reactions may have multiple inputs and outputs. Their vector arguments describe
+Reactions may have multiple inputs and outputs. Their vector arguments describe
 stoichiometric participants rather than vectorized creation of many unrelated
 reactions. Repeated participants represent stoichiometry, for example two
 copies of the same input molecule.
@@ -239,25 +245,25 @@ volume, while for surface-like compartments it may be an amount per area. ODE
 export still chooses amount states when possible and concentration states when
 amount conversion is not available.
 
-Implementation anchor: reactions are represented by `compphysiol_reactions` objects
-created with `reactions()` or added with `add_reaction()`. Current reaction
+Implementation anchor: reactions are represented by `compphysiol_reactions`
+objects created with `reactions()` or added with `add_reaction()`. Current reaction
 support covers construction, storage, printing, wildcard wiring, and numerical
 ODE export. Analytical export and unit checking for reactions are not
 implemented yet.
 
 ## Equation
 
-An equation defines an auxiliary expression. equations are not ODE states and
+An equation defines an auxiliary expression. Equations are not ODE states and
 are not observables by themselves.
 
-equations are useful for derived quantities such as physiological sums,
+Equations are useful for derived quantities such as physiological sums,
 partitioning terms, or reusable rate expressions. In the current ODE export,
 equations can be reused in transport and reaction constants and rate
-expressions. equations help keep generated ODEs readable while preserving the
+expressions. Equations help keep generated ODEs readable while preserving the
 symbolic structure of the model.
 
-Implementation anchor: equations are represented by `compphysiol_equations` objects
-created with `equations()` or added with `add_equation()`.
+Implementation anchor: equations are represented by `compphysiol_equations`
+objects created with `equations()` or added with `add_equation()`.
 
 ## Observable
 
@@ -275,20 +281,20 @@ directly in terms of states and parameters for now. Reuse of equations in
 observables is a natural future extension, but is not part of the current
 export contract.
 
-Implementation anchor: observables are represented by `compphysiol_observables` objects
-created with `observables()` or added with `add_observable()`.
+Implementation anchor: observables are represented by `compphysiol_observables`
+objects created with `observables()` or added with `add_observable()`.
 
 ## Parameter
 
-A parameter is a named value used in the model. parameters may represent
+A parameter is a named value used in the model. Parameters may represent
 physiology, compound properties, kinetic constants, partition coefficients, or
 other fixed inputs to simulation and analysis.
 
-parameters can be numeric, categorical, symbolic, or unit-aware. Unit-aware
+Parameters can be numeric, categorical, symbolic, or unit-aware. Unit-aware
 parameter values use the general unit shorthand described above.
 
-Implementation anchor: parameters are represented by `compphysiol_parameters` objects
-created with `parameters()` or added with `add_parameter()`.
+Implementation anchor: parameters are represented by `compphysiol_parameters`
+objects created with `parameters()` or added with `add_parameter()`.
 
 ## Parameter set
 
@@ -297,18 +303,18 @@ can represent a realized population, such as individual-specific body weights,
 sexes, physiological values, or compound parameters. Numeric and categorical
 covariates are ordinary parameters rather than a separate component type.
 
-A `compphysiol_parameter_sets` collection contains only `compphysiol_parameters` objects and carries no
+A parameter-set collection contains only parameter objects and carries no
 metadata about individuals or about how their values were generated. It
 therefore represents a realized population, not a population distribution or
 sampling model. Parameter names shared across sets must have compatible units.
 
-Implementation anchor: realized parameter sets are represented by
-`compphysiol_parameter_sets` objects created with `parameter_sets()`. Subsetting with `[`
-retains the collection, while `[[` extracts one `compphysiol_parameters` object.
+Implementation anchor: realized parameter sets use `compphysiol_parameter_sets`,
+created with `parameter_sets()`. Subsetting with `[` retains the collection,
+while `[[` extracts one `compphysiol_parameters` object.
 
 ## Dosing
 
-dosing describes external input into the model, such as a bolus dose or an
+Dosing describes external input into the model, such as a bolus dose or an
 infusion. Doses target a molecule and compartment, either explicitly or through
 wildcards that can be resolved during wiring.
 
@@ -316,8 +322,8 @@ Infusion dosing may create additional depot or release-rate structures during
 ODE export. These are implementation devices for representing the dosing
 schedule, not necessarily physiological compartments.
 
-Implementation anchor: dosing events are represented by `compphysiol_dosing` objects
-created with `dosing()` or added with `add_dosing()`.
+Implementation anchor: dosing events are represented by `compphysiol_dosing`
+objects created with `dosing()` or added with `add_dosing()`.
 
 ## Observation schedule
 
@@ -342,21 +348,22 @@ row metadata. The representation is deliberately neutral about provenance:
 values may be experimental measurements, predictions from another model,
 synthetic data, or externally prepared observations.
 
-A `compphysiol_observation_data` object is also a `compphysiol_observation_schedule`, so code that only
+Observation data also satisfy the observation-schedule contract, so code that only
 needs evaluation points can consume it as a schedule. The explicit
 `as_observation_schedule()` conversion removes the `value` column. Observable
-simulation output uses the same `compphysiol_observation_data` representation, allowing one
+simulation output uses the same observation data representation, allowing one
 model's predictions to be supplied directly as data when calibrating another
 model, provided their observable names and units are compatible.
 
 A conditional prediction is the deterministic observable value returned by
 `simulate()`. A sampled observation is a random value drawn conditionally from
 an observation-level distribution around such a prediction. Both use
-`compphysiol_observation_data`; the class deliberately remains neutral about whether values
+observation data; the class deliberately remains neutral about whether values
 are measured, predicted, or synthetically sampled.
 
-Implementation anchor: observation data are represented by `compphysiol_observation_data`
-data-frame-like objects created with `observation_data()`.
+Implementation anchor: observation data are represented by
+`compphysiol_observation_data` objects, which inherit from
+`compphysiol_observation_schedule` and are created with `observation_data()`.
 
 ## Statistical model
 
@@ -365,7 +372,7 @@ quantities. The left-hand-side name identifies either an unresolved structural
 parameter in the dynamic model or a model observable. Structural-parameter
 distributions describe individual variability; observable distributions
 describe the probabilistic relationship between predictions and values in
-`compphysiol_observation_data`. The statistical model does not obtain a
+observation data. The statistical model does not obtain a
 population location implicitly from a fixed structural-model value.
 
 The primary distribution families are `normal()` and `lognormal()`. Locations
@@ -398,7 +405,8 @@ Proportional coefficients and log-normal `sdlog` values are dimensionless.
 Consequently realized structural values retain structural target units and
 observations retain observable units.
 
-Implementation anchor: `statistical_model()` collects unresolved distribution
+Implementation anchor: `statistical_model()` creates a
+`compphysiol_statistical_model` that collects unresolved distribution
 specifications. `estimation_problem()` resolves their targets and levels against
 the dynamic model and validates their dimensions. The optim engine currently
 supports observation-level entries only; individual-level entries require a
@@ -416,7 +424,7 @@ the dynamic model, this restriction is fully checked when the statistical model
 is resolved.
 
 `sample_population()` realizes the individual-level entries as a named
-`compphysiol_parameter_sets` population. Population locations, variability parameters, and
+collection of parameter sets. Population locations, variability parameters, and
 correlation parameters are inputs to sampling but are not copied into each
 realized individual. Symbolic correlations are resolved at this boundary, the
 completed correlation matrix is checked for positive semidefiniteness, and
@@ -438,8 +446,8 @@ statistical entries are ignored. Every input row must have a matching
 distribution; sampling replaces values without filtering or reordering rows.
 The input prediction is always the distribution location, so explicit
 observation locations are rejected. The function requires prediction-bearing
-`compphysiol_observation_data`, giving it a `compphysiol_observation_data`-to-`compphysiol_observation_data`
-contract. Predictions in a `compphysiol_simulation_result` are extracted explicitly with
+observation data, giving it an observation-data-to-observation-data
+contract. Predictions in a simulation result are extracted explicitly with
 `as_observables_long()` before sampling.
 
 ## Experiment
@@ -455,8 +463,8 @@ Covariates such as body weight and sex are ordinary values in
 Relationships derived from covariates belong in model `Equation`s, which may
 depend on both experiment parameters and shared model parameters.
 
-The `observations` component contains either a `compphysiol_observation_schedule` or
-`compphysiol_observation_data`. Because observation data inherit from observation schedules,
+The `observations` component contains either an observation schedule or
+observation data. Because observation data inherit from observation schedules,
 simulation can use either representation directly. Estimation additionally
 requires the stored observations to contain values. Observation variability is
 not part of the experiment and belongs to the statistical model used during
@@ -472,11 +480,11 @@ select the earliest scheduled time: adding a later first observation does not
 shift when initial values apply. Negative schedule times require an explicit
 earlier start. Incompatible schedule units remain an error.
 
-experiment parameters are known values, fixed during the experiment. Joint
+Experiment parameters are known values, fixed during the experiment. Joint
 estimation keeps these separate from shared estimated parameters and rejects
 overlap. General scheduled parameter changes
 and time-dependent model equations are not part of the current experiment
-contract. dosing may be calculated from known experimental values before
+contract. Dosing may be calculated from known experimental values before
 constructing the experiment.
 
 Current support covers construction, printing, validation, and ODE simulation.
@@ -485,21 +493,22 @@ dosing even when the experiment schedule is empty. Its known parameters override
 model defaults. Simulation starts at the initial time and evaluates only the
 scheduled observable-time pairs. Stored observation values do not affect
 simulation. Collections return a list of simulation results in experiment
-order. experiments containing `compphysiol_observation_data` can be used for estimation.
+order. Experiments containing observation data can be used for estimation.
 
-Implementation anchor: experiments are represented by `compphysiol_experiment` objects
-created with `experiment()` and checked with `validate_experiment()`.
+Implementation anchor: one experiment uses `compphysiol_experiment`, created
+with `experiment()` and checked with `validate_experiment()`; collections use
+`compphysiol_experiments`, created with `experiments()`.
 
-A `compphysiol_experiments` collection, created with `experiments()`, holds several
+An experiment collection holds several
 independent individual units. The element name is the individual identifier;
 unnamed elements remain accepted for workflows that do not yet assign one.
 Subsetting with `[` retains a collection; `[[` extracts an individual
-`compphysiol_experiment`. Collections can be combined with `c()`. Printing a collection
+experiment. Collections can be combined with `c()`. Printing a collection
 shows one summary per experiment, while printing an individual experiment shows
 its parameters, dosing, and observations.
 
 Collections require a common time unit mode across experiments, including their
-initial times: all unit-free or all in compatible time units. parameters shared
+initial times: all unit-free or all in compatible time units. Parameters shared
 by name must have compatible units, as must dose amounts for each shared
 molecule-compartment target. Boluses and infusions are compared through their
 total amounts. Compatible units are preserved, not converted in storage.
@@ -509,13 +518,13 @@ when combining collections with `c()`.
 
 A shared experimental protocol can be extended across a realized population
 with `extend_protocol()`. The protocol supplies dosing, observations, start,
-and shared parameters; each element of a `compphysiol_parameter_sets` population supplies
-the individual parameters for one resulting `compphysiol_experiment`. Protocol and
+and shared parameters; each element of a realized population supplies
+the individual parameters for one resulting experiment. Protocol and
 individual parameter names must not overlap. This explicit transformation
-produces a `compphysiol_experiments` collection before simulation rather than adding a
+produces an experiment collection before simulation rather than adding a
 population concept to `simulate()`.
 
-Simulating a `compphysiol_experiments` collection returns a list of simulation results in
+Simulating an experiment collection returns a list of simulation results in
 collection order, named by the individual identifiers when present. Results are
 not automatically bound into one population-scale table. A future binding
 helper may add an `experiment` identifier if that analysis pattern is needed.
@@ -549,23 +558,23 @@ transformation. Thus a log parameter with its natural `(0, Inf)` domain and a
 logit parameter with its declared interval are unconstrained in optimizer
 coordinates, whereas an additional finite bound requires `L-BFGS-B`.
 
-An individual specification is a `compphysiol_parameter_spec`. Named specifications are
-combined with `c()` into a `compphysiol_parameter_specs` collection. Collections can be
+An individual specification is a parameter specification. Named specifications are
+combined with `c()` into a parameter-specification collection. Collections can be
 combined again; `[` retains a collection, while `[[` extracts one specification.
 `ParameterEstimate` and `ParameterEstimates` are reserved for future fitted
 results that contain parameter estimates and their uncertainty.
 
-Current estimation supports `compphysiol_model`, `compphysiol_process_model`, `compphysiol_ode_model`, and
-`compphysiol_desolve_compiled_model` inputs. These are model representations, not engines.
+Current estimation supports compartment model, process model, ODE model, and
+compiled deSolve model inputs. These are model representations, not engines.
 Analytical and stochastic model representations are outside the current
 estimation contract. An estimation engine owns the fitting workflow and may
 contain a simulation engine. The first estimation engine uses `stats::optim()`
 to minimize the joint negative log-likelihood across experiments and delegates
 ODE evaluation to a deSolve simulation engine. The latter can prepare either an
-`compphysiol_ode_model` or a `compphysiol_desolve_compiled_model`; compilation changes the representation
+ODE model or a compiled deSolve model; compilation changes the representation
 consumed by the same deSolve path rather than selecting another estimation
 engine. An
-`compphysiol_estimation_result` exposes coefficients, the negative log-likelihood as
+estimation result exposes coefficients, the negative log-likelihood as
 `neg_log_lik`, convergence
 information, fitted values, residuals, and the raw engine result.
 
@@ -581,10 +590,11 @@ implementation is supported.
 Fitted values and residuals preserve the observation rows and their order.
 Rows with missing observed values have a fitted value and a missing residual.
 
-Implementation anchors: `estimation_problem()` creates a `compphysiol_estimation_problem`,
-`parameter_spec()` declares an individual specification, `c()` combines specifications,
-`optim_engine()` configures the optimizer and its `deSolve_engine()`, and
-`estimate()` returns an
+Implementation anchor: `estimation_problem()` creates
+`compphysiol_estimation_problem`; `parameter_spec()` creates
+`compphysiol_parameter_spec`; `c()` combines them into
+`compphysiol_parameter_specs`; `optim_engine()` configures the optimizer and
+its `deSolve_engine()`; and `estimate()` returns
 `compphysiol_estimation_result`.
 
 ## Source and sink
@@ -616,12 +626,12 @@ model contains enough information to do so unambiguously.
 fully explicit model is useful for inspection or for avoiding later changes in
 interpretation as new components are added.
 
-Implementation anchor: wiring is handled by `wire()` in the `compphysiol_model`
-code.
+Implementation anchor: wiring is handled by `wire()` for
+`compphysiol_compartment_model` objects.
 
 ## Model merging
 
-Model merging combines two `compphysiol_model` objects into one model. In the
+Model merging combines two compartment models into one. In the
 limited overlay mode, matching names are interpreted as the same modelling
 entity: a compartment with the same name is the same location, a molecule with
 the same name is the same substance, and a matching molecule-in-compartment
@@ -646,22 +656,22 @@ Overlay merging is not a renaming or copying operation. Building independent
 copies of a model for multiple compounds requires explicit renaming before
 merging or a separate copy/renaming helper.
 
-Implementation anchor: overlay merging is handled by `mergeModels()`.
+Implementation anchor: `mergeModels()` combines two
+`compphysiol_compartment_model` objects.
 
 ## Model representations and execution
 
 A model representation is a persistent package-owned encoding of model
-structure. The authored `compphysiol_model` and all representations obtained by
-lowering it inherit from `compphysiol_model_representation`. The authored model
+structure. The authored compartment model and all representations obtained by
+lowering it share a common model superclass. The authored model
 retains the domain-level compartment, molecule, transport, and reaction
 structure. Process, ODE, analytical, and stochastic models encode successively
 more explicit mathematical forms for particular analyses.
 
 An executable model is a persistent backend-specific representation that can
-be run repeatedly. Executable models inherit from
-`compphysiol_executable_model` as well as
-`compphysiol_model_representation`. They do not inherit from the
-solver-neutral `compphysiol_ode_model` class merely because they contain or
+be run repeatedly. Executable models additionally share an executable-model
+superclass. They do not inherit from the solver-neutral ODE-model class merely
+because they contain or
 were derived from one: their own structure follows a backend-specific contract.
 The compiled deSolve representation is the first executable model. A future
 rxode2 representation will belong to the same category.
@@ -681,19 +691,24 @@ prefix is part of the underlying S3 class and method contract.
 Printed objects use concise natural-language headings, such as "Parameter
 specification", rather than presenting a second class-like name. Public
 predicates remove the prefix and add `is_`: for example,
-`is_parameter_spec(x)` tests for `compphysiol_parameter_spec`, while
-`is_model_representation(x)` tests the shared representation superclass.
+`is_parameter_spec(x)` tests for a parameter specification, while
+`is_model(x)` tests the shared model superclass.
 Direct calls to `inherits()` remain available when the technical class name is
 needed.
 
+Implementation anchor: every persistent model representation inherits from
+`compphysiol_model`; the authored form has class
+`compphysiol_compartment_model`, and executable forms additionally inherit from
+`compphysiol_executable_model`.
+
 ## Process model
 
-A `compphysiol_process_model` is the package-owned intermediate representation of the
-explicit process system obtained from a `compphysiol_model`. It sits between the
+A process model is the package-owned intermediate representation of the
+explicit process system obtained from a compartment model. It sits between the
 modular compartment/molecule representation and downstream deterministic or
 stochastic renderings.
 
-Lowering a `compphysiol_model` to a `compphysiol_process_model` resolves wildcard wiring,
+Lowering a compartment model to a process model resolves wildcard wiring,
 applies the state representation policy where possible, and expands
 implementation structures such as infusion depots. The result has a
 one-dimensional state vector, flattened dosing events, and a process list with
@@ -711,16 +726,16 @@ is represented as an amount-change rate. Concentration-state reactions in an
 unspecified volume can still be represented for deterministic ODE export, but
 are not directly suitable for stochastic export.
 
-Implementation anchor: process-model objects are created by
-`to_process_model()`.
+Implementation anchor: `to_process_model()` creates
+`compphysiol_process_model` objects.
 
 ## ODE model
 
-A `compphysiol_ode_model` is the package-owned intermediate representation of a concrete
-ODE system. It sits between the modular `compphysiol_model` and a
+An ODE model is the package-owned intermediate representation of a concrete
+ODE system. It sits between the modular compartment model and a
 solver-specific export such as a `deSolve` model.
 
-Lowering a `compphysiol_model` to a `compphysiol_ode_model` resolves wildcard wiring,
+Lowering a compartment model to an ODE model resolves wildcard wiring,
 applies the ODE state representation policy, and expands implementation
 structures such as infusion depots. After this step, the state structure is a
 one-dimensional ODE state vector. Each state still has its DSL state name, such
@@ -728,36 +743,37 @@ as `a[drug, Central]`, but expressions in the internal representation refer to
 states by index. This makes the representation independent of solver-specific
 state naming conventions.
 
-A `compphysiol_ode_model` stores initial value expressions, right-hand-side expressions,
+An ODE model stores initial value expressions, right-hand-side expressions,
 equations, observables, parameters, free parameter names, state metadata, and
 flattened dosing events. Expressions may still be symbolic and unit-aware.
-parameters already defined by the `compphysiol_model` are carried into the
-`compphysiol_ode_model`; other symbols remain free parameters to be supplied later, for
+Parameters already defined by the compartment model are carried into the
+ODE model; other symbols remain free parameters to be supplied later, for
 example during simulation.
 
-observables in a `compphysiol_ode_model` are still defined in terms of the model state, not
+Observables in an ODE model are still defined in terms of the model state, not
 in terms of a solver output table. When an observable requests a concentration
 state but the ODE state is represented as an amount, the lowered observable
 uses the amount state together with the compartment volume conversion.
 
 Unit checking remains a boundary operation rather than a defining part of the
-representation. When the user supplies a `compphysiol_model`, unit errors can be
+representation. When the user supplies a compartment model, unit errors can be
 reported in terms of compartments, transports, reactions, and other model
-components. When the user supplies a `compphysiol_ode_model`, unit errors are reported in
+components. When the user supplies an ODE model, unit errors are reported in
 terms of ODE states and their expressions.
 
 An ODE model can also be lowered to a
-`compphysiol_desolve_compiled_model`. This does not change the mathematical
+compiled deSolve model. This does not change the mathematical
 model; it prepares a deSolve-specific executable representation of the same ODE
 system so that repeated numerical simulations can avoid rebuilding
 solver-facing functions and metadata.
 
-Implementation anchor: ODE-model objects are created by `to_ode_model()`.
-Compiled deSolve models are currently created by `to_compiled_ode_model()`.
+Implementation anchor: `to_ode_model()` creates `compphysiol_ode_model`
+objects; `to_compiled_ode_model()` creates
+`compphysiol_desolve_compiled_model` objects.
 
 ## ODE export
 
-ODE export turns a `compphysiol_ode_model` into objects that can be used by an ODE solver.
+ODE export turns an ODE model into objects that can be used by an ODE solver.
 This step prepares numeric initial conditions, substitutes equations and
 parameters where needed, checks that all required numerical values are
 available, handles dosing events, and builds the generated derivative function.
@@ -765,7 +781,7 @@ available, handles dosing events, and builds the generated derivative function.
 Conceptually, this is the point where the solver-neutral ODE description
 becomes a solver-facing dynamical system. The amount-preferred state
 representation policy described under State has already been applied when
-creating the `compphysiol_ode_model`.
+creating the ODE model.
 
 ODE export is a solver-facing boundary. The exported initial values, event
 tables, and derivative functions are numeric objects in the requested output
@@ -785,30 +801,30 @@ Users should call `simulate()` for solver output or `to_ode_model()` for the
 solver-neutral ODE representation.
 
 Compiled deSolve execution uses a cached solver-specific executable model. A
-`compphysiol_desolve_compiled_model` stores the original ODE model together with a compiled
+compiled deSolve model stores the original ODE model together with a compiled
 right-hand side, compiled initial-value evaluation, fixed solver dimensions,
 default dosing event data, and cached unit/output metadata. Runtime parameter
 values and experiment dosing schedules may vary, but the parameter interface,
 solver dimensions, and state/process structure are fixed once the compiled cache
-has been created. experiment dosing can only address existing amount states,
+has been created. Experiment dosing can only address existing amount states,
 including the auxiliary states needed for infusions. Compartment-model simulation
 prepares the union of infusion auxiliaries when given several experiments.
 
 ## Simulation
 
-Simulation runs a `compphysiol_model` or one of its lowered model
+Simulation runs a compartment model or one of its lowered model
 representations over requested time points and returns a toolbox-level result.
-For `compphysiol_model` inputs, the `simulation_type` argument selects the
+For compartment model inputs, the `simulation_type` argument selects the
 route: numerical ODE simulation, analytical deterministic simulation,
 Gillespie stochastic simulation, or Alfonsi hybrid stochastic-deterministic
-simulation. Lowered `compphysiol_ode_model`, `compphysiol_desolve_compiled_model`, `compphysiol_analytical_model`, and
-`compphysiol_stochastic_model` objects can be simulated directly when repeated runs should
+simulation. Lowered ODE model, compiled deSolve model, analytical model, and
+stochastic model objects can be simulated directly when repeated runs should
 avoid repeated lowering or repeated ODE export work. Unlike ODE export,
 simulation owns both sides of the solver boundary: it converts unit-aware model
 quantities to numeric values for the solver and attaches units back to the
 returned trajectories.
 
-Hybrid simulation uses the same count-based `compphysiol_stochastic_model` representation
+Hybrid simulation uses the same count-based stochastic model representation
 as Gillespie simulation. A partition marks reactions as stochastic or
 deterministic, either by a fixed logical vector or by an adaptive propensity
 threshold. Stochastic event times can optionally be included in stochastic
@@ -821,9 +837,9 @@ whose stochastic event rate is too high for practical direct event simulation;
 deterministic integration steps in a hybrid simulation are not counted as
 stochastic events.
 
-Simulation returns ODE state trajectories in a `compphysiol_simulation_result` object.
+Simulation returns ODE state trajectories in a simulation result object.
 When observables are defined, their predictions are included in an
-`compphysiol_observation_data` object
+observation data object
 with `time`, `observable`, and `value` columns (plus `rep` for stochastic
 replicates); otherwise the observables component is `NULL`. Direct time input
 requests all observables at each time. An explicit experiment requests only its
@@ -864,10 +880,10 @@ unit-aware time points cannot be used with a model that is unit-free in time.
 
 Passing a lowered model representation to `simulate()` can avoid repeated
 lowering when the same model structure is simulated multiple times with
-different runtime parameter values. Passing a `compphysiol_model` keeps
+different runtime parameter values. Passing a compartment model keeps
 diagnostics closer to the original model components.
 
-Passing a `compphysiol_desolve_compiled_model` goes further: after the first simulation fills the
+Passing a compiled deSolve model goes further: after the first simulation fills the
 compiled cache, repeated simulations reuse the compiled ODE representation and
 cached solver metadata. This is intended for workloads such as parameter
 estimation where the model structure is fixed and only parameter values vary.
@@ -876,8 +892,10 @@ later simulations must use compatible parameter units and cannot introduce
 additional parameters or a different solver dimension set.
 
 Implementation anchor: simulation is handled by `simulate()` methods for
-`compphysiol_model`, `compphysiol_ode_model`, `compphysiol_desolve_compiled_model`, `compphysiol_analytical_model`, and
-`compphysiol_stochastic_model` objects.
+`compphysiol_compartment_model`, `compphysiol_ode_model`,
+`compphysiol_desolve_compiled_model`, `compphysiol_analytical_model`, and
+`compphysiol_stochastic_model` objects; results use
+`compphysiol_simulation_result`.
 
 ## Lumping
 
@@ -902,13 +920,13 @@ being simulated only through numerical ODE integration. This is useful for
 closed-form reasoning, model reduction, and comparison with classical PK
 solutions.
 
-A `compphysiol_analytical_model` is the package-owned intermediate representation of a
-linear system derived from a `compphysiol_process_model`. It stores the system in the form
+An analytical model is the package-owned intermediate representation of a
+linear system derived from a process model. It stores the system in the form
 `dx/dt = A x + b`, together with the one-dimensional state metadata, initial
 value expressions, equations, observables, parameters, and free parameter
 names. The constant source term `b` is part of the representation, although
 the first implementation only accepts homogeneous systems with `b = 0`.
 
-Implementation anchor: `compphysiol_analytical_model` objects are created by
-`to_analytical_model()` and can be simulated with `simulate()`. Exporting
+Implementation anchor: `to_analytical_model()` creates
+`compphysiol_analytical_model` objects that can be simulated with `simulate()`. Exporting
 analytical solution functions is an internal compatibility path.

@@ -2,45 +2,45 @@
     unique(c(primary, parents, base))
 }
 
-.class_compphysiol_model <- function() {
+.class_compartment_model <- function() {
     .compphysiol_class(
-        "compphysiol_model",
-        parents = "compphysiol_model_representation"
+        "compphysiol_compartment_model",
+        parents = "compphysiol_model"
     )
 }
 
 .class_process_model <- function() {
     .compphysiol_class(
         "compphysiol_process_model",
-        parents = "compphysiol_model_representation"
+        parents = "compphysiol_model"
     )
 }
 
 .class_ode_model <- function() {
     .compphysiol_class(
         "compphysiol_ode_model",
-        parents = "compphysiol_model_representation"
+        parents = "compphysiol_model"
     )
 }
 
 .class_desolve_compiled_model <- function() {
     .compphysiol_class(
         "compphysiol_desolve_compiled_model",
-        parents = c("compphysiol_executable_model", "compphysiol_model_representation")
+        parents = c("compphysiol_executable_model", "compphysiol_model")
     )
 }
 
 .class_analytical_model <- function() {
     .compphysiol_class(
         "compphysiol_analytical_model",
-        parents = "compphysiol_model_representation"
+        parents = "compphysiol_model"
     )
 }
 
 .class_stochastic_model <- function() {
     .compphysiol_class(
         "compphysiol_stochastic_model",
-        parents = "compphysiol_model_representation"
+        parents = "compphysiol_model"
     )
 }
 
@@ -50,8 +50,8 @@
 
 .compphysiol_class_name_label <- function(class) {
     labels <- c(
-        compphysiol_model = "Compartment model",
-        compphysiol_model_representation = "Model representation",
+        compphysiol_compartment_model = "Compartment model",
+        compphysiol_model = "Model",
         compphysiol_process_model = "Process model",
         compphysiol_ode_model = "ODE model",
         compphysiol_desolve_compiled_model = "Compiled deSolve model",

@@ -2,12 +2,12 @@
 % Please edit documentation in R/CompartmentModel.R
 \name{initials}
 \alias{initials}
-\title{Extract the initial states (with names) from a \code{compphysiol_model} object}
+\title{Extract the initial states (with names) from a \code{compphysiol_compartment_model} object}
 \usage{
 initials(model, type = c("a[] or c[]", "c[] or a[]", "a[] only", "c[] only"))
 }
 \arguments{
-\item{model}{A \code{compphysiol_model} object}
+\item{model}{A \code{compphysiol_compartment_model} object}
 
 \item{type}{The type of initials to extract: the default \code{"a[] or c[]"} means amounts are attempted first,
 but concentrations given if amounts cannot be calculated. \code{"c[] or a[]"} does the opposite,
@@ -21,5 +21,5 @@ A named list of state initial values, where the names are in the format
 \code{"a[molec,cmt]"} for amount states or \code{"c[molec,cmt]"} for concentration states.
 }
 \description{
-Extract the initial states (with names) from a \code{compphysiol_model} object
+Extract the initial states (with names) from a \code{compphysiol_compartment_model} object
 }

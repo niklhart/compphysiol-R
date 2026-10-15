@@ -1,10 +1,10 @@
 #' Create a process model representation
 #'
-#' `to_process_model()` lowers a `compphysiol_model` to a solver-neutral process
+#' `to_process_model()` lowers a `compphysiol_compartment_model` to a solver-neutral process
 #' representation with explicit states, process rates, and process
 #' stoichiometry.
 #'
-#' @param model A `compphysiol_model` object.
+#' @param model A `compphysiol_compartment_model` object.
 #' @returns A `compphysiol_process_model` object.
 #' @export
 to_process_model <- function(model) {
@@ -12,7 +12,7 @@ to_process_model <- function(model) {
 }
 
 #' @export
-to_process_model.compphysiol_model <- function(model) {
+to_process_model.compphysiol_compartment_model <- function(model) {
     model <- model |> wire() |> make_depot()
     .ode_model_check_transport_compartments(model)
 
@@ -180,10 +180,10 @@ to_process_model.compphysiol_model <- function(model) {
 
 #' Create an ODE model representation
 #'
-#' `to_ode_model()` lowers a `compphysiol_model` or `compphysiol_process_model` to a
+#' `to_ode_model()` lowers a `compphysiol_compartment_model` or `compphysiol_process_model` to a
 #' solver-neutral ODE representation with indexed one-dimensional states.
 #'
-#' @param model A `compphysiol_model` or `compphysiol_process_model` object.
+#' @param model A `compphysiol_compartment_model` or `compphysiol_process_model` object.
 #' @returns A `compphysiol_ode_model` object.
 #' @export
 to_ode_model <- function(model) {
@@ -191,7 +191,7 @@ to_ode_model <- function(model) {
 }
 
 #' @export
-to_ode_model.compphysiol_model <- function(model) {
+to_ode_model.compphysiol_compartment_model <- function(model) {
     model |> to_process_model() |> to_ode_model()
 }
 
@@ -231,12 +231,12 @@ to_ode_model.compphysiol_process_model <- function(model) {
 
 #' Create a compiled ODE model representation
 #'
-#' `to_compiled_ode_model()` lowers a `compphysiol_model`, `compphysiol_process_model`, or
+#' `to_compiled_ode_model()` lowers a `compphysiol_compartment_model`, `compphysiol_process_model`, or
 #' `compphysiol_ode_model` to a compiled-backend representation. The first implementation
 #' records the stable model metadata needed by the compiled deSolve backend;
 #' code generation and dynamic loading are attached in later backend steps.
 #'
-#' @param model A `compphysiol_model`, `compphysiol_process_model`, or `compphysiol_ode_model` object.
+#' @param model A `compphysiol_compartment_model`, `compphysiol_process_model`, or `compphysiol_ode_model` object.
 #' @returns A `compphysiol_desolve_compiled_model` object.
 #' @export
 to_compiled_ode_model <- function(model) {
@@ -244,7 +244,7 @@ to_compiled_ode_model <- function(model) {
 }
 
 #' @export
-to_compiled_ode_model.compphysiol_model <- function(model) {
+to_compiled_ode_model.compphysiol_compartment_model <- function(model) {
     model |> to_ode_model() |> to_compiled_ode_model()
 }
 
@@ -277,14 +277,14 @@ to_compiled_ode_model.compphysiol_ode_model <- function(model) {
 
 #' Create an analytical model representation
 #'
-#' `to_analytical_model()` lowers a `compphysiol_model` or `compphysiol_process_model` to a
+#' `to_analytical_model()` lowers a `compphysiol_compartment_model` or `compphysiol_process_model` to a
 #' solver-neutral linear analytical representation of the form `dx/dt = A x + b`.
 #'
 #' The first implementation supports homogeneous first-order linear systems.
 #' The constant source term `b` is part of the representation, but nonzero
 #' entries are rejected for now.
 #'
-#' @param model A `compphysiol_model` or `compphysiol_process_model` object.
+#' @param model A `compphysiol_compartment_model` or `compphysiol_process_model` object.
 #' @returns A `compphysiol_analytical_model` object.
 #' @export
 to_analytical_model <- function(model) {
@@ -292,7 +292,7 @@ to_analytical_model <- function(model) {
 }
 
 #' @export
-to_analytical_model.compphysiol_model <- function(model) {
+to_analytical_model.compphysiol_compartment_model <- function(model) {
     model |> to_process_model() |> to_analytical_model()
 }
 
@@ -325,14 +325,14 @@ to_analytical_model.compphysiol_process_model <- function(model) {
 
 #' Create a stochastic model representation
 #'
-#' `to_stochastic_model()` lowers a `compphysiol_model` or `compphysiol_process_model` to a
+#' `to_stochastic_model()` lowers a `compphysiol_compartment_model` or `compphysiol_process_model` to a
 #' count-based representation suitable for Gillespie SSA simulation.
 #'
 #' The first implementation supports models whose processes can be rendered as
 #' elementary propensities from their `const` and input-state metadata. Explicit
 #' `rate = ...` processes and dosing are rejected.
 #'
-#' @param model A `compphysiol_model` or `compphysiol_process_model` object.
+#' @param model A `compphysiol_compartment_model` or `compphysiol_process_model` object.
 #' @returns A `compphysiol_stochastic_model` object.
 #' @export
 to_stochastic_model <- function(model) {
@@ -340,7 +340,7 @@ to_stochastic_model <- function(model) {
 }
 
 #' @export
-to_stochastic_model.compphysiol_model <- function(model) {
+to_stochastic_model.compphysiol_compartment_model <- function(model) {
     model |> to_process_model() |> to_stochastic_model()
 }
 
@@ -692,7 +692,7 @@ print.compphysiol_ode_model <- function(x, ...) {
 
 .to_analytical <- function(model, parameters = list(), dimensions = NULL) {
     if (!inherits(model, "compphysiol_analytical_model")) {
-        .check_class(model, "compphysiol_model")
+        .check_class(model, "compphysiol_compartment_model")
         model <- to_analytical_model(model)
     }
     parameters <- .simulation_parameters_object(parameters)

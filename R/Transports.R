@@ -168,13 +168,13 @@ transports <- function(from, to, molec = NA_character_, ..., rate = NULL, const 
 }
 
 
-#' Add one or several transports to a `compphysiol_model` object.
+#' Add one or several transports to a `compphysiol_compartment_model` object.
 #'
 #' @inherit transports description details
-#' @param model A `compphysiol_model` object.
+#' @param model A `compphysiol_compartment_model` object.
 #' @inheritParams transports
 #' @param trans A `compphysiol_transports` object. Constructed from the other inputs if not provided.
-#' @returns The modified `compphysiol_model` object.
+#' @returns The modified `compphysiol_compartment_model` object.
 #' @examples
 #' # Add a linear transport
 #' compartment_model() |>
@@ -201,7 +201,7 @@ add_transport <- function(
     const = NULL,
     trans
 ) {
-    .check_class(model, "compphysiol_model")
+    .check_class(model, "compphysiol_compartment_model")
 
     call <- match.call()
 

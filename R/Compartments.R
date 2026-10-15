@@ -83,13 +83,13 @@ compartments <- function(name = character(0), volume = "V{name}", unit = NULL) {
     )
 }
 
-#' Add one or several compartments to a `compphysiol_model` object.
+#' Add one or several compartments to a `compphysiol_compartment_model` object.
 #'
 #' @inherit compartments description details
-#' @param model A `compphysiol_model` object.
+#' @param model A `compphysiol_compartment_model` object.
 #' @inheritParams compartments
 #' @param comp A `compphysiol_compartments` object. Constructed from the other inputs if not provided.
-#' @returns The modified `compphysiol_model` object.
+#' @returns The modified `compphysiol_compartment_model` object.
 #' @examples
 #' # Several compartments added in a single call
 #' compartment_model() |>
@@ -109,7 +109,7 @@ add_compartment <- function(
     unit = NULL,
     comp
 ) {
-    .check_class(model, "compphysiol_model")
+    .check_class(model, "compphysiol_compartment_model")
 
     call <- match.call()
 

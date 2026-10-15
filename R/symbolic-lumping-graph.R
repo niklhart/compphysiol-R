@@ -1,8 +1,8 @@
 # Graph theoretical helpers for symbolic lumping
 
-#' Create condensation graph from a `compphysiol_model` and reference state
+#' Create condensation graph from a `compphysiol_compartment_model` and reference state
 #'
-#' @param M A `compphysiol_model` object
+#' @param M A `compphysiol_compartment_model` object
 #' @param refstate A string specifying the reference state
 #' @returns A list with entries `nodes`, `edges`, `sccs`, `scc_id`
 #' @noRd
@@ -14,9 +14,9 @@
 }
 
 
-#' Construct a directed graph encoding the topology of a linear `compphysiol_model`.
+#' Construct a directed graph encoding the topology of a linear `compphysiol_compartment_model`.
 #'
-#' @param model A `compphysiol_model` object
+#' @param model A `compphysiol_compartment_model` object
 #' @param refstate A string, corresponding to the state used as reference.
 #' @returns A length two named list with entries `edges` (a data frame with
 #'     columns `from` and `to`) and `nodes` (a character vector)

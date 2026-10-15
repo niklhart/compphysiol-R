@@ -12,7 +12,7 @@ get_lumping_conditions(
 )
 }
 \arguments{
-\item{M}{A \code{compphysiol_model} object}
+\item{M}{A \code{compphysiol_compartment_model} object}
 
 \item{refstate}{A string specifying the reference state}
 

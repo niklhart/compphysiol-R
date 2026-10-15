@@ -2,12 +2,12 @@
 % Please edit documentation in R/equations.R
 \name{add_equation}
 \alias{add_equation}
-\title{Add one or several equations to a \code{compphysiol_model} object.}
+\title{Add one or several equations to a \code{compphysiol_compartment_model} object.}
 \usage{
 add_equation(model, ..., name = character(0), expr = character(0), eq)
 }
 \arguments{
-\item{model}{A \code{compphysiol_model} object.}
+\item{model}{A \code{compphysiol_compartment_model} object.}
 
 \item{...}{Name-expression pairs defining the equations. The expressions can be provided as character strings or as R calls.}
 
@@ -19,7 +19,7 @@ Expressions may contain parameters that are added to the model's parameters list
 \item{eq}{A \code{compphysiol_equations} object. Constructed from the other inputs if not provided.}
 }
 \value{
-The modified \code{compphysiol_model} object.
+The modified \code{compphysiol_compartment_model} object.
 }
 \description{
 compphysiol_equations allow to define algebraic relationships between model variables,

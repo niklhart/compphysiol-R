@@ -3,7 +3,7 @@
 \name{class_predicates}
 \alias{class_predicates}
 \alias{is_model}
-\alias{is_model_representation}
+\alias{is_compartment_model}
 \alias{is_process_model}
 \alias{is_ode_model}
 \alias{is_desolve_compiled_model}
@@ -51,7 +51,7 @@
 \usage{
 is_model(x)
 
-is_model_representation(x)
+is_compartment_model(x)
 
 is_process_model(x)
 

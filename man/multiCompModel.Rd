@@ -14,7 +14,7 @@ multiCompModel(ncomp = 1, type = c("micro", "macro"), unit = NULL)
 \item{unit}{Units for initial amounts (character scalar or \code{NULL}, the default).}
 }
 \value{
-A \code{compphysiol_model} object
+A \code{compphysiol_compartment_model} object
 }
 \description{
 Create an empirical multi-compartment PK model in micro- or macro-parameterization

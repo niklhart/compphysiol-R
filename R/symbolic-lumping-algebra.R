@@ -1,6 +1,6 @@
 # Linear algebra for symbolic lumping of ODE systems
 
-#' Symbolic lumping of a linear `compphysiol_model` based on its graph structure
+#' Symbolic lumping of a linear `compphysiol_compartment_model` based on its graph structure
 #' @param trans A `compphysiol_transports` object
 #' @param scc A character vector, the strongly connected component (SCC) to be lumped
 #' @returns A list with entries `internal`, `incoming`, `outgoing`, `elimination`, each a `compphysiol_transports` object

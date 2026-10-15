@@ -1,16 +1,16 @@
 # generic lumping function
 
-#' Lump a `compphysiol_model` object
+#' Lump a `compphysiol_compartment_model` object
 #'
-#' @param M A `compphysiol_model` object, the model to be lumped.
+#' @param M A `compphysiol_compartment_model` object, the model to be lumped.
 #' @param partitioning A list of character vectors (each a group of compartments)
 #' @param normalize A named list of quoted calls giving normalizing factors for each compartment
-#' @returns A `compphysiol_model` object representing the lumped model
+#' @returns A `compphysiol_compartment_model` object representing the lumped model
 #' @export
 lump_model <- function(M, partitioning = list(), normalize = list()) {
 
     # --- validate model ------------------------------------------------------
-    .check_class(M, "compphysiol_model")
+    .check_class(M, "compphysiol_compartment_model")
     M <- wire(M)
     if (!.is_linear(M)) stop("Lumping is only supported for linear models.")
     if (length(M$reactions) > 0) {

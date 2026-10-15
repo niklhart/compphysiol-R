@@ -33,7 +33,7 @@ deSolve_engine <- function(compiled = FALSE) {
 
 #' Simulate a compartment model
 #'
-#' `simulate()` solves a `compphysiol_model` and returns toolbox-level output.
+#' `simulate()` solves a `compphysiol_compartment_model` and returns toolbox-level output.
 #' The default route wraps the `deSolve` ODE export and returns ODE states and
 #' observables.
 #'
@@ -49,7 +49,7 @@ deSolve_engine <- function(compiled = FALSE) {
 #' converted to kilograms internally, an `atol` value is applied on the kilogram
 #' scale even if results are displayed back in milligrams.
 #'
-#' @param object A `compphysiol_model` object.
+#' @param object A `compphysiol_compartment_model` object.
 #' @param nsim Number of stochastic realizations for `simulation_type = "ssa"`.
 #'   Ignored by deterministic simulation routes.
 #' @param seed Optional random seed for stochastic simulation routes.
@@ -104,9 +104,9 @@ deSolve_engine <- function(compiled = FALSE) {
 #' out$states
 #' out$observables
 #' @importFrom stats simulate
-#' @method simulate compphysiol_model
+#' @method simulate compphysiol_compartment_model
 #' @export
-simulate.compphysiol_model <- function(
+simulate.compphysiol_compartment_model <- function(
     object,
     nsim = NULL,
     seed = NULL,

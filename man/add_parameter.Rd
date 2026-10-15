@@ -2,12 +2,12 @@
 % Please edit documentation in R/Parameters.R
 \name{add_parameter}
 \alias{add_parameter}
-\title{Add one or several parameters to a \code{compphysiol_model} object.}
+\title{Add one or several parameters to a \code{compphysiol_compartment_model} object.}
 \usage{
 add_parameter(model, ..., name = NULL, value = NULL, unit = NULL, param)
 }
 \arguments{
-\item{model}{A \code{compphysiol_model} object.}
+\item{model}{A \code{compphysiol_compartment_model} object.}
 
 \item{...}{Parameter values as name-value pairs, where values can optionally have units (e.g., \code{A = 2 [m]}).
 Values are evaluated from left to right and may refer to parameters
@@ -22,7 +22,7 @@ defined earlier in the same call.}
 \item{param}{A \code{compphysiol_parameters} object. Constructed from the other inputs if not provided.}
 }
 \value{
-The modified \code{compphysiol_model} object.
+The modified \code{compphysiol_compartment_model} object.
 }
 \description{
 The \code{compphysiol_parameters} class represents a collection of named parameters, which can optionally have associated units.

@@ -7,13 +7,13 @@
 to_compiled_ode_model(model)
 }
 \arguments{
-\item{model}{A \code{compphysiol_model}, \code{compphysiol_process_model}, or \code{compphysiol_ode_model} object.}
+\item{model}{A \code{compphysiol_compartment_model}, \code{compphysiol_process_model}, or \code{compphysiol_ode_model} object.}
 }
 \value{
 A \code{compphysiol_desolve_compiled_model} object.
 }
 \description{
-\code{to_compiled_ode_model()} lowers a \code{compphysiol_model}, \code{compphysiol_process_model}, or
+\code{to_compiled_ode_model()} lowers a \code{compphysiol_compartment_model}, \code{compphysiol_process_model}, or
 \code{compphysiol_ode_model} to a compiled-backend representation. The first implementation
 records the stable model metadata needed by the compiled deSolve backend;
 code generation and dynamic loading are attached in later backend steps.

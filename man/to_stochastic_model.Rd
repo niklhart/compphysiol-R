@@ -7,13 +7,13 @@
 to_stochastic_model(model)
 }
 \arguments{
-\item{model}{A \code{compphysiol_model} or \code{compphysiol_process_model} object.}
+\item{model}{A \code{compphysiol_compartment_model} or \code{compphysiol_process_model} object.}
 }
 \value{
 A \code{compphysiol_stochastic_model} object.
 }
 \description{
-\code{to_stochastic_model()} lowers a \code{compphysiol_model} or \code{compphysiol_process_model} to a
+\code{to_stochastic_model()} lowers a \code{compphysiol_compartment_model} or \code{compphysiol_process_model} to a
 count-based representation suitable for Gillespie SSA simulation.
 }
 \details{
