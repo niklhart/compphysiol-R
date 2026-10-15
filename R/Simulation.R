@@ -20,7 +20,35 @@ deSolve_engine <- function(compiled = FALSE) {
     )
 }
 
+#' Configure the rxode2 simulation engine
+#'
+#' @param ... Named arguments passed to [rxode2::rxSolve()]. Model, parameter,
+#'   initial-value, event, and return-type arguments are managed by compphysiol.
+#' @returns A `compphysiol_rxode2_engine` object.
+#' @export
+rxode2_engine <- function(...) {
+    args <- list(...)
+    if (length(args) && (is.null(names(args)) || any(names(args) == ""))) {
+        stop("rxode2 engine arguments must be named.", call. = FALSE)
+    }
+    managed <- intersect(names(args), c("object", "params", "inits", "events", "returnType"))
+    if (length(managed)) {
+        stop("rxode2 engine argument(s) managed by compphysiol: ", paste(managed, collapse = ", "), ".", call. = FALSE)
+    }
+    structure(
+        list(arguments = args),
+        class = .compphysiol_class(
+            "compphysiol_rxode2_engine",
+            parents = c("compphysiol_simulation_engine", "compphysiol_engine")
+        )
+    )
+}
+
 .simulation_model_for_engine <- function(model, engine) {
+    if (inherits(engine, "compphysiol_rxode2_engine")) {
+        if (!inherits(model, "compphysiol_rxode2_model")) return(to_rxode2_model(model))
+        return(model)
+    }
     if (!inherits(engine, "compphysiol_desolve_engine")) {
         stop("Unsupported simulation engine: ", class(engine)[1], ".", call. = FALSE)
     }
@@ -65,6 +93,8 @@ deSolve_engine <- function(compiled = FALSE) {
 #'   numerical ODE path. `"analytical"` uses matrix exponentials for supported
 #'   linear models. `"ssa"` uses Gillespie's stochastic simulation algorithm.
 #'   `"hybrid"` uses the Alfonsi hybrid stochastic-deterministic algorithm.
+#' @param engine Numerical ODE simulation engine. Defaults to
+#'   [deSolve_engine()] for compatibility; use [rxode2_engine()] for rxode2.
 #' @param partition Partitioning for `simulation_type = "hybrid"`. A logical
 #'   vector marks stochastic reactions with `TRUE` and deterministic reactions
 #'   with `FALSE`. A non-negative numeric scalar enables adaptive partitioning:
@@ -115,12 +145,16 @@ simulate.compphysiol_compartment_model <- function(
     parameters = list(),
     dimensions = NULL,
     simulation_type = c("ode", "analytical", "ssa", "hybrid"),
+    engine = deSolve_engine(),
     partition = NULL,
     include_event_times = FALSE,
     max_events = Inf,
     ...,
     experiment = NULL
 ) {
+    if (!inherits(engine, "compphysiol_simulation_engine")) {
+        stop("engine must be a compphysiol simulation engine.", call. = FALSE)
+    }
     if (!is.null(experiment)) {
         if (!missing(time) || !missing(unit) || !missing(parameters)) {
             stop("experiment cannot be combined with time, unit, or parameters.", call. = FALSE)
@@ -128,10 +162,13 @@ simulate.compphysiol_compartment_model <- function(
         if (match.arg(simulation_type) != "ode") {
             stop("Experiment simulation currently supports ODE models only.", call. = FALSE)
         }
-        return(.simulate_experiments(object, experiment, dimensions = dimensions, ...))
+        return(.simulate_experiments(object, experiment, dimensions = dimensions, engine = engine, ...))
     }
 
     simulation_type <- match.arg(simulation_type)
+    if (!identical(simulation_type, "ode") && !inherits(engine, "compphysiol_desolve_engine")) {
+        stop("engine is only supported for simulation_type = 'ode'.", call. = FALSE)
+    }
 
     time <- .process_nse_arg(substitute(time), envir = parent.frame())
     partition <- .process_nse_arg(substitute(partition), envir = parent.frame())
@@ -184,6 +221,15 @@ simulate.compphysiol_compartment_model <- function(
     .simulation_check_time_mode(export_model, time)
 
     dimensions <- .simulation_dimensions(export_model, time, dimensions)
+    if (inherits(engine, "compphysiol_rxode2_engine")) {
+        return(simulate(
+            to_rxode2_model(ode_model), time = time, parameters = export_model$parameters,
+            dimensions = dimensions, engine = engine, ...
+        ))
+    }
+    if (!inherits(engine, "compphysiol_desolve_engine")) {
+        stop("Unsupported simulation engine: ", class(engine)[1], ".", call. = FALSE)
+    }
     odeinfo <- .to_deSolve(ode_model, dimensions = dimensions)
 
     .simulation_solve_ode_model(
@@ -205,6 +251,7 @@ simulate.compphysiol_ode_model <- function(
     unit = NULL,
     parameters = list(),
     dimensions = NULL,
+    engine = deSolve_engine(),
     ...,
     experiment = NULL
 ) {
@@ -212,7 +259,15 @@ simulate.compphysiol_ode_model <- function(
         if (!missing(time) || !missing(unit) || !missing(parameters)) {
             stop("experiment cannot be combined with time, unit, or parameters.", call. = FALSE)
         }
-        return(.simulate_experiments(object, experiment, dimensions = dimensions, ...))
+        return(.simulate_experiments(object, experiment, dimensions = dimensions, engine = engine, ...))
+    }
+
+    if (inherits(engine, "compphysiol_rxode2_engine")) {
+        return(simulate(to_rxode2_model(object), time = time, unit = unit,
+                        parameters = parameters, dimensions = dimensions, engine = engine, ...))
+    }
+    if (!inherits(engine, "compphysiol_desolve_engine")) {
+        stop("Unsupported simulation engine: ", class(engine)[1], ".", call. = FALSE)
     }
 
     .simulate_ode_backend(

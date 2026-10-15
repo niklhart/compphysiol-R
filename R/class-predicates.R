@@ -35,6 +35,10 @@ is_desolve_compiled_model <- function(x) .inherits_compphysiol(x, "desolve_compi
 
 #' @rdname class_predicates
 #' @export
+is_rxode2_model <- function(x) .inherits_compphysiol(x, "rxode2_model")
+
+#' @rdname class_predicates
+#' @export
 is_executable_model <- function(x) .inherits_compphysiol(x, "executable_model")
 
 #' @rdname class_predicates
@@ -160,6 +164,10 @@ is_simulation_engine <- function(x) .inherits_compphysiol(x, "simulation_engine"
 #' @rdname class_predicates
 #' @export
 is_desolve_engine <- function(x) .inherits_compphysiol(x, "desolve_engine")
+
+#' @rdname class_predicates
+#' @export
+is_rxode2_engine <- function(x) .inherits_compphysiol(x, "rxode2_engine")
 
 #' @rdname class_predicates
 #' @export

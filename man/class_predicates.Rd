@@ -7,6 +7,7 @@
 \alias{is_process_model}
 \alias{is_ode_model}
 \alias{is_desolve_compiled_model}
+\alias{is_rxode2_model}
 \alias{is_executable_model}
 \alias{is_analytical_model}
 \alias{is_stochastic_model}
@@ -39,6 +40,7 @@
 \alias{is_engine}
 \alias{is_simulation_engine}
 \alias{is_desolve_engine}
+\alias{is_rxode2_engine}
 \alias{is_estimation_engine}
 \alias{is_optim_engine}
 \alias{is_simulation_result}
@@ -58,6 +60,8 @@ is_process_model(x)
 is_ode_model(x)
 
 is_desolve_compiled_model(x)
+
+is_rxode2_model(x)
 
 is_executable_model(x)
 
@@ -122,6 +126,8 @@ is_engine(x)
 is_simulation_engine(x)
 
 is_desolve_engine(x)
+
+is_rxode2_engine(x)
 
 is_estimation_engine(x)
 

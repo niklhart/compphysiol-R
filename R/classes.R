@@ -30,6 +30,13 @@
     )
 }
 
+.class_rxode2_model <- function() {
+    .compphysiol_class(
+        "compphysiol_rxode2_model",
+        parents = c("compphysiol_executable_model", "compphysiol_model")
+    )
+}
+
 .class_analytical_model <- function() {
     .compphysiol_class(
         "compphysiol_analytical_model",
@@ -55,6 +62,7 @@
         compphysiol_process_model = "Process model",
         compphysiol_ode_model = "ODE model",
         compphysiol_desolve_compiled_model = "Compiled deSolve model",
+        compphysiol_rxode2_model = "rxode2 model",
         compphysiol_executable_model = "Executable model",
         compphysiol_analytical_model = "Analytical model",
         compphysiol_stochastic_model = "Stochastic model",
@@ -86,6 +94,7 @@
         compphysiol_parameter_specs = "Parameter specifications",
         compphysiol_simulation_engine = "Simulation engine",
         compphysiol_desolve_engine = "deSolve engine",
+        compphysiol_rxode2_engine = "rxode2 engine",
         compphysiol_estimation_engine = "Estimation engine",
         compphysiol_optim_engine = "optim engine",
         compphysiol_simulation_result = "Simulation result",

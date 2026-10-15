@@ -13,6 +13,7 @@
   parameters = list(),
   dimensions = NULL,
   simulation_type = c("ode", "analytical", "ssa", "hybrid"),
+  engine = deSolve_engine(),
   partition = NULL,
   include_event_times = FALSE,
   max_events = Inf,
@@ -44,6 +45,9 @@ tolerances such as \code{atol}.}
 numerical ODE path. \code{"analytical"} uses matrix exponentials for supported
 linear models. \code{"ssa"} uses Gillespie's stochastic simulation algorithm.
 \code{"hybrid"} uses the Alfonsi hybrid stochastic-deterministic algorithm.}
+
+\item{engine}{Numerical ODE simulation engine. Defaults to
+\code{\link[=deSolve_engine]{deSolve_engine()}} for compatibility; use \code{\link[=rxode2_engine]{rxode2_engine()}} for rxode2.}
 
 \item{partition}{Partitioning for \code{simulation_type = "hybrid"}. A logical
 vector marks stochastic reactions with \code{TRUE} and deterministic reactions

@@ -673,8 +673,9 @@ be run repeatedly. Executable models additionally share an executable-model
 superclass. They do not inherit from the solver-neutral ODE-model class merely
 because they contain or
 were derived from one: their own structure follows a backend-specific contract.
-The compiled deSolve representation is the first executable model. A future
-rxode2 representation will belong to the same category.
+The compiled deSolve representation and the rxode2 representation are
+executable models in this category. The rxode2 representation retains generated
+backend source and caches its compiled payload for repeated simulation.
 
 An engine selects and configures how a representation is executed. Simulation
 engines and estimation engines are execution strategies, not model
@@ -682,6 +683,11 @@ representations. Solver payloads, such as a deSolve derivative function,
 numeric initial state, parameter vector, and event table prepared for one run,
 are transient internal objects. ODE export names the transformation across this
 solver boundary; it is not a public class hierarchy.
+
+For numerical ODE simulation, `simulation_type = "ode"` selects the ODE
+semantics while `deSolve_engine()` or `rxode2_engine()` selects the execution
+backend. The rxode2 engine contains solver configuration; scientific model
+content remains in the model representation.
 
 Package-owned S3 classes use lower-case `compphysiol_`-prefixed names to avoid
 global S3 class collisions. Constructor and modelling function names remain

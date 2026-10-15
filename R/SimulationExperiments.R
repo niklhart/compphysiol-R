@@ -7,7 +7,7 @@
     for (e in experiments) {
         validate_experiment(e)
         if (!nrow(e$observations)) stop("Experiment simulation requires nonempty observations.", call. = FALSE)
-        model <- if (inherits(object, "compphysiol_desolve_compiled_model")) object$ode_model else object
+        model <- if (inherits(object, c("compphysiol_desolve_compiled_model", "compphysiol_rxode2_model"))) object$ode_model else object
         unknown <- setdiff(e$observations$observable, names(model$observables))
         if (length(unknown)) stop("Unknown observable(s): ", paste(unknown, collapse = ", "), call. = FALSE)
     }
