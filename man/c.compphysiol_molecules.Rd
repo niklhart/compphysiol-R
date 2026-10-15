@@ -2,16 +2,16 @@
 % Please edit documentation in R/Molecules.R
 \name{c.compphysiol_molecules}
 \alias{c.compphysiol_molecules}
-\title{Combine multiple \code{Molecules} objects into one}
+\title{Combine multiple \code{compphysiol_molecules} objects into one}
 \usage{
 \method{c}{compphysiol_molecules}(...)
 }
 \arguments{
-\item{...}{Multiple \code{Molecules} objects to combine}
+\item{...}{Multiple \code{compphysiol_molecules} objects to combine}
 }
 \value{
-A combined \code{Molecules} object
+A combined \code{compphysiol_molecules} object
 }
 \description{
-Combine multiple \code{Molecules} objects into one
+Combine multiple \code{compphysiol_molecules} objects into one
 }

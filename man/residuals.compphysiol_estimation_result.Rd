@@ -7,12 +7,12 @@
 \method{residuals}{compphysiol_estimation_result}(object, ...)
 }
 \arguments{
-\item{object}{An \code{EstimationResult}.}
+\item{object}{An \code{compphysiol_estimation_result}.}
 
 \item{...}{Unused.}
 }
 \value{
-Unit-aware \code{ObservationData} of observed-minus-fitted residuals.
+Unit-aware \code{compphysiol_observation_data} of observed-minus-fitted residuals.
 }
 \description{
 Extract estimation residuals

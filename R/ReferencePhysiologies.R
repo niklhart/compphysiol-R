@@ -2,7 +2,7 @@
 #'
 #' Experimental internal prototype for future physiology support.
 #'
-#' @returns A `Physiology` object
+#' @returns A `compphysiol_physiology` object
 #' @noRd
 #' @examples
 #' # Load reference physiology
@@ -29,7 +29,7 @@ human35m <- function() {
 #'
 #' Experimental internal prototype for future physiology support.
 #'
-#' @returns A `Physiology` object
+#' @returns A `compphysiol_physiology` object
 #' @noRd
 rat250 <- function() {
     .physiologies$rat250
@@ -40,7 +40,7 @@ rat250 <- function() {
 #'
 #' Experimental internal prototype for future physiology support.
 #'
-#' @returns A `Physiology` object
+#' @returns A `compphysiol_physiology` object
 #' @noRd
 rat475 <- function() {
     .physiologies$rat475

@@ -3,13 +3,13 @@
 #' Observable output has `time`, `observable`, and `value` columns, plus `rep`
 #' for stochastic replicates. Values are numeric for unit-free output, a `units`
 #' vector when all output units are identical, and `mixed_units` otherwise.
-#' Experiment schedule order and duplicate observation rows are retained.
+#' compphysiol_experiment schedule order and duplicate observation rows are retained.
 #' Both helpers accept an observable table directly, allowing filtering before
 #' reshaping without modifying the simulation result.
-#' @param x A `SimulationResult`, `ObservationData`, or a long-format observable
+#' @param x A `compphysiol_simulation_result`, `compphysiol_observation_data`, or a long-format observable
 #'   data frame with `time`, `observable`, and `value` columns, and optionally
 #'   `rep`.
-#' @returns An `ObservationData` object containing observable predictions.
+#' @returns An `compphysiol_observation_data` object containing observable predictions.
 #' @export
 as_observables_long <- function(x) {
     if (is.data.frame(x)) {

@@ -7,7 +7,7 @@
 \method{print}{compphysiol_parameter_sets}(x, ...)
 }
 \arguments{
-\item{x}{A \code{ParameterSets} object.}
+\item{x}{A \code{compphysiol_parameter_sets} object.}
 
 \item{...}{Unused.}
 }

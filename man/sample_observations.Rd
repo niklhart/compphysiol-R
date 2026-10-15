@@ -7,18 +7,18 @@
 sample_observations(x, statistics, parameters)
 }
 \arguments{
-\item{x}{An \code{ObservationData} object containing conditional predictions.
-Extract predictions from a \code{SimulationResult} explicitly with
+\item{x}{An \code{compphysiol_observation_data} object containing conditional predictions.
+Extract predictions from a \code{compphysiol_simulation_result} explicitly with
 \code{\link[=as_observables_long]{as_observables_long()}}.}
 
-\item{statistics}{A \link[=statistical_model]{StatisticalModel} containing a
+\item{statistics}{A \link[=statistical_model]{compphysiol_statistical_model} containing a
 distribution for every observable represented in \code{x}.}
 
-\item{parameters}{A \link[=parameters]{Parameters} object containing referenced
+\item{parameters}{A \link[=parameters]{compphysiol_parameters} object containing referenced
 observation-distribution parameters.}
 }
 \value{
-An \code{ObservationData} object whose \code{value} column contains sampled
+An \code{compphysiol_observation_data} object whose \code{value} column contains sampled
 observations.
 }
 \description{

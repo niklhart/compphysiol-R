@@ -2,16 +2,16 @@
 % Please edit documentation in R/Parameters.R
 \name{c.compphysiol_parameters}
 \alias{c.compphysiol_parameters}
-\title{Combine multiple \code{Parameters} objects into one}
+\title{Combine multiple \code{compphysiol_parameters} objects into one}
 \usage{
 \method{c}{compphysiol_parameters}(...)
 }
 \arguments{
-\item{...}{\code{Parameters} objects to combine}
+\item{...}{\code{compphysiol_parameters} objects to combine}
 }
 \value{
-A combined \code{Parameters} object
+A combined \code{compphysiol_parameters} object
 }
 \description{
-Combine multiple \code{Parameters} objects into one
+Combine multiple \code{compphysiol_parameters} objects into one
 }

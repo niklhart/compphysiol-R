@@ -2,19 +2,19 @@
 % Please edit documentation in R/Dosing.R
 \name{as.data.frame.compphysiol_dosing}
 \alias{as.data.frame.compphysiol_dosing}
-\title{Convert a \code{Dosing} object to a data frame}
+\title{Convert a \code{compphysiol_dosing} object to a data frame}
 \usage{
 \method{as.data.frame}{compphysiol_dosing}(x, ...)
 }
 \arguments{
-\item{x}{A \code{Dosing} object}
+\item{x}{A \code{compphysiol_dosing} object}
 
 \item{...}{ignored}
 }
 \value{
-A data frame representation of the \code{Dosing} object
+A data frame representation of the \code{compphysiol_dosing} object
 }
 \description{
-This method allows a \code{Dosing} object to be treated as a data frame for operations
-like subsetting and combining, while preserving the \code{Dosing} class.
+This method allows a \code{compphysiol_dosing} object to be treated as a data frame for operations
+like subsetting and combining, while preserving the \code{compphysiol_dosing} class.
 }

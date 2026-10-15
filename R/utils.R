@@ -431,12 +431,12 @@ with_units <- function(expr) {
 
 #' Substitute equations in transports
 #' 
-#' This function takes a `Transports` object and an `Equations` object, and substitutes 
+#' This function takes a `compphysiol_transports` object and an `compphysiol_equations` object, and substitutes 
 #' the equations into the rate expressions of the transports.
 #' 
-#' @param trans A `Transports` object
-#' @param eqs An `Equations` object
-#' @returns A `Transports` object with the equations substituted into the rate expressions
+#' @param trans A `compphysiol_transports` object
+#' @param eqs An `compphysiol_equations` object
+#' @returns A `compphysiol_transports` object with the equations substituted into the rate expressions
 #' @noRd
 .subst_eq <- function(trans, eqs) {
     lapply(trans, function(tr) {
@@ -453,14 +453,14 @@ with_units <- function(expr) {
 
 #' Subsetting logic for data frame-like classes (named or unnamed)
 #' 
-#' This function is used to implement the `[` method for classes like `Molecules`, `Compartments`, etc. 
+#' This function is used to implement the `[` method for classes like `compphysiol_molecules`, `compphysiol_compartments`, etc. 
 #' It applies the subset to the underlying data frame and then reconstructs the object with the same class.
 #' 
-#' @param x The object to subset (e.g. a `Molecules` object)
+#' @param x The object to subset (e.g. a `compphysiol_molecules` object)
 #' @param i The row indices to subset
 #' @param byname If `TRUE`, allows subsetting by name; if `FALSE` (default), only allows numeric indices
 #' @param ... Additional arguments (not used)
-#' @returns A subsetted object of the same class (e.g. a `Molecules` object)
+#' @returns A subsetted object of the same class (e.g. a `compphysiol_molecules` object)
 #' @noRd
 .subset_df_like <- function(x, i, byname = FALSE, ...) {
 
@@ -477,7 +477,7 @@ with_units <- function(expr) {
     structure(df_subset, class = class(x))
 }
 
-#' Combine multiple data frame-like objects (e.g. `Molecules`, `Compartments`) into one
+#' Combine multiple data frame-like objects (e.g. `compphysiol_molecules`, `compphysiol_compartments`) into one
 #'
 #' @param ... Multiple objects of the same class to combine
 #' @returns A combined object of the same class

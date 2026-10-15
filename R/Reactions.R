@@ -1,12 +1,12 @@
-#' Create a `States` object
+#' Create a `compphysiol_states` object
 #'
-#' `States` represent molecule-compartment pairs. In reactions, repeated states
+#' `compphysiol_states` represent molecule-compartment pairs. In reactions, repeated states
 #' are interpreted as stoichiometric multiplicity during reaction construction.
 #'
 #' @param ... Unused. `molec` and `cmt` must be named explicitly.
 #' @param molec Character vector of molecule names.
 #' @param cmt Character vector of compartment names.
-#' @return A `States` object.
+#' @return A `compphysiol_states` object.
 #' @export
 state <- function(..., molec, cmt) {
     if (length(list(...)) > 0) {
@@ -51,7 +51,7 @@ length.compphysiol_states <- function(x) {
 c.compphysiol_states <- function(...) {
     objs <- list(...)
     if (!all(vapply(objs, inherits, logical(1), what = "compphysiol_states"))) {
-        stop("All inputs must be of class 'States'.", call. = FALSE)
+        stop("All inputs must be of class 'compphysiol_states'.", call. = FALSE)
     }
     structure(
         do.call(rbind, lapply(objs, as.data.frame)),
@@ -73,13 +73,13 @@ print.compphysiol_states <- function(x, ...) {
         molec <- ifelse(is.na(x$molec), "<all molec>", x$molec)
         cmt <- ifelse(is.na(x$cmt), "<all cmt>", x$cmt)
         state_str <- paste0(molec, "[", cmt, "]")
-        cat(" States:\n")
+        cat(" compphysiol_states:\n")
         cat(
             sprintf("  (%s) %s\n", seq_along(x), state_str),
             sep = ""
         )
     } else {
-        cat(" States: (none)\n")
+        cat(" compphysiol_states: (none)\n")
     }
     invisible(x)
 }
@@ -285,9 +285,9 @@ print.compphysiol_states <- function(x, ...) {
     x[[i]]
 }
 
-#' Create a `Reactions` object
+#' Create a `compphysiol_reactions` object
 #'
-#' The `Reactions` class can hold several reactions, each with an input, output, rate/constant, and compartment.
+#' The `compphysiol_reactions` class can hold several reactions, each with an input, output, rate/constant, and compartment.
 #' However, each reaction needs to be defined separately, i.e., vectorized definitions are not supported for reactions 
 #' as they can be for transports and molecules -- vector arguments are instead used for defining multiple reacting species within a single reaction.
 #'
@@ -300,10 +300,10 @@ print.compphysiol_states <- function(x, ...) {
 #' e.g., `k_{cmt}` will become `k_cytoplasm` for reactions in the cytoplasm and `k_nucleus` for reactions in the nucleus.
 #' Replacement is only applied if the `cmt` argument is provided (otherwise, parameter names would change dynamically as compartments change).  
 #' 
-#' @param input Character vector or `States` object representing the input of the reaction, e.g. `c("A", "B")` 
+#' @param input Character vector or `compphysiol_states` object representing the input of the reaction, e.g. `c("A", "B")` 
 #'   for a reaction where one molecule of `A` and one molecule of `B` are consumed. 
 #'   For synthesis reactions, use an empty character vector or `NULL`.
-#' @param output Character vector or `States` object representing the output of the reaction, e.g. `"C"` 
+#' @param output Character vector or `compphysiol_states` object representing the output of the reaction, e.g. `"C"` 
 #'   for a reaction where one molecule of `C` is produced. 
 #'   For degradation reactions, use an empty character vector or `NULL`.
 #' @param cmt Character vector of compartment names where the reaction(s) occur (optional, default: all compartments)
@@ -320,9 +320,9 @@ print.compphysiol_states <- function(x, ...) {
 #'   call, numeric, or unit-bearing value).
 #'   Formally, this corresponds to `rate = const * c[input[1]] * c[input[2]] * ...`. 
 #'   In addition, the information that the reaction is elementary is encoded in the `type` 
-#'   column of the resulting `Reactions` object.
+#'   column of the resulting `compphysiol_reactions` object.
 #' @details
-#' Reactions can be specified either by separate `input` and `output`
+#' compphysiol_reactions can be specified either by separate `input` and `output`
 #' arguments or by a character reaction formula. The formula form is an
 #' interactive shorthand for the same participant representation, for example
 #' `reactions("A + B -> C", cmt = "cyt", const = "k")`. Participants may be
@@ -344,9 +344,9 @@ print.compphysiol_states <- function(x, ...) {
 #' reaction. In membrane binding models, for example, choosing the membrane as
 #' `scale_cmt` means that the reaction rate has membrane concentration units
 #' such as amount per area per time.
-#' @return A `Reactions` object containing the reaction information.
+#' @return A `compphysiol_reactions` object containing the reaction information.
 #' @examples
-#' # empty `Reactions` object
+#' # empty `compphysiol_reactions` object
 #' reactions()
 #' # association reaction (second-order)
 #' reactions(input = c("A", "B"), output = "C", const = "k1")
@@ -354,9 +354,9 @@ print.compphysiol_states <- function(x, ...) {
 #' reactions(input = "", output = "A", const = "k2")
 #' # Michelis-Menten reaction (saturable, non-elementary)
 #' reactions(input = "A", output = "B", rate = "Vmax * c[A] / (Km + c[A])")
-#' # Reactions in several compartments (same rate constants)
+#' # compphysiol_reactions in several compartments (same rate constants)
 #' reactions(input = "A", output = "B", cmt = c("cytoplasm", "nucleus"), const = "kAB")
-#' # Reactions in several compartments (different rate constants)
+#' # compphysiol_reactions in several compartments (different rate constants)
 #' reactions(input = "A", output = "B", cmt = c("cytoplasm", "nucleus"), const = "kAB_{cmt}")
 #' # Interactive character formula shorthand
 #' reactions("A + B -> C", cmt = "cytoplasm", const = "kABC")
@@ -601,13 +601,13 @@ reactions <- function(
     )
 }
 
-#' Add one or several reactions to a `CompartmentModel` object.
+#' Add one or several reactions to a `compphysiol_model` object.
 #'
 #' @inherit reactions description details
-#' @param model A `CompartmentModel` object.
+#' @param model A `compphysiol_model` object.
 #' @inheritParams reactions
-#' @param react A `Reactions` object. Constructed from the other inputs if not provided.
-#' @returns The modified `CompartmentModel` object.
+#' @param react A `compphysiol_reactions` object. Constructed from the other inputs if not provided.
+#' @returns The modified `compphysiol_model` object.
 #' @export
 #' @seealso [reactions()]
 add_reaction <- function(
@@ -638,61 +638,61 @@ add_reaction <- function(
     model
 }
 
-#' Convert a `Reactions` object to a data frame
+#' Convert a `compphysiol_reactions` object to a data frame
 #'
-#' @param x A `Reactions` object
+#' @param x A `compphysiol_reactions` object
 #' @param ... Additional arguments (not used)
-#' @return A data frame representation of the `Reactions` object
+#' @return A data frame representation of the `compphysiol_reactions` object
 #' @export
 as.data.frame.compphysiol_reactions <- function(x, ...) {
     class(x) <- "data.frame"
     x
 }
 
-#' Length of a `Reactions` object
+#' Length of a `compphysiol_reactions` object
 #'
-#' @param x A `Reactions` object
+#' @param x A `compphysiol_reactions` object
 #' @return The number of reactions in the object
 #' @export
 length.compphysiol_reactions <- function(x) {
     nrow(as.data.frame(x))
 }
 
-#' Combine multiple `Reactions` objects into one
+#' Combine multiple `compphysiol_reactions` objects into one
 #'
-#' @param ... Multiple `Reactions` objects to combine
-#' @return A combined `Reactions` object
+#' @param ... Multiple `compphysiol_reactions` objects to combine
+#' @return A combined `compphysiol_reactions` object
 #' @export
 c.compphysiol_reactions <- function(...) .combine_df_like(...)
 
-#' Subset a `Reactions` object
+#' Subset a `compphysiol_reactions` object
 #' 
-#' Allows subsetting a `Reactions` object while preserving its class.
-#' @param x A `Reactions` object
+#' Allows subsetting a `compphysiol_reactions` object while preserving its class.
+#' @param x A `compphysiol_reactions` object
 #' @param i Row indices to subset
 #' @param ... Additional arguments (not used)
-#' @return A subsetted `Reactions` object
+#' @return A subsetted `compphysiol_reactions` object
 #' @export
 `[.compphysiol_reactions` <- function(x, i, ...) .subset_df_like(x, i, byname = FALSE)
 
-#' Extraction method for `Reactions` class
+#' Extraction method for `compphysiol_reactions` class
 #'
 #' This method is intentionally not implemented to prevent direct element access,
-#' which could lead to confusion given the internal data frame-like structure of `Reactions` objects.
+#' which could lead to confusion given the internal data frame-like structure of `compphysiol_reactions` objects.
 #' Instead, users should use subsetting with `[` and a scalar name/index to access specific reactions.
 #'
-#' @param x A `Reactions` object
+#' @param x A `compphysiol_reactions` object
 #' @param i Row index to access
 #' @param ... Additional arguments (not used)
 #' @return Nothing (errors)
 #' @export
 `[[.compphysiol_reactions` <- function(x, i, ...) .extract_df_like(x, i)
 
-#' Print a `Reactions` object
+#' Print a `compphysiol_reactions` object
 #'
-#' @param x A `Reactions` object
+#' @param x A `compphysiol_reactions` object
 #' @param ... Additional arguments (not used)
-#' @return The `Reactions` object (invisible)
+#' @return The `compphysiol_reactions` object (invisible)
 #' @export
 print.compphysiol_reactions = function(x, ...) {
 
@@ -730,7 +730,7 @@ print.compphysiol_reactions = function(x, ...) {
         }, logical(1))
         scale_str <- ifelse(show_scale, paste0(", scale = ", x$scale_cmt), "")
 
-        cat(" Reactions:\n")
+        cat(" compphysiol_reactions:\n")
         cat(
             sprintf(
                 "  (%i) %s \u2192 %s%s%s, rate = %s\n",
@@ -744,15 +744,15 @@ print.compphysiol_reactions = function(x, ...) {
             sep = ""
         )
     } else {
-        cat(" Reactions: (none)\n")
+        cat(" compphysiol_reactions: (none)\n")
     }
 
     invisible(x)
 }
 
-#' Convert a `Reactions` object to a list of lists, where each inner list represents a reaction with its properties
+#' Convert a `compphysiol_reactions` object to a list of lists, where each inner list represents a reaction with its properties
 #' 
-#' @param x A `Reactions` object
+#' @param x A `compphysiol_reactions` object
 #' @param ... Additional arguments (not used)
 #' @return A list of lists, where each inner list represents a reaction with its properties
 #' @export

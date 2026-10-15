@@ -2,12 +2,12 @@
 % Please edit documentation in R/Molecules.R
 \name{[[.compphysiol_molecules}
 \alias{[[.compphysiol_molecules}
-\title{Extraction method for \code{Molecules} class}
+\title{Extraction method for \code{compphysiol_molecules} class}
 \usage{
 \method{[[}{compphysiol_molecules}(x, i, ...)
 }
 \arguments{
-\item{x}{A \code{Molecules} object}
+\item{x}{A \code{compphysiol_molecules} object}
 
 \item{i}{Row index to access}
 
@@ -18,6 +18,6 @@ Nothing (errors)
 }
 \description{
 This method is intentionally not implemented to prevent direct element access,
-which could lead to confusion given the internal data frame-like structure of \code{Molecules} objects.
+which could lead to confusion given the internal data frame-like structure of \code{compphysiol_molecules} objects.
 Instead, users should use subsetting with \code{[} and a scalar name/index to access specific molecules.
 }

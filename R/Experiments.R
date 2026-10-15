@@ -7,16 +7,16 @@
 #' `[[` to extract a single experiment.
 #'
 #' All experiments must use the same time unit mode (unit-free or unit-bearing).
-#' Parameters with the same name and dose amounts for the same molecule and
+#' compphysiol_parameters with the same name and dose amounts for the same molecule and
 #' compartment must have compatible units, or all be unit-free. Convertible
 #' units are accepted without changing the stored values. Infusions are compared
 #' through their total amounts. Omitted dosing targets match other identically
 #' omitted targets; resolving them against explicit targets requires a model
 #' and is deferred to model preparation.
 #'
-#' @param ... `Experiment` objects, optionally named with their individual
+#' @param ... `compphysiol_experiment` objects, optionally named with their individual
 #'   identifiers. For a list of experiments, use `do.call(experiments, x)`.
-#' @returns An `Experiments` object.
+#' @returns An `compphysiol_experiments` object.
 #' @examples
 #' x <- experiments(control = experiment(), treatment = experiment())
 #' x
@@ -30,7 +30,7 @@ experiments <- function(...) {
 
 .new_experiments <- function(x) {
     if (!all(vapply(x, inherits, logical(1), "compphysiol_experiment"))) {
-        stop("All elements must be Experiment objects.", call. = FALSE)
+        stop("All elements must be compphysiol_experiment objects.", call. = FALSE)
     }
     invisible(lapply(x, validate_experiment))
     .experiments_check_units(x)
@@ -92,21 +92,21 @@ experiments <- function(...) {
 #' Subset a collection of experiments
 #'
 #' Missing or unknown indices that would introduce missing elements are rejected.
-#' @param x An `Experiments` object.
+#' @param x An `compphysiol_experiments` object.
 #' @param i Numeric, logical, or character indices.
 #' @param ... Unused.
-#' @returns An `Experiments` object.
+#' @returns An `compphysiol_experiments` object.
 #' @export
 `[.compphysiol_experiments` <- function(x, i, ...) {
     .new_experiments(unclass(x)[i])
 }
 
 #' Extract an experiment
-#' @param x An `Experiments` object.
+#' @param x An `compphysiol_experiments` object.
 #' @param i Index or name of a single experiment.
 #' @param ... Unused.
 #' @param exact Whether character indices must match exactly, as for lists.
-#' @returns An `Experiment` object; unknown names return `NULL`, as for lists.
+#' @returns An `compphysiol_experiment` object; unknown names return `NULL`, as for lists.
 #' @export
 `[[.compphysiol_experiments` <- function(x, i, ..., exact = TRUE) {
     if (length(i) != 1L) stop("Select a single experiment with [[.", call. = FALSE)
@@ -114,29 +114,29 @@ experiments <- function(...) {
 }
 
 #' Combine collections of experiments
-#' @param ... `Experiments` objects to combine.
-#' @returns An `Experiments` object, preserving order and names.
+#' @param ... `compphysiol_experiments` objects to combine.
+#' @returns An `compphysiol_experiments` object, preserving order and names.
 #' @export
 c.compphysiol_experiments <- function(...) {
     objects <- list(...)
     if (!all(vapply(objects, inherits, logical(1), "compphysiol_experiments"))) {
-        stop("All arguments must be Experiments objects.", call. = FALSE)
+        stop("All arguments must be compphysiol_experiments objects.", call. = FALSE)
     }
     combined <- do.call(c, unname(lapply(objects, unclass)))
     .new_experiments(combined %||% list())
 }
 
 #' Print a collection of experiments
-#' @param x An `Experiments` object.
+#' @param x An `compphysiol_experiments` object.
 #' @param ... Unused.
 #' @returns `x`, invisibly.
 #' @export
 print.compphysiol_experiments <- function(x, ...) {
     if (!length(x)) {
-        cat(" Experiments: (none)\n")
+        cat(" compphysiol_experiments: (none)\n")
         return(invisible(x))
     }
-    cat(" Experiments:\n")
+    cat(" compphysiol_experiments:\n")
     labels <- names(x)
     for (i in seq_along(x)) {
         e <- x[[i]]

@@ -14,7 +14,7 @@
 #'
 #' @param N Number of individuals (positive integer)
 #' @param sex Character, either "male" or "female"
-#' @returns An unnamed length `N` `ParameterSets` collection.
+#' @returns An unnamed length `N` `compphysiol_parameter_sets` collection.
 #' @examples
 #' humans <- humancovdistrib(5, "female")
 #' @noRd

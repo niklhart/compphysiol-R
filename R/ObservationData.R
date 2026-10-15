@@ -8,7 +8,7 @@
 #' @param observable Nonempty observable names. A scalar is recycled over
 #'   `time`.
 #' @param ... Additional columns with one value per schedule row.
-#' @returns An `ObservationSchedule` data frame.
+#' @returns An `compphysiol_observation_schedule` data frame.
 #' @examples
 #' observation_schedule(
 #'     time = c(1, 2, 4) [h],
@@ -48,7 +48,7 @@ observation_schedule <- function(time = numeric(), observable = character(), ...
 .new_observation_schedule <- function(x) {
     if (!is.data.frame(x) || anyDuplicated(names(x)) ||
         !all(c("time", "observable") %in% names(x))) {
-        stop("An ObservationSchedule must be a data frame with unique time and observable columns.",
+        stop("A compphysiol_observation_schedule must be a data frame with unique time and observable columns.",
              call. = FALSE)
     }
     .experiment_check_time(x$time, "schedule time")
@@ -73,8 +73,8 @@ observation_schedule <- function(time = numeric(), observable = character(), ...
 #' @inheritParams observation_schedule
 #' @param value Numeric observable values, including `units` or `mixed_units`
 #'   values. A scalar is recycled over the rows.
-#' @returns An `ObservationData` data frame. It also inherits from
-#'   `ObservationSchedule`.
+#' @returns An `compphysiol_observation_data` data frame. It also inherits from
+#'   `compphysiol_observation_schedule`.
 #' @examples
 #' observation_data(
 #'     time = c(1, 2, 4) [h],
@@ -103,7 +103,7 @@ observation_data <- function(time = numeric(), observable = character(), value =
 .new_observation_data <- function(x) {
     if (!is.data.frame(x) || anyDuplicated(names(x)) ||
         !all(c("time", "observable", "value") %in% names(x))) {
-        stop("ObservationData must be a data frame with unique time, observable, and value columns.",
+        stop("compphysiol_observation_data must be a data frame with unique time, observable, and value columns.",
              call. = FALSE)
     }
     .new_observation_schedule(x)
@@ -121,12 +121,12 @@ observation_data <- function(time = numeric(), observable = character(), value =
 
 #' Subset observation schedules and data
 #'
-#' Row subsets retain their class. Column subsets retain `ObservationData` when
-#' all three canonical columns remain, retain `ObservationSchedule` when `time`
+#' Row subsets retain their class. Column subsets retain `compphysiol_observation_data` when
+#' all three canonical columns remain, retain `compphysiol_observation_schedule` when `time`
 #' and `observable` remain, and otherwise return an ordinary data frame or
 #' vector according to data-frame subsetting rules.
 #'
-#' @param x An `ObservationSchedule` or `ObservationData`.
+#' @param x An `compphysiol_observation_schedule` or `compphysiol_observation_data`.
 #' @param i,j Row and column indices.
 #' @param drop Whether to simplify the result.
 #' @param ... Unused.
@@ -147,12 +147,12 @@ observation_data <- function(time = numeric(), observable = character(), value =
 
 #' Extract the schedule from observation data
 #'
-#' @param x An `ObservationSchedule` or `ObservationData` object.
-#' @returns An `ObservationSchedule` without the `value` column.
+#' @param x An `compphysiol_observation_schedule` or `compphysiol_observation_data` object.
+#' @returns An `compphysiol_observation_schedule` without the `value` column.
 #' @export
 as_observation_schedule <- function(x) {
     if (!inherits(x, "compphysiol_observation_schedule")) {
-        stop("x must be an ObservationSchedule or ObservationData object.", call. = FALSE)
+        stop("x must be a compphysiol_observation_schedule or compphysiol_observation_data object.", call. = FALSE)
     }
     out <- x[, setdiff(names(x), "value"), drop = FALSE]
     class(out) <- "data.frame"

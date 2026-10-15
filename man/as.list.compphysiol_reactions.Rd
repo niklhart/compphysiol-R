@@ -2,12 +2,12 @@
 % Please edit documentation in R/Reactions.R
 \name{as.list.compphysiol_reactions}
 \alias{as.list.compphysiol_reactions}
-\title{Convert a \code{Reactions} object to a list of lists, where each inner list represents a reaction with its properties}
+\title{Convert a \code{compphysiol_reactions} object to a list of lists, where each inner list represents a reaction with its properties}
 \usage{
 \method{as.list}{compphysiol_reactions}(x, ...)
 }
 \arguments{
-\item{x}{A \code{Reactions} object}
+\item{x}{A \code{compphysiol_reactions} object}
 
 \item{...}{Additional arguments (not used)}
 }
@@ -15,5 +15,5 @@
 A list of lists, where each inner list represents a reaction with its properties
 }
 \description{
-Convert a \code{Reactions} object to a list of lists, where each inner list represents a reaction with its properties
+Convert a \code{compphysiol_reactions} object to a list of lists, where each inner list represents a reaction with its properties
 }

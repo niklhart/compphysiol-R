@@ -2,18 +2,18 @@
 % Please edit documentation in R/ProcessOdeModel.R
 \name{print.compphysiol_process_model}
 \alias{print.compphysiol_process_model}
-\title{Print method for \code{ProcessModel} class}
+\title{Print method for \code{compphysiol_process_model} class}
 \usage{
 \method{print}{compphysiol_process_model}(x, ...)
 }
 \arguments{
-\item{x}{A \code{ProcessModel} object.}
+\item{x}{A \code{compphysiol_process_model} object.}
 
 \item{...}{ignored}
 }
 \value{
-The \code{ProcessModel} object (invisibly).
+The \code{compphysiol_process_model} object (invisibly).
 }
 \description{
-Pretty-prints a \code{ProcessModel} object using DSL state names.
+Pretty-prints a \code{compphysiol_process_model} object using DSL state names.
 }

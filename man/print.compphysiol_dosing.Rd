@@ -2,18 +2,18 @@
 % Please edit documentation in R/Dosing.R
 \name{print.compphysiol_dosing}
 \alias{print.compphysiol_dosing}
-\title{Print a \code{Dosing} object}
+\title{Print a \code{compphysiol_dosing} object}
 \usage{
 \method{print}{compphysiol_dosing}(x, ...)
 }
 \arguments{
-\item{x}{A \code{Dosing} object}
+\item{x}{A \code{compphysiol_dosing} object}
 
 \item{...}{ignored}
 }
 \value{
-The \code{Dosing} object (invisibly)
+The \code{compphysiol_dosing} object (invisibly)
 }
 \description{
-Pretty-prints a \code{Dosing} object.
+Pretty-prints a \code{compphysiol_dosing} object.
 }

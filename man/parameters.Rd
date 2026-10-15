@@ -2,7 +2,7 @@
 % Please edit documentation in R/Parameters.R
 \name{parameters}
 \alias{parameters}
-\title{\code{Parameters} class.}
+\title{\code{compphysiol_parameters} class.}
 \usage{
 parameters(..., name = NULL, value = NULL, unit = NULL)
 }
@@ -18,13 +18,13 @@ defined earlier in the same call.}
 \item{unit}{Optional parameter units (if not using named arguments).}
 }
 \value{
-A \code{Parameters} object containing the specified parameters.
+A \code{compphysiol_parameters} object containing the specified parameters.
 }
 \description{
-The \code{Parameters} class represents a collection of named parameters, which can optionally have associated units.
+The \code{compphysiol_parameters} class represents a collection of named parameters, which can optionally have associated units.
 }
 \details{
-Parameters can be specified in three different ways:
+compphysiol_parameters can be specified in three different ways:
 \enumerate{
 \item As name-value pairs, where values can be categorical, numeric or \code{units} objects, e.g., \code{parameters(A = 2, B = units::set_units(3, "m"))}.
 \item As name-value pairs specifying the unit in square brackets after the value (e.g., \code{A = 2 [m]}).

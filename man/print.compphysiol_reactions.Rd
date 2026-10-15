@@ -2,18 +2,18 @@
 % Please edit documentation in R/Reactions.R
 \name{print.compphysiol_reactions}
 \alias{print.compphysiol_reactions}
-\title{Print a \code{Reactions} object}
+\title{Print a \code{compphysiol_reactions} object}
 \usage{
 \method{print}{compphysiol_reactions}(x, ...)
 }
 \arguments{
-\item{x}{A \code{Reactions} object}
+\item{x}{A \code{compphysiol_reactions} object}
 
 \item{...}{Additional arguments (not used)}
 }
 \value{
-The \code{Reactions} object (invisible)
+The \code{compphysiol_reactions} object (invisible)
 }
 \description{
-Print a \code{Reactions} object
+Print a \code{compphysiol_reactions} object
 }

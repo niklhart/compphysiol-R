@@ -3,7 +3,7 @@
 #'
 #' This model implements a 12-compartment PBPK model with well-stirred tissue distribution.
 #'
-#' @return An object of class `CompartmentModel`
+#' @return An object of class `compphysiol_model`
 #' @export
 #' @examples
 #' \donttest{
@@ -62,7 +62,7 @@
 #'     col = 1:12,
 #'     xlab = "Time (h)",
 #'     ylab = "Amount",
-#'     main = "PBPK Model Compartments"
+#'     main = "PBPK Model compphysiol_compartments"
 #' )
 #' legend(
 #'     "topright",
@@ -108,7 +108,7 @@ sMD_PBPK_12CMT_wellstirred <- function() {
 #'
 #' This model implements a 12-compartment PBPK model with permeation-based tissue distribution.
 #'
-#' @return An object of class `CompartmentModel`
+#' @return An object of class `compphysiol_model`
 #' @export
 #' @examples
 #' \donttest{
@@ -201,7 +201,7 @@ sMD_PBPK_12CMT_wellstirred <- function() {
 #'     col = 1:12,
 #'     xlab = "Time (h)",
 #'     ylab = "Amount",
-#'     main = "PBPK Model Compartments"
+#'     main = "PBPK Model compphysiol_compartments"
 #' )
 #' legend(
 #'     "topright",
@@ -439,7 +439,7 @@ sMD_PBPK_12CMT_permbased <- function() {
 #' @param ncomp Number of compartments (>=1)
 #' @param type Style of parameterization: "micro" (rate constants) or "macro" (volumes + clearances)
 #' @param unit Units for initial amounts (character scalar or `NULL`, the default).
-#' @return A `CompartmentModel` object
+#' @return A `compphysiol_model` object
 #' @examples
 #' multiCompModel(ncomp = 3, type = "macro")
 #' @export

@@ -3,6 +3,6 @@
     Code
       print(eq)
     Output
-       Equations:
+       compphysiol_equations:
         (1) co = Qadi + Qbon + Qhea + Qkid + Qliv + Qmus + Qski
 

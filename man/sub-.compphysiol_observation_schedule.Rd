@@ -7,7 +7,7 @@
 \method{[}{compphysiol_observation_schedule}(x, i, j, ..., drop = FALSE)
 }
 \arguments{
-\item{x}{An \code{ObservationSchedule} or \code{ObservationData}.}
+\item{x}{An \code{compphysiol_observation_schedule} or \code{compphysiol_observation_data}.}
 
 \item{i, j}{Row and column indices.}
 
@@ -19,8 +19,8 @@
 A validated observation object when its required columns remain.
 }
 \description{
-Row subsets retain their class. Column subsets retain \code{ObservationData} when
-all three canonical columns remain, retain \code{ObservationSchedule} when \code{time}
+Row subsets retain their class. Column subsets retain \code{compphysiol_observation_data} when
+all three canonical columns remain, retain \code{compphysiol_observation_schedule} when \code{time}
 and \code{observable} remain, and otherwise return an ordinary data frame or
 vector according to data-frame subsetting rules.
 }

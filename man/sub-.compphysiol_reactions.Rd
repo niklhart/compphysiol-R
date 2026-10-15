@@ -2,20 +2,20 @@
 % Please edit documentation in R/Reactions.R
 \name{[.compphysiol_reactions}
 \alias{[.compphysiol_reactions}
-\title{Subset a \code{Reactions} object}
+\title{Subset a \code{compphysiol_reactions} object}
 \usage{
 \method{[}{compphysiol_reactions}(x, i, ...)
 }
 \arguments{
-\item{x}{A \code{Reactions} object}
+\item{x}{A \code{compphysiol_reactions} object}
 
 \item{i}{Row indices to subset}
 
 \item{...}{Additional arguments (not used)}
 }
 \value{
-A subsetted \code{Reactions} object
+A subsetted \code{compphysiol_reactions} object
 }
 \description{
-Allows subsetting a \code{Reactions} object while preserving its class.
+Allows subsetting a \code{compphysiol_reactions} object while preserving its class.
 }

@@ -7,10 +7,10 @@
 deSolve_engine(compiled = FALSE)
 }
 \arguments{
-\item{compiled}{Whether to prepare a \code{CompiledOdeModel} before simulation.}
+\item{compiled}{Whether to prepare a \code{compphysiol_desolve_compiled_model} before simulation.}
 }
 \value{
-A \code{DeSolveEngine} object.
+A \code{compphysiol_desolve_engine} object.
 }
 \description{
 This object describes how a consumer such as an estimation engine prepares

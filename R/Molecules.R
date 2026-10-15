@@ -1,6 +1,6 @@
-#' Create a `Molecules` object
+#' Create a `compphysiol_molecules` object
 #'
-#' Molecules represent the modelled substances whose amounts or concentrations
+#' compphysiol_molecules represent the modelled substances whose amounts or concentrations
 #' can vary across compartments. A molecule may be a drug, metabolite, protein,
 #' receptor, complex, biomarker, or other substance in the model.
 #'
@@ -20,7 +20,7 @@
 #'   and `unit`.
 #' @param unit Unit for the initial conditions (character scalar or `NULL`, the default), to be used if units are not specified via `initial`. 
 #' @param type Type of initial condition, either `"concentration"` (the default) or `"amount"`.
-#' @return A `Molecules` object containing the compartment and initial condition
+#' @return A `compphysiol_molecules` object containing the compartment and initial condition
 #'   information for each molecule.
 #' @examples 
 #' # No compartment specified: molecules are assumed to be present in all compartments
@@ -111,13 +111,13 @@ molecules <- function(name = character(0), cmt = NULL, initial = 0, unit = NULL,
     ))
 }
 
-#' Add one or several molecules to a `CompartmentModel` object.
+#' Add one or several molecules to a `compphysiol_model` object.
 #' 
 #' @inherit molecules description details
-#' @param model A `CompartmentModel` object.
+#' @param model A `compphysiol_model` object.
 #' @inheritParams molecules
-#' @param molec A `Molecules` object. Constructed from the other inputs if not provided.
-#' @returns The modified `CompartmentModel` object.
+#' @param molec A `compphysiol_molecules` object. Constructed from the other inputs if not provided.
+#' @returns The modified `compphysiol_model` object.
 #' @export
 #' @seealso [molecules()]
 add_molecule <- function(
@@ -145,53 +145,53 @@ add_molecule <- function(
     model
 }
 
-#' Combine multiple `Molecules` objects into one
+#' Combine multiple `compphysiol_molecules` objects into one
 #'
-#' @param ... Multiple `Molecules` objects to combine
-#' @return A combined `Molecules` object
+#' @param ... Multiple `compphysiol_molecules` objects to combine
+#' @return A combined `compphysiol_molecules` object
 #' @export
 c.compphysiol_molecules <- function(...) .combine_df_like(...)
 
-#' Subset a `Molecules` object
+#' Subset a `compphysiol_molecules` object
 #'
-#' @param x A `Molecules` object
+#' @param x A `compphysiol_molecules` object
 #' @param i Index or name(s) of molecules to subset
 #' @param ... Additional arguments (not used)
-#' @return A subsetted `Molecules` object
+#' @return A subsetted `compphysiol_molecules` object
 #' @export
 `[.compphysiol_molecules` <- function(x, i, ...) .subset_df_like(x, i, byname = TRUE)
 
-#' Extraction method for `Molecules` class
+#' Extraction method for `compphysiol_molecules` class
 #'
 #' This method is intentionally not implemented to prevent direct element access,
-#' which could lead to confusion given the internal data frame-like structure of `Molecules` objects.
+#' which could lead to confusion given the internal data frame-like structure of `compphysiol_molecules` objects.
 #' Instead, users should use subsetting with `[` and a scalar name/index to access specific molecules.
 #'
-#' @param x A `Molecules` object
+#' @param x A `compphysiol_molecules` object
 #' @param i Row index to access
 #' @param ... Additional arguments (not used)
 #' @return Nothing (errors)
 #' @export
 `[[.compphysiol_molecules` <- function(x, i, ...) .extract_df_like(x, i)
 
-#' Convert a `Molecules` object to a data frame
+#' Convert a `compphysiol_molecules` object to a data frame
 #'
-#' @param x A `Molecules` object
+#' @param x A `compphysiol_molecules` object
 #' @param ... Additional arguments (not used)
-#' @return A data frame representation of the `Molecules` object
+#' @return A data frame representation of the `compphysiol_molecules` object
 #' @export
 as.data.frame.compphysiol_molecules <- function(x, ...) {
     class(x) <- "data.frame"
     x
 }
 
-#' Print method for `Molecules` class
+#' Print method for `compphysiol_molecules` class
 #' 
-#' Pretty-prints a `Molecules` object.
+#' Pretty-prints a `compphysiol_molecules` object.
 #' 
-#' @param x A `Molecules` object
+#' @param x A `compphysiol_molecules` object
 #' @param ... Additional arguments (not used)
-#' @return The `Molecules` object (invisible)
+#' @return The `compphysiol_molecules` object (invisible)
 #' @export
 print.compphysiol_molecules <- function(x, ...) {
 
@@ -199,7 +199,7 @@ print.compphysiol_molecules <- function(x, ...) {
     init_str <- vapply(x$init, format, character(1))
 
     if (length(x) > 0) {
-        cat(" Molecules:\n")
+        cat(" compphysiol_molecules:\n")
         cat(
             sprintf(
                 "  (%i) %s in %s, initial %s = %s\n",
@@ -212,15 +212,15 @@ print.compphysiol_molecules <- function(x, ...) {
             sep = ""
         )
     } else {
-        cat(" Molecules: (none)\n")
+        cat(" compphysiol_molecules: (none)\n")
     }
 
     invisible(x)
 }
 
-#' Names of molecules in a `Molecules` object
+#' Names of molecules in a `compphysiol_molecules` object
 #'
-#' @param x A `Molecules` object
+#' @param x A `compphysiol_molecules` object
 #' @param ... Additional arguments (not used)
 #' @return A character vector of molecule names
 #' @export
@@ -228,9 +228,9 @@ names.compphysiol_molecules <- function(x, ...) {
     x$name
 }
 
-#' Length of a `Molecules` object
+#' Length of a `compphysiol_molecules` object
 #'
-#' @param x A `Molecules` object
+#' @param x A `compphysiol_molecules` object
 #' @param ... Additional arguments (not used)
 #' @return The number of molecules in the object
 #' @export
@@ -238,9 +238,9 @@ length.compphysiol_molecules <- function(x, ...) {
     nrow(as.data.frame(x))
 }
 
-#' Convert a `Molecules` object to a list of lists, where each inner list represents a molecule with its properties
+#' Convert a `compphysiol_molecules` object to a list of lists, where each inner list represents a molecule with its properties
 #' 
-#' @param x A `Molecules` object
+#' @param x A `compphysiol_molecules` object
 #' @param ... Additional arguments (not used)
 #' @return A list of lists, where each inner list represents a molecule with its properties
 #' @export

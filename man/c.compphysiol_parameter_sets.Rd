@@ -7,10 +7,10 @@
 \method{c}{compphysiol_parameter_sets}(...)
 }
 \arguments{
-\item{...}{\code{ParameterSets} objects to combine.}
+\item{...}{\code{compphysiol_parameter_sets} objects to combine.}
 }
 \value{
-A \code{ParameterSets} object, preserving order and names.
+A \code{compphysiol_parameter_sets} object, preserving order and names.
 }
 \description{
 Combine realized parameter-set collections

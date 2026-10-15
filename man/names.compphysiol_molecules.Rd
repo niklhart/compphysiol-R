@@ -2,12 +2,12 @@
 % Please edit documentation in R/Molecules.R
 \name{names.compphysiol_molecules}
 \alias{names.compphysiol_molecules}
-\title{Names of molecules in a \code{Molecules} object}
+\title{Names of molecules in a \code{compphysiol_molecules} object}
 \usage{
 \method{names}{compphysiol_molecules}(x, ...)
 }
 \arguments{
-\item{x}{A \code{Molecules} object}
+\item{x}{A \code{compphysiol_molecules} object}
 
 \item{...}{Additional arguments (not used)}
 }
@@ -15,5 +15,5 @@
 A character vector of molecule names
 }
 \description{
-Names of molecules in a \code{Molecules} object
+Names of molecules in a \code{compphysiol_molecules} object
 }

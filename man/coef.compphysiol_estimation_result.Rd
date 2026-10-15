@@ -7,12 +7,12 @@
 \method{coef}{compphysiol_estimation_result}(object, ...)
 }
 \arguments{
-\item{object}{An \code{EstimationResult}.}
+\item{object}{An \code{compphysiol_estimation_result}.}
 
 \item{...}{Unused.}
 }
 \value{
-Estimated coefficients as a \code{Parameters} object.
+Estimated coefficients as a \code{compphysiol_parameters} object.
 }
 \description{
 Extract estimated coefficients

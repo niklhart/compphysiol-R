@@ -2,16 +2,16 @@
 % Please edit documentation in R/Dosing.R
 \name{length.compphysiol_dosing}
 \alias{length.compphysiol_dosing}
-\title{Length of a \code{Dosing} object}
+\title{Length of a \code{compphysiol_dosing} object}
 \usage{
 \method{length}{compphysiol_dosing}(x)
 }
 \arguments{
-\item{x}{A \code{Dosing} object}
+\item{x}{A \code{compphysiol_dosing} object}
 }
 \value{
 The number of dosing events (number of rows in the data frame)
 }
 \description{
-Returns the number of dosing events in a \code{Dosing} object.
+Returns the number of dosing events in a \code{compphysiol_dosing} object.
 }

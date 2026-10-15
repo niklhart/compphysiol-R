@@ -2,7 +2,7 @@
 % Please edit documentation in R/Reactions.R
 \name{add_reaction}
 \alias{add_reaction}
-\title{Add one or several reactions to a \code{CompartmentModel} object.}
+\title{Add one or several reactions to a \code{compphysiol_model} object.}
 \usage{
 add_reaction(
   model,
@@ -18,13 +18,13 @@ add_reaction(
 )
 }
 \arguments{
-\item{model}{A \code{CompartmentModel} object.}
+\item{model}{A \code{compphysiol_model} object.}
 
-\item{input}{Character vector or \code{States} object representing the input of the reaction, e.g. \code{c("A", "B")}
+\item{input}{Character vector or \code{compphysiol_states} object representing the input of the reaction, e.g. \code{c("A", "B")}
 for a reaction where one molecule of \code{A} and one molecule of \code{B} are consumed.
 For synthesis reactions, use an empty character vector or \code{NULL}.}
 
-\item{output}{Character vector or \code{States} object representing the output of the reaction, e.g. \code{"C"}
+\item{output}{Character vector or \code{compphysiol_states} object representing the output of the reaction, e.g. \code{"C"}
 for a reaction where one molecule of \code{C} is produced.
 For degradation reactions, use an empty character vector or \code{NULL}.}
 
@@ -47,15 +47,15 @@ Use \code{c[A]} to refer to the concentration of molecule A, and \code{a[A]} to 
 call, numeric, or unit-bearing value).
 Formally, this corresponds to \code{rate = const * c[input[1]] * c[input[2]] * ...}.
 In addition, the information that the reaction is elementary is encoded in the \code{type}
-column of the resulting \code{Reactions} object.}
+column of the resulting \code{compphysiol_reactions} object.}
 
-\item{react}{A \code{Reactions} object. Constructed from the other inputs if not provided.}
+\item{react}{A \code{compphysiol_reactions} object. Constructed from the other inputs if not provided.}
 }
 \value{
-The modified \code{CompartmentModel} object.
+The modified \code{compphysiol_model} object.
 }
 \description{
-The \code{Reactions} class can hold several reactions, each with an input, output, rate/constant, and compartment.
+The \code{compphysiol_reactions} class can hold several reactions, each with an input, output, rate/constant, and compartment.
 However, each reaction needs to be defined separately, i.e., vectorized definitions are not supported for reactions
 as they can be for transports and molecules -- vector arguments are instead used for defining multiple reacting species within a single reaction.
 }
@@ -69,7 +69,7 @@ The special expression \code{{cmt}} can be used in \code{rate} or \code{const} t
 e.g., \verb{k_\{cmt\}} will become \code{k_cytoplasm} for reactions in the cytoplasm and \code{k_nucleus} for reactions in the nucleus.
 Replacement is only applied if the \code{cmt} argument is provided (otherwise, parameter names would change dynamically as compartments change).
 
-Reactions can be specified either by separate \code{input} and \code{output}
+compphysiol_reactions can be specified either by separate \code{input} and \code{output}
 arguments or by a character reaction formula. The formula form is an
 interactive shorthand for the same participant representation, for example
 \code{reactions("A + B -> C", cmt = "cyt", const = "k")}. Participants may be

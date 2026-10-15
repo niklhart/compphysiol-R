@@ -7,13 +7,13 @@
 to_process_model(model)
 }
 \arguments{
-\item{model}{A \code{CompartmentModel} object.}
+\item{model}{A \code{compphysiol_model} object.}
 }
 \value{
-A \code{ProcessModel} object.
+A \code{compphysiol_process_model} object.
 }
 \description{
-\code{to_process_model()} lowers a \code{CompartmentModel} to a solver-neutral process
+\code{to_process_model()} lowers a \code{compphysiol_model} to a solver-neutral process
 representation with explicit states, process rates, and process
 stoichiometry.
 }

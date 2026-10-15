@@ -4,8 +4,8 @@
 #' models for the existing deSolve simulation path. It is not yet a public
 #' argument to [simulate()].
 #'
-#' @param compiled Whether to prepare a `CompiledOdeModel` before simulation.
-#' @returns A `DeSolveEngine` object.
+#' @param compiled Whether to prepare a `compphysiol_desolve_compiled_model` before simulation.
+#' @returns A `compphysiol_desolve_engine` object.
 #' @export
 deSolve_engine <- function(compiled = FALSE) {
     if (!is.logical(compiled) || length(compiled) != 1L || is.na(compiled)) {
@@ -33,7 +33,7 @@ deSolve_engine <- function(compiled = FALSE) {
 
 #' Simulate a compartment model
 #'
-#' `simulate()` solves a `CompartmentModel` and returns toolbox-level output.
+#' `simulate()` solves a `compphysiol_model` and returns toolbox-level output.
 #' The default route wraps the `deSolve` ODE export and returns ODE states and
 #' observables.
 #'
@@ -49,7 +49,7 @@ deSolve_engine <- function(compiled = FALSE) {
 #' converted to kilograms internally, an `atol` value is applied on the kilogram
 #' scale even if results are displayed back in milligrams.
 #'
-#' @param object A `CompartmentModel` object.
+#' @param object A `compphysiol_model` object.
 #' @param nsim Number of stochastic realizations for `simulation_type = "ssa"`.
 #'   Ignored by deterministic simulation routes.
 #' @param seed Optional random seed for stochastic simulation routes.
@@ -57,7 +57,7 @@ deSolve_engine <- function(compiled = FALSE) {
 #'   shorthand, e.g. `seq(0, 24) [h]`.
 #' @param unit Optional time unit used when `time` is numeric without units.
 #' @param parameters Free parameters passed to the ODE solver, as a named list
-#'   or `Parameters` object.
+#'   or `compphysiol_parameters` object.
 #' @param dimensions Named list of unit dimensions defining the numerical scale
 #'   used at the solver boundary. These dimensions affect the scale of solver
 #'   tolerances such as `atol`.
@@ -71,9 +71,9 @@ deSolve_engine <- function(compiled = FALSE) {
 #'   reactions with propensities below this threshold are stochastic.
 #' @param include_event_times Include stochastic event times in stochastic
 #'   simulation output in addition to the requested `time` points.
-#' @param experiment An `Experiment` or `Experiments` collection, as an alternative
+#' @param experiment An `compphysiol_experiment` or `compphysiol_experiments` collection, as an alternative
 #'   to `time`, `unit`, and `parameters`. Currently supported for the ODE route
-#'   and `OdeModel`/`CompiledOdeModel` inputs. Known parameters override model
+#'   and `compphysiol_ode_model`/`compphysiol_desolve_compiled_model` inputs. Known parameters override model
 #'   defaults; experiment dosing replaces model dosing, including when empty.
 #'   Simulation starts at the experiment's initial time and evaluates only its
 #'   scheduled observable-time pairs. Each experiment is one independent
@@ -82,11 +82,11 @@ deSolve_engine <- function(compiled = FALSE) {
 #' @param max_events Maximum number of stochastic reaction events allowed per
 #'   realization. The default `Inf` imposes no limit.
 #' @param ... Additional arguments passed to [deSolve::ode()].
-#' @returns A `SimulationResult` with rectangular `states` and long-format
+#' @returns A `compphysiol_simulation_result` with rectangular `states` and long-format
 #'   `observables` (`time`, `observable`, `value`, plus `rep` for stochastic
 #'   replicates). Direct `time` input requests all observables at every output
 #'   time. Values are numeric, `units`, or `mixed_units` depending on their units.
-#'   Without observables the component is `NULL`. An `Experiments` input returns
+#'   Without observables the component is `NULL`. An `compphysiol_experiments` input returns
 #'   a list of results named by individual identifier when the collection is
 #'   named. Results are not automatically bound into a population table. See
 #'   [as_observables_long()] and
@@ -665,9 +665,9 @@ simulate.compphysiol_stochastic_model <- function(
 
 #' Print a simulation result
 #'
-#' @param x A `SimulationResult` object.
+#' @param x A `compphysiol_simulation_result` object.
 #' @param ... Additional arguments, currently ignored.
-#' @returns The `SimulationResult` object, invisibly.
+#' @returns The `compphysiol_simulation_result` object, invisibly.
 #' @export
 print.compphysiol_simulation_result <- function(x, ...) {
     has_replicates <- "rep" %in% names(x$states)
@@ -688,7 +688,7 @@ print.compphysiol_simulation_result <- function(x, ...) {
         "empty"
     }
 
-    cat(" SimulationResult:\n")
+    cat(" compphysiol_simulation_result:\n")
     cat(sprintf("  time: %s (%s points)\n", time_span, n_time))
     if (has_replicates) {
         cat(sprintf("  replicates: %s\n", n_rep))
@@ -1025,7 +1025,7 @@ print.compphysiol_simulation_result <- function(x, ...) {
         return(parameters)
     }
     if (!is.list(parameters)) {
-        stop("Argument 'parameters' must be a named list or Parameters object.", call. = FALSE)
+        stop("Argument 'parameters' must be a named list or compphysiol_parameters object.", call. = FALSE)
     }
     structure(parameters, class = .class_parameters())
 }
@@ -1052,7 +1052,7 @@ print.compphysiol_simulation_result <- function(x, ...) {
         parameters <- unclass(parameters)
     }
     if (!is.list(parameters)) {
-        stop("Argument 'parameters' must be a named list or Parameters object.", call. = FALSE)
+        stop("Argument 'parameters' must be a named list or compphysiol_parameters object.", call. = FALSE)
     }
 
     lapply(parameters, function(x) {

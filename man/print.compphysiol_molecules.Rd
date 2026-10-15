@@ -2,18 +2,18 @@
 % Please edit documentation in R/Molecules.R
 \name{print.compphysiol_molecules}
 \alias{print.compphysiol_molecules}
-\title{Print method for \code{Molecules} class}
+\title{Print method for \code{compphysiol_molecules} class}
 \usage{
 \method{print}{compphysiol_molecules}(x, ...)
 }
 \arguments{
-\item{x}{A \code{Molecules} object}
+\item{x}{A \code{compphysiol_molecules} object}
 
 \item{...}{Additional arguments (not used)}
 }
 \value{
-The \code{Molecules} object (invisible)
+The \code{compphysiol_molecules} object (invisible)
 }
 \description{
-Pretty-prints a \code{Molecules} object.
+Pretty-prints a \code{compphysiol_molecules} object.
 }

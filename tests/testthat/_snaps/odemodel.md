@@ -3,13 +3,13 @@
     Code
       print(compiled_model)
     Output
-      CompiledOdeModel (pending):
+      compphysiol_desolve_compiled_model (pending):
        ODE model:
-        States: 1
-        Equations: none
-        Observables: 1
+        compphysiol_states: 1
+        compphysiol_equations: none
+        compphysiol_observables: 1
         Dosing events: none
-       Parameters:
+       compphysiol_parameters:
         A0: required, unit signature pending
         V: default = 1 [L]
         ke: required, unit signature pending
@@ -19,17 +19,17 @@
     Code
       print(compiled_model)
     Output
-      CompiledOdeModel (compiled):
+      compphysiol_desolve_compiled_model (compiled):
        ODE model:
-        States: 1
-        Equations: none
-        Observables: 1
+        compphysiol_states: 1
+        compphysiol_equations: none
+        compphysiol_observables: 1
         Dosing events: none
        Solver dimensions:
         mass: mg
         length: dm
         time: h
-       Parameters:
+       compphysiol_parameters:
         A0: required, [mg]
         V: default = 1 [L]
         ke: required, [1/h]
@@ -39,18 +39,18 @@
     Code
       print(ode_model)
     Output
-      OdeModel:
-       States:
+      compphysiol_ode_model:
+       compphysiol_states:
         (1) a[drug, Central], initial = A0
        ODEs:
         d/dt a[drug, Central] = -ke * a[drug, Central]
-       Equations:
+       compphysiol_equations:
         (1) C = a[drug, Central]/V
-       Observables:
+       compphysiol_observables:
         (1) Cobs = a[drug, Central]/V
-       Dosing:
+       compphysiol_dosing:
         (1) add 100 to a[drug, Central] at 0
-       Parameters:
+       compphysiol_parameters:
         (1) V = 10
        Free parameters: A0, ke
 

@@ -1,5 +1,5 @@
 
-#' compphysiol: A Package for Computational Physiology
+#' compphysiol: A Package for Computational compphysiol_physiology
 #' @name compphysiol
 #' @docType package
 #' @description
@@ -9,22 +9,22 @@
 #' explicit model components.
 #' @details
 #' Core modelling concepts include:
-#' - `CompartmentModel`: Encapsulates the structure of a compartmental model,
+#' - `compphysiol_model`: Encapsulates the structure of a compartmental model,
 #'   including compartments, molecules, transports, reactions, equations,
 #'   observables, parameters, and dosing events.
-#' - `Compartments`: Represent model spaces, tissues, organs, or abstract
+#' - `compphysiol_compartments`: Represent model spaces, tissues, organs, or abstract
 #'   locations with names and volumes.
-#' - `Molecules`: Represent modelled substances whose amounts or concentrations
+#' - `compphysiol_molecules`: Represent modelled substances whose amounts or concentrations
 #'   can vary across compartments.
-#' - `Transports`: Define movement of the same molecule between compartments.
-#' - `Reactions`: Define molecular transformations or stoichiometric changes
+#' - `compphysiol_transports`: Define movement of the same molecule between compartments.
+#' - `compphysiol_reactions`: Define molecular transformations or stoichiometric changes
 #'   within compartments.
-#' - `Equations`: Define auxiliary expressions that can be reused in model
+#' - `compphysiol_equations`: Define auxiliary expressions that can be reused in model
 #'   processes.
-#' - `Observables`: Represent derived outputs calculated from states and
+#' - `compphysiol_observables`: Represent derived outputs calculated from states and
 #'   parameters.
-#' - `Parameters`: Represent named inputs used in the definition of compartments, 
+#' - `compphysiol_parameters`: Represent named inputs used in the definition of compartments, 
 #'   transports, reactions, equations and observables.
-#' - `Dosing`: Represents dosing events, including bolus and infusion doses.
+#' - `compphysiol_dosing`: Represents dosing events, including bolus and infusion doses.
 #' @keywords internal
 "_PACKAGE"

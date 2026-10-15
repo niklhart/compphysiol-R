@@ -2,18 +2,18 @@
 % Please edit documentation in R/Observables.R
 \name{print.compphysiol_observables}
 \alias{print.compphysiol_observables}
-\title{Print an \code{Observables} object}
+\title{Print an \code{compphysiol_observables} object}
 \usage{
 \method{print}{compphysiol_observables}(x, ...)
 }
 \arguments{
-\item{x}{An \code{Observables} object}
+\item{x}{An \code{compphysiol_observables} object}
 
 \item{...}{Additional arguments (not used)}
 }
 \value{
-The \code{Observables} object (invisible)
+The \code{compphysiol_observables} object (invisible)
 }
 \description{
-Print an \code{Observables} object
+Print an \code{compphysiol_observables} object
 }

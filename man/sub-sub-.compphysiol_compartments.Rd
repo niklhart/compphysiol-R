@@ -2,12 +2,12 @@
 % Please edit documentation in R/Compartments.R
 \name{[[.compphysiol_compartments}
 \alias{[[.compphysiol_compartments}
-\title{Extraction method for \code{Compartments} class}
+\title{Extraction method for \code{compphysiol_compartments} class}
 \usage{
 \method{[[}{compphysiol_compartments}(x, i, ...)
 }
 \arguments{
-\item{x}{A \code{Compartments} object}
+\item{x}{A \code{compphysiol_compartments} object}
 
 \item{i}{Row index to access}
 
@@ -18,6 +18,6 @@ Nothing (errors)
 }
 \description{
 This method is intentionally not implemented to prevent direct element access,
-which could lead to confusion given the internal data frame-like structure of \code{Compartments} objects.
+which could lead to confusion given the internal data frame-like structure of \code{compphysiol_compartments} objects.
 Instead, users should use subsetting with \code{[} and a scalar name/index to access specific compartments.
 }

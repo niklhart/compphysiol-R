@@ -2,16 +2,16 @@
 % Please edit documentation in R/Compartments.R
 \name{c.compphysiol_compartments}
 \alias{c.compphysiol_compartments}
-\title{Combine multiple \code{Compartments} objects into one}
+\title{Combine multiple \code{compphysiol_compartments} objects into one}
 \usage{
 \method{c}{compphysiol_compartments}(...)
 }
 \arguments{
-\item{...}{Multiple \code{Compartments} objects to combine}
+\item{...}{Multiple \code{compphysiol_compartments} objects to combine}
 }
 \value{
-A combined \code{Compartments} object
+A combined \code{compphysiol_compartments} object
 }
 \description{
-Combine multiple \code{Compartments} objects into one
+Combine multiple \code{compphysiol_compartments} objects into one
 }

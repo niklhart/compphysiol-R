@@ -7,20 +7,20 @@
 parameter_sets(...)
 }
 \arguments{
-\item{...}{\link[=parameters]{Parameters} objects, optionally named. For a list
+\item{...}{\link[=parameters]{compphysiol_parameters} objects, optionally named. For a list
 of parameter sets, use \code{do.call(parameter_sets, x)}.}
 }
 \value{
-A \code{ParameterSets} object.
+A \code{compphysiol_parameter_sets} object.
 }
 \description{
 Creates a list-like collection in which each element is a complete,
-realized \link[=parameters]{Parameters} object. Elements may be named or unnamed.
-\code{ParameterSets} records values only: it does not describe a population model
+realized \link[=parameters]{compphysiol_parameters} object. Elements may be named or unnamed.
+\code{compphysiol_parameter_sets} records values only: it does not describe a population model
 or how the parameter sets were generated.
 }
 \details{
-Parameters shared across elements must both be unit-free or have convertible
+compphysiol_parameters shared across elements must both be unit-free or have convertible
 units. Compatible values are retained as supplied and are not converted.
 Numeric and categorical covariates are ordinary parameters.
 }

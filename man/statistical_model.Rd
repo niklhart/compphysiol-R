@@ -12,7 +12,7 @@ statistical_model(...)
 \code{correlated()}.}
 }
 \value{
-A \code{StatisticalModel} object.
+A \code{compphysiol_statistical_model} object.
 }
 \description{
 The left-hand-side name identifies the random quantity. Targets are resolved

@@ -2,16 +2,16 @@
 % Please edit documentation in R/Compartments.R
 \name{names.compphysiol_compartments}
 \alias{names.compphysiol_compartments}
-\title{Names of compartments in a \code{Compartments} object}
+\title{Names of compartments in a \code{compphysiol_compartments} object}
 \usage{
 \method{names}{compphysiol_compartments}(x)
 }
 \arguments{
-\item{x}{A \code{Compartments} object}
+\item{x}{A \code{compphysiol_compartments} object}
 }
 \value{
 A character vector of compartment names
 }
 \description{
-Returns the names of compartments in a \code{Compartments} object.
+Returns the names of compartments in a \code{compphysiol_compartments} object.
 }

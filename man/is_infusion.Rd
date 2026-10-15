@@ -7,7 +7,7 @@
 is_infusion(dose)
 }
 \arguments{
-\item{dose}{A \code{Dosing} object}
+\item{dose}{A \code{compphysiol_dosing} object}
 }
 \value{
 A logical vector in which the i-th entry is \code{TRUE} if the i-th dosing is an infusion and \code{FALSE} otherwise

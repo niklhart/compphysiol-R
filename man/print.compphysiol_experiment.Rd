@@ -7,7 +7,7 @@
 \method{print}{compphysiol_experiment}(x, ...)
 }
 \arguments{
-\item{x}{An \code{Experiment} object.}
+\item{x}{An \code{compphysiol_experiment} object.}
 
 \item{...}{Unused.}
 }

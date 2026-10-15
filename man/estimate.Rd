@@ -10,7 +10,7 @@ estimate(object, ...)
 \method{estimate}{compphysiol_estimation_problem}(object, engine = optim_engine(), dimensions = NULL, ...)
 }
 \arguments{
-\item{object}{An \code{EstimationProblem}.}
+\item{object}{An \code{compphysiol_estimation_problem}.}
 
 \item{...}{Additional method arguments.}
 

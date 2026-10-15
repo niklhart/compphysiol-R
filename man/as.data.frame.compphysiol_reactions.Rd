@@ -2,18 +2,18 @@
 % Please edit documentation in R/Reactions.R
 \name{as.data.frame.compphysiol_reactions}
 \alias{as.data.frame.compphysiol_reactions}
-\title{Convert a \code{Reactions} object to a data frame}
+\title{Convert a \code{compphysiol_reactions} object to a data frame}
 \usage{
 \method{as.data.frame}{compphysiol_reactions}(x, ...)
 }
 \arguments{
-\item{x}{A \code{Reactions} object}
+\item{x}{A \code{compphysiol_reactions} object}
 
 \item{...}{Additional arguments (not used)}
 }
 \value{
-A data frame representation of the \code{Reactions} object
+A data frame representation of the \code{compphysiol_reactions} object
 }
 \description{
-Convert a \code{Reactions} object to a data frame
+Convert a \code{compphysiol_reactions} object to a data frame
 }

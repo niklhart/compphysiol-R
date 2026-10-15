@@ -2,18 +2,18 @@
 % Please edit documentation in R/Parameters.R
 \name{print.compphysiol_parameters}
 \alias{print.compphysiol_parameters}
-\title{Print a \code{Parameters} object}
+\title{Print a \code{compphysiol_parameters} object}
 \usage{
 \method{print}{compphysiol_parameters}(x, ...)
 }
 \arguments{
-\item{x}{An \code{Parameters} object}
+\item{x}{An \code{compphysiol_parameters} object}
 
 \item{...}{Additional arguments (not used)}
 }
 \value{
-The \code{Parameters} object (invisible)
+The \code{compphysiol_parameters} object (invisible)
 }
 \description{
-Print a \code{Parameters} object
+Print a \code{compphysiol_parameters} object
 }

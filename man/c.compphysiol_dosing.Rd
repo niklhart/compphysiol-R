@@ -2,17 +2,17 @@
 % Please edit documentation in R/Dosing.R
 \name{c.compphysiol_dosing}
 \alias{c.compphysiol_dosing}
-\title{Combine multiple \code{Dosing} objects into one}
+\title{Combine multiple \code{compphysiol_dosing} objects into one}
 \usage{
 \method{c}{compphysiol_dosing}(...)
 }
 \arguments{
-\item{...}{One or more \code{Dosing} objects to combine.}
+\item{...}{One or more \code{compphysiol_dosing} objects to combine.}
 }
 \value{
-A single \code{Dosing} object containing all dosing events from the inputs, sorted by time.
+A single \code{compphysiol_dosing} object containing all dosing events from the inputs, sorted by time.
 }
 \description{
-Combines multiple \code{Dosing} objects by row-binding their data.
-The resulting \code{Dosing} object will contain all dosing events from the inputs, sorted by time.
+Combines multiple \code{compphysiol_dosing} objects by row-binding their data.
+The resulting \code{compphysiol_dosing} object will contain all dosing events from the inputs, sorted by time.
 }

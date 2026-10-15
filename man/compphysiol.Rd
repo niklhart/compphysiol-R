@@ -4,7 +4,7 @@
 \name{compphysiol}
 \alias{compphysiol-package}
 \alias{compphysiol}
-\title{compphysiol: A Package for Computational Physiology}
+\title{compphysiol: A Package for Computational compphysiol_physiology}
 \description{
 The \code{compphysiol} package provides tools for building and simulating compartment
 models in R. It separates model locations, modelled substances, processes,
@@ -14,23 +14,23 @@ explicit model components.
 \details{
 Core modelling concepts include:
 \itemize{
-\item \code{CompartmentModel}: Encapsulates the structure of a compartmental model,
+\item \code{compphysiol_model}: Encapsulates the structure of a compartmental model,
 including compartments, molecules, transports, reactions, equations,
 observables, parameters, and dosing events.
-\item \code{Compartments}: Represent model spaces, tissues, organs, or abstract
+\item \code{compphysiol_compartments}: Represent model spaces, tissues, organs, or abstract
 locations with names and volumes.
-\item \code{Molecules}: Represent modelled substances whose amounts or concentrations
+\item \code{compphysiol_molecules}: Represent modelled substances whose amounts or concentrations
 can vary across compartments.
-\item \code{Transports}: Define movement of the same molecule between compartments.
-\item \code{Reactions}: Define molecular transformations or stoichiometric changes
+\item \code{compphysiol_transports}: Define movement of the same molecule between compartments.
+\item \code{compphysiol_reactions}: Define molecular transformations or stoichiometric changes
 within compartments.
-\item \code{Equations}: Define auxiliary expressions that can be reused in model
+\item \code{compphysiol_equations}: Define auxiliary expressions that can be reused in model
 processes.
-\item \code{Observables}: Represent derived outputs calculated from states and
+\item \code{compphysiol_observables}: Represent derived outputs calculated from states and
 parameters.
-\item \code{Parameters}: Represent named inputs used in the definition of compartments,
+\item \code{compphysiol_parameters}: Represent named inputs used in the definition of compartments,
 transports, reactions, equations and observables.
-\item \code{Dosing}: Represents dosing events, including bolus and infusion doses.
+\item \code{compphysiol_dosing}: Represents dosing events, including bolus and infusion doses.
 }
 }
 \author{

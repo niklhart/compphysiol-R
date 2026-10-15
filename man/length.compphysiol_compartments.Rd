@@ -2,16 +2,16 @@
 % Please edit documentation in R/Compartments.R
 \name{length.compphysiol_compartments}
 \alias{length.compphysiol_compartments}
-\title{Length of a \code{Compartments} object}
+\title{Length of a \code{compphysiol_compartments} object}
 \usage{
 \method{length}{compphysiol_compartments}(x)
 }
 \arguments{
-\item{x}{A \code{Compartments} object}
+\item{x}{A \code{compphysiol_compartments} object}
 }
 \value{
 The number of compartments
 }
 \description{
-Returns the number of compartments in a \code{Compartments} object.
+Returns the number of compartments in a \code{compphysiol_compartments} object.
 }

@@ -1,17 +1,17 @@
 #' Collect realized parameter sets
 #'
 #' Creates a list-like collection in which each element is a complete,
-#' realized [Parameters][parameters()] object. Elements may be named or unnamed.
-#' `ParameterSets` records values only: it does not describe a population model
+#' realized [compphysiol_parameters][parameters()] object. Elements may be named or unnamed.
+#' `compphysiol_parameter_sets` records values only: it does not describe a population model
 #' or how the parameter sets were generated.
 #'
-#' Parameters shared across elements must both be unit-free or have convertible
+#' compphysiol_parameters shared across elements must both be unit-free or have convertible
 #' units. Compatible values are retained as supplied and are not converted.
 #' Numeric and categorical covariates are ordinary parameters.
 #'
-#' @param ... [Parameters][parameters()] objects, optionally named. For a list
+#' @param ... [compphysiol_parameters][parameters()] objects, optionally named. For a list
 #'   of parameter sets, use `do.call(parameter_sets, x)`.
-#' @returns A `ParameterSets` object.
+#' @returns A `compphysiol_parameter_sets` object.
 #' @examples
 #' population <- parameter_sets(
 #'     individual_1 = parameters(BW = 65 [kg], sex = "female"),
@@ -27,7 +27,7 @@ parameter_sets <- function(...) {
 
 .new_parameter_sets <- function(x, check_units = TRUE) {
     if (!all(vapply(x, inherits, logical(1), "compphysiol_parameters"))) {
-        stop("All elements must be Parameters objects.", call. = FALSE)
+        stop("All elements must be compphysiol_parameters objects.", call. = FALSE)
     }
     labels <- names(x)
     named <- !is.null(labels) & !is.na(labels) & nzchar(labels)
@@ -60,10 +60,10 @@ parameter_sets <- function(...) {
 
 #' Subset realized parameter sets
 #'
-#' @param x A `ParameterSets` object.
+#' @param x A `compphysiol_parameter_sets` object.
 #' @param i Numeric, logical, or character indices.
 #' @param ... Unused.
-#' @returns A `ParameterSets` object.
+#' @returns A `compphysiol_parameter_sets` object.
 #' @export
 `[.compphysiol_parameter_sets` <- function(x, i, ...) {
     .new_parameter_sets(unclass(x)[i], check_units = FALSE)
@@ -71,11 +71,11 @@ parameter_sets <- function(...) {
 
 #' Extract one realized parameter set
 #'
-#' @param x A `ParameterSets` object.
+#' @param x A `compphysiol_parameter_sets` object.
 #' @param i Index or name of one parameter set.
 #' @param ... Unused.
 #' @param exact Whether character indices must match exactly, as for lists.
-#' @returns A `Parameters` object; an unknown name returns `NULL`, as for lists.
+#' @returns A `compphysiol_parameters` object; an unknown name returns `NULL`, as for lists.
 #' @export
 `[[.compphysiol_parameter_sets` <- function(x, i, ..., exact = TRUE) {
     if (length(i) != 1L) stop("Select a single parameter set with [[.", call. = FALSE)
@@ -84,13 +84,13 @@ parameter_sets <- function(...) {
 
 #' Combine realized parameter-set collections
 #'
-#' @param ... `ParameterSets` objects to combine.
-#' @returns A `ParameterSets` object, preserving order and names.
+#' @param ... `compphysiol_parameter_sets` objects to combine.
+#' @returns A `compphysiol_parameter_sets` object, preserving order and names.
 #' @export
 c.compphysiol_parameter_sets <- function(...) {
     objects <- list(...)
     if (!all(vapply(objects, inherits, logical(1), "compphysiol_parameter_sets"))) {
-        stop("All arguments must be ParameterSets objects.", call. = FALSE)
+        stop("All arguments must be compphysiol_parameter_sets objects.", call. = FALSE)
     }
     combined <- do.call(c, unname(lapply(objects, unclass)))
     .new_parameter_sets(combined %||% list())
@@ -98,16 +98,16 @@ c.compphysiol_parameter_sets <- function(...) {
 
 #' Print realized parameter sets
 #'
-#' @param x A `ParameterSets` object.
+#' @param x A `compphysiol_parameter_sets` object.
 #' @param ... Unused.
 #' @returns `x`, invisibly.
 #' @export
 print.compphysiol_parameter_sets <- function(x, ...) {
     if (!length(x)) {
-        cat(" Parameter sets: (none)\n")
+        cat(" compphysiol_parameter_sets: (none)\n")
         return(invisible(x))
     }
-    cat(" Parameter sets:\n")
+    cat(" compphysiol_parameter_sets:\n")
     labels <- names(x)
     for (i in seq_along(x)) {
         label <- if (!is.null(labels) && !is.na(labels[i]) && nzchar(labels[i])) {

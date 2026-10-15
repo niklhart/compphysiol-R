@@ -2,20 +2,20 @@
 % Please edit documentation in R/lumping.R
 \name{lump_model}
 \alias{lump_model}
-\title{Lump a \code{CompartmentModel} object}
+\title{Lump a \code{compphysiol_model} object}
 \usage{
 lump_model(M, partitioning = list(), normalize = list())
 }
 \arguments{
-\item{M}{A \code{CompartmentModel} object, the model to be lumped.}
+\item{M}{A \code{compphysiol_model} object, the model to be lumped.}
 
 \item{partitioning}{A list of character vectors (each a group of compartments)}
 
 \item{normalize}{A named list of quoted calls giving normalizing factors for each compartment}
 }
 \value{
-A \code{CompartmentModel} object representing the lumped model
+A \code{compphysiol_model} object representing the lumped model
 }
 \description{
-Lump a \code{CompartmentModel} object
+Lump a \code{compphysiol_model} object
 }

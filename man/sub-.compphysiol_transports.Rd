@@ -2,20 +2,20 @@
 % Please edit documentation in R/Transports.R
 \name{[.compphysiol_transports}
 \alias{[.compphysiol_transports}
-\title{Subset a \code{Transports} object}
+\title{Subset a \code{compphysiol_transports} object}
 \usage{
 \method{[}{compphysiol_transports}(x, i, ...)
 }
 \arguments{
-\item{x}{A \code{Transports} object}
+\item{x}{A \code{compphysiol_transports} object}
 
 \item{i}{Row indices to subset}
 
 \item{...}{Additional arguments (not used)}
 }
 \value{
-A subsetted \code{Transports} object
+A subsetted \code{compphysiol_transports} object
 }
 \description{
-Subset a \code{Transports} object
+Subset a \code{compphysiol_transports} object
 }

@@ -1,6 +1,6 @@
-#' Create a `Dosing` object
+#' Create a `compphysiol_dosing` object
 #'
-#' Represents a dosing event for a `CompartmentModel`. A dose can be specified either as a bolus (instantaneous input) 
+#' Represents a dosing event for a `compphysiol_model`. A dose can be specified either as a bolus (instantaneous input) 
 #' or as an infusion (continuous input over time).
 #'
 #' ## Bolus
@@ -13,7 +13,7 @@
 #' \deqn{duration = amount / rate}
 #' The `rate` and `duration` argument must be specified as named arguments, not positional, to avoid any ambiguity.
 #'
-#' @param time Dosing time(s) (numeric scalar or vector)
+#' @param time compphysiol_dosing time(s) (numeric scalar or vector)
 #' @param amount Amount(s) of dose (non-negative numeric scalar or vector, optional)
 #' @param time_unit Optional unit for time (character scalar, e.g., "h", or `NULL`, the default)
 #' @param amount_unit Optional unit for amount (character scalar, e.g., "mg", or `NULL`, the default)
@@ -25,7 +25,7 @@
 #'   as named arguments only, not positional
 #' @param rate Infusion rate (non-negative numeric scalar or vector, optional)
 #' @param duration Infusion duration (positive numeric scalar or vector, optional)
-#' @return A `Dosing` object
+#' @return A `compphysiol_dosing` object
 #' @examples
 #' # Bolus of 100 at t=0
 #' dosing(time = 0, amount = 100, cmt = "Central")
@@ -172,20 +172,20 @@ dosing <- function(
     vapply(x, function(value) all(is.na(value)), logical(1))
 }
 
-#' Add one or several dosing events (bolus or infusion) to a `CompartmentModel` object.
+#' Add one or several dosing events (bolus or infusion) to a `compphysiol_model` object.
 #'
 #' This function allows the user to add dosing events to a compartment model.
-#' Dosing events can be either bolus (instantaneous) or infusion (continuous over time).
+#' compphysiol_dosing events can be either bolus (instantaneous) or infusion (continuous over time).
 #'
 #' Unlike the other `add_*` functions, `add_dosing()` does not simply append the new dosing events 
 #' to the model, but also handles the necessary modifications to the model structure for infusion dosing,
 #' i.e., adding infusion bag and rate compartments, and creating the appropriate events for
 #' starting and stopping the infusion.
 #'
-#' @param model A `CompartmentModel` object.
+#' @param model A `compphysiol_model` object.
 #' @inheritParams dosing
-#' @param dose A `Dosing` object. Constructed from the other inputs if not provided.
-#' @returns The modified `CompartmentModel` object.
+#' @param dose A `compphysiol_dosing` object. Constructed from the other inputs if not provided.
+#' @returns The modified `compphysiol_model` object.
 #' @examples
 #' model <- compartment_model() |>
 #'     add_dosing(time = 0, amount = 100, duration = 5, cmt = "cen")
@@ -221,7 +221,7 @@ add_dosing <- function(
 }
 
 #' Check which dosing events are boluses.
-#' @param dose A `Dosing` object
+#' @param dose A `compphysiol_dosing` object
 #' @return A logical vector in which the i-th entry is `TRUE` if the i-th dosing is a bolus and `FALSE` otherwise
 #' @export
 is_bolus <- function(dose) {
@@ -230,7 +230,7 @@ is_bolus <- function(dose) {
 }
 
 #' Check which dosing events are infusions.
-#' @param dose A `Dosing` object
+#' @param dose A `compphysiol_dosing` object
 #' @return A logical vector in which the i-th entry is `TRUE` if the i-th dosing is an infusion and `FALSE` otherwise
 #' @export
 is_infusion <- function(dose) {
@@ -238,24 +238,24 @@ is_infusion <- function(dose) {
     !is_bolus(dose)
 }
 
-#' Length of a `Dosing` object
+#' Length of a `compphysiol_dosing` object
 #' 
-#' Returns the number of dosing events in a `Dosing` object.
+#' Returns the number of dosing events in a `compphysiol_dosing` object.
 #' 
-#' @param x A `Dosing` object
+#' @param x A `compphysiol_dosing` object
 #' @return The number of dosing events (number of rows in the data frame)
 #' @export
 length.compphysiol_dosing <- function(x) {
     nrow(as.data.frame(x))
 }
 
-#' Print a `Dosing` object
+#' Print a `compphysiol_dosing` object
 #' 
-#' Pretty-prints a `Dosing` object.
+#' Pretty-prints a `compphysiol_dosing` object.
 #' 
-#' @param x A `Dosing` object
+#' @param x A `compphysiol_dosing` object
 #' @param ... ignored
-#' @return The `Dosing` object (invisibly)
+#' @return The `compphysiol_dosing` object (invisibly)
 #' @export
 print.compphysiol_dosing <- function(x, ...) {
 
@@ -306,22 +306,22 @@ print.compphysiol_dosing <- function(x, ...) {
                 ")"
             )
         }
-        cat(" Dosing:\n")
+        cat(" compphysiol_dosing:\n")
         cat(sprintf('  (%s) %s\n', seq_len(n), dosing_strings), sep = "")
     } else {
-        cat(" Dosing: (none)\n")
+        cat(" compphysiol_dosing: (none)\n")
     }
     invisible(x)
 }
 
-#' Subset a `Dosing` object
+#' Subset a `compphysiol_dosing` object
 #' 
-#' Allows subsetting a `Dosing` object while preserving its class.
+#' Allows subsetting a `compphysiol_dosing` object while preserving its class.
 #' 
-#' @param x A `Dosing` object
+#' @param x A `compphysiol_dosing` object
 #' @param i Row indices to subset
 #' @param ... ignored
-#' @return A subsetted `Dosing` object
+#' @return A subsetted `compphysiol_dosing` object
 #' @export
 `[.compphysiol_dosing` <- function(x, i, ...) {
     x_subset <- as.data.frame(x)[i, , drop = FALSE]
@@ -330,18 +330,18 @@ print.compphysiol_dosing <- function(x, ...) {
     ))
 }
 
-#' Combine multiple `Dosing` objects into one
+#' Combine multiple `compphysiol_dosing` objects into one
 #' 
-#' Combines multiple `Dosing` objects by row-binding their data.
-#' The resulting `Dosing` object will contain all dosing events from the inputs, sorted by time.
+#' Combines multiple `compphysiol_dosing` objects by row-binding their data.
+#' The resulting `compphysiol_dosing` object will contain all dosing events from the inputs, sorted by time.
 #' 
-#' @param ... One or more `Dosing` objects to combine.
-#' @return A single `Dosing` object containing all dosing events from the inputs, sorted by time.
+#' @param ... One or more `compphysiol_dosing` objects to combine.
+#' @return A single `compphysiol_dosing` object containing all dosing events from the inputs, sorted by time.
 #' @export
 c.compphysiol_dosing <- function(...) {
     objs <- list(...)
     if (!all(sapply(objs, function(o) inherits(o, "compphysiol_dosing")))) {
-        stop("All inputs must be Dosing objects.")
+        stop("All inputs must be compphysiol_dosing objects.")
     }
 
     # Combine the data frames by row-binding
@@ -356,14 +356,14 @@ c.compphysiol_dosing <- function(...) {
     ))
 }
 
-#' Convert a `Dosing` object to a data frame
+#' Convert a `compphysiol_dosing` object to a data frame
 #' 
-#' This method allows a `Dosing` object to be treated as a data frame for operations 
-#' like subsetting and combining, while preserving the `Dosing` class.
+#' This method allows a `compphysiol_dosing` object to be treated as a data frame for operations 
+#' like subsetting and combining, while preserving the `compphysiol_dosing` class.
 #' 
-#' @param x A `Dosing` object
+#' @param x A `compphysiol_dosing` object
 #' @param ... ignored
-#' @return A data frame representation of the `Dosing` object
+#' @return A data frame representation of the `compphysiol_dosing` object
 #' @export
 as.data.frame.compphysiol_dosing <- function(x, ...) {
     class(x) <- "data.frame"

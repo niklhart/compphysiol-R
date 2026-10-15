@@ -2,16 +2,16 @@
 % Please edit documentation in R/Observables.R
 \name{c.compphysiol_observables}
 \alias{c.compphysiol_observables}
-\title{Combine multiple \code{Observables} objects into one}
+\title{Combine multiple \code{compphysiol_observables} objects into one}
 \usage{
 \method{c}{compphysiol_observables}(...)
 }
 \arguments{
-\item{...}{\code{Observables} objects to combine}
+\item{...}{\code{compphysiol_observables} objects to combine}
 }
 \value{
-A combined \code{Observables} object
+A combined \code{compphysiol_observables} object
 }
 \description{
-Combine multiple \code{Observables} objects into one
+Combine multiple \code{compphysiol_observables} objects into one
 }

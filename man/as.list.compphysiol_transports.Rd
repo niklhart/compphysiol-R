@@ -2,21 +2,21 @@
 % Please edit documentation in R/Transports.R
 \name{as.list.compphysiol_transports}
 \alias{as.list.compphysiol_transports}
-\title{Convert a \code{Transports} object to a list of \code{Transport} objects (experimental).}
+\title{Convert a \code{compphysiol_transports} object to a list of \code{compphysiol_transport} objects (experimental).}
 \usage{
 \method{as.list}{compphysiol_transports}(x, ...)
 }
 \arguments{
-\item{x}{A \code{Transports} object}
+\item{x}{A \code{compphysiol_transports} object}
 
 \item{...}{Additional arguments (not used)}
 }
 \value{
-A list of \code{Transport} objects, where each component is a list of the form \code{list(from, to, molec, rate, const, type)}
+A list of \code{compphysiol_transport} objects, where each component is a list of the form \code{list(from, to, molec, rate, const, type)}
 }
 \description{
-\code{Transport} objects are light-weighted representations of individual transports,
+\code{compphysiol_transport} objects are light-weighted representations of individual transports,
 where each transport is represented as a list with entries
 \code{from}, \code{to}, \code{molec}, \code{rate}, \code{const}, and \code{type}.
-This function is useful for iterating over transports in a \code{Transports} object.
+This function is useful for iterating over transports in a \code{compphysiol_transports} object.
 }

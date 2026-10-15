@@ -7,7 +7,7 @@
 sMD_PBPK_12CMT_permbased()
 }
 \value{
-An object of class \code{CompartmentModel}
+An object of class \code{compphysiol_model}
 }
 \description{
 This model implements a 12-compartment PBPK model with permeation-based tissue distribution.
@@ -103,7 +103,7 @@ matplot(
     col = 1:12,
     xlab = "Time (h)",
     ylab = "Amount",
-    main = "PBPK Model Compartments"
+    main = "PBPK Model compphysiol_compartments"
 )
 legend(
     "topright",

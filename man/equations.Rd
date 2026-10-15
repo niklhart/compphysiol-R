@@ -2,7 +2,7 @@
 % Please edit documentation in R/equations.R
 \name{equations}
 \alias{equations}
-\title{Create an \code{Equations} object}
+\title{Create an \code{compphysiol_equations} object}
 \usage{
 equations(..., name = character(0), expr = character(0))
 }
@@ -15,19 +15,19 @@ equations(..., name = character(0), expr = character(0))
 Expressions may contain parameters that are added to the model's parameters list, as well as compartment states (not compartment names!)}
 }
 \value{
-An \code{Equations} object
+An \code{compphysiol_equations} object
 }
 \description{
-Equations allow to define algebraic relationships between model variables,
+compphysiol_equations allow to define algebraic relationships between model variables,
 which can be used in transports and observables. The main purpose of equations is to
 define physiologically meaningful aggregate parameters (such as cardiac output)
 that are composed of more basic parameters (such as blood flows to individual organs).
 }
 \details{
-Observables and equations are very similar, but there are two key differences:
+compphysiol_observables and equations are very similar, but there are two key differences:
 \enumerate{
-\item Observables are evaluated from simulation output, while equations are evaluated inside model expressions.
-\item Equations can be used in the definitions of transports, while observables cannot.
+\item compphysiol_observables are evaluated from simulation output, while equations are evaluated inside model expressions.
+\item compphysiol_equations can be used in the definitions of transports, while observables cannot.
 }
 }
 \examples{

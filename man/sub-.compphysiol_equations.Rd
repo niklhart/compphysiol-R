@@ -2,20 +2,20 @@
 % Please edit documentation in R/equations.R
 \name{[.compphysiol_equations}
 \alias{[.compphysiol_equations}
-\title{Subset an \code{Equations} object}
+\title{Subset an \code{compphysiol_equations} object}
 \usage{
 \method{[}{compphysiol_equations}(x, i, ...)
 }
 \arguments{
-\item{x}{An \code{Equations} object}
+\item{x}{An \code{compphysiol_equations} object}
 
 \item{i}{Indices or names of the equations to subset}
 
 \item{...}{Additional arguments (not used)}
 }
 \value{
-A subset of the \code{Equations} object
+A subset of the \code{compphysiol_equations} object
 }
 \description{
-Subset an \code{Equations} object
+Subset an \code{compphysiol_equations} object
 }

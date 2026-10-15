@@ -7,14 +7,14 @@
 experiment(parameters = NULL, dosing = NULL, observations = NULL, start = NULL)
 }
 \arguments{
-\item{parameters}{A \link[=parameters]{Parameters} object containing known
+\item{parameters}{A \link[=parameters]{compphysiol_parameters} object containing known
 individual and experimental values, including covariates. \code{NULL} creates
 an empty parameter collection.}
 
-\item{dosing}{A \link[=dosing]{Dosing} object. \code{NULL} creates an empty dosing schedule.}
+\item{dosing}{A \link[=dosing]{compphysiol_dosing} object. \code{NULL} creates an empty dosing schedule.}
 
-\item{observations}{An \link[=observation_schedule]{ObservationSchedule} or
-\link[=observation_data]{ObservationData}. \code{NULL} creates an empty schedule.}
+\item{observations}{An \link[=observation_schedule]{compphysiol_observation_schedule} or
+\link[=observation_data]{compphysiol_observation_data}. \code{NULL} creates an empty schedule.}
 
 \item{start}{Initial time, a finite numeric scalar, optionally with units.
 Supports unit shorthand such as \code{0 [h]}. The default \code{NULL} means zero in
@@ -23,7 +23,7 @@ unit-free zero if both schedules are empty. It does not mean the earliest
 scheduled time. Incompatible schedules still produce an error.}
 }
 \value{
-An \code{Experiment} object.
+An \code{compphysiol_experiment} object.
 }
 \description{
 One experiment represents one independent individual simulation or
@@ -39,7 +39,7 @@ Pass an experiment to \code{\link[=simulate]{simulate()}} through the \code{expe
 simulation, or include observation data when using it for estimation.
 
 Observation rows retain their order, duplicates, additional columns, and
-units. \code{ObservationData} inherits from \code{ObservationSchedule}, so simulation
+units. \code{compphysiol_observation_data} inherits from \code{compphysiol_observation_schedule}, so simulation
 can use either representation while estimation can require data values.
 Times need not be sorted. All nonempty observations must use the same unit
 mode as \code{start}: either unit-free,

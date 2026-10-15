@@ -23,8 +23,8 @@ values. A scalar is recycled over the rows.}
 \item{...}{Additional columns with one value per schedule row.}
 }
 \value{
-An \code{ObservationData} data frame. It also inherits from
-\code{ObservationSchedule}.
+An \code{compphysiol_observation_data} data frame. It also inherits from
+\code{compphysiol_observation_schedule}.
 }
 \description{
 Observation data use the same rows as an \code{\link[=observation_schedule]{observation_schedule()}} and add a

@@ -7,14 +7,14 @@
 \method{[}{compphysiol_parameter_sets}(x, i, ...)
 }
 \arguments{
-\item{x}{A \code{ParameterSets} object.}
+\item{x}{A \code{compphysiol_parameter_sets} object.}
 
 \item{i}{Numeric, logical, or character indices.}
 
 \item{...}{Unused.}
 }
 \value{
-A \code{ParameterSets} object.
+A \code{compphysiol_parameter_sets} object.
 }
 \description{
 Subset realized parameter sets

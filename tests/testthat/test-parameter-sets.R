@@ -14,7 +14,7 @@ test_that("ParameterSets hold named and unnamed Parameters objects", {
     expect_error(population[[c(1, 1)]], "single parameter set")
     expect_identical(parameter_sets(a)[[1]], a)
     expect_length(parameter_sets(), 0)
-    expect_error(parameter_sets(a, 1), "Parameters")
+    expect_error(parameter_sets(a, 1), "compphysiol_parameters")
 })
 
 test_that("ParameterSets subsetting preserves the collection", {
@@ -28,8 +28,8 @@ test_that("ParameterSets subsetting preserves the collection", {
     expect_identical(population["a"][[1]], population[["a"]])
     expect_s3_class(population[integer()], "compphysiol_parameter_sets")
     expect_length(population[integer()], 0)
-    expect_error(population[NA_integer_], "Parameters")
-    expect_error(population["missing"], "Parameters")
+    expect_error(population[NA_integer_], "compphysiol_parameters")
+    expect_error(population["missing"], "compphysiol_parameters")
 })
 
 test_that("ParameterSets combine collections and reject duplicate names", {
@@ -41,7 +41,7 @@ test_that("ParameterSets combine collections and reject duplicate names", {
     expect_identical(c(parameter_sets(), parameter_sets()), parameter_sets())
     expect_error(c(a, parameter_sets(a = parameters(BW = 70 [kg]))), "unique")
     expect_error(parameter_sets(a = parameters(), a = parameters()), "unique")
-    expect_error(c(a, parameters(BW = 70 [kg])), "ParameterSets")
+    expect_error(c(a, parameters(BW = 70 [kg])), "compphysiol_parameter_sets")
 
     unnamed <- c(parameter_sets(parameters(BW = 65)), parameter_sets(parameters(BW = 82)))
     expect_length(unnamed, 2)
@@ -71,7 +71,7 @@ test_that("trusted construction can skip only unit validation", {
     expect_s3_class(trusted[1], "compphysiol_parameter_sets")
     expect_error(.new_parameter_sets(incompatible), "parameter 'x'.*units")
     expect_error(.new_parameter_sets(list(parameters(), 1), check_units = FALSE),
-                 "Parameters")
+                 "compphysiol_parameters")
     expect_error(
         .new_parameter_sets(list(a = parameters(), a = parameters()), check_units = FALSE),
         "unique"
@@ -88,7 +88,7 @@ test_that("ParameterSets print a compact summary", {
     expect_identical(returned, population)
     expect_match(output[2], "individual_1: BW = 65 [kg]; sex = female", fixed = TRUE)
     expect_match(output[3], "(2) BW = 82 [kg]; sex = male", fixed = TRUE)
-    expect_output(print(parameter_sets()), "Parameter sets: \\(none\\)")
+    expect_output(print(parameter_sets()), "compphysiol_parameter_sets: \\(none\\)")
     expect_output(
         print(parameter_sets(empty = parameters())),
         "empty: \\(none\\)"

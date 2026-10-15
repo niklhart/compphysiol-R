@@ -57,7 +57,7 @@
         dsl <- .dsl_make_state(molec = molec, cmt = cmt, prefix = "a")
         idx <- match(dsl, model$states$dsl_name)
         if (is.na(idx)) stop("Dosing target is absent from this ODE model: ", dsl,
-                            ". Prepare a CompartmentModel with all required dosing targets first.", call. = FALSE)
+                            ". Prepare a compphysiol_model with all required dosing targets first.", call. = FALSE)
         .ode_model_check_same_units(state_units[[idx]], value, dsl, what = "dosing event")
         events[[length(events) + 1L]] <<- data.frame(
             var = model$states$output_name[idx],

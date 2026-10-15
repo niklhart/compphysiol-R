@@ -27,7 +27,7 @@ for an observable prediction default.}
 standard deviation.}
 }
 \value{
-A \code{StatisticalDistribution} object.
+A \code{compphysiol_statistical_distribution} object.
 }
 \description{
 \code{normal()} uses a mean and a standard-deviation specification. A bare name or

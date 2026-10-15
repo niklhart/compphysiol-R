@@ -11,15 +11,15 @@
 \method{c}{compphysiol_parameter_specs}(..., recursive = FALSE)
 }
 \arguments{
-\item{...}{Named \code{ParameterSpec} or \code{ParameterSpecs} objects.}
+\item{...}{Named \code{compphysiol_parameter_spec} or \code{compphysiol_parameter_specs} objects.}
 
 \item{recursive}{Unused.}
 }
 \value{
-A \code{ParameterSpecs} collection.
+A \code{compphysiol_parameter_specs} collection.
 }
 \description{
-Named \code{\link[=parameter_spec]{parameter_spec()}} objects and existing \code{ParameterSpecs}
+Named \code{\link[=parameter_spec]{parameter_spec()}} objects and existing \code{compphysiol_parameter_specs}
 collections can be combined with \code{c()}. Names identify the model or
 observation-model parameters being estimated.
 }

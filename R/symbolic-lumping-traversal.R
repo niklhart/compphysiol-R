@@ -3,7 +3,7 @@
 
 #' Solve the symbolic linear system for the given condensation
 #' @param cond A condensation graph
-#' @param trans A `Transports` object
+#' @param trans A `compphysiol_transports` object
 #' @param simplify Method for simplifying the resulting expressions.
 #' @returns A named list of solution expressions
 #' @noRd

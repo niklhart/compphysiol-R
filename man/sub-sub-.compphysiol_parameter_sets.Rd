@@ -7,7 +7,7 @@
 \method{[[}{compphysiol_parameter_sets}(x, i, ..., exact = TRUE)
 }
 \arguments{
-\item{x}{A \code{ParameterSets} object.}
+\item{x}{A \code{compphysiol_parameter_sets} object.}
 
 \item{i}{Index or name of one parameter set.}
 
@@ -16,7 +16,7 @@
 \item{exact}{Whether character indices must match exactly, as for lists.}
 }
 \value{
-A \code{Parameters} object; an unknown name returns \code{NULL}, as for lists.
+A \code{compphysiol_parameters} object; an unknown name returns \code{NULL}, as for lists.
 }
 \description{
 Extract one realized parameter set

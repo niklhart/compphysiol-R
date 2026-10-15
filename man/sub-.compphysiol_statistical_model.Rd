@@ -7,14 +7,14 @@
 \method{[}{compphysiol_statistical_model}(x, i, ...)
 }
 \arguments{
-\item{x}{A \code{StatisticalModel} object.}
+\item{x}{A \code{compphysiol_statistical_model} object.}
 
 \item{i}{Indices or names of random quantities to retain.}
 
 \item{...}{Unused.}
 }
 \value{
-A \code{StatisticalModel} object.
+A \code{compphysiol_statistical_model} object.
 }
 \description{
 Subset a statistical model

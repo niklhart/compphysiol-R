@@ -7,11 +7,11 @@
 experiments(...)
 }
 \arguments{
-\item{...}{\code{Experiment} objects, optionally named with their individual
+\item{...}{\code{compphysiol_experiment} objects, optionally named with their individual
 identifiers. For a list of experiments, use \code{do.call(experiments, x)}.}
 }
 \value{
-An \code{Experiments} object.
+An \code{compphysiol_experiments} object.
 }
 \description{
 Creates a list-like collection of independent individual simulation or
@@ -22,7 +22,7 @@ retains its own parameters and units. Use \code{[} to obtain a collection and
 }
 \details{
 All experiments must use the same time unit mode (unit-free or unit-bearing).
-Parameters with the same name and dose amounts for the same molecule and
+compphysiol_parameters with the same name and dose amounts for the same molecule and
 compartment must have compatible units, or all be unit-free. Convertible
 units are accepted without changing the stored values. Infusions are compared
 through their total amounts. Omitted dosing targets match other identically

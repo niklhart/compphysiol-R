@@ -2,12 +2,12 @@
 % Please edit documentation in R/Molecules.R
 \name{length.compphysiol_molecules}
 \alias{length.compphysiol_molecules}
-\title{Length of a \code{Molecules} object}
+\title{Length of a \code{compphysiol_molecules} object}
 \usage{
 \method{length}{compphysiol_molecules}(x, ...)
 }
 \arguments{
-\item{x}{A \code{Molecules} object}
+\item{x}{A \code{compphysiol_molecules} object}
 
 \item{...}{Additional arguments (not used)}
 }
@@ -15,5 +15,5 @@
 The number of molecules in the object
 }
 \description{
-Length of a \code{Molecules} object
+Length of a \code{compphysiol_molecules} object
 }

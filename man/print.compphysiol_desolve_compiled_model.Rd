@@ -2,17 +2,17 @@
 % Please edit documentation in R/CompiledOdeModel.R
 \name{print.compphysiol_desolve_compiled_model}
 \alias{print.compphysiol_desolve_compiled_model}
-\title{Print method for \code{CompiledOdeModel} class}
+\title{Print method for \code{compphysiol_desolve_compiled_model} class}
 \usage{
 \method{print}{compphysiol_desolve_compiled_model}(x, ...)
 }
 \arguments{
-\item{x}{A \code{CompiledOdeModel} object.}
+\item{x}{A \code{compphysiol_desolve_compiled_model} object.}
 
 \item{...}{ignored}
 }
 \value{
-The \code{CompiledOdeModel} object (invisibly).
+The \code{compphysiol_desolve_compiled_model} object (invisibly).
 }
 \description{
 Pretty-prints the compiled model status, compact ODE model shape, and frozen

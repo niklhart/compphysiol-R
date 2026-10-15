@@ -3,7 +3,7 @@
     Code
       print(out)
     Output
-       SimulationResult:
+       compphysiol_simulation_result:
         time: 0 to 10 (11 points)
         states: 1 (a_drug_Central)
         observables: 0
@@ -13,7 +13,7 @@
     Code
       print(out)
     Output
-       SimulationResult:
+       compphysiol_simulation_result:
         time: 0 to 0 (1 points)
         states: 3 (very_long_state_..., ... +2 more)
         observables: 2 (very_long_o..., ... +1 more)
@@ -23,7 +23,7 @@
     Code
       print(out)
     Output
-       SimulationResult:
+       compphysiol_simulation_result:
         time: 0 to 10 (2 points)
         replicates: 1500
         states: 1 (a_A_cyt)
@@ -34,7 +34,7 @@
     Code
       print(out)
     Output
-       SimulationResult:
+       compphysiol_simulation_result:
         time: 0 to 10 (11 points)
         states: 1 (a_drug_Central)
         observables: 1 (C)

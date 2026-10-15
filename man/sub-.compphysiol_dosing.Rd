@@ -2,20 +2,20 @@
 % Please edit documentation in R/Dosing.R
 \name{[.compphysiol_dosing}
 \alias{[.compphysiol_dosing}
-\title{Subset a \code{Dosing} object}
+\title{Subset a \code{compphysiol_dosing} object}
 \usage{
 \method{[}{compphysiol_dosing}(x, i, ...)
 }
 \arguments{
-\item{x}{A \code{Dosing} object}
+\item{x}{A \code{compphysiol_dosing} object}
 
 \item{i}{Row indices to subset}
 
 \item{...}{ignored}
 }
 \value{
-A subsetted \code{Dosing} object
+A subsetted \code{compphysiol_dosing} object
 }
 \description{
-Allows subsetting a \code{Dosing} object while preserving its class.
+Allows subsetting a \code{compphysiol_dosing} object while preserving its class.
 }

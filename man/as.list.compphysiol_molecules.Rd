@@ -2,12 +2,12 @@
 % Please edit documentation in R/Molecules.R
 \name{as.list.compphysiol_molecules}
 \alias{as.list.compphysiol_molecules}
-\title{Convert a \code{Molecules} object to a list of lists, where each inner list represents a molecule with its properties}
+\title{Convert a \code{compphysiol_molecules} object to a list of lists, where each inner list represents a molecule with its properties}
 \usage{
 \method{as.list}{compphysiol_molecules}(x, ...)
 }
 \arguments{
-\item{x}{A \code{Molecules} object}
+\item{x}{A \code{compphysiol_molecules} object}
 
 \item{...}{Additional arguments (not used)}
 }
@@ -15,5 +15,5 @@
 A list of lists, where each inner list represents a molecule with its properties
 }
 \description{
-Convert a \code{Molecules} object to a list of lists, where each inner list represents a molecule with its properties
+Convert a \code{compphysiol_molecules} object to a list of lists, where each inner list represents a molecule with its properties
 }

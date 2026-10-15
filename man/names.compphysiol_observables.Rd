@@ -2,16 +2,16 @@
 % Please edit documentation in R/Observables.R
 \name{names.compphysiol_observables}
 \alias{names.compphysiol_observables}
-\title{Names of observables in an \code{Observables} object}
+\title{Names of observables in an \code{compphysiol_observables} object}
 \usage{
 \method{names}{compphysiol_observables}(x)
 }
 \arguments{
-\item{x}{An \code{Observables} object}
+\item{x}{An \code{compphysiol_observables} object}
 }
 \value{
 The names of the observables
 }
 \description{
-Names of observables in an \code{Observables} object
+Names of observables in an \code{compphysiol_observables} object
 }

@@ -2,16 +2,16 @@
 % Please edit documentation in R/equations.R
 \name{c.compphysiol_equations}
 \alias{c.compphysiol_equations}
-\title{Combine multiple \code{Equations} objects}
+\title{Combine multiple \code{compphysiol_equations} objects}
 \usage{
 \method{c}{compphysiol_equations}(...)
 }
 \arguments{
-\item{...}{\code{Equations} objects to combine}
+\item{...}{\code{compphysiol_equations} objects to combine}
 }
 \value{
-A combined \code{Equations} object
+A combined \code{compphysiol_equations} object
 }
 \description{
-Combine multiple \code{Equations} objects
+Combine multiple \code{compphysiol_equations} objects
 }

@@ -2,16 +2,16 @@
 % Please edit documentation in R/Transports.R
 \name{c.compphysiol_transport}
 \alias{c.compphysiol_transport}
-\title{Combine multiple \code{Transport} objects into a \code{Transports} object}
+\title{Combine multiple \code{compphysiol_transport} objects into a \code{compphysiol_transports} object}
 \usage{
 \method{c}{compphysiol_transport}(...)
 }
 \arguments{
-\item{...}{Multiple \code{Transport} objects to combine}
+\item{...}{Multiple \code{compphysiol_transport} objects to combine}
 }
 \value{
-A combined \code{Transports} object
+A combined \code{compphysiol_transports} object
 }
 \description{
-Combine multiple \code{Transport} objects into a \code{Transports} object
+Combine multiple \code{compphysiol_transport} objects into a \code{compphysiol_transports} object
 }

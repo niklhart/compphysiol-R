@@ -3,7 +3,7 @@
     Code
       print(params)
     Output
-       Parameters:
+       compphysiol_parameters:
         (1) A = 2 [m]
         (2) B = 3 [kg]
 

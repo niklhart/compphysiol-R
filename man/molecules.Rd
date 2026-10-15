@@ -2,7 +2,7 @@
 % Please edit documentation in R/Molecules.R
 \name{molecules}
 \alias{molecules}
-\title{Create a \code{Molecules} object}
+\title{Create a \code{compphysiol_molecules} object}
 \usage{
 molecules(
   name = character(0),
@@ -31,11 +31,11 @@ and \code{unit}.}
 \item{type}{Type of initial condition, either \code{"concentration"} (the default) or \code{"amount"}.}
 }
 \value{
-A \code{Molecules} object containing the compartment and initial condition
+A \code{compphysiol_molecules} object containing the compartment and initial condition
 information for each molecule.
 }
 \description{
-Molecules represent the modelled substances whose amounts or concentrations
+compphysiol_molecules represent the modelled substances whose amounts or concentrations
 can vary across compartments. A molecule may be a drug, metabolite, protein,
 receptor, complex, biomarker, or other substance in the model.
 }

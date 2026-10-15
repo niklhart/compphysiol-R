@@ -2,20 +2,20 @@
 % Please edit documentation in R/Molecules.R
 \name{[.compphysiol_molecules}
 \alias{[.compphysiol_molecules}
-\title{Subset a \code{Molecules} object}
+\title{Subset a \code{compphysiol_molecules} object}
 \usage{
 \method{[}{compphysiol_molecules}(x, i, ...)
 }
 \arguments{
-\item{x}{A \code{Molecules} object}
+\item{x}{A \code{compphysiol_molecules} object}
 
 \item{i}{Index or name(s) of molecules to subset}
 
 \item{...}{Additional arguments (not used)}
 }
 \value{
-A subsetted \code{Molecules} object
+A subsetted \code{compphysiol_molecules} object
 }
 \description{
-Subset a \code{Molecules} object
+Subset a \code{compphysiol_molecules} object
 }

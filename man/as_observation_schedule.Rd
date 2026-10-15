@@ -7,10 +7,10 @@
 as_observation_schedule(x)
 }
 \arguments{
-\item{x}{An \code{ObservationSchedule} or \code{ObservationData} object.}
+\item{x}{An \code{compphysiol_observation_schedule} or \code{compphysiol_observation_data} object.}
 }
 \value{
-An \code{ObservationSchedule} without the \code{value} column.
+An \code{compphysiol_observation_schedule} without the \code{value} column.
 }
 \description{
 Extract the schedule from observation data

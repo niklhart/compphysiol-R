@@ -2,18 +2,18 @@
 % Please edit documentation in R/Parameters.R
 \name{unlist.compphysiol_parameters}
 \alias{unlist.compphysiol_parameters}
-\title{Unlist a \code{Parameters} object (experimental).}
+\title{Unlist a \code{compphysiol_parameters} object (experimental).}
 \usage{
 \method{unlist}{compphysiol_parameters}(x, ...)
 }
 \arguments{
-\item{x}{A \code{Parameters} object}
+\item{x}{A \code{compphysiol_parameters} object}
 
 \item{...}{Additional arguments (not used)}
 }
 \value{
-An unlisted \code{Parameters} object
+An unlisted \code{compphysiol_parameters} object
 }
 \description{
-Parameters may be scalars or vectors, but for some purposes it may be desirable to unlist them into a flat \code{Parameters} object.
+compphysiol_parameters may be scalars or vectors, but for some purposes it may be desirable to unlist them into a flat \code{compphysiol_parameters} object.
 }

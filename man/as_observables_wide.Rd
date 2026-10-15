@@ -7,7 +7,7 @@
 as_observables_wide(x)
 }
 \arguments{
-\item{x}{A \code{SimulationResult}, \code{ObservationData}, or a long-format observable
+\item{x}{A \code{compphysiol_simulation_result}, \code{compphysiol_observation_data}, or a long-format observable
 data frame with \code{time}, \code{observable}, and \code{value} columns, and optionally
 \code{rep}.}
 }

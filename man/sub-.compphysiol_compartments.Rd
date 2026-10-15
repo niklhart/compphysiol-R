@@ -2,20 +2,20 @@
 % Please edit documentation in R/Compartments.R
 \name{[.compphysiol_compartments}
 \alias{[.compphysiol_compartments}
-\title{Subset a \code{Compartments} object}
+\title{Subset a \code{compphysiol_compartments} object}
 \usage{
 \method{[}{compphysiol_compartments}(x, i, ...)
 }
 \arguments{
-\item{x}{A \code{Compartments} object}
+\item{x}{A \code{compphysiol_compartments} object}
 
 \item{i}{Index or name(s) of compartments to subset}
 
 \item{...}{Additional arguments (not used)}
 }
 \value{
-A subsetted \code{Compartments} object
+A subsetted \code{compphysiol_compartments} object
 }
 \description{
-Subset a \code{Compartments} object
+Subset a \code{compphysiol_compartments} object
 }

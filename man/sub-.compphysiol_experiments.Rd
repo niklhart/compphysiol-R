@@ -7,14 +7,14 @@
 \method{[}{compphysiol_experiments}(x, i, ...)
 }
 \arguments{
-\item{x}{An \code{Experiments} object.}
+\item{x}{An \code{compphysiol_experiments} object.}
 
 \item{i}{Numeric, logical, or character indices.}
 
 \item{...}{Unused.}
 }
 \value{
-An \code{Experiments} object.
+An \code{compphysiol_experiments} object.
 }
 \description{
 Missing or unknown indices that would introduce missing elements are rejected.

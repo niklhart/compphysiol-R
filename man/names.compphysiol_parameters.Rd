@@ -2,16 +2,16 @@
 % Please edit documentation in R/Parameters.R
 \name{names.compphysiol_parameters}
 \alias{names.compphysiol_parameters}
-\title{Names of parameters in a \code{Parameters} object}
+\title{Names of parameters in a \code{compphysiol_parameters} object}
 \usage{
 \method{names}{compphysiol_parameters}(x)
 }
 \arguments{
-\item{x}{A \code{Parameters} object}
+\item{x}{A \code{compphysiol_parameters} object}
 }
 \value{
 The names of the parameters
 }
 \description{
-Names of parameters in a \code{Parameters} object
+Names of parameters in a \code{compphysiol_parameters} object
 }

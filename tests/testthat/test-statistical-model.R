@@ -77,7 +77,7 @@ test_that("statistical_model uses names as random-quantity targets", {
         statistical_model(C = normal(sd = "a"), C = normal(sd = "b")),
         "unique"
     )
-    expect_error(statistical_model(C = 1), "StatisticalDistribution")
+    expect_error(statistical_model(C = 1), "compphysiol_statistical_distribution")
 })
 
 test_that("correlated declares pairwise dependence between model targets", {

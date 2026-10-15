@@ -2,20 +2,20 @@
 % Please edit documentation in R/Parameters.R
 \name{[<-.compphysiol_parameters}
 \alias{[<-.compphysiol_parameters}
-\title{Replace parts of a \code{Parameters} object}
+\title{Replace parts of a \code{compphysiol_parameters} object}
 \usage{
 \method{[}{compphysiol_parameters}(x, i) <- value
 }
 \arguments{
-\item{x}{A \code{Parameters} object}
+\item{x}{A \code{compphysiol_parameters} object}
 
 \item{i}{Indices or names of the parameters to replace}
 
-\item{value}{Another \code{Parameters} object with the new values to insert}
+\item{value}{Another \code{compphysiol_parameters} object with the new values to insert}
 }
 \value{
-The modified \code{Parameters} object
+The modified \code{compphysiol_parameters} object
 }
 \description{
-Replace parts of a \code{Parameters} object
+Replace parts of a \code{compphysiol_parameters} object
 }

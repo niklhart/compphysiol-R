@@ -2,20 +2,20 @@
 % Please edit documentation in R/mergeModels.R
 \name{mergeModels}
 \alias{mergeModels}
-\title{Merge two \code{CompartmentModel} objects into one.}
+\title{Merge two \code{compphysiol_model} objects into one.}
 \usage{
 mergeModels(M1, M2, mode = "overlay")
 }
 \arguments{
-\item{M1, M2}{\code{CompartmentModel} objects}
+\item{M1, M2}{\code{compphysiol_model} objects}
 
 \item{mode}{Merge mode. Currently only \code{"overlay"} is implemented.}
 }
 \value{
-A new \code{CompartmentModel} containing both.
+A new \code{compphysiol_model} containing both.
 }
 \description{
-This function combines two \code{CompartmentModel} objects into a single model.
+This function combines two \code{compphysiol_model} objects into a single model.
 In overlay mode, matching names are interpreted as the same modelling entity:
 compartments with the same name are the same location, molecules with the same
 name are the same substance, and matching molecule-in-compartment combinations

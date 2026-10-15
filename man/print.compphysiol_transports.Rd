@@ -2,18 +2,18 @@
 % Please edit documentation in R/Transports.R
 \name{print.compphysiol_transports}
 \alias{print.compphysiol_transports}
-\title{Print a \code{Transports} object}
+\title{Print a \code{compphysiol_transports} object}
 \usage{
 \method{print}{compphysiol_transports}(x, ...)
 }
 \arguments{
-\item{x}{A \code{Transports} object}
+\item{x}{A \code{compphysiol_transports} object}
 
 \item{...}{Additional arguments (not used)}
 }
 \value{
-The \code{Transports} object (invisible)
+The \code{compphysiol_transports} object (invisible)
 }
 \description{
-Print a \code{Transports} object
+Print a \code{compphysiol_transports} object
 }

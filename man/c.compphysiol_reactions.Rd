@@ -2,16 +2,16 @@
 % Please edit documentation in R/Reactions.R
 \name{c.compphysiol_reactions}
 \alias{c.compphysiol_reactions}
-\title{Combine multiple \code{Reactions} objects into one}
+\title{Combine multiple \code{compphysiol_reactions} objects into one}
 \usage{
 \method{c}{compphysiol_reactions}(...)
 }
 \arguments{
-\item{...}{Multiple \code{Reactions} objects to combine}
+\item{...}{Multiple \code{compphysiol_reactions} objects to combine}
 }
 \value{
-A combined \code{Reactions} object
+A combined \code{compphysiol_reactions} object
 }
 \description{
-Combine multiple \code{Reactions} objects into one
+Combine multiple \code{compphysiol_reactions} objects into one
 }

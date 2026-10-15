@@ -8,7 +8,7 @@
 #' @param transform Internal optimizer transformation: `"identity"`, `"log"`,
 #'   or `"logit"`. Log transforms require a positive initial value. Logit
 #'   transforms require finite lower and upper bounds.
-#' @returns A `ParameterSpec` object.
+#' @returns A `compphysiol_parameter_spec` object.
 #' @export
 parameter_spec <- function(
     initial,
@@ -70,7 +70,7 @@ parameter_spec <- function(
 
 #' Print an estimated-parameter specification
 #'
-#' @param x A `ParameterSpec` object.
+#' @param x A `compphysiol_parameter_spec` object.
 #' @param ... Unused.
 #' @returns `x`, invisibly.
 #' @export
@@ -81,7 +81,7 @@ print.compphysiol_parameter_spec <- function(x, ...) {
         lower = .estimation_bound_numeric(x$lower, x$initial, "lower"),
         upper = .estimation_bound_numeric(x$upper, x$initial, "upper")
     )
-    cat("ParameterSpec:\n")
+    cat("compphysiol_parameter_spec:\n")
     cat(" initial: ", format(values[["initial"]], trim = TRUE), "\n", sep = "")
     cat(" bounds: [", format(values[["lower"]], trim = TRUE), ", ",
         format(values[["upper"]], trim = TRUE), "]\n", sep = "")
@@ -119,13 +119,13 @@ print.compphysiol_parameter_spec <- function(x, ...) {
 
 #' Combine parameter-estimation specifications
 #'
-#' Named [parameter_spec()] objects and existing `ParameterSpecs`
+#' Named [parameter_spec()] objects and existing `compphysiol_parameter_specs`
 #' collections can be combined with `c()`. Names identify the model or
 #' observation-model parameters being estimated.
 #'
-#' @param ... Named `ParameterSpec` or `ParameterSpecs` objects.
+#' @param ... Named `compphysiol_parameter_spec` or `compphysiol_parameter_specs` objects.
 #' @param recursive Unused.
-#' @returns A `ParameterSpecs` collection.
+#' @returns A `compphysiol_parameter_specs` collection.
 #' @name parameter_specs
 NULL
 
@@ -159,7 +159,7 @@ c.compphysiol_parameter_specs <- function(..., recursive = FALSE) {
                 names(part) <- paste(label, names(part), sep = ".")
             }
         } else {
-            stop("c() can only combine ParameterSpec and ParameterSpecs objects.",
+            stop("c() can only combine compphysiol_parameter_spec and compphysiol_parameter_specs objects.",
                  call. = FALSE)
         }
         out <- append(out, part)
@@ -177,7 +177,7 @@ c.compphysiol_parameter_specs <- function(..., recursive = FALSE) {
              call. = FALSE)
     }
     if (!all(vapply(x, inherits, logical(1), "compphysiol_parameter_spec"))) {
-        stop("Every parameter specification must be a ParameterSpec object.", call. = FALSE)
+        stop("Every parameter specification must be a compphysiol_parameter_spec object.", call. = FALSE)
     }
     structure(x, class = .compphysiol_class(
         "compphysiol_parameter_specs", base = "list"
@@ -186,10 +186,10 @@ c.compphysiol_parameter_specs <- function(..., recursive = FALSE) {
 
 #' Subset parameter-estimation specifications
 #'
-#' @param x A `ParameterSpecs` collection.
+#' @param x A `compphysiol_parameter_specs` collection.
 #' @param i Indices or names of specifications to retain.
 #' @param ... Unused.
-#' @returns A `ParameterSpecs` collection.
+#' @returns A `compphysiol_parameter_specs` collection.
 #' @export
 `[.compphysiol_parameter_specs` <- function(x, i, ...) {
     if (missing(i)) return(x)
@@ -198,16 +198,16 @@ c.compphysiol_parameter_specs <- function(..., recursive = FALSE) {
 
 #' Print parameter-estimation specifications
 #'
-#' @param x A `ParameterSpecs` collection.
+#' @param x A `compphysiol_parameter_specs` collection.
 #' @param ... Unused.
 #' @returns `x`, invisibly.
 #' @export
 print.compphysiol_parameter_specs <- function(x, ...) {
     if (!length(x)) {
-        cat(" Parameter specifications: (none)\n")
+        cat(" compphysiol_parameter_specs: (none)\n")
         return(invisible(x))
     }
-    cat(" Parameter specifications:\n")
+    cat(" compphysiol_parameter_specs:\n")
     for (i in seq_along(x)) {
         estimate <- x[[i]]
         values <- c(
@@ -238,7 +238,7 @@ print.compphysiol_parameter_specs <- function(x, ...) {
 #'   optimizer-coordinate bounds to be unbounded after transformation.
 #' @param control Control list passed to [stats::optim()].
 #' @param simulation A simulation engine, currently [deSolve_engine()].
-#' @returns An `OptimEngine` object.
+#' @returns An `compphysiol_optim_engine` object.
 #' @export
 optim_engine <- function(
     method = "L-BFGS-B",
@@ -263,17 +263,17 @@ optim_engine <- function(
 
 #' Create an engine-neutral estimation problem
 #'
-#' @param model A `CompartmentModel`, `ProcessModel`, `OdeModel`, or
-#'   `CompiledOdeModel`.
-#' @param experiments An [Experiment][experiment()] or
-#'   [Experiments][experiments()] collection containing `ObservationData`.
+#' @param model A `compphysiol_model`, `compphysiol_process_model`, `compphysiol_ode_model`, or
+#'   `compphysiol_desolve_compiled_model`.
+#' @param experiments An [compphysiol_experiment][experiment()] or
+#'   [compphysiol_experiments][experiments()] collection containing `compphysiol_observation_data`.
 #'   Each experiment is one independent individual estimation unit, and
 #'   collection names are individual identifiers.
 #' @param parameters Named [parameter_spec()] objects combined with `c()`
-#'   into a `ParameterSpecs` collection.
-#' @param statistics A [StatisticalModel][statistical_model()] describing the
+#'   into a `compphysiol_parameter_specs` collection.
+#' @param statistics A [compphysiol_statistical_model][statistical_model()] describing the
 #'   distributions of observed and individual-level quantities.
-#' @returns An `EstimationProblem` object.
+#' @returns An `compphysiol_estimation_problem` object.
 #' @export
 estimation_problem <- function(model, experiments, parameters, statistics) {
     supported <- c(
@@ -303,7 +303,7 @@ estimation_problem <- function(model, experiments, parameters, statistics) {
         e <- experiments[[i]]
         validate_experiment(e)
         if (!inherits(e$observations, "compphysiol_observation_data")) {
-            stop("Estimation requires ObservationData in every experiment.", call. = FALSE)
+            stop("Estimation requires compphysiol_observation_data in every experiment.", call. = FALSE)
         }
         if (!nrow(e$observations)) stop("Estimation requires nonempty observation data.", call. = FALSE)
         if (all(is.na(e$observations$value))) {
@@ -384,7 +384,7 @@ estimation_problem <- function(model, experiments, parameters, statistics) {
 
 #' Print an estimation problem
 #'
-#' @param x An `EstimationProblem` object.
+#' @param x An `compphysiol_estimation_problem` object.
 #' @param ... Unused.
 #' @returns `x`, invisibly.
 #' @export
@@ -392,7 +392,7 @@ print.compphysiol_estimation_problem <- function(x, ...) {
     observations <- sum(vapply(
         unclass(x$experiments), function(e) nrow(e$observations), integer(1)
     ))
-    cat("EstimationProblem:\n")
+    cat("compphysiol_estimation_problem:\n")
     cat(" model: ", .compphysiol_class_label(x$model), "\n", sep = "")
     cat(" experiments: ", length(x$experiments), "\n", sep = "")
     cat(" observations: ", observations, "\n", sep = "")
@@ -413,14 +413,14 @@ print.compphysiol_estimation_problem <- function(x, ...) {
 
 #' Estimate model parameters
 #'
-#' @param object An `EstimationProblem`.
+#' @param object An `compphysiol_estimation_problem`.
 #' @param ... Additional method arguments.
 #' @export
 estimate <- function(object, ...) UseMethod("estimate")
 
 #' @export
 estimate.default <- function(object, ...) {
-    stop("estimate() requires an EstimationProblem object; no method exists for class ",
+    stop("estimate() requires a compphysiol_estimation_problem object; no method exists for class ",
          paste(class(object), collapse = "/"), ".", call. = FALSE)
 }
 
@@ -527,12 +527,12 @@ estimate.compphysiol_estimation_problem <- function(
 
 #' Print an estimation result
 #'
-#' @param x An `EstimationResult` object.
+#' @param x An `compphysiol_estimation_result` object.
 #' @param ... Unused.
 #' @returns `x`, invisibly.
 #' @export
 print.compphysiol_estimation_result <- function(x, ...) {
-    cat("EstimationResult:\n")
+    cat("compphysiol_estimation_result:\n")
     cat(" Coefficients:\n")
     if (length(x$coefficients)) {
         cat(sprintf(
@@ -864,22 +864,22 @@ print.compphysiol_estimation_result <- function(x, ...) {
 }
 
 #' Extract estimated coefficients
-#' @param object An `EstimationResult`.
+#' @param object An `compphysiol_estimation_result`.
 #' @param ... Unused.
-#' @returns Estimated coefficients as a `Parameters` object.
+#' @returns Estimated coefficients as a `compphysiol_parameters` object.
 #' @export
 coef.compphysiol_estimation_result <- function(object, ...) object$coefficients
 
 #' Extract fitted observable values
-#' @param object An `EstimationResult`.
+#' @param object An `compphysiol_estimation_result`.
 #' @param ... Unused.
-#' @returns Unit-aware `ObservationData` of fitted values in estimation-row order.
+#' @returns Unit-aware `compphysiol_observation_data` of fitted values in estimation-row order.
 #' @export
 fitted.compphysiol_estimation_result <- function(object, ...) object$predictions
 
 #' Extract estimation residuals
-#' @param object An `EstimationResult`.
+#' @param object An `compphysiol_estimation_result`.
 #' @param ... Unused.
-#' @returns Unit-aware `ObservationData` of observed-minus-fitted residuals.
+#' @returns Unit-aware `compphysiol_observation_data` of observed-minus-fitted residuals.
 #' @export
 residuals.compphysiol_estimation_result <- function(object, ...) object$residuals

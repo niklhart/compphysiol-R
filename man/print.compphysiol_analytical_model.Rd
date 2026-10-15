@@ -2,19 +2,19 @@
 % Please edit documentation in R/ProcessOdeModel.R
 \name{print.compphysiol_analytical_model}
 \alias{print.compphysiol_analytical_model}
-\title{Print method for \code{AnalyticalModel} class}
+\title{Print method for \code{compphysiol_analytical_model} class}
 \usage{
 \method{print}{compphysiol_analytical_model}(x, ...)
 }
 \arguments{
-\item{x}{An \code{AnalyticalModel} object.}
+\item{x}{An \code{compphysiol_analytical_model} object.}
 
 \item{...}{ignored}
 }
 \value{
-The \code{AnalyticalModel} object (invisibly).
+The \code{compphysiol_analytical_model} object (invisibly).
 }
 \description{
-Pretty-prints an \code{AnalyticalModel} object using state indices in the linear
+Pretty-prints an \code{compphysiol_analytical_model} object using state indices in the linear
 system and DSL state names in the state list.
 }

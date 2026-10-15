@@ -7,14 +7,14 @@
 \method{[}{compphysiol_parameter_specs}(x, i, ...)
 }
 \arguments{
-\item{x}{A \code{ParameterSpecs} collection.}
+\item{x}{A \code{compphysiol_parameter_specs} collection.}
 
 \item{i}{Indices or names of specifications to retain.}
 
 \item{...}{Unused.}
 }
 \value{
-A \code{ParameterSpecs} collection.
+A \code{compphysiol_parameter_specs} collection.
 }
 \description{
 Subset parameter-estimation specifications

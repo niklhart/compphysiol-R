@@ -7,7 +7,7 @@
 wire(model, what = c("molec", "cmt"))
 }
 \arguments{
-\item{model}{A \code{CompartmentModel} object}
+\item{model}{A \code{compphysiol_model} object}
 
 \item{what}{What to wire: \code{"molec"} for molecules, \code{"cmt"} for compartments, or both (the default)}
 }

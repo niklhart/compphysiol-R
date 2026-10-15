@@ -1,9 +1,9 @@
 # Linear algebra for symbolic lumping of ODE systems
 
-#' Symbolic lumping of a linear `CompartmentModel` based on its graph structure
-#' @param trans A `Transports` object
+#' Symbolic lumping of a linear `compphysiol_model` based on its graph structure
+#' @param trans A `compphysiol_transports` object
 #' @param scc A character vector, the strongly connected component (SCC) to be lumped
-#' @returns A list with entries `internal`, `incoming`, `outgoing`, `elimination`, each a `Transports` object
+#' @returns A list with entries `internal`, `incoming`, `outgoing`, `elimination`, each a `compphysiol_transports` object
 #' @noRd
 .classify_transports <- function(trans, scc) {
     .check_class(trans, "compphysiol_transports")
@@ -94,7 +94,7 @@
 
 #' Assemble the lumping equations for a strongly connected component (SCC)
 #' @param scc A character vector, the strongly connected component (SCC) to be lumped
-#' @param trans A `Transports` object
+#' @param trans A `compphysiol_transports` object
 #' @returns A list with entries `A`, `b`
 #' @noRd
 .assemble_linear_expr <- function(scc, trans) {

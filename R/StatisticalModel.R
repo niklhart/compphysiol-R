@@ -86,7 +86,7 @@ combined <- function(constant, proportional) {
 #'   standard deviation.
 #' @param level `NULL`, `"individual"`, or `"observation"`. `NULL` is inferred
 #'   from the target when validated against a dynamic model.
-#' @returns A `StatisticalDistribution` object.
+#' @returns A `compphysiol_statistical_distribution` object.
 #' @name statistical_distributions
 NULL
 
@@ -203,7 +203,7 @@ correlated <- function(...) {
 #' @param ... Named distribution specifications created by [normal()] or
 #'   [lognormal()], plus optional unnamed specifications created by
 #'   `correlated()`.
-#' @returns A `StatisticalModel` object.
+#' @returns A `compphysiol_statistical_model` object.
 #' @examples
 #' model <- statistical_model(
 #'     CL = normal(mean = "CL_pop", sd = proportional("omega_CL")),
@@ -229,7 +229,7 @@ statistical_model <- function(...) {
         stop("Statistical-model target names must be unique.", call. = FALSE)
     }
     if (!all(vapply(x, inherits, logical(1), "compphysiol_statistical_distribution"))) {
-        stop("Every statistical-model entry must be a StatisticalDistribution object.",
+        stop("Every statistical-model entry must be a compphysiol_statistical_distribution object.",
              call. = FALSE)
     }
     correlations <- unlist(entries[is_correlated], recursive = FALSE)
@@ -272,10 +272,10 @@ statistical_model <- function(...) {
 
 #' Subset a statistical model
 #'
-#' @param x A `StatisticalModel` object.
+#' @param x A `compphysiol_statistical_model` object.
 #' @param i Indices or names of random quantities to retain.
 #' @param ... Unused.
-#' @returns A `StatisticalModel` object.
+#' @returns A `compphysiol_statistical_model` object.
 #' @export
 `[.compphysiol_statistical_model` <- function(x, i, ...) {
     distributions <- unclass(x)
@@ -555,16 +555,16 @@ statistical_model <- function(...) {
 
 #' Print a statistical model
 #'
-#' @param x A `StatisticalModel` object.
+#' @param x A `compphysiol_statistical_model` object.
 #' @param ... Unused.
 #' @returns `x`, invisibly.
 #' @export
 print.compphysiol_statistical_model <- function(x, ...) {
     if (!length(x)) {
-        cat(" Statistical model: (none)\n")
+        cat(" compphysiol_statistical_model: (none)\n")
         return(invisible(x))
     }
-    cat(" Statistical model:\n")
+    cat(" compphysiol_statistical_model:\n")
     for (i in seq_along(x)) {
         d <- x[[i]]
         family <- if (inherits(d, "compphysiol_normal_distribution")) "normal" else "lognormal"

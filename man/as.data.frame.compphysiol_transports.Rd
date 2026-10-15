@@ -2,18 +2,18 @@
 % Please edit documentation in R/Transports.R
 \name{as.data.frame.compphysiol_transports}
 \alias{as.data.frame.compphysiol_transports}
-\title{Convert a \code{Transports} object to a data frame}
+\title{Convert a \code{compphysiol_transports} object to a data frame}
 \usage{
 \method{as.data.frame}{compphysiol_transports}(x, ...)
 }
 \arguments{
-\item{x}{A \code{Transports} object}
+\item{x}{A \code{compphysiol_transports} object}
 
 \item{...}{Additional arguments (not used)}
 }
 \value{
-A data frame representation of the \code{Transports} object
+A data frame representation of the \code{compphysiol_transports} object
 }
 \description{
-Convert a \code{Transports} object to a data frame
+Convert a \code{compphysiol_transports} object to a data frame
 }

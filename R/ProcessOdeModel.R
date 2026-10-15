@@ -1,11 +1,11 @@
 #' Create a process model representation
 #'
-#' `to_process_model()` lowers a `CompartmentModel` to a solver-neutral process
+#' `to_process_model()` lowers a `compphysiol_model` to a solver-neutral process
 #' representation with explicit states, process rates, and process
 #' stoichiometry.
 #'
-#' @param model A `CompartmentModel` object.
-#' @returns A `ProcessModel` object.
+#' @param model A `compphysiol_model` object.
+#' @returns A `compphysiol_process_model` object.
 #' @export
 to_process_model <- function(model) {
     UseMethod("to_process_model")
@@ -180,11 +180,11 @@ to_process_model.compphysiol_model <- function(model) {
 
 #' Create an ODE model representation
 #'
-#' `to_ode_model()` lowers a `CompartmentModel` or `ProcessModel` to a
+#' `to_ode_model()` lowers a `compphysiol_model` or `compphysiol_process_model` to a
 #' solver-neutral ODE representation with indexed one-dimensional states.
 #'
-#' @param model A `CompartmentModel` or `ProcessModel` object.
-#' @returns An `OdeModel` object.
+#' @param model A `compphysiol_model` or `compphysiol_process_model` object.
+#' @returns An `compphysiol_ode_model` object.
 #' @export
 to_ode_model <- function(model) {
     UseMethod("to_ode_model")
@@ -231,13 +231,13 @@ to_ode_model.compphysiol_process_model <- function(model) {
 
 #' Create a compiled ODE model representation
 #'
-#' `to_compiled_ode_model()` lowers a `CompartmentModel`, `ProcessModel`, or
-#' `OdeModel` to a compiled-backend representation. The first implementation
+#' `to_compiled_ode_model()` lowers a `compphysiol_model`, `compphysiol_process_model`, or
+#' `compphysiol_ode_model` to a compiled-backend representation. The first implementation
 #' records the stable model metadata needed by the compiled deSolve backend;
 #' code generation and dynamic loading are attached in later backend steps.
 #'
-#' @param model A `CompartmentModel`, `ProcessModel`, or `OdeModel` object.
-#' @returns A `CompiledOdeModel` object.
+#' @param model A `compphysiol_model`, `compphysiol_process_model`, or `compphysiol_ode_model` object.
+#' @returns A `compphysiol_desolve_compiled_model` object.
 #' @export
 to_compiled_ode_model <- function(model) {
     UseMethod("to_compiled_ode_model")
@@ -277,15 +277,15 @@ to_compiled_ode_model.compphysiol_ode_model <- function(model) {
 
 #' Create an analytical model representation
 #'
-#' `to_analytical_model()` lowers a `CompartmentModel` or `ProcessModel` to a
+#' `to_analytical_model()` lowers a `compphysiol_model` or `compphysiol_process_model` to a
 #' solver-neutral linear analytical representation of the form `dx/dt = A x + b`.
 #'
 #' The first implementation supports homogeneous first-order linear systems.
 #' The constant source term `b` is part of the representation, but nonzero
 #' entries are rejected for now.
 #'
-#' @param model A `CompartmentModel` or `ProcessModel` object.
-#' @returns An `AnalyticalModel` object.
+#' @param model A `compphysiol_model` or `compphysiol_process_model` object.
+#' @returns An `compphysiol_analytical_model` object.
 #' @export
 to_analytical_model <- function(model) {
     UseMethod("to_analytical_model")
@@ -325,15 +325,15 @@ to_analytical_model.compphysiol_process_model <- function(model) {
 
 #' Create a stochastic model representation
 #'
-#' `to_stochastic_model()` lowers a `CompartmentModel` or `ProcessModel` to a
+#' `to_stochastic_model()` lowers a `compphysiol_model` or `compphysiol_process_model` to a
 #' count-based representation suitable for Gillespie SSA simulation.
 #'
 #' The first implementation supports models whose processes can be rendered as
 #' elementary propensities from their `const` and input-state metadata. Explicit
 #' `rate = ...` processes and dosing are rejected.
 #'
-#' @param model A `CompartmentModel` or `ProcessModel` object.
-#' @returns A `StochasticModel` object.
+#' @param model A `compphysiol_model` or `compphysiol_process_model` object.
+#' @returns A `compphysiol_stochastic_model` object.
 #' @export
 to_stochastic_model <- function(model) {
     UseMethod("to_stochastic_model")
@@ -376,18 +376,18 @@ to_stochastic_model.compphysiol_process_model <- function(model) {
     )
 }
 
-#' Print method for `ProcessModel` class
+#' Print method for `compphysiol_process_model` class
 #'
-#' Pretty-prints a `ProcessModel` object using DSL state names.
-#' @param x A `ProcessModel` object.
+#' Pretty-prints a `compphysiol_process_model` object using DSL state names.
+#' @param x A `compphysiol_process_model` object.
 #' @param ... ignored
-#' @returns The `ProcessModel` object (invisibly).
+#' @returns The `compphysiol_process_model` object (invisibly).
 #' @export
 print.compphysiol_process_model <- function(x, ...) {
-    cat("ProcessModel:\n")
+    cat("compphysiol_process_model:\n")
 
     if (nrow(x$states) > 0) {
-        cat(" States:\n")
+        cat(" compphysiol_states:\n")
         cat(sprintf(
             "  (%s) %s, initial = %s\n",
             x$states$index,
@@ -395,7 +395,7 @@ print.compphysiol_process_model <- function(x, ...) {
             vapply(x$initials, .ode_model_format_expr, character(1), model = x)
         ), sep = "")
     } else {
-        cat(" States: (none)\n")
+        cat(" compphysiol_states: (none)\n")
     }
 
     if (nrow(x$processes) > 0) {
@@ -413,7 +413,7 @@ print.compphysiol_process_model <- function(x, ...) {
     }
 
     if (length(x$equations) > 0) {
-        cat(" Equations:\n")
+        cat(" compphysiol_equations:\n")
         cat(sprintf(
             "  (%s) %s = %s\n",
             seq_along(x$equations),
@@ -421,11 +421,11 @@ print.compphysiol_process_model <- function(x, ...) {
             vapply(x$equations, .ode_model_format_expr, character(1), model = x)
         ), sep = "")
     } else {
-        cat(" Equations: (none)\n")
+        cat(" compphysiol_equations: (none)\n")
     }
 
     if (length(x$observables) > 0) {
-        cat(" Observables:\n")
+        cat(" compphysiol_observables:\n")
         cat(sprintf(
             "  (%s) %s = %s\n",
             seq_along(x$observables),
@@ -433,11 +433,11 @@ print.compphysiol_process_model <- function(x, ...) {
             vapply(x$observables, .ode_model_format_expr, character(1), model = x)
         ), sep = "")
     } else {
-        cat(" Observables: (none)\n")
+        cat(" compphysiol_observables: (none)\n")
     }
 
     if (nrow(x$dosing) > 0) {
-        cat(" Dosing:\n")
+        cat(" compphysiol_dosing:\n")
         cat(sprintf(
             "  (%s) %s %s to %s at %s\n",
             seq_len(nrow(x$dosing)),
@@ -447,7 +447,7 @@ print.compphysiol_process_model <- function(x, ...) {
             vapply(x$dosing$time, .ode_model_format_expr, character(1), model = x)
         ), sep = "")
     } else {
-        cat(" Dosing: (none)\n")
+        cat(" compphysiol_dosing: (none)\n")
     }
 
     print(x$parameters)
@@ -461,18 +461,18 @@ print.compphysiol_process_model <- function(x, ...) {
     invisible(x)
 }
 
-#' Print method for `StochasticModel` class
+#' Print method for `compphysiol_stochastic_model` class
 #'
-#' Pretty-prints a `StochasticModel` object using DSL state names.
-#' @param x A `StochasticModel` object.
+#' Pretty-prints a `compphysiol_stochastic_model` object using DSL state names.
+#' @param x A `compphysiol_stochastic_model` object.
 #' @param ... ignored
-#' @returns The `StochasticModel` object (invisibly).
+#' @returns The `compphysiol_stochastic_model` object (invisibly).
 #' @export
 print.compphysiol_stochastic_model <- function(x, ...) {
-    cat("StochasticModel:\n")
+    cat("compphysiol_stochastic_model:\n")
 
     if (nrow(x$states) > 0) {
-        cat(" States:\n")
+        cat(" compphysiol_states:\n")
         cat(sprintf(
             "  (%s) %s, initial = %s\n",
             x$states$index,
@@ -480,7 +480,7 @@ print.compphysiol_stochastic_model <- function(x, ...) {
             vapply(x$initials, .ode_model_format_expr, character(1), model = x)
         ), sep = "")
     } else {
-        cat(" States: (none)\n")
+        cat(" compphysiol_states: (none)\n")
     }
 
     if (length(x$propensities) > 0) {
@@ -498,7 +498,7 @@ print.compphysiol_stochastic_model <- function(x, ...) {
     }
 
     if (length(x$equations) > 0) {
-        cat(" Equations:\n")
+        cat(" compphysiol_equations:\n")
         cat(sprintf(
             "  (%s) %s = %s\n",
             seq_along(x$equations),
@@ -506,11 +506,11 @@ print.compphysiol_stochastic_model <- function(x, ...) {
             vapply(x$equations, .ode_model_format_expr, character(1), model = x)
         ), sep = "")
     } else {
-        cat(" Equations: (none)\n")
+        cat(" compphysiol_equations: (none)\n")
     }
 
     if (length(x$observables) > 0) {
-        cat(" Observables:\n")
+        cat(" compphysiol_observables:\n")
         cat(sprintf(
             "  (%s) %s = %s\n",
             seq_along(x$observables),
@@ -518,7 +518,7 @@ print.compphysiol_stochastic_model <- function(x, ...) {
             vapply(x$observables, .ode_model_format_expr, character(1), model = x)
         ), sep = "")
     } else {
-        cat(" Observables: (none)\n")
+        cat(" compphysiol_observables: (none)\n")
     }
 
     print(x$parameters)
@@ -532,19 +532,19 @@ print.compphysiol_stochastic_model <- function(x, ...) {
     invisible(x)
 }
 
-#' Print method for `AnalyticalModel` class
+#' Print method for `compphysiol_analytical_model` class
 #'
-#' Pretty-prints an `AnalyticalModel` object using state indices in the linear
+#' Pretty-prints an `compphysiol_analytical_model` object using state indices in the linear
 #' system and DSL state names in the state list.
-#' @param x An `AnalyticalModel` object.
+#' @param x An `compphysiol_analytical_model` object.
 #' @param ... ignored
-#' @returns The `AnalyticalModel` object (invisibly).
+#' @returns The `compphysiol_analytical_model` object (invisibly).
 #' @export
 print.compphysiol_analytical_model <- function(x, ...) {
-    cat("AnalyticalModel:\n")
+    cat("compphysiol_analytical_model:\n")
 
     if (nrow(x$states) > 0) {
-        cat(" States:\n")
+        cat(" compphysiol_states:\n")
         cat(sprintf(
             "  (%s) %s, initial = %s\n",
             x$states$index,
@@ -552,7 +552,7 @@ print.compphysiol_analytical_model <- function(x, ...) {
             vapply(x$initials, .ode_model_format_expr, character(1), model = x)
         ), sep = "")
     } else {
-        cat(" States: (none)\n")
+        cat(" compphysiol_states: (none)\n")
     }
 
     if (length(x$A) > 0) {
@@ -574,7 +574,7 @@ print.compphysiol_analytical_model <- function(x, ...) {
     }
 
     if (length(x$equations) > 0) {
-        cat(" Equations:\n")
+        cat(" compphysiol_equations:\n")
         cat(sprintf(
             "  (%s) %s = %s\n",
             seq_along(x$equations),
@@ -582,11 +582,11 @@ print.compphysiol_analytical_model <- function(x, ...) {
             vapply(x$equations, .ode_model_format_expr, character(1), model = x)
         ), sep = "")
     } else {
-        cat(" Equations: (none)\n")
+        cat(" compphysiol_equations: (none)\n")
     }
 
     if (length(x$observables) > 0) {
-        cat(" Observables:\n")
+        cat(" compphysiol_observables:\n")
         cat(sprintf(
             "  (%s) %s = %s\n",
             seq_along(x$observables),
@@ -594,7 +594,7 @@ print.compphysiol_analytical_model <- function(x, ...) {
             vapply(x$observables, .ode_model_format_expr, character(1), model = x)
         ), sep = "")
     } else {
-        cat(" Observables: (none)\n")
+        cat(" compphysiol_observables: (none)\n")
     }
 
     print(x$parameters)
@@ -608,18 +608,18 @@ print.compphysiol_analytical_model <- function(x, ...) {
     invisible(x)
 }
 
-#' Print method for `OdeModel` class
+#' Print method for `compphysiol_ode_model` class
 #'
-#' Pretty-prints an `OdeModel` object using DSL state names.
-#' @param x An `OdeModel` object.
+#' Pretty-prints an `compphysiol_ode_model` object using DSL state names.
+#' @param x An `compphysiol_ode_model` object.
 #' @param ... ignored
-#' @returns The `OdeModel` object (invisibly).
+#' @returns The `compphysiol_ode_model` object (invisibly).
 #' @export
 print.compphysiol_ode_model <- function(x, ...) {
-    cat("OdeModel:\n")
+    cat("compphysiol_ode_model:\n")
 
     if (nrow(x$states) > 0) {
-        cat(" States:\n")
+        cat(" compphysiol_states:\n")
         cat(sprintf(
             "  (%s) %s, initial = %s\n",
             x$states$index,
@@ -627,7 +627,7 @@ print.compphysiol_ode_model <- function(x, ...) {
             vapply(x$initials, .ode_model_format_expr, character(1), model = x)
         ), sep = "")
     } else {
-        cat(" States: (none)\n")
+        cat(" compphysiol_states: (none)\n")
     }
 
     if (length(x$rhs) > 0) {
@@ -642,7 +642,7 @@ print.compphysiol_ode_model <- function(x, ...) {
     }
 
     if (length(x$equations) > 0) {
-        cat(" Equations:\n")
+        cat(" compphysiol_equations:\n")
         cat(sprintf(
             "  (%s) %s = %s\n",
             seq_along(x$equations),
@@ -650,11 +650,11 @@ print.compphysiol_ode_model <- function(x, ...) {
             vapply(x$equations, .ode_model_format_expr, character(1), model = x)
         ), sep = "")
     } else {
-        cat(" Equations: (none)\n")
+        cat(" compphysiol_equations: (none)\n")
     }
 
     if (length(x$observables) > 0) {
-        cat(" Observables:\n")
+        cat(" compphysiol_observables:\n")
         cat(sprintf(
             "  (%s) %s = %s\n",
             seq_along(x$observables),
@@ -662,11 +662,11 @@ print.compphysiol_ode_model <- function(x, ...) {
             vapply(x$observables, .ode_model_format_expr, character(1), model = x)
         ), sep = "")
     } else {
-        cat(" Observables: (none)\n")
+        cat(" compphysiol_observables: (none)\n")
     }
 
     if (nrow(x$dosing) > 0) {
-        cat(" Dosing:\n")
+        cat(" compphysiol_dosing:\n")
         cat(sprintf(
             "  (%s) %s %s to %s at %s\n",
             seq_len(nrow(x$dosing)),
@@ -676,7 +676,7 @@ print.compphysiol_ode_model <- function(x, ...) {
             vapply(x$dosing$time, .ode_model_format_expr, character(1), model = x)
         ), sep = "")
     } else {
-        cat(" Dosing: (none)\n")
+        cat(" compphysiol_dosing: (none)\n")
     }
 
     print(x$parameters)
@@ -939,7 +939,7 @@ print.compphysiol_ode_model <- function(x, ...) {
         return(matrix(numeric(0), nrow = length(time), ncol = 0))
     }
     if (any(b != 0)) {
-        stop("AnalyticalModel simulation with nonzero b is not implemented yet.", call. = FALSE)
+        stop("compphysiol_analytical_model simulation with nonzero b is not implemented yet.", call. = FALSE)
     }
 
     out <- vapply(
@@ -960,7 +960,7 @@ print.compphysiol_ode_model <- function(x, ...) {
     missing <- setdiff(free_params, names(parameters))
     if (length(missing) > 0) {
         stop(
-            "AnalyticalModel requires missing free parameter(s): ",
+            "compphysiol_analytical_model requires missing free parameter(s): ",
             paste(missing, collapse = ", "),
             ".",
             call. = FALSE
@@ -1045,7 +1045,7 @@ print.compphysiol_ode_model <- function(x, ...) {
 
 .analytical_model_check_compatibility <- function(model) {
     if (nrow(model$dosing) > 0) {
-        stop("AnalyticalModel with dosing is not implemented yet.", call. = FALSE)
+        stop("compphysiol_analytical_model with dosing is not implemented yet.", call. = FALSE)
     }
 
     invisible(model)
@@ -1094,7 +1094,7 @@ print.compphysiol_ode_model <- function(x, ...) {
         }
 
         stop(
-            "AnalyticalModel currently supports only linear first-order processes.",
+            "compphysiol_analytical_model currently supports only linear first-order processes.",
             call. = FALSE
         )
     }
@@ -1117,7 +1117,7 @@ print.compphysiol_ode_model <- function(x, ...) {
     nonzero <- !vapply(b, .analytical_model_is_zero, logical(1))
     if (any(nonzero)) {
         stop(
-            "The current AnalyticalModel represents b but requires b = 0; ",
+            "The current compphysiol_analytical_model represents b but requires b = 0; ",
             "nonzero source or constant terms are not supported yet.",
             call. = FALSE
         )
@@ -1164,7 +1164,7 @@ print.compphysiol_ode_model <- function(x, ...) {
 
     if (any(model$states$type != "amount")) {
         stop(
-            "StochasticModel requires amount/count states; concentration states are not supported.",
+            "compphysiol_stochastic_model requires amount/count states; concentration states are not supported.",
             call. = FALSE
         )
     }
@@ -1180,13 +1180,13 @@ print.compphysiol_ode_model <- function(x, ...) {
 
     if (length(model$stoichiometry) > 0 &&
         any(model$stoichiometry != round(model$stoichiometry))) {
-        stop("StochasticModel requires integer-valued stoichiometry.", call. = FALSE)
+        stop("compphysiol_stochastic_model requires integer-valued stoichiometry.", call. = FALSE)
     }
 
     explicit_rate <- vapply(model$processes$const, .stochastic_model_is_explicit_rate, logical(1))
     if (any(explicit_rate)) {
         stop(
-            "Explicit rate processes are not implemented for the current StochasticModel.",
+            "Explicit rate processes are not implemented for the current compphysiol_stochastic_model.",
             call. = FALSE
         )
     }

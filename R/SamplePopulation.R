@@ -1,7 +1,7 @@
 #' Sample a realized population
 #'
 #' Samples structural parameters from the individual-level distributions in a
-#' [StatisticalModel][statistical_model()], respecting dependencies declared by
+#' [compphysiol_statistical_model][statistical_model()], respecting dependencies declared by
 #' [correlated()]. Observation-level entries are ignored. The result contains
 #' only the sampled targets; population parameters used as distribution
 #' locations, scales, or correlations are not copied into the individual
@@ -13,15 +13,15 @@
 #' unspecified level as individual for this operation. An entry already marked
 #' as observation-level cannot be selected.
 #'
-#' @param statistics A `StatisticalModel` with resolved or explicit levels.
-#' @param parameters A [Parameters][parameters()] object containing population
+#' @param statistics A `compphysiol_statistical_model` with resolved or explicit levels.
+#' @param parameters A [compphysiol_parameters][parameters()] object containing population
 #'   parameters referenced by the individual-level distributions and their
 #'   correlations.
 #' @param n Positive whole number of individuals to sample.
 #' @param targets Optional character vector of statistical-model targets to
 #'   sample. `NULL` samples all resolved individual-level entries. Explicit
 #'   targets may have unresolved levels but must not be observation-level.
-#' @returns A named `ParameterSets` collection with names `individual_1`,
+#' @returns A named `compphysiol_parameter_sets` collection with names `individual_1`,
 #'   `individual_2`, and so on.
 #' @examples
 #' statistics <- statistical_model(

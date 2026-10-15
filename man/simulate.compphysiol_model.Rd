@@ -21,7 +21,7 @@
 )
 }
 \arguments{
-\item{object}{A \code{CompartmentModel} object.}
+\item{object}{A \code{compphysiol_model} object.}
 
 \item{nsim}{Number of stochastic realizations for \code{simulation_type = "ssa"}.
 Ignored by deterministic simulation routes.}
@@ -34,7 +34,7 @@ shorthand, e.g. \code{seq(0, 24) [h]}.}
 \item{unit}{Optional time unit used when \code{time} is numeric without units.}
 
 \item{parameters}{Free parameters passed to the ODE solver, as a named list
-or \code{Parameters} object.}
+or \code{compphysiol_parameters} object.}
 
 \item{dimensions}{Named list of unit dimensions defining the numerical scale
 used at the solver boundary. These dimensions affect the scale of solver
@@ -58,9 +58,9 @@ realization. The default \code{Inf} imposes no limit.}
 
 \item{...}{Additional arguments passed to \code{\link[deSolve:ode]{deSolve::ode()}}.}
 
-\item{experiment}{An \code{Experiment} or \code{Experiments} collection, as an alternative
+\item{experiment}{An \code{compphysiol_experiment} or \code{compphysiol_experiments} collection, as an alternative
 to \code{time}, \code{unit}, and \code{parameters}. Currently supported for the ODE route
-and \code{OdeModel}/\code{CompiledOdeModel} inputs. Known parameters override model
+and \code{compphysiol_ode_model}/\code{compphysiol_desolve_compiled_model} inputs. Known parameters override model
 defaults; experiment dosing replaces model dosing, including when empty.
 Simulation starts at the experiment's initial time and evaluates only its
 scheduled observable-time pairs. Each experiment is one independent
@@ -68,18 +68,18 @@ individual simulation unit. Collections return a list in input order, with
 experiment names serving as individual identifiers.}
 }
 \value{
-A \code{SimulationResult} with rectangular \code{states} and long-format
+A \code{compphysiol_simulation_result} with rectangular \code{states} and long-format
 \code{observables} (\code{time}, \code{observable}, \code{value}, plus \code{rep} for stochastic
 replicates). Direct \code{time} input requests all observables at every output
 time. Values are numeric, \code{units}, or \code{mixed_units} depending on their units.
-Without observables the component is \code{NULL}. An \code{Experiments} input returns
+Without observables the component is \code{NULL}. An \code{compphysiol_experiments} input returns
 a list of results named by individual identifier when the collection is
 named. Results are not automatically bound into a population table. See
 \code{\link[=as_observables_long]{as_observables_long()}} and
 \code{\link[=as_observables_wide]{as_observables_wide()}} for a storage-independent processing interface.
 }
 \description{
-\code{simulate()} solves a \code{CompartmentModel} and returns toolbox-level output.
+\code{simulate()} solves a \code{compphysiol_model} and returns toolbox-level output.
 The default route wraps the \code{deSolve} ODE export and returns ODE states and
 observables.
 }

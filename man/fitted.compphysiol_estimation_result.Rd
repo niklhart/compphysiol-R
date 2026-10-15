@@ -7,12 +7,12 @@
 \method{fitted}{compphysiol_estimation_result}(object, ...)
 }
 \arguments{
-\item{object}{An \code{EstimationResult}.}
+\item{object}{An \code{compphysiol_estimation_result}.}
 
 \item{...}{Unused.}
 }
 \value{
-Unit-aware \code{ObservationData} of fitted values in estimation-row order.
+Unit-aware \code{compphysiol_observation_data} of fitted values in estimation-row order.
 }
 \description{
 Extract fitted observable values

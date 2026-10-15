@@ -7,22 +7,22 @@
 estimation_problem(model, experiments, parameters, statistics)
 }
 \arguments{
-\item{model}{A \code{CompartmentModel}, \code{ProcessModel}, \code{OdeModel}, or
-\code{CompiledOdeModel}.}
+\item{model}{A \code{compphysiol_model}, \code{compphysiol_process_model}, \code{compphysiol_ode_model}, or
+\code{compphysiol_desolve_compiled_model}.}
 
-\item{experiments}{An \link[=experiment]{Experiment} or
-\link[=experiments]{Experiments} collection containing \code{ObservationData}.
+\item{experiments}{An \link[=experiment]{compphysiol_experiment} or
+\link[=experiments]{compphysiol_experiments} collection containing \code{compphysiol_observation_data}.
 Each experiment is one independent individual estimation unit, and
 collection names are individual identifiers.}
 
 \item{parameters}{Named \code{\link[=parameter_spec]{parameter_spec()}} objects combined with \code{c()}
-into a \code{ParameterSpecs} collection.}
+into a \code{compphysiol_parameter_specs} collection.}
 
-\item{statistics}{A \link[=statistical_model]{StatisticalModel} describing the
+\item{statistics}{A \link[=statistical_model]{compphysiol_statistical_model} describing the
 distributions of observed and individual-level quantities.}
 }
 \value{
-An \code{EstimationProblem} object.
+An \code{compphysiol_estimation_problem} object.
 }
 \description{
 Create an engine-neutral estimation problem

@@ -1,15 +1,15 @@
 
-#' Merge two `CompartmentModel` objects into one.
+#' Merge two `compphysiol_model` objects into one.
 #'
-#' This function combines two `CompartmentModel` objects into a single model.
+#' This function combines two `compphysiol_model` objects into a single model.
 #' In overlay mode, matching names are interpreted as the same modelling entity:
 #' compartments with the same name are the same location, molecules with the same
 #' name are the same substance, and matching molecule-in-compartment combinations
 #' are the same state.
 #' 
-#' @param M1,M2 `CompartmentModel` objects
+#' @param M1,M2 `compphysiol_model` objects
 #' @param mode Merge mode. Currently only `"overlay"` is implemented.
-#' @returns A new `CompartmentModel` containing both.
+#' @returns A new `compphysiol_model` containing both.
 #' @examples
 #' abs <- compartment_model() |>
 #'     add_compartment(c("Gut", "Central")) |>

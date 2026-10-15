@@ -12,7 +12,7 @@
 #' simulation, or include observation data when using it for estimation.
 #'
 #' Observation rows retain their order, duplicates, additional columns, and
-#' units. `ObservationData` inherits from `ObservationSchedule`, so simulation
+#' units. `compphysiol_observation_data` inherits from `compphysiol_observation_schedule`, so simulation
 #' can use either representation while estimation can require data values.
 #' Times need not be sorted. All nonempty observations must use the same unit
 #' mode as `start`: either unit-free,
@@ -20,18 +20,18 @@
 #' Compatible units need not be identical. Doses and observations cannot precede
 #' `start`. Empty observations do not impose a time unit.
 #'
-#' @param parameters A [Parameters][parameters()] object containing known
+#' @param parameters A [compphysiol_parameters][parameters()] object containing known
 #'   individual and experimental values, including covariates. `NULL` creates
 #'   an empty parameter collection.
-#' @param dosing A [Dosing][dosing()] object. `NULL` creates an empty dosing schedule.
-#' @param observations An [ObservationSchedule][observation_schedule()] or
-#'   [ObservationData][observation_data()]. `NULL` creates an empty schedule.
+#' @param dosing A [compphysiol_dosing][dosing()] object. `NULL` creates an empty dosing schedule.
+#' @param observations An [compphysiol_observation_schedule][observation_schedule()] or
+#'   [compphysiol_observation_data][observation_data()]. `NULL` creates an empty schedule.
 #' @param start Initial time, a finite numeric scalar, optionally with units.
 #'   Supports unit shorthand such as `0 [h]`. The default `NULL` means zero in
 #'   the units of the first nonempty schedule (dosing, then observations), or
 #'   unit-free zero if both schedules are empty. It does not mean the earliest
 #'   scheduled time. Incompatible schedules still produce an error.
-#' @returns An `Experiment` object.
+#' @returns An `compphysiol_experiment` object.
 #' @seealso [validate_experiment()]
 #' @examples
 #' e <- experiment(
@@ -86,8 +86,8 @@ experiment <- function(
 #' are not accepted unless explicitly declared as observable names. This does
 #' not wire dosing targets, resolve model parameters, or check model equations.
 #'
-#' @param x An `Experiment` object.
-#' @param model Optional `CompartmentModel` against which to check observable names.
+#' @param x An `compphysiol_experiment` object.
+#' @param model Optional `compphysiol_model` against which to check observable names.
 #' @returns `x`, invisibly, after successful validation.
 #' @export
 validate_experiment <- function(x, model = NULL) {
@@ -146,12 +146,12 @@ validate_experiment <- function(x, model = NULL) {
 }
 
 #' Print an experiment
-#' @param x An `Experiment` object.
+#' @param x An `compphysiol_experiment` object.
 #' @param ... Unused.
 #' @returns `x`, invisibly.
 #' @export
 print.compphysiol_experiment <- function(x, ...) {
-    cat("Experiment:\n")
+    cat("compphysiol_experiment:\n")
     cat(" Start: ", format(x$start), "\n", sep = "")
     print(x$parameters)
     print(x$dosing)

@@ -7,12 +7,12 @@
 to_ode_model(model)
 }
 \arguments{
-\item{model}{A \code{CompartmentModel} or \code{ProcessModel} object.}
+\item{model}{A \code{compphysiol_model} or \code{compphysiol_process_model} object.}
 }
 \value{
-An \code{OdeModel} object.
+An \code{compphysiol_ode_model} object.
 }
 \description{
-\code{to_ode_model()} lowers a \code{CompartmentModel} or \code{ProcessModel} to a
+\code{to_ode_model()} lowers a \code{compphysiol_model} or \code{compphysiol_process_model} to a
 solver-neutral ODE representation with indexed one-dimensional states.
 }

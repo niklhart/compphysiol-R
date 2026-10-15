@@ -1,9 +1,9 @@
 #' General symbolic lumping (experimental version)
 #' 
-#' @param M A CompartmentModel object
+#' @param M A compphysiol_model object
 #' @param partitioning A list of character vectors (each a group of compartments)
 #' @param refstate A string specifying a reference state (defaults to the one with most incoming transports)
-#' @returns A CompartmentModel object representing the lumped model
+#' @returns A compphysiol_model object representing the lumped model
 #' @export
 symbolic_lumping <- function(M, partitioning = list(), refstate = .get_default_refstate(M)) {
 
@@ -50,7 +50,7 @@ symbolic_lumping <- function(M, partitioning = list(), refstate = .get_default_r
 
 #' Determine a default reference state if unspecified
 #'
-#' @param model A `CompartmentModel` object
+#' @param model A `compphysiol_model` object
 #' @returns A string containing the compartment name with the most incoming transports
 #' @noRd
 .get_default_refstate <- function(model) {
@@ -66,7 +66,7 @@ symbolic_lumping <- function(M, partitioning = list(), refstate = .get_default_r
 
 #' Get symbolic lumping conditions based on a reference state
 #'
-#' @param M A `CompartmentModel` object
+#' @param M A `compphysiol_model` object
 #' @param refstate A string specifying the reference state
 #' @param maxdegree An integer specifying the maximum degree for which to carry out symbolic substitution.
 #'   Values > 2 are currently unsupported and will throw an error.

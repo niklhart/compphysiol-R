@@ -1,7 +1,7 @@
 
-#' Create an `Observables` object
+#' Create an `compphysiol_observables` object
 #' 
-#' Observables are quantities of interest that are computed from parameters
+#' compphysiol_observables are quantities of interest that are computed from parameters
 #' and/or concentrations or amounts of molecule-in-compartment pairs. They are
 #' not integrated as independent variables in the ODE system.
 #'
@@ -10,10 +10,10 @@
 #' semantic reference is independent of whether the corresponding ODE state is
 #' represented internally as an amount or as a concentration.
 #' 
-#' Observables and equations are very similar, but there are two key differences:
+#' compphysiol_observables and equations are very similar, but there are two key differences:
 #' 
-#' 1. Observables are evaluated from simulation output, while equations are evaluated inside model expressions.
-#' 2. Equations can be used in the definitions of transports, while observables cannot.
+#' 1. compphysiol_observables are evaluated from simulation output, while equations are evaluated inside model expressions.
+#' 2. compphysiol_equations can be used in the definitions of transports, while observables cannot.
 #' 
 #' The `cmt` and `molec` arguments allow for convenient generation of common observables like concentrations and amounts.
 #' They substitute `{cmt}` and `{molec}` in the names and expressions of the observables with the provided values.
@@ -28,7 +28,7 @@
 #'  Used for automatic generation of common observables like concentrations and amounts.
 #' @param molec Optional character vector specifying the molecule(s) associated with the observable(s). 
 #'  Used for automatic generation of common observables like concentrations and amounts.
-#' @returns An `Observables` object
+#' @returns An `compphysiol_observables` object
 #' @examples
 #' # Interactive path with name-expression pairs
 #' observables(
@@ -95,7 +95,7 @@ observables <- function(..., name = character(0), expr = character(0), cmt = NUL
         expr <- replace_pattern(expr, "molec", molec)
     }
 
-    # internal structure of class Observables: a named list of expressions
+    # internal structure of class compphysiol_observables: a named list of expressions
     names(expr) <- name
     expr <- lapply(expr, .as_call)
 
@@ -107,13 +107,13 @@ observables <- function(..., name = character(0), expr = character(0), cmt = NUL
     )
 }
 
-#' Add one or several observables to a `CompartmentModel` object.
+#' Add one or several observables to a `compphysiol_model` object.
 #'
 #' @inherit observables description details
-#' @param model A `CompartmentModel` object.
+#' @param model A `compphysiol_model` object.
 #' @inheritParams observables
-#' @param obs An `Observables` object. Constructed from the other inputs if not provided.
-#' @returns The modified `CompartmentModel` object.
+#' @param obs An `compphysiol_observables` object. Constructed from the other inputs if not provided.
+#' @returns The modified `compphysiol_model` object.
 #' @examples
 #' ## Interactive path with name-expression pairs
 #' compartment_model() |>
@@ -123,7 +123,7 @@ observables <- function(..., name = character(0), expr = character(0), cmt = NUL
 #' compartment_model() |>
 #'     add_compartment("blo") |>
 #'     add_observable(name = "Cblo", expr = "Ablo/Vblo")
-#' ## Programmatic path with Observables object
+#' ## Programmatic path with compphysiol_observables object
 #' obs <- observables(name = "Cblo", expr = "Ablo/Vblo")
 #' compartment_model() |>
 #'     add_compartment("blo") |>
@@ -156,21 +156,21 @@ add_observable <- function(
 }
 
 
-#' Names of observables in an `Observables` object
-#' @param x An `Observables` object
+#' Names of observables in an `compphysiol_observables` object
+#' @param x An `compphysiol_observables` object
 #' @returns The names of the observables
 #' @export
 names.compphysiol_observables <- function(x) names(unclass(x))
 
-#' Print an `Observables` object
-#' @param x An `Observables` object
+#' Print an `compphysiol_observables` object
+#' @param x An `compphysiol_observables` object
 #' @param ... Additional arguments (not used)
-#' @returns The `Observables` object (invisible)
+#' @returns The `compphysiol_observables` object (invisible)
 #' @export
 print.compphysiol_observables <- function(x, ...) {
 
     if (length(x) > 0) {
-        cat(" Observables:\n")
+        cat(" compphysiol_observables:\n")
         cat(sprintf(
                 "  (%s) %s = %s\n",
                 seq_along(x),
@@ -180,16 +180,16 @@ print.compphysiol_observables <- function(x, ...) {
             sep = ""
         )
     } else {
-        cat(" Observables: (none)\n")
+        cat(" compphysiol_observables: (none)\n")
     }
     invisible(x)
 }
 
-#' Subset an `Observables` object
-#' @param x An `Observables` object
+#' Subset an `compphysiol_observables` object
+#' @param x An `compphysiol_observables` object
 #' @param i Indices or names of the observables to subset
 #' @param ... Additional arguments (not used)
-#' @returns A subset of the `Observables` object
+#' @returns A subset of the `compphysiol_observables` object
 #' @export
 `[.compphysiol_observables` <- function(x, i, ...) {
     structure(
@@ -200,14 +200,14 @@ print.compphysiol_observables <- function(x, ...) {
     )
 }
 
-#' Combine multiple `Observables` objects into one
-#' @param ... `Observables` objects to combine
-#' @returns A combined `Observables` object
+#' Combine multiple `compphysiol_observables` objects into one
+#' @param ... `compphysiol_observables` objects to combine
+#' @returns A combined `compphysiol_observables` object
 #' @export
 c.compphysiol_observables <- function(...) {
     obs_list <- list(...)
     if (!all(sapply(obs_list, inherits, "compphysiol_observables"))) {
-        stop("All arguments must be of class 'Observables'")
+        stop("All arguments must be of class 'compphysiol_observables'")
     }
     obs_list |> 
          lapply(FUN = unclass) |> 

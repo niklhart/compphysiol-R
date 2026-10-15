@@ -7,14 +7,14 @@
 symbolic_lumping(M, partitioning = list(), refstate = .get_default_refstate(M))
 }
 \arguments{
-\item{M}{A CompartmentModel object}
+\item{M}{A compphysiol_model object}
 
 \item{partitioning}{A list of character vectors (each a group of compartments)}
 
 \item{refstate}{A string specifying a reference state (defaults to the one with most incoming transports)}
 }
 \value{
-A CompartmentModel object representing the lumped model
+A compphysiol_model object representing the lumped model
 }
 \description{
 General symbolic lumping (experimental version)

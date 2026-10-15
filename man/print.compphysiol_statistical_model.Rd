@@ -7,7 +7,7 @@
 \method{print}{compphysiol_statistical_model}(x, ...)
 }
 \arguments{
-\item{x}{A \code{StatisticalModel} object.}
+\item{x}{A \code{compphysiol_statistical_model} object.}
 
 \item{...}{Unused.}
 }

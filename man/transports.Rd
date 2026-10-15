@@ -2,7 +2,7 @@
 % Please edit documentation in R/Transports.R
 \name{transports}
 \alias{transports}
-\title{Create a \code{Transports} object}
+\title{Create a \code{compphysiol_transports} object}
 \usage{
 transports(from, to, molec = NA_character_, ..., rate = NULL, const = NULL)
 }
@@ -21,13 +21,13 @@ transports(from, to, molec = NA_character_, ..., rate = NULL, const = NULL)
 or unit-bearing value, optional, mutually exclusive with \code{rate})}
 }
 \value{
-A \code{Transports} object
+A \code{compphysiol_transports} object
 }
 \description{
-Transports represent mass/amount-preserving transports of molecules between two compartments in a compartment model.
+compphysiol_transports represent mass/amount-preserving transports of molecules between two compartments in a compartment model.
 }
 \details{
-Transports can be linear (first-order) or nonlinear, depending on whether the transport rate is defined by a constant
+compphysiol_transports can be linear (first-order) or nonlinear, depending on whether the transport rate is defined by a constant
 (argument \code{const}) or a general expression (argument \code{rate}).
 The special syntax \code{{from}}, \code{{to}} and \code{{molec}} can be used in \code{rate} or \code{const} to automatically substitute
 the source and destination compartment names and molecule names, respectively, e.g., \code{"k_{from}_{to}"} will become

@@ -12,7 +12,7 @@ test_that("Experiments hold named and unnamed experiments without altering them"
     expect_error(x[[c(1, 1)]], "single experiment")
     expect_identical(experiments(a)[[1]], a)
     expect_length(experiments(), 0)
-    expect_error(experiments(a, 1), "Experiment")
+    expect_error(experiments(a, 1), "compphysiol_experiment")
 })
 
 test_that("Experiments subsetting preserves the collection and requested order", {
@@ -24,8 +24,8 @@ test_that("Experiments subsetting preserves the collection and requested order",
     expect_identical(x[c(1, 1)], experiments(a = x[[1]], a = x[[1]]))
     expect_s3_class(x[integer()], "compphysiol_experiments")
     expect_length(x[integer()], 0)
-    expect_error(x["missing"], "Experiment")
-    expect_error(x[NA_integer_], "Experiment")
+    expect_error(x["missing"], "compphysiol_experiment")
+    expect_error(x[NA_integer_], "compphysiol_experiment")
 })
 
 test_that("Experiments concatenation retains names, units, and empty collections", {
@@ -34,7 +34,7 @@ test_that("Experiments concatenation retains names, units, and empty collections
     expect_identical(c(a, b), experiments(a = a[[1]], b = b[[1]]))
     expect_identical(c(experiments(), a, experiments()), a)
     expect_identical(c(experiments(), experiments()), experiments())
-    expect_error(c(a, experiment()), "Experiments")
+    expect_error(c(a, experiment()), "compphysiol_experiments")
 })
 
 test_that("collection printing summarizes while single printing shows details", {
@@ -49,7 +49,7 @@ test_that("collection printing summarizes while single printing shows details", 
     expect_identical(result, x)
     expect_length(summary, 3)
     expect_match(summary[2], "treatment.*0.*h.*1 parameter.*1 dosing event.*2 observations scheduled")
-    expect_output(print(experiments()), "Experiments: \\(none\\)")
+    expect_output(print(experiments()), "compphysiol_experiments: \\(none\\)")
     details <- capture.output(result <- print(x[[1]]))
     expect_identical(result, e)
     expect_true(any(grepl("BW.*70.*kg", details)))

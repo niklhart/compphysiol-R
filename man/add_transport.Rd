@@ -2,7 +2,7 @@
 % Please edit documentation in R/Transports.R
 \name{add_transport}
 \alias{add_transport}
-\title{Add one or several transports to a \code{CompartmentModel} object.}
+\title{Add one or several transports to a \code{compphysiol_model} object.}
 \usage{
 add_transport(
   model,
@@ -16,7 +16,7 @@ add_transport(
 )
 }
 \arguments{
-\item{model}{A \code{CompartmentModel} object.}
+\item{model}{A \code{compphysiol_model} object.}
 
 \item{from}{The name of the source compartment(s) (character vector or NULL for source compartments)}
 
@@ -31,16 +31,16 @@ add_transport(
 \item{const}{Rate constant for first-order transports (character, call, numeric,
 or unit-bearing value, optional, mutually exclusive with \code{rate})}
 
-\item{trans}{A \code{Transports} object. Constructed from the other inputs if not provided.}
+\item{trans}{A \code{compphysiol_transports} object. Constructed from the other inputs if not provided.}
 }
 \value{
-The modified \code{CompartmentModel} object.
+The modified \code{compphysiol_model} object.
 }
 \description{
-Transports represent mass/amount-preserving transports of molecules between two compartments in a compartment model.
+compphysiol_transports represent mass/amount-preserving transports of molecules between two compartments in a compartment model.
 }
 \details{
-Transports can be linear (first-order) or nonlinear, depending on whether the transport rate is defined by a constant
+compphysiol_transports can be linear (first-order) or nonlinear, depending on whether the transport rate is defined by a constant
 (argument \code{const}) or a general expression (argument \code{rate}).
 The special syntax \code{{from}}, \code{{to}} and \code{{molec}} can be used in \code{rate} or \code{const} to automatically substitute
 the source and destination compartment names and molecule names, respectively, e.g., \code{"k_{from}_{to}"} will become
@@ -59,7 +59,7 @@ compartment_model() |>
     add_transport("A", c("B", "C"), const = "k{to}")
 compartment_model() |>
     add_transport(c("A", "B"), c("B", "C"), const = "k_{from}_{to}")
-# Transports with specific molecules
+# compphysiol_transports with specific molecules
 compartment_model() |>
     add_transport(from = "cen", to = "per", molec = c("DrugA","DrugB"), const = "k_{molec}")
 }

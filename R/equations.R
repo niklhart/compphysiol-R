@@ -1,20 +1,20 @@
-#' Create an `Equations` object
+#' Create an `compphysiol_equations` object
 #' 
-#' Equations allow to define algebraic relationships between model variables,
+#' compphysiol_equations allow to define algebraic relationships between model variables,
 #' which can be used in transports and observables. The main purpose of equations is to 
 #' define physiologically meaningful aggregate parameters (such as cardiac output) 
 #' that are composed of more basic parameters (such as blood flows to individual organs).
 #' 
-#' Observables and equations are very similar, but there are two key differences:
+#' compphysiol_observables and equations are very similar, but there are two key differences:
 #' 
-#' 1. Observables are evaluated from simulation output, while equations are evaluated inside model expressions.
-#' 2. Equations can be used in the definitions of transports, while observables cannot.
+#' 1. compphysiol_observables are evaluated from simulation output, while equations are evaluated inside model expressions.
+#' 2. compphysiol_equations can be used in the definitions of transports, while observables cannot.
 #' 
 #' @param ... Name-expression pairs defining the equations. The expressions can be provided as character strings or as R calls. 
 #' @param name Name of the equation(s), character scalar or vector
 #' @param expr Expression(s) for the equation(s), as character scalar/vector or as R call / lists of R calls.
 #'   Expressions may contain parameters that are added to the model's parameters list, as well as compartment states (not compartment names!)
-#' @returns An `Equations` object
+#' @returns An `compphysiol_equations` object
 #' @examples
 #' ## Interactive path with name-expression pairs
 #' equations(co = Qadi + Qbon + Qhea + Qkid + Qliv + Qmus + Qski)
@@ -48,13 +48,13 @@ equations <- function(..., name = character(0), expr = character(0)) {
     )
 }
 
-#' Add one or several equations to a `CompartmentModel` object.
+#' Add one or several equations to a `compphysiol_model` object.
 #' 
 #' @inherit equations description details
-#' @param model A `CompartmentModel` object.
+#' @param model A `compphysiol_model` object.
 #' @inheritParams equations
-#' @param eq An `Equations` object. Constructed from the other inputs if not provided.
-#' @returns The modified `CompartmentModel` object.
+#' @param eq An `compphysiol_equations` object. Constructed from the other inputs if not provided.
+#' @returns The modified `compphysiol_model` object.
 #' @examples
 #' ## Interactive path with name-expression pairs
 #' compartment_model() |>
@@ -62,7 +62,7 @@ equations <- function(..., name = character(0), expr = character(0)) {
 #' ## Programmatic path with name and expression vectors
 #' compartment_model() |>
 #'     add_equation(name = "co", expr = "Qadi + Qbon + Qhea + Qkid + Qliv + Qmus + Qski")
-#' ## Programmatic path with Equations object
+#' ## Programmatic path with compphysiol_equations object
 #' eq <- equations(name = "co", expr = "Qadi + Qbon + Qhea + Qkid + Qliv + Qmus + Qski")
 #' compartment_model() |>
 #'     add_equation(eq = eq)
@@ -85,21 +85,21 @@ add_equation <- function(model, ..., name = character(0), expr = character(0), e
     return(model)
 }
 
-#' Names of equations in an `Equations` object
-#' @param x An `Equations` object
+#' Names of equations in an `compphysiol_equations` object
+#' @param x An `compphysiol_equations` object
 #' @returns The names of the equations
 #' @export
 names.compphysiol_equations <- function(x) names(unclass(x))
 
-#' Print an `Equations` object
-#' @param x An `Equations` object
+#' Print an `compphysiol_equations` object
+#' @param x An `compphysiol_equations` object
 #' @param ... Additional arguments (not used)
-#' @returns The `Equations` object (invisible)
+#' @returns The `compphysiol_equations` object (invisible)
 #' @export
 print.compphysiol_equations <- function(x, ...) {
 
     if (length(x) > 0) {
-        cat(" Equations:\n")
+        cat(" compphysiol_equations:\n")
         cat(sprintf(
                 "  (%s) %s = %s\n",
                 seq_along(x),
@@ -109,16 +109,16 @@ print.compphysiol_equations <- function(x, ...) {
             sep = ""
         )
     } else {
-        cat(" Equations: (none)\n")
+        cat(" compphysiol_equations: (none)\n")
     }
     invisible(x)
 }
 
-#' Subset an `Equations` object
-#' @param x An `Equations` object
+#' Subset an `compphysiol_equations` object
+#' @param x An `compphysiol_equations` object
 #' @param i Indices or names of the equations to subset
 #' @param ... Additional arguments (not used)
-#' @returns A subset of the `Equations` object
+#' @returns A subset of the `compphysiol_equations` object
 #' @export
 `[.compphysiol_equations` <- function(x, i, ...) {
     structure(
@@ -129,14 +129,14 @@ print.compphysiol_equations <- function(x, ...) {
     )
 }
 
-#' Combine multiple `Equations` objects
-#' @param ... `Equations` objects to combine
-#' @returns A combined `Equations` object
+#' Combine multiple `compphysiol_equations` objects
+#' @param ... `compphysiol_equations` objects to combine
+#' @returns A combined `compphysiol_equations` object
 #' @export
 c.compphysiol_equations <- function(...) {
     eq_list <- list(...)
     if (!all(sapply(eq_list, inherits, "compphysiol_equations"))) {
-        stop("All arguments must be of class 'Equations'")
+        stop("All arguments must be of class 'compphysiol_equations'")
     }
     eq_list |> 
          lapply(FUN = unclass) |> 

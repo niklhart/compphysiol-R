@@ -24,7 +24,7 @@ or \code{"logit"}. Log transforms require a positive initial value. Logit
 transforms require finite lower and upper bounds.}
 }
 \value{
-A \code{ParameterSpec} object.
+A \code{compphysiol_parameter_spec} object.
 }
 \description{
 Describe one parameter to estimate

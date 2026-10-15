@@ -56,7 +56,7 @@ test_that("ParameterSpecs compose, subset, and print by row", {
     expect_s3_class(spec[["k"]], "compphysiol_parameter_spec")
     expect_identical(spec[], spec)
     expect_error(c(spec, k = parameter_spec(1)), "unique|duplicated")
-    expect_error(c(spec, invalid = 1), "ParameterSpec")
+    expect_error(c(spec, invalid = 1), "compphysiol_parameter_spec")
 
     output <- capture.output(returned <- print(spec))
     output <- paste(output, collapse = "\n")
@@ -174,8 +174,8 @@ test_that("EstimationProblem has a concise print method", {
     output <- paste(output, collapse = "\n")
 
     expect_identical(returned, problem)
-    expect_match(output, "EstimationProblem", fixed = TRUE)
-    expect_match(output, "model: CompartmentModel", fixed = TRUE)
+    expect_match(output, "compphysiol_estimation_problem", fixed = TRUE)
+    expect_match(output, "model: compphysiol_model", fixed = TRUE)
     expect_match(output, "experiments: 1", fixed = TRUE)
     expect_match(output, "observations: 3", fixed = TRUE)
     expect_match(output, "estimated parameters: k, sigma", fixed = TRUE)
@@ -329,7 +329,7 @@ test_that("optim_engine keeps optimizer configuration out of estimate", {
     expect_false(engine$simulation$compiled)
     expect_error(optim_engine(method = "not-an-optim-method"), "method")
     expect_error(optim_engine(control = 1), "control")
-    expect_error(optim_engine(simulation = list()), "SimulationEngine")
+    expect_error(optim_engine(simulation = list()), "compphysiol_simulation_engine")
 })
 
 test_that("deSolve_engine configures the representation used by estimation", {
@@ -443,9 +443,9 @@ test_that("estimate consumes an EstimationProblem and returns a stable result", 
     output <- capture.output(returned <- print(fit))
     output <- paste(output, collapse = "\n")
     expect_identical(returned, fit)
-    expect_match(output, "EstimationResult", fixed = TRUE)
+    expect_match(output, "compphysiol_estimation_result", fixed = TRUE)
     expect_match(output, "negative log-likelihood", fixed = TRUE)
-    expect_match(output, "OptimEngine (L-BFGS-B)", fixed = TRUE)
+    expect_match(output, "compphysiol_optim_engine (L-BFGS-B)", fixed = TRUE)
 })
 
 test_that("estimation diagnostics retain rows with missing observations", {

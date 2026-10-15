@@ -2,12 +2,12 @@
 % Please edit documentation in R/Reactions.R
 \name{[[.compphysiol_reactions}
 \alias{[[.compphysiol_reactions}
-\title{Extraction method for \code{Reactions} class}
+\title{Extraction method for \code{compphysiol_reactions} class}
 \usage{
 \method{[[}{compphysiol_reactions}(x, i, ...)
 }
 \arguments{
-\item{x}{A \code{Reactions} object}
+\item{x}{A \code{compphysiol_reactions} object}
 
 \item{i}{Row index to access}
 
@@ -18,6 +18,6 @@ Nothing (errors)
 }
 \description{
 This method is intentionally not implemented to prevent direct element access,
-which could lead to confusion given the internal data frame-like structure of \code{Reactions} objects.
+which could lead to confusion given the internal data frame-like structure of \code{compphysiol_reactions} objects.
 Instead, users should use subsetting with \code{[} and a scalar name/index to access specific reactions.
 }

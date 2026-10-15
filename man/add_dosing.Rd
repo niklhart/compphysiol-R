@@ -2,7 +2,7 @@
 % Please edit documentation in R/Dosing.R
 \name{add_dosing}
 \alias{add_dosing}
-\title{Add one or several dosing events (bolus or infusion) to a \code{CompartmentModel} object.}
+\title{Add one or several dosing events (bolus or infusion) to a \code{compphysiol_model} object.}
 \usage{
 add_dosing(
   model,
@@ -19,9 +19,9 @@ add_dosing(
 )
 }
 \arguments{
-\item{model}{A \code{CompartmentModel} object.}
+\item{model}{A \code{compphysiol_model} object.}
 
-\item{time}{Dosing time(s) (numeric scalar or vector)}
+\item{time}{compphysiol_dosing time(s) (numeric scalar or vector)}
 
 \item{amount}{Amount(s) of dose (non-negative numeric scalar or vector, optional)}
 
@@ -42,14 +42,14 @@ as named arguments only, not positional}
 
 \item{duration}{Infusion duration (positive numeric scalar or vector, optional)}
 
-\item{dose}{A \code{Dosing} object. Constructed from the other inputs if not provided.}
+\item{dose}{A \code{compphysiol_dosing} object. Constructed from the other inputs if not provided.}
 }
 \value{
-The modified \code{CompartmentModel} object.
+The modified \code{compphysiol_model} object.
 }
 \description{
 This function allows the user to add dosing events to a compartment model.
-Dosing events can be either bolus (instantaneous) or infusion (continuous over time).
+compphysiol_dosing events can be either bolus (instantaneous) or infusion (continuous over time).
 }
 \details{
 Unlike the other \verb{add_*} functions, \code{add_dosing()} does not simply append the new dosing events

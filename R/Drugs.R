@@ -38,8 +38,8 @@ drug <- function(..., data = NULL) {
     )))
 }
 
-#' Create an empty Drugs object
-#' @returns An empty `Drugs` object.
+#' Create an empty compphysiol_drugs
+#' @returns An empty `compphysiol_drugs` object.
 #' @noRd
 drugs <- function() structure(
     data.frame(
@@ -53,9 +53,9 @@ drugs <- function() structure(
 )
 
 
-#' Print method for Drug objects
+#' Print method for compphysiol_drugs
 #'
-#' @param x An object of class `Drug`.
+#' @param x An object of class `compphysiol_drug`.
 #' @param ... Additional arguments (not used).
 #' @param meta Logical indicating whether to print parameter metadata as well (default: `FALSE`).
 #' @param string Logical indicating whether to return a short string representation instead of printing (default: `FALSE`).
@@ -65,7 +65,7 @@ print.compphysiol_drug <- function(x, ..., meta = FALSE, string = FALSE) {
         sprintf("%s = %s", names(x$param), vapply(x$param, format, character(1))) |>
             paste(collapse = ", ")
     } else {
-        cat("Drug object\n")
+        cat("compphysiol_drug\n")
         val_str <- vapply(x$Value, format, "")
         vars <- c("Parameter", "Species")
         if (meta) vars <- c(vars, "Reference", "Assumption")
@@ -75,7 +75,7 @@ print.compphysiol_drug <- function(x, ..., meta = FALSE, string = FALSE) {
     }
 }
 
-# #' Accessor for parameters in a Drug object
+# #' Accessor for parameters in a compphysiol_drug
 # #' @param x An object of class `Drug`.
 # #' @param name The name(s) of the parameter(s) to access (character scalar or vector).
 # #' @param species Optional species argument for species-specific parameters (character scalar or vector).
@@ -88,7 +88,7 @@ print.compphysiol_drug <- function(x, ..., meta = FALSE, string = FALSE) {
 # param.Drug <- function(x, name, species = NULL, simplify = FALSE) {
 
 #     param <- x$param[name]
-#     if (is.null(x$param)) stop(paste("Parameter", name, "not found in Drug object"))
+#     if (is.null(x$param)) stop(paste("Parameter", name, "not found in compphysiol_drug"))
 #     if (simplify && length(name) > 1) {
 #         warning("Simplification to named vector is not possible across multiple parameters. Returning a Parameters object instead.")
 #         simplify <- FALSE
@@ -101,7 +101,7 @@ print.compphysiol_drug <- function(x, ..., meta = FALSE, string = FALSE) {
 
 
 
-# #' Replace parameters in a Drug object
+# #' Replace parameters in a compphysiol_drug
 # #' @param x An object of class `Drug`.
 # #' @param name The name of the parameter to replace.
 # #' @param value A `Parameters` object containing the new parameter values.
@@ -117,13 +117,13 @@ print.compphysiol_drug <- function(x, ..., meta = FALSE, string = FALSE) {
 #     return(x)
 # }
 
-#' Subset method for Drugs objects
+#' Subset method for compphysiol_drugss
 #'
-#' This method allows you to subset a `Drugs` object using standard indexing.
+#' This method allows you to subset a `compphysiol_drugs` object using standard indexing.
 #' 
-#' @param x An object of class `Drugs`.
+#' @param x An object of class `compphysiol_drugs`.
 #' @param i Index(es) or name(s) of drug(s) to select
-#' @returns A subsetted `Drugs` object.
+#' @returns A subsetted `compphysiol_drugs` object.
 #' @noRd
 `[.compphysiol_drugs` <- function(x, i) {
     class(x) <- "data.frame"
@@ -134,31 +134,31 @@ print.compphysiol_drug <- function(x, ..., meta = FALSE, string = FALSE) {
 }
 
 
-#' Implementation of the c() function for combining Drug and Drugs objects
+#' Implementation of the c() function for combining compphysiol_drug and compphysiol_drugss
 #' @noRd
 .c_drug_drugs <- function(...) {
     dots <- list(...)
     if (!all(sapply(dots, function(x) inherits(
         x, c("compphysiol_drug", "compphysiol_drugs")
     )))) {
-        stop("All arguments must be of class 'Drug' or 'Drugs'")
+        stop("All arguments must be of class 'compphysiol_drug' or 'compphysiol_drugs'")
     }
 
     is_drug <- vapply(dots, inherits, logical(1), "compphysiol_drug")
-    dots[is_drug] <- lapply(dots[is_drug], list) # wrap Drug objects in a list for uniform processing
-    dots[!is_drug] <- lapply(dots[!is_drug], unclass) # wrap Drugs objects in a list for uniform processing
+    dots[is_drug] <- lapply(dots[is_drug], list) # wrap compphysiol_drugs in a list for uniform processing
+    dots[!is_drug] <- lapply(dots[!is_drug], unclass) # wrap compphysiol_drugss in a list for uniform processing
 
     structure(do.call(c, dots), class = .compphysiol_class(
         "compphysiol_drugs"
     ))
 }
 
-#' Combine multiple Drug or Drugs objects into a Drugs object
+#' Combine multiple compphysiol_drug or compphysiol_drugss into a compphysiol_drugs
 #'
-#' This method allows you to combine multiple `Drug` or `Drugs` objects into a `Drugs` using the `c()` function.
+#' This method allows you to combine multiple `compphysiol_drug` or `compphysiol_drugs` objects into a `compphysiol_drugs` using the `c()` function.
 #'
-#' @param ... `Drug` or `Drugs` objects to combine
-#' @returns A `Drugs` object containing the combined drugs.
+#' @param ... `compphysiol_drug` or `compphysiol_drugs` objects to combine
+#' @returns A `compphysiol_drugs` object containing the combined drugs.
 #' @noRd
 c.compphysiol_drug <- .c_drug_drugs
 
@@ -166,15 +166,15 @@ c.compphysiol_drug <- .c_drug_drugs
 #' @noRd
 c.compphysiol_drugs <- .c_drug_drugs
 
-#' Print method for Drugs objects
+#' Print method for compphysiol_drugss
 #'
-#' @param x An object of class `Drugs`.
+#' @param x An object of class `compphysiol_drugs`.
 #' @param ... Additional arguments (not used).
 #' @param meta Logical indicating whether to print parameter metadata as well (default: `FALSE`).
 #' @noRd
 print.compphysiol_drugs <- function(x, ..., meta = FALSE) {
     if (length(x) > 0) {
-        cat("Drugs object\n")
+        cat("compphysiol_drugs\n")
         val_str <- vapply(x$Value, format, "")
         vars <- c("Drug", "Parameter", "Species")
         if (meta) vars <- c(vars, "Reference", "Assumption")
@@ -182,18 +182,18 @@ print.compphysiol_drugs <- function(x, ..., meta = FALSE) {
             cbind(Value = val_str) |>
             print() 
     } else {
-        cat("Drugs: (none)\n")
+        cat("compphysiol_drugs: (none)\n")
     }
     invisible(x)
 }
 
-#' Accessor for parameters in a Drugs object (experimental)
-#' @param x An object of class `Drugs`.
+#' Accessor for parameters in a compphysiol_drugs (experimental)
+#' @param x An object of class `compphysiol_drugs`.
 #' @param name The name of the parameter(s) to access (optional). If not provided, all parameters will be returned and a warning will be issued if some are missing.
 #' @param ... Additional arguments (not used).
 #' @param drug Optional name of the drug to access (character scalar or vector). The default `NULL` means that parameters will be returned for all drugs in the database.
 #' @param species Optional species argument for species-specific parameters.
-#' @returns The requested parameter(s) in the database for the requested drug and species as a `Parameters` object.
+#' @returns The requested parameter(s) in the database for the requested drug and species as a `compphysiol_parameters` object.
 #' @noRd
 param.compphysiol_drugs <- function(x, name = NULL, ..., drug, species) {
     drug <- match.arg(drug, choices = unique(x$Drug))
@@ -219,11 +219,11 @@ param.compphysiol_drugs <- function(x, name = NULL, ..., drug, species) {
     do.call(parameters, map[name])
 }
 
-#' Extract method for Drugs objects.
+#' Extract method for compphysiol_drugss.
 #' 
-#' @param x An object of class `Drugs`.
+#' @param x An object of class `compphysiol_drugs`.
 #' @param i The name of the drug to extract.
-#' @returns A `Drug` object containing the parameters for the specified drug.
+#' @returns A `compphysiol_drug` object containing the parameters for the specified drug.
 #' @noRd
 `[[.compphysiol_drugs` <- function(x, i) {
     class(x) <- "data.frame"
@@ -235,7 +235,7 @@ param.compphysiol_drugs <- function(x, name = NULL, ..., drug, species) {
 #' Load a drug from the drug database
 #' @param name The name of the drug to load.
 #' @param species Character string, for which species to load species-specific parameters (default: all species).
-#' @returns A `Drug` object containing all parameters for the specified drug and species.
+#' @returns A `compphysiol_drug` object containing all parameters for the specified drug and species.
 #' @noRd
 loaddrugdata <- function(name = "", species = NULL) {
 

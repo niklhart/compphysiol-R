@@ -21,7 +21,7 @@ optimizer-coordinate bounds to be unbounded after transformation.}
 \item{simulation}{A simulation engine, currently \code{\link[=deSolve_engine]{deSolve_engine()}}.}
 }
 \value{
-An \code{OptimEngine} object.
+An \code{compphysiol_optim_engine} object.
 }
 \description{
 Configure the stats optim estimation engine

@@ -7,7 +7,7 @@
 \method{print}{compphysiol_parameter_specs}(x, ...)
 }
 \arguments{
-\item{x}{A \code{ParameterSpecs} collection.}
+\item{x}{A \code{compphysiol_parameter_specs} collection.}
 
 \item{...}{Unused.}
 }

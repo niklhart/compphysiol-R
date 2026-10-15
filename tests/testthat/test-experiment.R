@@ -35,7 +35,7 @@ test_that("observation data extend schedules with canonical values", {
     expect_false(inherits(data["time"], "compphysiol_observation_schedule"))
     expect_error(observation_data(1, "C", "eight"), "numeric")
     expect_error(as_observation_schedule(data.frame(time = 1, observable = "C")),
-                 "ObservationSchedule")
+                 "compphysiol_observation_schedule")
 })
 
 test_that("experiments store schedules and data polymorphically as observations", {
@@ -69,12 +69,12 @@ test_that("empty and unit-free experiments are supported", {
 })
 
 test_that("experiment components are checked", {
-    expect_error(experiment(parameters = list(BW = 70)), "Parameters")
-    expect_error(experiment(dosing = list()), "Dosing")
+    expect_error(experiment(parameters = list(BW = 70)), "compphysiol_parameters")
+    expect_error(experiment(dosing = list()), "compphysiol_dosing")
     expect_error(experiment(observations = data.frame(time = 1, observable = "C")),
-                 "ObservationSchedule")
+                 "compphysiol_observation_schedule")
     expect_error(experiment(observations = data.frame(time = 1, observable = "C", value = 2)),
-                 "ObservationSchedule")
+                 "compphysiol_observation_schedule")
     for (start in list(numeric(), c(0, 1), NA_real_, Inf, "0")) {
         expect_error(experiment(start = start), "start")
     }
@@ -132,7 +132,7 @@ test_that("model validation accepts only declared observables", {
     expect_identical(validate_experiment(x, model), x)
     x$observations$observable <- "a[drug,Central]"
     expect_error(validate_experiment(x, model), "Unknown observable")
-    expect_error(validate_experiment(x, list()), "CompartmentModel")
+    expect_error(validate_experiment(x, list()), "compphysiol_model")
     x$observations$time <- -1
     expect_error(validate_experiment(x), "before.*start")
 })

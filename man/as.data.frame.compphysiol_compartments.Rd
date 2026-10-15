@@ -2,18 +2,18 @@
 % Please edit documentation in R/Compartments.R
 \name{as.data.frame.compphysiol_compartments}
 \alias{as.data.frame.compphysiol_compartments}
-\title{Convert a \code{Compartments} object to a data frame}
+\title{Convert a \code{compphysiol_compartments} object to a data frame}
 \usage{
 \method{as.data.frame}{compphysiol_compartments}(x, ...)
 }
 \arguments{
-\item{x}{A \code{Compartments} object}
+\item{x}{A \code{compphysiol_compartments} object}
 
 \item{...}{Additional arguments (not used)}
 }
 \value{
-A data frame representation of the \code{Compartments} object
+A data frame representation of the \code{compphysiol_compartments} object
 }
 \description{
-Convert a \code{Compartments} object to a data frame
+Convert a \code{compphysiol_compartments} object to a data frame
 }

@@ -1,10 +1,10 @@
 # Parameters class. Parameters are obtained from `Physiology` objects or empirically specified, and can be passed to `CompartmentModel` objects.
 
-#' `Parameters` class.
+#' `compphysiol_parameters` class.
 #'
-#' The `Parameters` class represents a collection of named parameters, which can optionally have associated units.
+#' The `compphysiol_parameters` class represents a collection of named parameters, which can optionally have associated units.
 #' 
-#' Parameters can be specified in three different ways:
+#' compphysiol_parameters can be specified in three different ways:
 #' 
 #' 1. As name-value pairs, where values can be categorical, numeric or `units` objects, e.g., `parameters(A = 2, B = units::set_units(3, "m"))`.
 #' 2. As name-value pairs specifying the unit in square brackets after the value (e.g., `A = 2 [m]`). 
@@ -18,7 +18,7 @@
 #' @param name Optional parameter names (if not using named arguments).
 #' @param value Optional parameter values (if not using named arguments).
 #' @param unit Optional parameter units (if not using named arguments).
-#' @returns A `Parameters` object containing the specified parameters.
+#' @returns A `compphysiol_parameters` object containing the specified parameters.
 #' @examples
 #' # Specification using name/value/unit vectors (programmatic use)
 #' parameters(name = c("A", "B"), value = c(2, 3), unit = c("", "m"))
@@ -111,13 +111,13 @@ parameters <- function(..., name = NULL, value = NULL, unit = NULL) {
     invisible(NULL)
 }
 
-#' Add one or several parameters to a `CompartmentModel` object.
+#' Add one or several parameters to a `compphysiol_model` object.
 #' 
 #' @inherit parameters description details
-#' @param model A `CompartmentModel` object.
+#' @param model A `compphysiol_model` object.
 #' @inheritParams parameters
-#' @param param A `Parameters` object. Constructed from the other inputs if not provided.
-#' @returns The modified `CompartmentModel` object.
+#' @param param A `compphysiol_parameters` object. Constructed from the other inputs if not provided.
+#' @returns The modified `compphysiol_model` object.
 #' @export
 add_parameter <- function(
     model,
@@ -145,17 +145,17 @@ add_parameter <- function(
 }
 
 
-#' Names of parameters in a `Parameters` object
-#' @param x A `Parameters` object
+#' Names of parameters in a `compphysiol_parameters` object
+#' @param x A `compphysiol_parameters` object
 #' @returns The names of the parameters
 #' @export
 names.compphysiol_parameters <- function(x) names(unclass(x))
 
-#' Subset a `Parameters` object
-#' @param x A `Parameters` object
+#' Subset a `compphysiol_parameters` object
+#' @param x A `compphysiol_parameters` object
 #' @param i Indices or names of the parameters to subset
 #' @param ... Additional arguments (not used)
-#' @returns A subset of the `Parameters` object
+#' @returns A subset of the `compphysiol_parameters` object
 #' @export
 `[.compphysiol_parameters` <- function(x, i, ...) {
     structure(
@@ -164,11 +164,11 @@ names.compphysiol_parameters <- function(x) names(unclass(x))
     )
 }
 
-#' Replace parts of a `Parameters` object
-#' @param x A `Parameters` object
+#' Replace parts of a `compphysiol_parameters` object
+#' @param x A `compphysiol_parameters` object
 #' @param i Indices or names of the parameters to replace
-#' @param value Another `Parameters` object with the new values to insert
-#' @returns The modified `Parameters` object
+#' @param value Another `compphysiol_parameters` object with the new values to insert
+#' @returns The modified `compphysiol_parameters` object
 #' @export
 `[<-.compphysiol_parameters` <- function(x, i, value) {
     x <- unclass(x)
@@ -181,14 +181,14 @@ names.compphysiol_parameters <- function(x) names(unclass(x))
     )
 }
 
-#' Combine multiple `Parameters` objects into one
-#' @param ... `Parameters` objects to combine
-#' @returns A combined `Parameters` object
+#' Combine multiple `compphysiol_parameters` objects into one
+#' @param ... `compphysiol_parameters` objects to combine
+#' @returns A combined `compphysiol_parameters` object
 #' @export
 c.compphysiol_parameters <- function(...) {
     params_list <- list(...)
     if (!all(sapply(params_list, inherits, "compphysiol_parameters"))) {
-        stop("All arguments must be of class 'Parameters'")
+        stop("All arguments must be of class 'compphysiol_parameters'")
     }
     params <- params_list |>
         lapply(FUN = unclass) |>
@@ -198,14 +198,14 @@ c.compphysiol_parameters <- function(...) {
         structure(class = .class_parameters())
 }
 
-#' Print a `Parameters` object
-#' @param x An `Parameters` object
+#' Print a `compphysiol_parameters` object
+#' @param x An `compphysiol_parameters` object
 #' @param ... Additional arguments (not used)
-#' @returns The `Parameters` object (invisible)
+#' @returns The `compphysiol_parameters` object (invisible)
 #' @export
 print.compphysiol_parameters <- function(x, ...) {
     if (length(x) > 0) {
-        cat(" Parameters:\n")
+        cat(" compphysiol_parameters:\n")
         cat(
             sprintf(
                 "  (%s) %s = %s\n",
@@ -216,18 +216,18 @@ print.compphysiol_parameters <- function(x, ...) {
             sep = ""
         )
     } else {
-        cat(" Parameters: (none)\n")
+        cat(" compphysiol_parameters: (none)\n")
     }
     invisible(x)
 }
 
-#' Unlist a `Parameters` object (experimental).
+#' Unlist a `compphysiol_parameters` object (experimental).
 #' 
-#' Parameters may be scalars or vectors, but for some purposes it may be desirable to unlist them into a flat `Parameters` object.
+#' compphysiol_parameters may be scalars or vectors, but for some purposes it may be desirable to unlist them into a flat `compphysiol_parameters` object.
 #' 
-#' @param x A `Parameters` object
+#' @param x A `compphysiol_parameters` object
 #' @param ... Additional arguments (not used)
-#' @returns An unlisted `Parameters` object
+#' @returns An unlisted `compphysiol_parameters` object
 #' @method unlist compphysiol_parameters
 #' @export
 unlist.compphysiol_parameters <- function(x, ...) {

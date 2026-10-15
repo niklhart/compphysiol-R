@@ -2,12 +2,12 @@
 % Please edit documentation in R/equations.R
 \name{add_equation}
 \alias{add_equation}
-\title{Add one or several equations to a \code{CompartmentModel} object.}
+\title{Add one or several equations to a \code{compphysiol_model} object.}
 \usage{
 add_equation(model, ..., name = character(0), expr = character(0), eq)
 }
 \arguments{
-\item{model}{A \code{CompartmentModel} object.}
+\item{model}{A \code{compphysiol_model} object.}
 
 \item{...}{Name-expression pairs defining the equations. The expressions can be provided as character strings or as R calls.}
 
@@ -16,22 +16,22 @@ add_equation(model, ..., name = character(0), expr = character(0), eq)
 \item{expr}{Expression(s) for the equation(s), as character scalar/vector or as R call / lists of R calls.
 Expressions may contain parameters that are added to the model's parameters list, as well as compartment states (not compartment names!)}
 
-\item{eq}{An \code{Equations} object. Constructed from the other inputs if not provided.}
+\item{eq}{An \code{compphysiol_equations} object. Constructed from the other inputs if not provided.}
 }
 \value{
-The modified \code{CompartmentModel} object.
+The modified \code{compphysiol_model} object.
 }
 \description{
-Equations allow to define algebraic relationships between model variables,
+compphysiol_equations allow to define algebraic relationships between model variables,
 which can be used in transports and observables. The main purpose of equations is to
 define physiologically meaningful aggregate parameters (such as cardiac output)
 that are composed of more basic parameters (such as blood flows to individual organs).
 }
 \details{
-Observables and equations are very similar, but there are two key differences:
+compphysiol_observables and equations are very similar, but there are two key differences:
 \enumerate{
-\item Observables are evaluated from simulation output, while equations are evaluated inside model expressions.
-\item Equations can be used in the definitions of transports, while observables cannot.
+\item compphysiol_observables are evaluated from simulation output, while equations are evaluated inside model expressions.
+\item compphysiol_equations can be used in the definitions of transports, while observables cannot.
 }
 }
 \examples{
@@ -41,7 +41,7 @@ compartment_model() |>
 ## Programmatic path with name and expression vectors
 compartment_model() |>
     add_equation(name = "co", expr = "Qadi + Qbon + Qhea + Qkid + Qliv + Qmus + Qski")
-## Programmatic path with Equations object
+## Programmatic path with compphysiol_equations object
 eq <- equations(name = "co", expr = "Qadi + Qbon + Qhea + Qkid + Qliv + Qmus + Qski")
 compartment_model() |>
     add_equation(eq = eq)

@@ -2,7 +2,7 @@
 % Please edit documentation in R/Observables.R
 \name{observables}
 \alias{observables}
-\title{Create an \code{Observables} object}
+\title{Create an \code{compphysiol_observables} object}
 \usage{
 observables(
   ...,
@@ -27,10 +27,10 @@ Used for automatic generation of common observables like concentrations and amou
 Used for automatic generation of common observables like concentrations and amounts.}
 }
 \value{
-An \code{Observables} object
+An \code{compphysiol_observables} object
 }
 \description{
-Observables are quantities of interest that are computed from parameters
+compphysiol_observables are quantities of interest that are computed from parameters
 and/or concentrations or amounts of molecule-in-compartment pairs. They are
 not integrated as independent variables in the ODE system.
 }
@@ -40,10 +40,10 @@ refer to the amount or concentration of a molecule in a compartment. This
 semantic reference is independent of whether the corresponding ODE state is
 represented internally as an amount or as a concentration.
 
-Observables and equations are very similar, but there are two key differences:
+compphysiol_observables and equations are very similar, but there are two key differences:
 \enumerate{
-\item Observables are evaluated from simulation output, while equations are evaluated inside model expressions.
-\item Equations can be used in the definitions of transports, while observables cannot.
+\item compphysiol_observables are evaluated from simulation output, while equations are evaluated inside model expressions.
+\item compphysiol_equations can be used in the definitions of transports, while observables cannot.
 }
 
 The \code{cmt} and \code{molec} arguments allow for convenient generation of common observables like concentrations and amounts.

@@ -2,16 +2,16 @@
 % Please edit documentation in R/equations.R
 \name{names.compphysiol_equations}
 \alias{names.compphysiol_equations}
-\title{Names of equations in an \code{Equations} object}
+\title{Names of equations in an \code{compphysiol_equations} object}
 \usage{
 \method{names}{compphysiol_equations}(x)
 }
 \arguments{
-\item{x}{An \code{Equations} object}
+\item{x}{An \code{compphysiol_equations} object}
 }
 \value{
 The names of the equations
 }
 \description{
-Names of equations in an \code{Equations} object
+Names of equations in an \code{compphysiol_equations} object
 }

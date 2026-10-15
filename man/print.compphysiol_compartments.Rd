@@ -2,18 +2,18 @@
 % Please edit documentation in R/Compartments.R
 \name{print.compphysiol_compartments}
 \alias{print.compphysiol_compartments}
-\title{Print a \code{Compartments} object}
+\title{Print a \code{compphysiol_compartments} object}
 \usage{
 \method{print}{compphysiol_compartments}(x, ...)
 }
 \arguments{
-\item{x}{A \code{Compartments} object.}
+\item{x}{A \code{compphysiol_compartments} object.}
 
 \item{...}{ignored}
 }
 \value{
-The \code{Compartments} object (invisibly).
+The \code{compphysiol_compartments} object (invisibly).
 }
 \description{
-Pretty-prints a \code{Compartments} object.
+Pretty-prints a \code{compphysiol_compartments} object.
 }

@@ -2,16 +2,16 @@
 % Please edit documentation in R/Reactions.R
 \name{length.compphysiol_reactions}
 \alias{length.compphysiol_reactions}
-\title{Length of a \code{Reactions} object}
+\title{Length of a \code{compphysiol_reactions} object}
 \usage{
 \method{length}{compphysiol_reactions}(x)
 }
 \arguments{
-\item{x}{A \code{Reactions} object}
+\item{x}{A \code{compphysiol_reactions} object}
 }
 \value{
 The number of reactions in the object
 }
 \description{
-Length of a \code{Reactions} object
+Length of a \code{compphysiol_reactions} object
 }

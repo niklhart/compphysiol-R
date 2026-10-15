@@ -2,18 +2,18 @@
 % Please edit documentation in R/ProcessOdeModel.R
 \name{print.compphysiol_ode_model}
 \alias{print.compphysiol_ode_model}
-\title{Print method for \code{OdeModel} class}
+\title{Print method for \code{compphysiol_ode_model} class}
 \usage{
 \method{print}{compphysiol_ode_model}(x, ...)
 }
 \arguments{
-\item{x}{An \code{OdeModel} object.}
+\item{x}{An \code{compphysiol_ode_model} object.}
 
 \item{...}{ignored}
 }
 \value{
-The \code{OdeModel} object (invisibly).
+The \code{compphysiol_ode_model} object (invisibly).
 }
 \description{
-Pretty-prints an \code{OdeModel} object using DSL state names.
+Pretty-prints an \code{compphysiol_ode_model} object using DSL state names.
 }

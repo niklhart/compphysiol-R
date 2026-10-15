@@ -7,13 +7,13 @@
 to_analytical_model(model)
 }
 \arguments{
-\item{model}{A \code{CompartmentModel} or \code{ProcessModel} object.}
+\item{model}{A \code{compphysiol_model} or \code{compphysiol_process_model} object.}
 }
 \value{
-An \code{AnalyticalModel} object.
+An \code{compphysiol_analytical_model} object.
 }
 \description{
-\code{to_analytical_model()} lowers a \code{CompartmentModel} or \code{ProcessModel} to a
+\code{to_analytical_model()} lowers a \code{compphysiol_model} or \code{compphysiol_process_model} to a
 solver-neutral linear analytical representation of the form \verb{dx/dt = A x + b}.
 }
 \details{

@@ -2,7 +2,7 @@
 % Please edit documentation in R/Reactions.R
 \name{state}
 \alias{state}
-\title{Create a \code{States} object}
+\title{Create a \code{compphysiol_states} object}
 \usage{
 state(..., molec, cmt)
 }
@@ -14,9 +14,9 @@ state(..., molec, cmt)
 \item{cmt}{Character vector of compartment names.}
 }
 \value{
-A \code{States} object.
+A \code{compphysiol_states} object.
 }
 \description{
-\code{States} represent molecule-compartment pairs. In reactions, repeated states
+\code{compphysiol_states} represent molecule-compartment pairs. In reactions, repeated states
 are interpreted as stoichiometric multiplicity during reaction construction.
 }

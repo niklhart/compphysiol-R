@@ -1,19 +1,19 @@
 #' Extend an experimental protocol across a realized population
 #'
-#' Combines one protocol [Experiment][experiment()] with each individual in a
-#' [ParameterSets][parameter_sets()] collection. The result contains one
-#' `Experiment` per individual. Dosing, observations, and start are copied from
+#' Combines one protocol [compphysiol_experiment][experiment()] with each individual in a
+#' [compphysiol_parameter_sets][parameter_sets()] collection. The result contains one
+#' `compphysiol_experiment` per individual. compphysiol_dosing, observations, and start are copied from
 #' the protocol, while protocol and individual parameters are combined.
 #'
 #' Protocol and individual parameter names must not overlap. Names of parameter
 #' sets become experiment names. Unnamed sets receive names based on their
 #' position, such as `"individual_1"` and `"individual_2"`.
 #'
-#' @param protocol An [Experiment][experiment()] defining shared dosing,
+#' @param protocol An [compphysiol_experiment][experiment()] defining shared dosing,
 #'   observations, start, and optional parameters.
-#' @param population A [ParameterSets][parameter_sets()] collection containing
+#' @param population A [compphysiol_parameter_sets][parameter_sets()] collection containing
 #'   realized individual parameters.
-#' @returns An `Experiments` collection with one experiment per parameter set.
+#' @returns An `compphysiol_experiments` collection with one experiment per parameter set.
 #' @examples
 #' protocol <- experiment(
 #'     dosing = dosing(time = 0 [h], amount = 100 [mg]),

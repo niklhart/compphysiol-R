@@ -7,10 +7,10 @@
 \method{c}{compphysiol_experiments}(...)
 }
 \arguments{
-\item{...}{\code{Experiments} objects to combine.}
+\item{...}{\code{compphysiol_experiments} objects to combine.}
 }
 \value{
-An \code{Experiments} object, preserving order and names.
+An \code{compphysiol_experiments} object, preserving order and names.
 }
 \description{
 Combine collections of experiments

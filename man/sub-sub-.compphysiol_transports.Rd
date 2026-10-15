@@ -2,18 +2,18 @@
 % Please edit documentation in R/Transports.R
 \name{[[.compphysiol_transports}
 \alias{[[.compphysiol_transports}
-\title{Access an element in a \code{Transports} object}
+\title{Access an element in a \code{compphysiol_transports} object}
 \usage{
 \method{[[}{compphysiol_transports}(x, i)
 }
 \arguments{
-\item{x}{A \code{Transports} object}
+\item{x}{A \code{compphysiol_transports} object}
 
 \item{i}{Row index to access}
 }
 \value{
-A \code{Transport} object, which is a list with entries \code{from}, \code{to}, \code{molec}, \code{rate}, \code{const}, and \code{type}.
+A \code{compphysiol_transport} object, which is a list with entries \code{from}, \code{to}, \code{molec}, \code{rate}, \code{const}, and \code{type}.
 }
 \description{
-Access an element in a \code{Transports} object
+Access an element in a \code{compphysiol_transports} object
 }

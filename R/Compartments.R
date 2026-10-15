@@ -1,6 +1,6 @@
-#' Create a `Compartments` object
+#' Create a `compphysiol_compartments` object
 #'
-#' Compartments represent model compartments with names and fixed or parametrized volumes.
+#' compphysiol_compartments represent model compartments with names and fixed or parametrized volumes.
 #'
 #' @param name Compartment name(s), character scalar or vector
 #' @param volume Volume(s) (numeric or character) for each compartment.
@@ -11,7 +11,7 @@
 #' @param unit Unit for the compartment volume(s) (optional, default: `NULL`). If specified,
 #'   it can be a single unit (applied to all volumes) or a vector of units corresponding to each volume.
 #'   The `unit` argument is ignored (with a warning) if the `volume` argument is not numeric.
-#' @return A `Compartments` object
+#' @return A `compphysiol_compartments` object
 #' @examples
 #' compartments(c("adi","bon"))
 #' compartments('adi', volume = "Vadi")
@@ -83,13 +83,13 @@ compartments <- function(name = character(0), volume = "V{name}", unit = NULL) {
     )
 }
 
-#' Add one or several compartments to a `CompartmentModel` object.
+#' Add one or several compartments to a `compphysiol_model` object.
 #'
 #' @inherit compartments description details
-#' @param model A `CompartmentModel` object.
+#' @param model A `compphysiol_model` object.
 #' @inheritParams compartments
-#' @param comp A `Compartments` object. Constructed from the other inputs if not provided.
-#' @returns The modified `CompartmentModel` object.
+#' @param comp A `compphysiol_compartments` object. Constructed from the other inputs if not provided.
+#' @returns The modified `compphysiol_model` object.
 #' @examples
 #' # Several compartments added in a single call
 #' compartment_model() |>
@@ -126,83 +126,83 @@ add_compartment <- function(
     model
 }
 
-#' Convert a `Compartments` object to a data frame
+#' Convert a `compphysiol_compartments` object to a data frame
 #'
-#' @param x A `Compartments` object
+#' @param x A `compphysiol_compartments` object
 #' @param ... Additional arguments (not used)
-#' @return A data frame representation of the `Compartments` object
+#' @return A data frame representation of the `compphysiol_compartments` object
 #' @export
 as.data.frame.compphysiol_compartments <- function(x, ...) {
     class(x) <- "data.frame"
     x
 }
 
-#' Length of a `Compartments` object
+#' Length of a `compphysiol_compartments` object
 #' 
-#' Returns the number of compartments in a `Compartments` object.
-#' @param x A `Compartments` object
+#' Returns the number of compartments in a `compphysiol_compartments` object.
+#' @param x A `compphysiol_compartments` object
 #' @return The number of compartments
 #' @export
 length.compphysiol_compartments <- function(x) {
     nrow(as.data.frame(x))
 }
 
-#' Names of compartments in a `Compartments` object
+#' Names of compartments in a `compphysiol_compartments` object
 #' 
-#' Returns the names of compartments in a `Compartments` object.
-#' @param x A `Compartments` object
+#' Returns the names of compartments in a `compphysiol_compartments` object.
+#' @param x A `compphysiol_compartments` object
 #' @return A character vector of compartment names
 #' @export
 names.compphysiol_compartments <- function(x) x$name
 
 
-#' Print a `Compartments` object
+#' Print a `compphysiol_compartments` object
 #' 
-#' Pretty-prints a `Compartments` object.
+#' Pretty-prints a `compphysiol_compartments` object.
 #' 
-#' @param x A `Compartments` object.
+#' @param x A `compphysiol_compartments` object.
 #' @param ... ignored
-#' @return The `Compartments` object (invisibly).
+#' @return The `compphysiol_compartments` object (invisibly).
 #' @export
 print.compphysiol_compartments <- function(x, ...) {
 
     vol_str <- vapply(x$volume, format, character(1))
 
     if (length(x) > 0) {
-        cat(" Compartments:\n")
+        cat(" compphysiol_compartments:\n")
         cat(
             sprintf("  (%s) %s (volume = %s)\n", seq_along(x), x$name, vol_str),
             sep = ""
         )
     } else {
-        cat(" Compartments: (none)\n")
+        cat(" compphysiol_compartments: (none)\n")
     }
     invisible(x)
 }
 
-#' Combine multiple `Compartments` objects into one
+#' Combine multiple `compphysiol_compartments` objects into one
 #'
-#' @param ... Multiple `Compartments` objects to combine
-#' @return A combined `Compartments` object
+#' @param ... Multiple `compphysiol_compartments` objects to combine
+#' @return A combined `compphysiol_compartments` object
 #' @export
 c.compphysiol_compartments <- function(...) .combine_df_like(...)
 
-#' Subset a `Compartments` object
+#' Subset a `compphysiol_compartments` object
 #'
-#' @param x A `Compartments` object
+#' @param x A `compphysiol_compartments` object
 #' @param i Index or name(s) of compartments to subset
 #' @param ... Additional arguments (not used)
-#' @return A subsetted `Compartments` object
+#' @return A subsetted `compphysiol_compartments` object
 #' @export
 `[.compphysiol_compartments` <- function(x, i, ...) .subset_df_like(x, i, byname = TRUE)
 
-#' Extraction method for `Compartments` class
+#' Extraction method for `compphysiol_compartments` class
 #'
 #' This method is intentionally not implemented to prevent direct element access,
-#' which could lead to confusion given the internal data frame-like structure of `Compartments` objects.
+#' which could lead to confusion given the internal data frame-like structure of `compphysiol_compartments` objects.
 #' Instead, users should use subsetting with `[` and a scalar name/index to access specific compartments.
 #'
-#' @param x A `Compartments` object
+#' @param x A `compphysiol_compartments` object
 #' @param i Row index to access
 #' @param ... Additional arguments (not used)
 #' @return Nothing (errors)

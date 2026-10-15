@@ -2,7 +2,7 @@
 % Please edit documentation in R/Compartments.R
 \name{compartments}
 \alias{compartments}
-\title{Create a \code{Compartments} object}
+\title{Create a \code{compphysiol_compartments} object}
 \usage{
 compartments(name = character(0), volume = "V{name}", unit = NULL)
 }
@@ -20,10 +20,10 @@ it can be a single unit (applied to all volumes) or a vector of units correspond
 The \code{unit} argument is ignored (with a warning) if the \code{volume} argument is not numeric.}
 }
 \value{
-A \code{Compartments} object
+A \code{compphysiol_compartments} object
 }
 \description{
-Compartments represent model compartments with names and fixed or parametrized volumes.
+compphysiol_compartments represent model compartments with names and fixed or parametrized volumes.
 }
 \examples{
 compartments(c("adi","bon"))

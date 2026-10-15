@@ -2,16 +2,16 @@
 % Please edit documentation in R/Transports.R
 \name{length.compphysiol_transports}
 \alias{length.compphysiol_transports}
-\title{Length of a \code{Transports} object}
+\title{Length of a \code{compphysiol_transports} object}
 \usage{
 \method{length}{compphysiol_transports}(x)
 }
 \arguments{
-\item{x}{A \code{Transports} object}
+\item{x}{A \code{compphysiol_transports} object}
 }
 \value{
 The number of transports in the object
 }
 \description{
-Length of a \code{Transports} object
+Length of a \code{compphysiol_transports} object
 }

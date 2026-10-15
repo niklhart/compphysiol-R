@@ -1,11 +1,11 @@
 # generic lumping function
 
-#' Lump a `CompartmentModel` object
+#' Lump a `compphysiol_model` object
 #'
-#' @param M A `CompartmentModel` object, the model to be lumped.
+#' @param M A `compphysiol_model` object, the model to be lumped.
 #' @param partitioning A list of character vectors (each a group of compartments)
 #' @param normalize A named list of quoted calls giving normalizing factors for each compartment
-#' @returns A `CompartmentModel` object representing the lumped model
+#' @returns A `compphysiol_model` object representing the lumped model
 #' @export
 lump_model <- function(M, partitioning = list(), normalize = list()) {
 

@@ -2,18 +2,18 @@
 % Please edit documentation in R/Molecules.R
 \name{as.data.frame.compphysiol_molecules}
 \alias{as.data.frame.compphysiol_molecules}
-\title{Convert a \code{Molecules} object to a data frame}
+\title{Convert a \code{compphysiol_molecules} object to a data frame}
 \usage{
 \method{as.data.frame}{compphysiol_molecules}(x, ...)
 }
 \arguments{
-\item{x}{A \code{Molecules} object}
+\item{x}{A \code{compphysiol_molecules} object}
 
 \item{...}{Additional arguments (not used)}
 }
 \value{
-A data frame representation of the \code{Molecules} object
+A data frame representation of the \code{compphysiol_molecules} object
 }
 \description{
-Convert a \code{Molecules} object to a data frame
+Convert a \code{compphysiol_molecules} object to a data frame
 }

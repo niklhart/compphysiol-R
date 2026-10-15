@@ -2,18 +2,18 @@
 % Please edit documentation in R/ProcessOdeModel.R
 \name{print.compphysiol_stochastic_model}
 \alias{print.compphysiol_stochastic_model}
-\title{Print method for \code{StochasticModel} class}
+\title{Print method for \code{compphysiol_stochastic_model} class}
 \usage{
 \method{print}{compphysiol_stochastic_model}(x, ...)
 }
 \arguments{
-\item{x}{A \code{StochasticModel} object.}
+\item{x}{A \code{compphysiol_stochastic_model} object.}
 
 \item{...}{ignored}
 }
 \value{
-The \code{StochasticModel} object (invisibly).
+The \code{compphysiol_stochastic_model} object (invisibly).
 }
 \description{
-Pretty-prints a \code{StochasticModel} object using DSL state names.
+Pretty-prints a \code{compphysiol_stochastic_model} object using DSL state names.
 }

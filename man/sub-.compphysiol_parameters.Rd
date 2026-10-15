@@ -2,20 +2,20 @@
 % Please edit documentation in R/Parameters.R
 \name{[.compphysiol_parameters}
 \alias{[.compphysiol_parameters}
-\title{Subset a \code{Parameters} object}
+\title{Subset a \code{compphysiol_parameters} object}
 \usage{
 \method{[}{compphysiol_parameters}(x, i, ...)
 }
 \arguments{
-\item{x}{A \code{Parameters} object}
+\item{x}{A \code{compphysiol_parameters} object}
 
 \item{i}{Indices or names of the parameters to subset}
 
 \item{...}{Additional arguments (not used)}
 }
 \value{
-A subset of the \code{Parameters} object
+A subset of the \code{compphysiol_parameters} object
 }
 \description{
-Subset a \code{Parameters} object
+Subset a \code{compphysiol_parameters} object
 }

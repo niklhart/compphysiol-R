@@ -1,8 +1,8 @@
-#' Create a `Transports` object
+#' Create a `compphysiol_transports` object
 #'
-#' Transports represent mass/amount-preserving transports of molecules between two compartments in a compartment model.
+#' compphysiol_transports represent mass/amount-preserving transports of molecules between two compartments in a compartment model.
 #' 
-#' Transports can be linear (first-order) or nonlinear, depending on whether the transport rate is defined by a constant 
+#' compphysiol_transports can be linear (first-order) or nonlinear, depending on whether the transport rate is defined by a constant 
 #' (argument `const`) or a general expression (argument `rate`). 
 #' The special syntax `{from}`, `{to}` and `{molec}` can be used in `rate` or `const` to automatically substitute 
 #' the source and destination compartment names and molecule names, respectively, e.g., `"k_{from}_{to}"` will become 
@@ -16,7 +16,7 @@
 #' @param rate The transport rate (character or call, optional, mutually exclusive with `const`)
 #' @param const Rate constant for first-order transports (character, call, numeric,
 #'   or unit-bearing value, optional, mutually exclusive with `rate`)
-#' @return A `Transports` object
+#' @return A `compphysiol_transports` object
 #' @examples
 #' # Linear transport
 #' f1 <- transports(from = "A", to = "B", const = "k1")   # rate will be k1 * a[A]
@@ -168,13 +168,13 @@ transports <- function(from, to, molec = NA_character_, ..., rate = NULL, const 
 }
 
 
-#' Add one or several transports to a `CompartmentModel` object.
+#' Add one or several transports to a `compphysiol_model` object.
 #'
 #' @inherit transports description details
-#' @param model A `CompartmentModel` object.
+#' @param model A `compphysiol_model` object.
 #' @inheritParams transports
-#' @param trans A `Transports` object. Constructed from the other inputs if not provided.
-#' @returns The modified `CompartmentModel` object.
+#' @param trans A `compphysiol_transports` object. Constructed from the other inputs if not provided.
+#' @returns The modified `compphysiol_model` object.
 #' @examples
 #' # Add a linear transport
 #' compartment_model() |>
@@ -187,7 +187,7 @@ transports <- function(from, to, molec = NA_character_, ..., rate = NULL, const 
 #'     add_transport("A", c("B", "C"), const = "k{to}")
 #' compartment_model() |>
 #'     add_transport(c("A", "B"), c("B", "C"), const = "k_{from}_{to}")
-#' # Transports with specific molecules
+#' # compphysiol_transports with specific molecules
 #' compartment_model() |>
 #'     add_transport(from = "cen", to = "per", molec = c("DrugA","DrugB"), const = "k_{molec}")
 #' @export
@@ -219,11 +219,11 @@ add_transport <- function(
 }
 
 
-#' Print a `Transports` object
+#' Print a `compphysiol_transports` object
 #'
-#' @param x A `Transports` object
+#' @param x A `compphysiol_transports` object
 #' @param ... Additional arguments (not used)
-#' @return The `Transports` object (invisible)
+#' @return The `compphysiol_transports` object (invisible)
 #' @export
 print.compphysiol_transports = function(x, ...) {
 
@@ -238,7 +238,7 @@ print.compphysiol_transports = function(x, ...) {
     rate <- vapply(x$rate, .ode_model_deparse_with_unit_placeholders, character(1))
 
     if (length(x) > 0) {
-        cat(" Transports:\n")
+        cat(" compphysiol_transports:\n")
         cat(
             sprintf(
                 "  (%i) %s: %s \u2192 %s, rate = %s\n",
@@ -252,43 +252,43 @@ print.compphysiol_transports = function(x, ...) {
             sep = ""
         )
     } else {
-        cat(" Transports: (none)\n")
+        cat(" compphysiol_transports: (none)\n")
     }
 
     invisible(x)
 }
 
 
-#' Length of a `Transports` object
+#' Length of a `compphysiol_transports` object
 #' 
-#' @param x A `Transports` object
+#' @param x A `compphysiol_transports` object
 #' @return The number of transports in the object
 #' @export
 length.compphysiol_transports <- function(x) {
     nrow(as.data.frame(x))
 }
 
-#' Convert a `Transports` object to a data frame
+#' Convert a `compphysiol_transports` object to a data frame
 #' 
-#' @param x A `Transports` object
+#' @param x A `compphysiol_transports` object
 #' @param ... Additional arguments (not used)
-#' @return A data frame representation of the `Transports` object
+#' @return A data frame representation of the `compphysiol_transports` object
 #' @export
 as.data.frame.compphysiol_transports <- function(x, ...) {
     class(x) <- "data.frame"
     x
 }
 
-#' Convert a `Transports` object to a list of `Transport` objects (experimental).
+#' Convert a `compphysiol_transports` object to a list of `compphysiol_transport` objects (experimental).
 #' 
-#' `Transport` objects are light-weighted representations of individual transports, 
+#' `compphysiol_transport` objects are light-weighted representations of individual transports, 
 #' where each transport is represented as a list with entries 
 #' `from`, `to`, `molec`, `rate`, `const`, and `type`. 
-#' This function is useful for iterating over transports in a `Transports` object.
+#' This function is useful for iterating over transports in a `compphysiol_transports` object.
 #' 
-#' @param x A `Transports` object
+#' @param x A `compphysiol_transports` object
 #' @param ... Additional arguments (not used)
-#' @return A list of `Transport` objects, where each component is a list of the form `list(from, to, molec, rate, const, type)`
+#' @return A list of `compphysiol_transport` objects, where each component is a list of the form `list(from, to, molec, rate, const, type)`
 #' @export
 as.list.compphysiol_transports <- function(x, ...) {
     lst <- do.call(
@@ -305,27 +305,27 @@ as.list.compphysiol_transports <- function(x, ...) {
     })
 }
 
-#' Subset a `Transports` object
+#' Subset a `compphysiol_transports` object
 #' 
-#' @param x A `Transports` object
+#' @param x A `compphysiol_transports` object
 #' @param i Row indices to subset
 #' @param ... Additional arguments (not used)
-#' @return A subsetted `Transports` object
+#' @return A subsetted `compphysiol_transports` object
 #' @export
 `[.compphysiol_transports` <- function(x, i, ...) .subset_df_like(x, i, byname = FALSE)
 
-#' Combine multiple `Transports` objects into one
+#' Combine multiple `compphysiol_transports` objects into one
 #' 
-#' @param ... Multiple `Transports` objects to combine
-#' @return A combined `Transports` object
+#' @param ... Multiple `compphysiol_transports` objects to combine
+#' @return A combined `compphysiol_transports` object
 #' @export
 c.compphysiol_transports <- function(...) .combine_df_like(...)
 
-#' Access an element in a `Transports` object
+#' Access an element in a `compphysiol_transports` object
 #' 
-#' @param x A `Transports` object
+#' @param x A `compphysiol_transports` object
 #' @param i Row index to access
-#' @returns A `Transport` object, which is a list with entries `from`, `to`, `molec`, `rate`, `const`, and `type`.
+#' @returns A `compphysiol_transport` object, which is a list with entries `from`, `to`, `molec`, `rate`, `const`, and `type`.
 #' @export
 `[[.compphysiol_transports` <- function(x, i) {
     if (!is.numeric(i) || length(i) != 1) stop("Index must be a single numeric value.")
@@ -346,11 +346,11 @@ c.compphysiol_transports <- function(...) .combine_df_like(...)
     )
 }
 
-#' Print a `Transport` object
+#' Print a `compphysiol_transport` object
 #'
-#' @param x A `Transport` object
+#' @param x A `compphysiol_transport` object
 #' @param ... Additional arguments (not used)
-#' @return The `Transport` object (invisible)
+#' @return The `compphysiol_transport` object (invisible)
 #' @export
 print.compphysiol_transport <- function(x, ...) {
     empty_symbol <- "\u2205" # empty set symbol for source/sink compartments
@@ -360,7 +360,7 @@ print.compphysiol_transport <- function(x, ...) {
     rate <- deparse1(x$rate)
 
     cat(sprintf(
-        " Transport: %s \u2192 %s, molec = %s, rate = %s\n",
+        " compphysiol_transport: %s \u2192 %s, molec = %s, rate = %s\n",
         from,
         to,
         molec,
@@ -369,15 +369,15 @@ print.compphysiol_transport <- function(x, ...) {
     invisible(x)
 }
 
-#' Combine multiple `Transport` objects into a `Transports` object
+#' Combine multiple `compphysiol_transport` objects into a `compphysiol_transports` object
 #' 
-#' @param ... Multiple `Transport` objects to combine
-#' @return A combined `Transports` object
+#' @param ... Multiple `compphysiol_transport` objects to combine
+#' @return A combined `compphysiol_transports` object
 #' @export
 c.compphysiol_transport <- function(...) {
     objs <- list(...)
     if (!all(sapply(objs, function(o) inherits(o, "compphysiol_transport")))) {
-        stop("All inputs must be Transport objects.")
+        stop("All inputs must be compphysiol_transport objects.")
     }
     
     # Combine the components into vectors/lists

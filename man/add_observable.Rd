@@ -2,7 +2,7 @@
 % Please edit documentation in R/Observables.R
 \name{add_observable}
 \alias{add_observable}
-\title{Add one or several observables to a \code{CompartmentModel} object.}
+\title{Add one or several observables to a \code{compphysiol_model} object.}
 \usage{
 add_observable(
   model,
@@ -15,7 +15,7 @@ add_observable(
 )
 }
 \arguments{
-\item{model}{A \code{CompartmentModel} object.}
+\item{model}{A \code{compphysiol_model} object.}
 
 \item{...}{Name-expression pairs defining the observables. The expressions can be provided as character strings or as R calls.}
 
@@ -30,13 +30,13 @@ Used for automatic generation of common observables like concentrations and amou
 \item{molec}{Optional character vector specifying the molecule(s) associated with the observable(s).
 Used for automatic generation of common observables like concentrations and amounts.}
 
-\item{obs}{An \code{Observables} object. Constructed from the other inputs if not provided.}
+\item{obs}{An \code{compphysiol_observables} object. Constructed from the other inputs if not provided.}
 }
 \value{
-The modified \code{CompartmentModel} object.
+The modified \code{compphysiol_model} object.
 }
 \description{
-Observables are quantities of interest that are computed from parameters
+compphysiol_observables are quantities of interest that are computed from parameters
 and/or concentrations or amounts of molecule-in-compartment pairs. They are
 not integrated as independent variables in the ODE system.
 }
@@ -46,10 +46,10 @@ refer to the amount or concentration of a molecule in a compartment. This
 semantic reference is independent of whether the corresponding ODE state is
 represented internally as an amount or as a concentration.
 
-Observables and equations are very similar, but there are two key differences:
+compphysiol_observables and equations are very similar, but there are two key differences:
 \enumerate{
-\item Observables are evaluated from simulation output, while equations are evaluated inside model expressions.
-\item Equations can be used in the definitions of transports, while observables cannot.
+\item compphysiol_observables are evaluated from simulation output, while equations are evaluated inside model expressions.
+\item compphysiol_equations can be used in the definitions of transports, while observables cannot.
 }
 
 The \code{cmt} and \code{molec} arguments allow for convenient generation of common observables like concentrations and amounts.
@@ -66,7 +66,7 @@ compartment_model() |>
 compartment_model() |>
     add_compartment("blo") |>
     add_observable(name = "Cblo", expr = "Ablo/Vblo")
-## Programmatic path with Observables object
+## Programmatic path with compphysiol_observables object
 obs <- observables(name = "Cblo", expr = "Ablo/Vblo")
 compartment_model() |>
     add_compartment("blo") |>

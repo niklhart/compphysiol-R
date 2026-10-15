@@ -2,7 +2,7 @@
 % Please edit documentation in R/Reactions.R
 \name{reactions}
 \alias{reactions}
-\title{Create a \code{Reactions} object}
+\title{Create a \code{compphysiol_reactions} object}
 \usage{
 reactions(
   input = character(0),
@@ -16,11 +16,11 @@ reactions(
 )
 }
 \arguments{
-\item{input}{Character vector or \code{States} object representing the input of the reaction, e.g. \code{c("A", "B")}
+\item{input}{Character vector or \code{compphysiol_states} object representing the input of the reaction, e.g. \code{c("A", "B")}
 for a reaction where one molecule of \code{A} and one molecule of \code{B} are consumed.
 For synthesis reactions, use an empty character vector or \code{NULL}.}
 
-\item{output}{Character vector or \code{States} object representing the output of the reaction, e.g. \code{"C"}
+\item{output}{Character vector or \code{compphysiol_states} object representing the output of the reaction, e.g. \code{"C"}
 for a reaction where one molecule of \code{C} is produced.
 For degradation reactions, use an empty character vector or \code{NULL}.}
 
@@ -43,13 +43,13 @@ Use \code{c[A]} to refer to the concentration of molecule A, and \code{a[A]} to 
 call, numeric, or unit-bearing value).
 Formally, this corresponds to \code{rate = const * c[input[1]] * c[input[2]] * ...}.
 In addition, the information that the reaction is elementary is encoded in the \code{type}
-column of the resulting \code{Reactions} object.}
+column of the resulting \code{compphysiol_reactions} object.}
 }
 \value{
-A \code{Reactions} object containing the reaction information.
+A \code{compphysiol_reactions} object containing the reaction information.
 }
 \description{
-The \code{Reactions} class can hold several reactions, each with an input, output, rate/constant, and compartment.
+The \code{compphysiol_reactions} class can hold several reactions, each with an input, output, rate/constant, and compartment.
 However, each reaction needs to be defined separately, i.e., vectorized definitions are not supported for reactions
 as they can be for transports and molecules -- vector arguments are instead used for defining multiple reacting species within a single reaction.
 }
@@ -63,7 +63,7 @@ The special expression \code{{cmt}} can be used in \code{rate} or \code{const} t
 e.g., \verb{k_\{cmt\}} will become \code{k_cytoplasm} for reactions in the cytoplasm and \code{k_nucleus} for reactions in the nucleus.
 Replacement is only applied if the \code{cmt} argument is provided (otherwise, parameter names would change dynamically as compartments change).
 
-Reactions can be specified either by separate \code{input} and \code{output}
+compphysiol_reactions can be specified either by separate \code{input} and \code{output}
 arguments or by a character reaction formula. The formula form is an
 interactive shorthand for the same participant representation, for example
 \code{reactions("A + B -> C", cmt = "cyt", const = "k")}. Participants may be
@@ -87,7 +87,7 @@ reaction. In membrane binding models, for example, choosing the membrane as
 such as amount per area per time.
 }
 \examples{
-# empty `Reactions` object
+# empty `compphysiol_reactions` object
 reactions()
 # association reaction (second-order)
 reactions(input = c("A", "B"), output = "C", const = "k1")
@@ -95,9 +95,9 @@ reactions(input = c("A", "B"), output = "C", const = "k1")
 reactions(input = "", output = "A", const = "k2")
 # Michelis-Menten reaction (saturable, non-elementary)
 reactions(input = "A", output = "B", rate = "Vmax * c[A] / (Km + c[A])")
-# Reactions in several compartments (same rate constants)
+# compphysiol_reactions in several compartments (same rate constants)
 reactions(input = "A", output = "B", cmt = c("cytoplasm", "nucleus"), const = "kAB")
-# Reactions in several compartments (different rate constants)
+# compphysiol_reactions in several compartments (different rate constants)
 reactions(input = "A", output = "B", cmt = c("cytoplasm", "nucleus"), const = "kAB_{cmt}")
 # Interactive character formula shorthand
 reactions("A + B -> C", cmt = "cytoplasm", const = "kABC")

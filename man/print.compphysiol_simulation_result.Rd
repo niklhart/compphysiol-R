@@ -7,12 +7,12 @@
 \method{print}{compphysiol_simulation_result}(x, ...)
 }
 \arguments{
-\item{x}{A \code{SimulationResult} object.}
+\item{x}{A \code{compphysiol_simulation_result} object.}
 
 \item{...}{Additional arguments, currently ignored.}
 }
 \value{
-The \code{SimulationResult} object, invisibly.
+The \code{compphysiol_simulation_result} object, invisibly.
 }
 \description{
 Print a simulation result

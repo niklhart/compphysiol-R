@@ -2,7 +2,7 @@
 % Please edit documentation in R/Dosing.R
 \name{dosing}
 \alias{dosing}
-\title{Create a \code{Dosing} object}
+\title{Create a \code{compphysiol_dosing} object}
 \usage{
 dosing(
   time = numeric(0),
@@ -17,7 +17,7 @@ dosing(
 )
 }
 \arguments{
-\item{time}{Dosing time(s) (numeric scalar or vector)}
+\item{time}{compphysiol_dosing time(s) (numeric scalar or vector)}
 
 \item{amount}{Amount(s) of dose (non-negative numeric scalar or vector, optional)}
 
@@ -39,10 +39,10 @@ as named arguments only, not positional}
 \item{duration}{Infusion duration (positive numeric scalar or vector, optional)}
 }
 \value{
-A \code{Dosing} object
+A \code{compphysiol_dosing} object
 }
 \description{
-Represents a dosing event for a \code{CompartmentModel}. A dose can be specified either as a bolus (instantaneous input)
+Represents a dosing event for a \code{compphysiol_model}. A dose can be specified either as a bolus (instantaneous input)
 or as an infusion (continuous input over time).
 }
 \details{

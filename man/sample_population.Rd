@@ -7,9 +7,9 @@
 sample_population(statistics, parameters, n, targets = NULL)
 }
 \arguments{
-\item{statistics}{A \code{StatisticalModel} with resolved or explicit levels.}
+\item{statistics}{A \code{compphysiol_statistical_model} with resolved or explicit levels.}
 
-\item{parameters}{A \link[=parameters]{Parameters} object containing population
+\item{parameters}{A \link[=parameters]{compphysiol_parameters} object containing population
 parameters referenced by the individual-level distributions and their
 correlations.}
 
@@ -20,12 +20,12 @@ sample. \code{NULL} samples all resolved individual-level entries. Explicit
 targets may have unresolved levels but must not be observation-level.}
 }
 \value{
-A named \code{ParameterSets} collection with names \code{individual_1},
+A named \code{compphysiol_parameter_sets} collection with names \code{individual_1},
 \code{individual_2}, and so on.
 }
 \description{
 Samples structural parameters from the individual-level distributions in a
-\link[=statistical_model]{StatisticalModel}, respecting dependencies declared by
+\link[=statistical_model]{compphysiol_statistical_model}, respecting dependencies declared by
 \code{\link[=correlated]{correlated()}}. Observation-level entries are ignored. The result contains
 only the sampled targets; population parameters used as distribution
 locations, scales, or correlations are not copied into the individual
