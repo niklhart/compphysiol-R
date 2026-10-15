@@ -13,14 +13,14 @@
 #' explicit observation locations are not supported because this operation is
 #' always conditional on the input prediction.
 #'
-#' @param x An `compphysiol_observation_data` object containing conditional predictions.
+#' @param x A `compphysiol_observation_data` object containing conditional predictions.
 #'   Extract predictions from a `compphysiol_simulation_result` explicitly with
 #'   [as_observables_long()].
 #' @param statistics A [compphysiol_statistical_model][statistical_model()] containing a
 #'   distribution for every observable represented in `x`.
 #' @param parameters A [compphysiol_parameters][parameters()] object containing referenced
 #'   observation-distribution parameters.
-#' @returns An `compphysiol_observation_data` object whose `value` column contains sampled
+#' @returns A `compphysiol_observation_data` object whose `value` column contains sampled
 #'   observations.
 #' @examples
 #' predictions <- observation_data(
@@ -38,7 +38,7 @@
 #' @export
 sample_observations <- function(x, statistics, parameters) {
     if (!inherits(x, "compphysiol_observation_data")) {
-        stop("x must be a compphysiol_observation_data object; extract compphysiol_simulation_result predictions ",
+        stop("x must be a observation data object; extract simulation result predictions ",
              "with as_observables_long().", call. = FALSE)
     }
     x <- .new_observation_data(x)
@@ -50,7 +50,7 @@ sample_observations <- function(x, statistics, parameters) {
         !is.numeric(value) || length(value) != 1L || is.na(value) || !is.finite(value)
     }, logical(1))
     if (any(invalid)) {
-        stop("compphysiol_observation_data must contain finite numeric predictions in every row.",
+        stop("observation data must contain finite numeric predictions in every row.",
              call. = FALSE)
     }
 

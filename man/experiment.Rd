@@ -23,7 +23,7 @@ unit-free zero if both schedules are empty. It does not mean the earliest
 scheduled time. Incompatible schedules still produce an error.}
 }
 \value{
-An \code{compphysiol_experiment} object.
+A \code{compphysiol_experiment} object.
 }
 \description{
 One experiment represents one independent individual simulation or

@@ -10,7 +10,7 @@
 \item{...}{\code{compphysiol_experiments} objects to combine.}
 }
 \value{
-An \code{compphysiol_experiments} object, preserving order and names.
+A \code{compphysiol_experiments} object, preserving order and names.
 }
 \description{
 Combine collections of experiments

@@ -65,6 +65,6 @@ test_that("extend_protocol rejects overlapping parameter names", {
 })
 
 test_that("extend_protocol validates its input classes", {
-    expect_error(extend_protocol(parameters(), parameter_sets()), "compphysiol_experiment")
-    expect_error(extend_protocol(experiment(), parameters()), "compphysiol_parameter_sets")
+    expect_error(extend_protocol(parameters(), parameter_sets()), "Experiment")
+    expect_error(extend_protocol(experiment(), parameters()), "Parameter sets")
 })

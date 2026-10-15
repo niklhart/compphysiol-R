@@ -14,7 +14,7 @@ observations, start, and optional parameters.}
 realized individual parameters.}
 }
 \value{
-An \code{compphysiol_experiments} collection with one experiment per parameter set.
+A \code{compphysiol_experiments} collection with one experiment per parameter set.
 }
 \description{
 Combines one protocol \link[=experiment]{compphysiol_experiment} with each individual in a

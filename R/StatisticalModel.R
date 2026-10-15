@@ -229,7 +229,7 @@ statistical_model <- function(...) {
         stop("Statistical-model target names must be unique.", call. = FALSE)
     }
     if (!all(vapply(x, inherits, logical(1), "compphysiol_statistical_distribution"))) {
-        stop("Every statistical-model entry must be a compphysiol_statistical_distribution object.",
+        stop("Every statistical-model entry must be a statistical distribution object.",
              call. = FALSE)
     }
     correlations <- unlist(entries[is_correlated], recursive = FALSE)
@@ -561,10 +561,10 @@ statistical_model <- function(...) {
 #' @export
 print.compphysiol_statistical_model <- function(x, ...) {
     if (!length(x)) {
-        cat(" compphysiol_statistical_model: (none)\n")
+        cat(" Statistical model: (none)\n")
         return(invisible(x))
     }
-    cat(" compphysiol_statistical_model:\n")
+    cat(" Statistical model:\n")
     for (i in seq_along(x)) {
         d <- x[[i]]
         family <- if (inherits(d, "compphysiol_normal_distribution")) "normal" else "lognormal"

@@ -23,7 +23,7 @@ values. A scalar is recycled over the rows.}
 \item{...}{Additional columns with one value per schedule row.}
 }
 \value{
-An \code{compphysiol_observation_data} data frame. It also inherits from
+A \code{compphysiol_observation_data} data frame. It also inherits from
 \code{compphysiol_observation_schedule}.
 }
 \description{

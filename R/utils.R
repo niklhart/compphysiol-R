@@ -431,11 +431,11 @@ with_units <- function(expr) {
 
 #' Substitute equations in transports
 #' 
-#' This function takes a `compphysiol_transports` object and an `compphysiol_equations` object, and substitutes 
+#' This function takes a `compphysiol_transports` object and a `compphysiol_equations` object, and substitutes 
 #' the equations into the rate expressions of the transports.
 #' 
 #' @param trans A `compphysiol_transports` object
-#' @param eqs An `compphysiol_equations` object
+#' @param eqs A `compphysiol_equations` object
 #' @returns A `compphysiol_transports` object with the equations substituted into the rate expressions
 #' @noRd
 .subst_eq <- function(trans, eqs) {

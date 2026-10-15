@@ -3,7 +3,7 @@
     Code
       print(molec)
     Output
-       compphysiol_molecules:
+       Molecules:
         (1) NFkB in cytoplasm, initial concentration = 100
         (2) IkB in nucleus, initial concentration = 50
 

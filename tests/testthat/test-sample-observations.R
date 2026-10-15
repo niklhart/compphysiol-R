@@ -40,7 +40,7 @@ test_that("SimulationResult predictions require explicit extraction", {
     statistics <- statistical_model(C = normal(sd = 0 [mg/L]))
     expect_error(
         sample_observations(result, statistics, parameters()),
-        "compphysiol_observation_data.*as_observables_long"
+        "observation data.*as_observables_long"
     )
 
     sampled <- result |>
@@ -154,7 +154,7 @@ test_that("sample_observations validates distributions and inputs", {
     )
     expect_error(
         sample_observations(list(predictions), statistical_model(), parameters()),
-        "compphysiol_observation_data"
+        "observation data"
     )
     missing_prediction <- predictions
     missing_prediction$value[[1]] <- NA_real_ * missing_prediction$value[[1]]

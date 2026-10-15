@@ -58,7 +58,7 @@ realization. The default \code{Inf} imposes no limit.}
 
 \item{...}{Additional arguments passed to \code{\link[deSolve:ode]{deSolve::ode()}}.}
 
-\item{experiment}{An \code{compphysiol_experiment} or \code{compphysiol_experiments} collection, as an alternative
+\item{experiment}{A \code{compphysiol_experiment} or \code{compphysiol_experiments} collection, as an alternative
 to \code{time}, \code{unit}, and \code{parameters}. Currently supported for the ODE route
 and \code{compphysiol_ode_model}/\code{compphysiol_desolve_compiled_model} inputs. Known parameters override model
 defaults; experiment dosing replaces model dosing, including when empty.
@@ -72,7 +72,7 @@ A \code{compphysiol_simulation_result} with rectangular \code{states} and long-f
 \code{observables} (\code{time}, \code{observable}, \code{value}, plus \code{rep} for stochastic
 replicates). Direct \code{time} input requests all observables at every output
 time. Values are numeric, \code{units}, or \code{mixed_units} depending on their units.
-Without observables the component is \code{NULL}. An \code{compphysiol_experiments} input returns
+Without observables the component is \code{NULL}. A \code{compphysiol_experiments} input returns
 a list of results named by individual identifier when the collection is
 named. Results are not automatically bound into a population table. See
 \code{\link[=as_observables_long]{as_observables_long()}} and

@@ -4,7 +4,7 @@
 \name{compphysiol}
 \alias{compphysiol-package}
 \alias{compphysiol}
-\title{compphysiol: A Package for Computational compphysiol_physiology}
+\title{compphysiol: A Package for Computational Physiology}
 \description{
 The \code{compphysiol} package provides tools for building and simulating compartment
 models in R. It separates model locations, modelled substances, processes,

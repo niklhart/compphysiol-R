@@ -51,7 +51,7 @@ length.compphysiol_states <- function(x) {
 c.compphysiol_states <- function(...) {
     objs <- list(...)
     if (!all(vapply(objs, inherits, logical(1), what = "compphysiol_states"))) {
-        stop("All inputs must be of class 'compphysiol_states'.", call. = FALSE)
+        stop("All inputs must be of class 'states'.", call. = FALSE)
     }
     structure(
         do.call(rbind, lapply(objs, as.data.frame)),
@@ -73,13 +73,13 @@ print.compphysiol_states <- function(x, ...) {
         molec <- ifelse(is.na(x$molec), "<all molec>", x$molec)
         cmt <- ifelse(is.na(x$cmt), "<all cmt>", x$cmt)
         state_str <- paste0(molec, "[", cmt, "]")
-        cat(" compphysiol_states:\n")
+        cat(" States:\n")
         cat(
             sprintf("  (%s) %s\n", seq_along(x), state_str),
             sep = ""
         )
     } else {
-        cat(" compphysiol_states: (none)\n")
+        cat(" States: (none)\n")
     }
     invisible(x)
 }
@@ -730,7 +730,7 @@ print.compphysiol_reactions = function(x, ...) {
         }, logical(1))
         scale_str <- ifelse(show_scale, paste0(", scale = ", x$scale_cmt), "")
 
-        cat(" compphysiol_reactions:\n")
+        cat(" Reactions:\n")
         cat(
             sprintf(
                 "  (%i) %s \u2192 %s%s%s, rate = %s\n",
@@ -744,7 +744,7 @@ print.compphysiol_reactions = function(x, ...) {
             sep = ""
         )
     } else {
-        cat(" compphysiol_reactions: (none)\n")
+        cat(" Reactions: (none)\n")
     }
 
     invisible(x)

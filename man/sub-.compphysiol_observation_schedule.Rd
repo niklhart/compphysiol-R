@@ -7,7 +7,7 @@
 \method{[}{compphysiol_observation_schedule}(x, i, j, ..., drop = FALSE)
 }
 \arguments{
-\item{x}{An \code{compphysiol_observation_schedule} or \code{compphysiol_observation_data}.}
+\item{x}{A \code{compphysiol_observation_schedule} or \code{compphysiol_observation_data}.}
 
 \item{i, j}{Row and column indices.}
 

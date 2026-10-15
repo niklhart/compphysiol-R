@@ -2,12 +2,12 @@
 % Please edit documentation in R/Observables.R
 \name{[.compphysiol_observables}
 \alias{[.compphysiol_observables}
-\title{Subset an \code{compphysiol_observables} object}
+\title{Subset a \code{compphysiol_observables} object}
 \usage{
 \method{[}{compphysiol_observables}(x, i, ...)
 }
 \arguments{
-\item{x}{An \code{compphysiol_observables} object}
+\item{x}{A \code{compphysiol_observables} object}
 
 \item{i}{Indices or names of the observables to subset}
 
@@ -17,5 +17,5 @@
 A subset of the \code{compphysiol_observables} object
 }
 \description{
-Subset an \code{compphysiol_observables} object
+Subset a \code{compphysiol_observables} object
 }

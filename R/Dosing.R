@@ -306,10 +306,10 @@ print.compphysiol_dosing <- function(x, ...) {
                 ")"
             )
         }
-        cat(" compphysiol_dosing:\n")
+        cat(" Dosing:\n")
         cat(sprintf('  (%s) %s\n', seq_len(n), dosing_strings), sep = "")
     } else {
-        cat(" compphysiol_dosing: (none)\n")
+        cat(" Dosing: (none)\n")
     }
     invisible(x)
 }
@@ -341,7 +341,7 @@ print.compphysiol_dosing <- function(x, ...) {
 c.compphysiol_dosing <- function(...) {
     objs <- list(...)
     if (!all(sapply(objs, function(o) inherits(o, "compphysiol_dosing")))) {
-        stop("All inputs must be compphysiol_dosing objects.")
+        stop("All inputs must be dosing objects.")
     }
 
     # Combine the data frames by row-binding

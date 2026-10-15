@@ -13,7 +13,7 @@
 #'   observations, start, and optional parameters.
 #' @param population A [compphysiol_parameter_sets][parameter_sets()] collection containing
 #'   realized individual parameters.
-#' @returns An `compphysiol_experiments` collection with one experiment per parameter set.
+#' @returns A `compphysiol_experiments` collection with one experiment per parameter set.
 #' @examples
 #' protocol <- experiment(
 #'     dosing = dosing(time = 0 [h], amount = 100 [mg]),

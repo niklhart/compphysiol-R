@@ -7,7 +7,7 @@
 \method{print}{compphysiol_estimation_result}(x, ...)
 }
 \arguments{
-\item{x}{An \code{compphysiol_estimation_result} object.}
+\item{x}{A \code{compphysiol_estimation_result} object.}
 
 \item{...}{Unused.}
 }

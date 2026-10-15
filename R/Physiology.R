@@ -131,7 +131,7 @@ print.compphysiol_physiology <- function(x, ...) {
         if (length(x$meta) > 3) meta_str <- paste0(meta_str, ", ...")
     }
 
-    header <- "<compphysiol_physiology>"
+    header <- "<Physiology>"
     if (meta_str != "") {
         header <- paste0(header, " (", meta_str, ")")
     }
@@ -171,7 +171,7 @@ print.compphysiol_physiology <- function(x, ...) {
  #' @return A summary string
  #' @noRd
 summary.compphysiol_physiology <- function(object, ...) {
-    paste0("compphysiol_physiology: ", nrow(object$param_table), " parameters")
+    paste0("Physiology: ", nrow(object$param_table), " parameters")
 }
 
 

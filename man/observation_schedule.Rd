@@ -15,7 +15,7 @@ observation_schedule(time = numeric(), observable = character(), ...)
 \item{...}{Additional columns with one value per schedule row.}
 }
 \value{
-An \code{compphysiol_observation_schedule} data frame.
+A \code{compphysiol_observation_schedule} data frame.
 }
 \description{
 An observation schedule identifies the times and named model observables to

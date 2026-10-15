@@ -7,7 +7,7 @@
 \method{print}{compphysiol_ode_model}(x, ...)
 }
 \arguments{
-\item{x}{An \code{compphysiol_ode_model} object.}
+\item{x}{A \code{compphysiol_ode_model} object.}
 
 \item{...}{ignored}
 }
@@ -15,5 +15,5 @@
 The \code{compphysiol_ode_model} object (invisibly).
 }
 \description{
-Pretty-prints an \code{compphysiol_ode_model} object using DSL state names.
+Pretty-prints a \code{compphysiol_ode_model} object using DSL state names.
 }

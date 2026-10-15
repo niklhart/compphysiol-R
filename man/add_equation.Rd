@@ -16,7 +16,7 @@ add_equation(model, ..., name = character(0), expr = character(0), eq)
 \item{expr}{Expression(s) for the equation(s), as character scalar/vector or as R call / lists of R calls.
 Expressions may contain parameters that are added to the model's parameters list, as well as compartment states (not compartment names!)}
 
-\item{eq}{An \code{compphysiol_equations} object. Constructed from the other inputs if not provided.}
+\item{eq}{A \code{compphysiol_equations} object. Constructed from the other inputs if not provided.}
 }
 \value{
 The modified \code{compphysiol_model} object.

@@ -41,7 +41,7 @@ compartment_model <- function() {
 #' @returns The `compphysiol_model` object (invisibly).
 #' @export
 print.compphysiol_model <- function(x, ...) {
-    cat("compphysiol_model:\n")
+    cat("Compartment model:\n")
 
     print(x$compartments)
     print(x$molecules)

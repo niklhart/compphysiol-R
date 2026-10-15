@@ -135,3 +135,71 @@ test_that("simulation results use the prefixed result class", {
     expect_identical(class(result)[[1]], "compphysiol_simulation_result")
     expect_false(inherits(result, "SimulationResult"))
 })
+
+test_that("public predicates mirror prefixed class names", {
+    objects <- list(
+        compartments = compartments(),
+        molecules = molecules(),
+        transports = transports(),
+        transport = transports("a", "b", const = 1)[[1]],
+        reactions = reactions(),
+        states = state(molec = "drug", cmt = "central"),
+        equations = equations(),
+        observables = observables(),
+        parameters = parameters(),
+        parameter_sets = parameter_sets(),
+        dosing = dosing(),
+        experiment = experiment(),
+        experiments = experiments(),
+        observation_schedule = observation_schedule(),
+        observation_data = observation_data(),
+        parameter_spec = parameter_spec(1),
+        parameter_specs = c(x = parameter_spec(1)),
+        statistical_model = statistical_model(),
+        normal_distribution = normal(sd = 1),
+        lognormal_distribution = lognormal(sdlog = 1),
+        proportional_sd = proportional(1),
+        combined_sd = combined(1, 1),
+        correlations = correlated(list("x", "y", 0)),
+        simulation_engine = deSolve_engine(),
+        desolve_engine = deSolve_engine(),
+        estimation_engine = optim_engine(),
+        optim_engine = optim_engine(),
+        physiology = physiology(),
+        drug = drug(),
+        drugs = drugs()
+    )
+
+    for (suffix in names(objects)) {
+        predicate <- get(paste0("is_", suffix), mode = "function")
+        expect_true(predicate(objects[[suffix]]), info = suffix)
+        expect_false(predicate(NULL), info = suffix)
+    }
+})
+
+test_that("model predicates follow concrete and abstract inheritance", {
+    model <- compartment_model() |>
+        add_compartment("central", volume = 1) |>
+        add_molecule("drug", cmt = "central", initial = 0, type = "amount")
+    process <- to_process_model(model)
+    ode <- to_ode_model(process)
+    compiled <- to_compiled_ode_model(ode)
+    analytical <- to_analytical_model(process)
+    stochastic <- to_stochastic_model(process)
+
+    expect_true(is_model(model))
+    expect_true(is_process_model(process))
+    expect_true(is_ode_model(ode))
+    expect_true(is_desolve_compiled_model(compiled))
+    expect_true(is_analytical_model(analytical))
+    expect_true(is_stochastic_model(stochastic))
+    expect_true(all(vapply(
+        list(model, process, ode, compiled, analytical, stochastic),
+        is_model_representation,
+        logical(1)
+    )))
+    expect_true(is_executable_model(compiled))
+    expect_false(is_executable_model(ode))
+    expect_true(is_engine(deSolve_engine()))
+    expect_true(is_engine(optim_engine()))
+})

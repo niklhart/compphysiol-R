@@ -9,7 +9,7 @@
 #' @param x A `compphysiol_simulation_result`, `compphysiol_observation_data`, or a long-format observable
 #'   data frame with `time`, `observable`, and `value` columns, and optionally
 #'   `rep`.
-#' @returns An `compphysiol_observation_data` object containing observable predictions.
+#' @returns A `compphysiol_observation_data` object containing observable predictions.
 #' @export
 as_observables_long <- function(x) {
     if (is.data.frame(x)) {

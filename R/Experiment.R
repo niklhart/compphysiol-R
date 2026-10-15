@@ -31,7 +31,7 @@
 #'   the units of the first nonempty schedule (dosing, then observations), or
 #'   unit-free zero if both schedules are empty. It does not mean the earliest
 #'   scheduled time. Incompatible schedules still produce an error.
-#' @returns An `compphysiol_experiment` object.
+#' @returns A `compphysiol_experiment` object.
 #' @seealso [validate_experiment()]
 #' @examples
 #' e <- experiment(
@@ -86,7 +86,7 @@ experiment <- function(
 #' are not accepted unless explicitly declared as observable names. This does
 #' not wire dosing targets, resolve model parameters, or check model equations.
 #'
-#' @param x An `compphysiol_experiment` object.
+#' @param x A `compphysiol_experiment` object.
 #' @param model Optional `compphysiol_model` against which to check observable names.
 #' @returns `x`, invisibly, after successful validation.
 #' @export
@@ -146,12 +146,12 @@ validate_experiment <- function(x, model = NULL) {
 }
 
 #' Print an experiment
-#' @param x An `compphysiol_experiment` object.
+#' @param x A `compphysiol_experiment` object.
 #' @param ... Unused.
 #' @returns `x`, invisibly.
 #' @export
 print.compphysiol_experiment <- function(x, ...) {
-    cat("compphysiol_experiment:\n")
+    cat("Experiment:\n")
     cat(" Start: ", format(x$start), "\n", sep = "")
     print(x$parameters)
     print(x$dosing)

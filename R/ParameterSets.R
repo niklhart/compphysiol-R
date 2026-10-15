@@ -27,7 +27,7 @@ parameter_sets <- function(...) {
 
 .new_parameter_sets <- function(x, check_units = TRUE) {
     if (!all(vapply(x, inherits, logical(1), "compphysiol_parameters"))) {
-        stop("All elements must be compphysiol_parameters objects.", call. = FALSE)
+        stop("All elements must be parameters objects.", call. = FALSE)
     }
     labels <- names(x)
     named <- !is.null(labels) & !is.na(labels) & nzchar(labels)
@@ -90,7 +90,7 @@ parameter_sets <- function(...) {
 c.compphysiol_parameter_sets <- function(...) {
     objects <- list(...)
     if (!all(vapply(objects, inherits, logical(1), "compphysiol_parameter_sets"))) {
-        stop("All arguments must be compphysiol_parameter_sets objects.", call. = FALSE)
+        stop("All arguments must be parameter sets objects.", call. = FALSE)
     }
     combined <- do.call(c, unname(lapply(objects, unclass)))
     .new_parameter_sets(combined %||% list())
@@ -104,10 +104,10 @@ c.compphysiol_parameter_sets <- function(...) {
 #' @export
 print.compphysiol_parameter_sets <- function(x, ...) {
     if (!length(x)) {
-        cat(" compphysiol_parameter_sets: (none)\n")
+        cat(" Parameter sets: (none)\n")
         return(invisible(x))
     }
-    cat(" compphysiol_parameter_sets:\n")
+    cat(" Parameter sets:\n")
     labels <- names(x)
     for (i in seq_along(x)) {
         label <- if (!is.null(labels) && !is.na(labels[i]) && nzchar(labels[i])) {

@@ -2,12 +2,12 @@
 % Please edit documentation in R/equations.R
 \name{print.compphysiol_equations}
 \alias{print.compphysiol_equations}
-\title{Print an \code{compphysiol_equations} object}
+\title{Print a \code{compphysiol_equations} object}
 \usage{
 \method{print}{compphysiol_equations}(x, ...)
 }
 \arguments{
-\item{x}{An \code{compphysiol_equations} object}
+\item{x}{A \code{compphysiol_equations} object}
 
 \item{...}{Additional arguments (not used)}
 }
@@ -15,5 +15,5 @@
 The \code{compphysiol_equations} object (invisible)
 }
 \description{
-Print an \code{compphysiol_equations} object
+Print a \code{compphysiol_equations} object
 }

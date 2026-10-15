@@ -7,7 +7,7 @@
 \method{print}{compphysiol_analytical_model}(x, ...)
 }
 \arguments{
-\item{x}{An \code{compphysiol_analytical_model} object.}
+\item{x}{A \code{compphysiol_analytical_model} object.}
 
 \item{...}{ignored}
 }
@@ -15,6 +15,6 @@
 The \code{compphysiol_analytical_model} object (invisibly).
 }
 \description{
-Pretty-prints an \code{compphysiol_analytical_model} object using state indices in the linear
+Pretty-prints a \code{compphysiol_analytical_model} object using state indices in the linear
 system and DSL state names in the state list.
 }

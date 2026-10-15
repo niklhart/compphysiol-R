@@ -199,7 +199,7 @@ print.compphysiol_molecules <- function(x, ...) {
     init_str <- vapply(x$init, format, character(1))
 
     if (length(x) > 0) {
-        cat(" compphysiol_molecules:\n")
+        cat(" Molecules:\n")
         cat(
             sprintf(
                 "  (%i) %s in %s, initial %s = %s\n",
@@ -212,7 +212,7 @@ print.compphysiol_molecules <- function(x, ...) {
             sep = ""
         )
     } else {
-        cat(" compphysiol_molecules: (none)\n")
+        cat(" Molecules: (none)\n")
     }
 
     invisible(x)

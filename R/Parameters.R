@@ -188,7 +188,7 @@ names.compphysiol_parameters <- function(x) names(unclass(x))
 c.compphysiol_parameters <- function(...) {
     params_list <- list(...)
     if (!all(sapply(params_list, inherits, "compphysiol_parameters"))) {
-        stop("All arguments must be of class 'compphysiol_parameters'")
+        stop("All arguments must be of class 'parameters'")
     }
     params <- params_list |>
         lapply(FUN = unclass) |>
@@ -199,13 +199,13 @@ c.compphysiol_parameters <- function(...) {
 }
 
 #' Print a `compphysiol_parameters` object
-#' @param x An `compphysiol_parameters` object
+#' @param x A `compphysiol_parameters` object
 #' @param ... Additional arguments (not used)
 #' @returns The `compphysiol_parameters` object (invisible)
 #' @export
 print.compphysiol_parameters <- function(x, ...) {
     if (length(x) > 0) {
-        cat(" compphysiol_parameters:\n")
+        cat(" Parameters:\n")
         cat(
             sprintf(
                 "  (%s) %s = %s\n",
@@ -216,7 +216,7 @@ print.compphysiol_parameters <- function(x, ...) {
             sep = ""
         )
     } else {
-        cat(" compphysiol_parameters: (none)\n")
+        cat(" Parameters: (none)\n")
     }
     invisible(x)
 }

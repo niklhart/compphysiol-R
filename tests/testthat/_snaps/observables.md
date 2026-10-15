@@ -3,7 +3,7 @@
     Code
       print(obs)
     Output
-       compphysiol_observables:
+       Observables:
         (1) Cpla = c[blo]/BP
         (2) Cblo = c[blo]
 

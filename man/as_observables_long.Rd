@@ -12,7 +12,7 @@ data frame with \code{time}, \code{observable}, and \code{value} columns, and op
 \code{rep}.}
 }
 \value{
-An \code{compphysiol_observation_data} object containing observable predictions.
+A \code{compphysiol_observation_data} object containing observable predictions.
 }
 \description{
 Observable output has \code{time}, \code{observable}, and \code{value} columns, plus \code{rep}

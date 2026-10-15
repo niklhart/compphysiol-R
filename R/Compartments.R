@@ -169,13 +169,13 @@ print.compphysiol_compartments <- function(x, ...) {
     vol_str <- vapply(x$volume, format, character(1))
 
     if (length(x) > 0) {
-        cat(" compphysiol_compartments:\n")
+        cat(" Compartments:\n")
         cat(
             sprintf("  (%s) %s (volume = %s)\n", seq_along(x), x$name, vol_str),
             sep = ""
         )
     } else {
-        cat(" compphysiol_compartments: (none)\n")
+        cat(" Compartments: (none)\n")
     }
     invisible(x)
 }

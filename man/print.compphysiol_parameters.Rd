@@ -7,7 +7,7 @@
 \method{print}{compphysiol_parameters}(x, ...)
 }
 \arguments{
-\item{x}{An \code{compphysiol_parameters} object}
+\item{x}{A \code{compphysiol_parameters} object}
 
 \item{...}{Additional arguments (not used)}
 }

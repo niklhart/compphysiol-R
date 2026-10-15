@@ -238,7 +238,7 @@ print.compphysiol_transports = function(x, ...) {
     rate <- vapply(x$rate, .ode_model_deparse_with_unit_placeholders, character(1))
 
     if (length(x) > 0) {
-        cat(" compphysiol_transports:\n")
+        cat(" Transports:\n")
         cat(
             sprintf(
                 "  (%i) %s: %s \u2192 %s, rate = %s\n",
@@ -252,7 +252,7 @@ print.compphysiol_transports = function(x, ...) {
             sep = ""
         )
     } else {
-        cat(" compphysiol_transports: (none)\n")
+        cat(" Transports: (none)\n")
     }
 
     invisible(x)
@@ -360,7 +360,7 @@ print.compphysiol_transport <- function(x, ...) {
     rate <- deparse1(x$rate)
 
     cat(sprintf(
-        " compphysiol_transport: %s \u2192 %s, molec = %s, rate = %s\n",
+        " Transport: %s \u2192 %s, molec = %s, rate = %s\n",
         from,
         to,
         molec,
@@ -377,7 +377,7 @@ print.compphysiol_transport <- function(x, ...) {
 c.compphysiol_transport <- function(...) {
     objs <- list(...)
     if (!all(sapply(objs, function(o) inherits(o, "compphysiol_transport")))) {
-        stop("All inputs must be compphysiol_transport objects.")
+        stop("All inputs must be transport objects.")
     }
     
     # Combine the components into vectors/lists

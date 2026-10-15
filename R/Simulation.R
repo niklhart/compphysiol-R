@@ -71,7 +71,7 @@ deSolve_engine <- function(compiled = FALSE) {
 #'   reactions with propensities below this threshold are stochastic.
 #' @param include_event_times Include stochastic event times in stochastic
 #'   simulation output in addition to the requested `time` points.
-#' @param experiment An `compphysiol_experiment` or `compphysiol_experiments` collection, as an alternative
+#' @param experiment A `compphysiol_experiment` or `compphysiol_experiments` collection, as an alternative
 #'   to `time`, `unit`, and `parameters`. Currently supported for the ODE route
 #'   and `compphysiol_ode_model`/`compphysiol_desolve_compiled_model` inputs. Known parameters override model
 #'   defaults; experiment dosing replaces model dosing, including when empty.
@@ -86,7 +86,7 @@ deSolve_engine <- function(compiled = FALSE) {
 #'   `observables` (`time`, `observable`, `value`, plus `rep` for stochastic
 #'   replicates). Direct `time` input requests all observables at every output
 #'   time. Values are numeric, `units`, or `mixed_units` depending on their units.
-#'   Without observables the component is `NULL`. An `compphysiol_experiments` input returns
+#'   Without observables the component is `NULL`. A `compphysiol_experiments` input returns
 #'   a list of results named by individual identifier when the collection is
 #'   named. Results are not automatically bound into a population table. See
 #'   [as_observables_long()] and
@@ -688,7 +688,7 @@ print.compphysiol_simulation_result <- function(x, ...) {
         "empty"
     }
 
-    cat(" compphysiol_simulation_result:\n")
+    cat(" Simulation result:\n")
     cat(sprintf("  time: %s (%s points)\n", time_span, n_time))
     if (has_replicates) {
         cat(sprintf("  replicates: %s\n", n_rep))
@@ -1025,7 +1025,7 @@ print.compphysiol_simulation_result <- function(x, ...) {
         return(parameters)
     }
     if (!is.list(parameters)) {
-        stop("Argument 'parameters' must be a named list or compphysiol_parameters object.", call. = FALSE)
+        stop("Argument 'parameters' must be a named list or parameters object.", call. = FALSE)
     }
     structure(parameters, class = .class_parameters())
 }
@@ -1052,7 +1052,7 @@ print.compphysiol_simulation_result <- function(x, ...) {
         parameters <- unclass(parameters)
     }
     if (!is.list(parameters)) {
-        stop("Argument 'parameters' must be a named list or compphysiol_parameters object.", call. = FALSE)
+        stop("Argument 'parameters' must be a named list or parameters object.", call. = FALSE)
     }
 
     lapply(parameters, function(x) {

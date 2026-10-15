@@ -7,7 +7,7 @@
 \method{coef}{compphysiol_estimation_result}(object, ...)
 }
 \arguments{
-\item{object}{An \code{compphysiol_estimation_result}.}
+\item{object}{A \code{compphysiol_estimation_result}.}
 
 \item{...}{Unused.}
 }

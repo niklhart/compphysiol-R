@@ -2,7 +2,7 @@
 % Please edit documentation in R/Observables.R
 \name{observables}
 \alias{observables}
-\title{Create an \code{compphysiol_observables} object}
+\title{Create a \code{compphysiol_observables} object}
 \usage{
 observables(
   ...,
@@ -27,7 +27,7 @@ Used for automatic generation of common observables like concentrations and amou
 Used for automatic generation of common observables like concentrations and amounts.}
 }
 \value{
-An \code{compphysiol_observables} object
+A \code{compphysiol_observables} object
 }
 \description{
 compphysiol_observables are quantities of interest that are computed from parameters

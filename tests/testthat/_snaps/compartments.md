@@ -3,7 +3,7 @@
     Code
       print(cmt)
     Output
-       compphysiol_compartments:
+       Compartments:
         (1) adi (volume = 10)
         (2) bon (volume = 20)
 

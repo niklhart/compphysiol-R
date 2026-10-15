@@ -30,7 +30,7 @@ Used for automatic generation of common observables like concentrations and amou
 \item{molec}{Optional character vector specifying the molecule(s) associated with the observable(s).
 Used for automatic generation of common observables like concentrations and amounts.}
 
-\item{obs}{An \code{compphysiol_observables} object. Constructed from the other inputs if not provided.}
+\item{obs}{A \code{compphysiol_observables} object. Constructed from the other inputs if not provided.}
 }
 \value{
 The modified \code{compphysiol_model} object.

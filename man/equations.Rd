@@ -2,7 +2,7 @@
 % Please edit documentation in R/equations.R
 \name{equations}
 \alias{equations}
-\title{Create an \code{compphysiol_equations} object}
+\title{Create a \code{compphysiol_equations} object}
 \usage{
 equations(..., name = character(0), expr = character(0))
 }
@@ -15,7 +15,7 @@ equations(..., name = character(0), expr = character(0))
 Expressions may contain parameters that are added to the model's parameters list, as well as compartment states (not compartment names!)}
 }
 \value{
-An \code{compphysiol_equations} object
+A \code{compphysiol_equations} object
 }
 \description{
 compphysiol_equations allow to define algebraic relationships between model variables,

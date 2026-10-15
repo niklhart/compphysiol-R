@@ -7,7 +7,7 @@
 \method{[[}{compphysiol_experiments}(x, i, ..., exact = TRUE)
 }
 \arguments{
-\item{x}{An \code{compphysiol_experiments} object.}
+\item{x}{A \code{compphysiol_experiments} object.}
 
 \item{i}{Index or name of a single experiment.}
 
@@ -16,7 +16,7 @@
 \item{exact}{Whether character indices must match exactly, as for lists.}
 }
 \value{
-An \code{compphysiol_experiment} object; unknown names return \code{NULL}, as for lists.
+A \code{compphysiol_experiment} object; unknown names return \code{NULL}, as for lists.
 }
 \description{
 Extract an experiment

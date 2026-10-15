@@ -65,7 +65,7 @@ print.compphysiol_drug <- function(x, ..., meta = FALSE, string = FALSE) {
         sprintf("%s = %s", names(x$param), vapply(x$param, format, character(1))) |>
             paste(collapse = ", ")
     } else {
-        cat("compphysiol_drug\n")
+        cat("Drug\n")
         val_str <- vapply(x$Value, format, "")
         vars <- c("Parameter", "Species")
         if (meta) vars <- c(vars, "Reference", "Assumption")
@@ -88,7 +88,7 @@ print.compphysiol_drug <- function(x, ..., meta = FALSE, string = FALSE) {
 # param.Drug <- function(x, name, species = NULL, simplify = FALSE) {
 
 #     param <- x$param[name]
-#     if (is.null(x$param)) stop(paste("Parameter", name, "not found in compphysiol_drug"))
+#     if (is.null(x$param)) stop(paste("Parameter", name, "not found in drug"))
 #     if (simplify && length(name) > 1) {
 #         warning("Simplification to named vector is not possible across multiple parameters. Returning a Parameters object instead.")
 #         simplify <- FALSE
@@ -141,7 +141,7 @@ print.compphysiol_drug <- function(x, ..., meta = FALSE, string = FALSE) {
     if (!all(sapply(dots, function(x) inherits(
         x, c("compphysiol_drug", "compphysiol_drugs")
     )))) {
-        stop("All arguments must be of class 'compphysiol_drug' or 'compphysiol_drugs'")
+        stop("All arguments must be of class 'drug' or 'drugs'")
     }
 
     is_drug <- vapply(dots, inherits, logical(1), "compphysiol_drug")
@@ -174,7 +174,7 @@ c.compphysiol_drugs <- .c_drug_drugs
 #' @noRd
 print.compphysiol_drugs <- function(x, ..., meta = FALSE) {
     if (length(x) > 0) {
-        cat("compphysiol_drugs\n")
+        cat("Drugs\n")
         val_str <- vapply(x$Value, format, "")
         vars <- c("Drug", "Parameter", "Species")
         if (meta) vars <- c(vars, "Reference", "Assumption")
@@ -182,7 +182,7 @@ print.compphysiol_drugs <- function(x, ..., meta = FALSE) {
             cbind(Value = val_str) |>
             print() 
     } else {
-        cat("compphysiol_drugs: (none)\n")
+        cat("Drugs: (none)\n")
     }
     invisible(x)
 }

@@ -22,7 +22,7 @@ into a \code{compphysiol_parameter_specs} collection.}
 distributions of observed and individual-level quantities.}
 }
 \value{
-An \code{compphysiol_estimation_problem} object.
+A \code{compphysiol_estimation_problem} object.
 }
 \description{
 Create an engine-neutral estimation problem

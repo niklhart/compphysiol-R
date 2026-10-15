@@ -7,7 +7,7 @@
 validate_experiment(x, model = NULL)
 }
 \arguments{
-\item{x}{An \code{compphysiol_experiment} object.}
+\item{x}{A \code{compphysiol_experiment} object.}
 
 \item{model}{Optional \code{compphysiol_model} against which to check observable names.}
 }

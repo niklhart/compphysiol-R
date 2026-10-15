@@ -11,7 +11,7 @@ experiments(...)
 identifiers. For a list of experiments, use \code{do.call(experiments, x)}.}
 }
 \value{
-An \code{compphysiol_experiments} object.
+A \code{compphysiol_experiments} object.
 }
 \description{
 Creates a list-like collection of independent individual simulation or

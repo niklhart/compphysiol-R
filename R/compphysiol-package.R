@@ -1,5 +1,5 @@
 
-#' compphysiol: A Package for Computational compphysiol_physiology
+#' compphysiol: A Package for Computational Physiology
 #' @name compphysiol
 #' @docType package
 #' @description

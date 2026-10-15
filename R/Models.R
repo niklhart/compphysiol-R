@@ -62,7 +62,7 @@
 #'     col = 1:12,
 #'     xlab = "Time (h)",
 #'     ylab = "Amount",
-#'     main = "PBPK Model compphysiol_compartments"
+#'     main = "PBPK Model Compartments"
 #' )
 #' legend(
 #'     "topright",
@@ -201,7 +201,7 @@ sMD_PBPK_12CMT_wellstirred <- function() {
 #'     col = 1:12,
 #'     xlab = "Time (h)",
 #'     ylab = "Amount",
-#'     main = "PBPK Model compphysiol_compartments"
+#'     main = "PBPK Model Compartments"
 #' )
 #' legend(
 #'     "topright",

@@ -15,11 +15,11 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
     ode_model <- x$ode_model
     .check_class(ode_model, "compphysiol_ode_model")
 
-    cat("compphysiol_desolve_compiled_model (", .compiled_ode_model_status(x), "):\n", sep = "")
+    cat("Compiled deSolve model (", .compiled_ode_model_status(x), "):\n", sep = "")
     cat(" ODE model:\n")
-    cat("  compphysiol_states: ", .compiled_ode_model_count(nrow(ode_model$states)), "\n", sep = "")
-    cat("  compphysiol_equations: ", .compiled_ode_model_count(length(ode_model$equations)), "\n", sep = "")
-    cat("  compphysiol_observables: ", .compiled_ode_model_count(length(ode_model$observables)), "\n", sep = "")
+    cat("  States: ", .compiled_ode_model_count(nrow(ode_model$states)), "\n", sep = "")
+    cat("  Equations: ", .compiled_ode_model_count(length(ode_model$equations)), "\n", sep = "")
+    cat("  Observables: ", .compiled_ode_model_count(length(ode_model$observables)), "\n", sep = "")
     cat("  Dosing events: ", .compiled_ode_model_count(nrow(ode_model$dosing)), "\n", sep = "")
     dimensions <- .compiled_ode_model_print_dimensions(x)
     if (!is.null(dimensions)) {
@@ -28,11 +28,11 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
     }
 
     if (length(x$parameterNames) == 0L) {
-        cat(" compphysiol_parameters: none\n")
+        cat(" Parameters: none\n")
         return(invisible(x))
     }
 
-    cat(" compphysiol_parameters:\n")
+    cat(" Parameters:\n")
     parameter_signature <- .compiled_ode_model_print_signature(x)
     parameter_lines <- vapply(
         x$parameterNames,
@@ -138,7 +138,7 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
     )
     if (length(free_params$list) > 0L) {
         stop(
-            "compphysiol_desolve_compiled_model expression contains parameter(s) outside the frozen interface: ",
+            "compiled deSolve model expression contains parameter(s) outside the frozen interface: ",
             paste(free_params$list, collapse = ", "),
             ".",
             call. = FALSE
@@ -165,7 +165,7 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
         outside_interface <- setdiff(free_params$list, parameter_names)
         if (length(outside_interface) > 0L) {
             stop(
-                "compphysiol_desolve_compiled_model expression contains parameter(s) outside the frozen interface: ",
+                "compiled deSolve model expression contains parameter(s) outside the frozen interface: ",
                 paste(outside_interface, collapse = ", "),
                 ".",
                 call. = FALSE
@@ -225,7 +225,7 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
         fixed_dimensions <- .compiled_ode_model_fixed_dimensions(model)
         if (!is.null(dimensions) && !identical(dimensions, fixed_dimensions)) {
             stop(
-                "compphysiol_desolve_compiled_model uses fixed solver dimensions; requested dimensions differ from the compiled model.",
+                "compiled deSolve model uses fixed solver dimensions; requested dimensions differ from the compiled model.",
                 call. = FALSE
             )
         }
@@ -316,7 +316,7 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
         idx <- artifact$parameterIndex[[nm]]
         if (is.null(idx)) {
             stop(
-                "compphysiol_desolve_compiled_model has a fixed parameter interface; unknown runtime parameter(s): ",
+                "compiled deSolve model has a fixed parameter interface; unknown runtime parameter(s): ",
                 nm,
                 ".",
                 call. = FALSE
@@ -353,7 +353,7 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
         has_units <- inherits(value, "units")
         if (!identical(has_units, expected$has_units)) {
             stop(
-                "compphysiol_desolve_compiled_model parameter '",
+                "compiled deSolve model parameter '",
                 nm,
                 "' must be ",
                 if (expected$has_units) "unit-bearing" else "unitless",
@@ -363,7 +363,7 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
         }
         if (has_units && !units::ud_are_convertible(units(value), expected$unit)) {
             stop(
-                "compphysiol_desolve_compiled_model parameter '",
+                "compiled deSolve model parameter '",
                 nm,
                 "' has units ",
                 units(value),
@@ -402,7 +402,7 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
         requested <- .simulation_dimensions(ode_model, time, dimensions, parameters = parameters)
         if (!identical(requested, fixed_dimensions)) {
             stop(
-                "compphysiol_desolve_compiled_model uses fixed solver dimensions; requested dimensions differ from the compiled model.",
+                "compiled deSolve model uses fixed solver dimensions; requested dimensions differ from the compiled model.",
                 call. = FALSE
             )
         }
@@ -474,7 +474,7 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
     if (length(unknown) == 0L) return(invisible(NULL))
 
     stop(
-        "compphysiol_desolve_compiled_model has a fixed parameter interface; unknown runtime parameter(s): ",
+        "compiled deSolve model has a fixed parameter interface; unknown runtime parameter(s): ",
         paste(unknown, collapse = ", "),
         ".",
         call. = FALSE
@@ -501,7 +501,7 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
         has_units <- inherits(value, "units")
         if (!identical(has_units, expected$has_units)) {
             stop(
-                "compphysiol_desolve_compiled_model parameter '",
+                "compiled deSolve model parameter '",
                 nm,
                 "' must be ",
                 if (expected$has_units) "unit-bearing" else "unitless",
@@ -511,7 +511,7 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
         }
         if (has_units && !units::ud_are_convertible(units(value), expected$unit)) {
             stop(
-                "compphysiol_desolve_compiled_model parameter '",
+                "compiled deSolve model parameter '",
                 nm,
                 "' has units ",
                 units(value),
