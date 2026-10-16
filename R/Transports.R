@@ -148,7 +148,7 @@ transports <- function(from, to, molec = NA_character_, ..., rate = NULL, const 
     )
 
     # Assemble into a data frame (`I()` to prevent data.frame from attempting to convert list columns)
-    x <- .new_transports(data.frame(
+    .new_transports(data.frame(
             from = from,
             to = to,
             molec = if (is.null(molec)) NA_character_ else molec,
@@ -157,7 +157,6 @@ transports <- function(from, to, molec = NA_character_, ..., rate = NULL, const 
             type = type,
             stringsAsFactors = FALSE
         ))
-    x
 }
 
 .new_transports <- function(x) {

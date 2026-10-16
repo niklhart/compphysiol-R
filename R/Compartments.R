@@ -75,8 +75,7 @@ compartments <- function(name = character(0), volume = "V{name}", unit = NULL) {
 
     }
 
-    x <- .new_compartments(data.frame(name = name, volume = I(volume)))
-    x
+    .new_compartments(data.frame(name = name, volume = I(volume)))
 }
 
 .new_compartments <- function(x) {

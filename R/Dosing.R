@@ -124,7 +124,7 @@ dosing <- function(
         duration <- amount / rate
     }
 
-    x <- .new_dosing(
+    .new_dosing(
         .dosing_data_frame(
             time = time,
             amount = amount,
@@ -134,7 +134,6 @@ dosing <- function(
             cmt = cmt
         )
     )
-    x
 }
 
 .new_dosing <- function(x) {

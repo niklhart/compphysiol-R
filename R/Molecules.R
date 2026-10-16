@@ -94,15 +94,13 @@ molecules <- function(name = character(0), cmt = NULL, initial = 0, unit = NULL,
     }
 
     # Construct the molecules object as a data frame with its package class.
-    molec <- data.frame(
+    .new_molecules(data.frame(
         name = name,
         cmt = cmt %||% NA_character_,
         init = I(initial),
         type = type,
         stringsAsFactors = FALSE
-    )
-    molec <- .new_molecules(molec)
-    molec
+    ))
 }
 
 .new_molecules <- function(x) {

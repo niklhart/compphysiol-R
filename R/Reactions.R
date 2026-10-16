@@ -579,7 +579,7 @@ reactions <- function(
     )
 
     # Construct the reactions object as a data frame with its package class.
-    x <- .new_reactions(
+    .new_reactions(
             data.frame(
                 rate = I(rate),
                 const = I(const),
@@ -589,7 +589,6 @@ reactions <- function(
                 stringsAsFactors = FALSE
             )
     )
-    x
 }
 
 .new_reactions <- function(x) {
