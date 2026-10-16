@@ -25,7 +25,7 @@ test_that("Experiments subsetting preserves the collection and requested order",
     expect_s3_class(x[integer()], "compphysiol_experiments")
     expect_length(x[integer()], 0)
     expect_error(x["missing"], "experiment")
-    expect_error(x[NA_integer_], "experiment")
+    expect_error(x[NA_integer_], "must not contain NA")
 })
 
 test_that("Experiment names are optional but nonempty names are unique", {

@@ -131,6 +131,7 @@ test_that("Subsetting dosing objects works", {
     expect_equal(length(doses_subset), 2)
     expect_equal(doses_subset$time, c(0, 24))
     expect_equal(dosing_col_values(doses_subset$amount), c(100, 200))
+    expect_error(doses[NA_integer_], "must not contain NA")
 })
 
 # Dosing with units tests

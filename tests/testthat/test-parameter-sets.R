@@ -28,7 +28,7 @@ test_that("ParameterSets subsetting preserves the collection", {
     expect_identical(population["a"][[1]], population[["a"]])
     expect_s3_class(population[integer()], "compphysiol_parameter_sets")
     expect_length(population[integer()], 0)
-    expect_error(population[NA_integer_], "parameters")
+    expect_error(population[NA_integer_], "must not contain NA")
     expect_error(population["missing"], "parameters")
 })
 

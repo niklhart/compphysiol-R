@@ -48,6 +48,12 @@ test_that("observation low-level constructors trust canonical input", {
     expect_s3_class(data, "compphysiol_observation_schedule")
 })
 
+test_that("observation subsetting rejects missing indices", {
+    schedule <- observation_schedule(1:2, c("A", "B"), group = 1:2)
+    expect_error(schedule[NA_integer_, ], "must not contain NA")
+    expect_error(schedule[, c("time", NA_character_)], "must not contain NA")
+})
+
 test_that("experiments store schedules and data polymorphically as observations", {
     p <- parameters(BW = 70 [kg], group = "adult")
     d <- dosing(time = 0 [min], amount = 100 [mg])

@@ -319,6 +319,7 @@ print.compphysiol_dosing <- function(x, ...) {
 #' @return A subsetted `compphysiol_dosing` object
 #' @export
 `[.compphysiol_dosing` <- function(x, i, ...) {
+    if (!missing(i)) .check_subset_index(i)
     x_subset <- as.data.frame(x)[i, , drop = FALSE]
     .new_dosing(x_subset)
 }

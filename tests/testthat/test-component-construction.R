@@ -84,6 +84,19 @@ test_that("named component subsetting rejects newly duplicated names", {
     )
 })
 
+test_that("component subsetting rejects missing indices", {
+    expect_error(compartments("A", volume = 1)[NA_integer_], "must not contain NA")
+    expect_error(molecules("A")[NA_character_], "must not contain NA")
+    expect_error(
+        transports("A", "B", const = "k")[NA],
+        "must not contain NA"
+    )
+    expect_error(
+        reactions("A -> B", cmt = "cyt", const = "k")[c(TRUE, NA)],
+        "must not contain NA"
+    )
+})
+
 test_that("molecule-compartment states stay unique", {
     expect_error(
         molecules(c("A", "A"), cmt = c("cyt", "cyt")),

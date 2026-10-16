@@ -448,7 +448,15 @@ with_units <- function(expr) {
     }) |> do.call(what = "c")
 }
 
+.check_subset_index <- function(i) {
+    if (anyNA(i)) {
+        stop("Subsetting indices must not contain NA.", call. = FALSE)
+    }
+    invisible(NULL)
+}
+
 .check_unique_subset_index <- function(i, label = "Subset") {
+    .check_subset_index(i)
     duplicated <- if (is.logical(i)) {
         FALSE
     } else if (is.character(i)) {
@@ -477,6 +485,7 @@ with_units <- function(expr) {
 #' @noRd
 .subset_df_like <- function(x, i, byname = FALSE, unique = FALSE, ...) {
     if (missing(i)) i <- seq_len(length(x))
+    .check_subset_index(i)
     if (unique) .check_unique_subset_index(i)
     if (is.character(i)) {
         if (!byname) stop(sprintf(

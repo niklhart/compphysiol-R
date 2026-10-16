@@ -137,6 +137,8 @@ observation_data <- function(time = numeric(), observable = character(), value =
 #'   columns remain.
 #' @export
 `[.compphysiol_observation_schedule` <- function(x, i, j, ..., drop = FALSE) {
+    if (!missing(i)) .check_subset_index(i)
+    if (!missing(j)) .check_subset_index(j)
     out <- NextMethod("[")
     if (!is.data.frame(out)) return(out)
     class(out) <- "data.frame"
