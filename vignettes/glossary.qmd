@@ -518,6 +518,15 @@ Omitted dosing targets match identically omitted targets; matching them to
 explicit targets requires later model-based resolution. These checks also apply
 when combining collections with `c()`.
 
+An experiment collection records whether its starts, parameter schemas,
+complete parameter values, dosing schedules, observation plans, and complete
+observations are each identical across all members. This homogeneity metadata
+does not change the meaning or independence of the experiments. It allows
+simulation and estimation implementations to prepare a shared component once
+when the whole collection is homogeneous, while heterogeneous components keep
+their ordinary per-experiment behavior. A false homogeneity flag means only
+that not all values are identical; it does not imply that every value differs.
+
 A shared experimental protocol can be extended across a realized population
 with `extend_protocol()`. The protocol supplies dosing, observations, start,
 and shared parameters; each element of a realized population supplies

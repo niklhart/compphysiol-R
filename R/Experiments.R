@@ -30,13 +30,86 @@ experiments <- function(...) {
     .experiments_check_elements(x)
     .check_optional_unique_names(x, "experiment")
     .experiments_check_units(x)
-    .new_experiments(x)
+    .new_experiments(x, .experiments_compute_component_homogeneity(x))
 }
 
-.new_experiments <- function(x) {
-    structure(x, class = .compphysiol_class(
-        "compphysiol_experiments", base = "list"
-    ))
+.new_experiments <- function(x, component_homogeneity = NULL) {
+    structure(
+        x,
+        component_homogeneity = component_homogeneity,
+        class = .compphysiol_class("compphysiol_experiments", base = "list")
+    )
+}
+
+.experiments_elements <- function(x) {
+    out <- unclass(x)
+    attr(out, "component_homogeneity") <- NULL
+    out
+}
+
+.experiments_component_names <- function() {
+    c(
+        "start", "parameter_schema", "parameters", "dosing",
+        "observation_plan", "observations"
+    )
+}
+
+.experiments_component_homogeneity <- function(x) {
+    out <- attr(x, "component_homogeneity", exact = TRUE)
+    if (is.null(out)) {
+        out <- .experiments_compute_component_homogeneity(.experiments_elements(x))
+    }
+    out
+}
+
+.experiments_compute_component_homogeneity <- function(x) {
+    categories <- .experiments_component_names()
+    out <- stats::setNames(rep(TRUE, length(categories)), categories)
+    if (length(x) < 2L) return(out)
+
+    reference <- x[[1]]
+    for (category in categories) {
+        for (i in seq.int(2L, length(x))) {
+            if (!.experiments_components_identical(reference, x[[i]], category)) {
+                out[[category]] <- FALSE
+                break
+            }
+        }
+    }
+    out
+}
+
+.experiments_components_identical <- function(x, y, category) {
+    switch(
+        category,
+        start = identical(x$start, y$start),
+        parameter_schema = .experiments_parameter_schema_identical(x$parameters, y$parameters),
+        parameters = identical(x$parameters, y$parameters),
+        dosing = identical(x$dosing, y$dosing),
+        observation_plan = identical(x$observations$time, y$observations$time) &&
+            identical(x$observations$observable, y$observations$observable),
+        observations = identical(x$observations, y$observations),
+        stop("Unknown experiment component category: ", category, ".", call. = FALSE)
+    )
+}
+
+.experiments_parameter_schema_identical <- function(x, y) {
+    if (!identical(names(x), names(y))) return(FALSE)
+    if (length(x) == 0L) return(TRUE)
+    identical(
+        lapply(unclass(x), .experiments_parameter_value_schema),
+        lapply(unclass(y), .experiments_parameter_value_schema)
+    )
+}
+
+.experiments_parameter_value_schema <- function(x) {
+    list(
+        type = typeof(x),
+        class = class(x),
+        length = length(x),
+        dim = dim(x),
+        unit = if (inherits(x, "units")) units::deparse_unit(x) else NULL
+    )
 }
 
 .experiments_check_elements <- function(x) {
@@ -107,11 +180,11 @@ experiments <- function(...) {
 `[.compphysiol_experiments` <- function(x, i, ...) {
     if (missing(i)) return(x)
     .check_unique_subset_index(i, "Experiment")
-    out <- unclass(x)[i]
+    out <- .experiments_elements(x)[i]
     if (any(vapply(out, is.null, logical(1)))) {
         stop("Cannot subset experiments with missing or unknown indices.", call. = FALSE)
     }
-    .new_experiments(out)
+    .new_experiments(out, .experiments_compute_component_homogeneity(out))
 }
 
 #' Extract an experiment
@@ -123,7 +196,41 @@ experiments <- function(...) {
 #' @export
 `[[.compphysiol_experiments` <- function(x, i, ..., exact = TRUE) {
     if (length(i) != 1L) stop("Select a single experiment with [[.", call. = FALSE)
-    unclass(x)[[i, exact = exact]]
+    .experiments_elements(x)[[i, exact = exact]]
+}
+
+#' Replace experiments in a collection
+#'
+#' Replacement re-establishes collection validity and refreshes component
+#' homogeneity metadata.
+#' @param x A `compphysiol_experiments` collection.
+#' @param i Replacement index.
+#' @param ... Unused.
+#' @param value For `[[<-`, a `compphysiol_experiment` or `NULL`; for `[<-`, a
+#'   `compphysiol_experiments` collection.
+#' @returns The modified `compphysiol_experiments` collection.
+#' @export
+`[[<-.compphysiol_experiments` <- function(x, i, ..., value) {
+    if (!is.null(value)) .check_class(value, "compphysiol_experiment")
+    out <- .experiments_elements(x)
+    out[[i]] <- value
+    .experiments_validate_result(out)
+}
+
+#' @rdname sub-subset-.compphysiol_experiments
+#' @export
+`[<-.compphysiol_experiments` <- function(x, i, ..., value) {
+    .check_class(value, "compphysiol_experiments")
+    out <- .experiments_elements(x)
+    out[i] <- .experiments_elements(value)
+    .experiments_validate_result(out)
+}
+
+.experiments_validate_result <- function(x) {
+    .experiments_check_elements(x)
+    .check_optional_unique_names(x, "experiment")
+    .experiments_check_units(x)
+    .new_experiments(x, .experiments_compute_component_homogeneity(x))
 }
 
 #' Combine collections of experiments
@@ -135,11 +242,36 @@ c.compphysiol_experiments <- function(...) {
     if (!all(vapply(objects, inherits, logical(1), "compphysiol_experiments"))) {
         stop("All arguments must be experiments objects.", call. = FALSE)
     }
-    combined <- do.call(c, unname(lapply(objects, unclass)))
+    combined <- do.call(c, unname(lapply(objects, .experiments_elements)))
     combined <- combined %||% list()
     .check_optional_unique_names(combined, "experiment")
     .experiments_check_units(combined)
-    .new_experiments(combined)
+    .new_experiments(combined, .experiments_combine_component_homogeneity(objects))
+}
+
+.experiments_combine_component_homogeneity <- function(objects) {
+    nonempty <- objects[lengths(objects) > 0L]
+    categories <- .experiments_component_names()
+    out <- stats::setNames(rep(TRUE, length(categories)), categories)
+    if (length(nonempty) < 1L) return(out)
+
+    metadata <- lapply(nonempty, .experiments_component_homogeneity)
+    reference <- nonempty[[1]][[1]]
+    for (category in categories) {
+        if (!all(vapply(metadata, `[[`, logical(1), category))) {
+            out[[category]] <- FALSE
+            next
+        }
+        if (length(nonempty) > 1L) {
+            for (i in seq.int(2L, length(nonempty))) {
+                if (!.experiments_components_identical(reference, nonempty[[i]][[1]], category)) {
+                    out[[category]] <- FALSE
+                    break
+                }
+            }
+        }
+    }
+    out
 }
 
 #' Print a collection of experiments

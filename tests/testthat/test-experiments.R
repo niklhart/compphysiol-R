@@ -28,6 +28,55 @@ test_that("Experiments subsetting preserves the collection and requested order",
     expect_error(x[NA_integer_], "must not contain NA")
 })
 
+test_that("experiment collections track component homogeneity", {
+    dose <- dosing(time = 0, amount = 100, cmt = "Central")
+    a <- experiment(
+        parameters = parameters(CL = 1), dosing = dose,
+        observations = observation_data(c(1, 2), "C", c(8, 5)), start = 0
+    )
+    b <- experiment(
+        parameters = parameters(CL = 2), dosing = dose,
+        observations = observation_data(c(1, 2), "C", c(7, 4)), start = 0
+    )
+    x <- experiments(a = a, b = b)
+
+    expect_identical(
+        .experiments_component_homogeneity(x),
+        c(
+            start = TRUE, parameter_schema = TRUE, parameters = FALSE,
+            dosing = TRUE, observation_plan = TRUE, observations = FALSE
+        )
+    )
+    expect_true(all(.experiments_component_homogeneity(x[1])))
+
+    different_units <- experiments(
+        experiment(parameters = parameters(BW = 70 [kg])),
+        experiment(parameters = parameters(BW = 70000 [g]))
+    )
+    expect_false(.experiments_component_homogeneity(different_units)[["parameter_schema"]])
+})
+
+test_that("collection combination and replacement maintain homogeneity", {
+    a <- experiment(parameters = parameters(CL = 1))
+    b <- experiment(parameters = parameters(CL = 2))
+    homogeneous <- experiments(a = a, b = a)
+    heterogeneous <- experiments(c = a, d = b)
+
+    expect_true(all(.experiments_component_homogeneity(homogeneous)))
+    combined <- c(homogeneous, heterogeneous)
+    expect_false(.experiments_component_homogeneity(combined)[["parameters"]])
+    expect_true(.experiments_component_homogeneity(combined)[["parameter_schema"]])
+
+    heterogeneous[[2]] <- a
+    expect_true(all(.experiments_component_homogeneity(heterogeneous)))
+    heterogeneous[[2]]$parameters <- parameters(CL = 3)
+    expect_false(.experiments_component_homogeneity(heterogeneous)[["parameters"]])
+
+    heterogeneous[2] <- experiments(replacement = a)
+    expect_true(all(.experiments_component_homogeneity(heterogeneous)))
+    expect_named(heterogeneous, c("c", "d"))
+})
+
 test_that("Experiment names are optional but nonempty names are unique", {
     expect_error(
         experiments(a = experiment(), a = experiment()),

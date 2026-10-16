@@ -29,6 +29,9 @@ test_that("extend_protocol creates one experiment per individual", {
     }
     expect_identical(protocol$parameters, parameters(route = "oral"))
     expect_identical(population[[1]], parameters(BW = 65 [kg], sex = "female"))
+    homogeneity <- .experiments_component_homogeneity(result)
+    expect_true(all(homogeneity[c("start", "parameter_schema", "dosing", "observation_plan", "observations")]))
+    expect_false(homogeneity[["parameters"]])
 })
 
 test_that("extend_protocol generates names for unnamed individuals", {

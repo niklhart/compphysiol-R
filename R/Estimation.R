@@ -285,7 +285,10 @@ estimation_problem <- function(model, experiments, parameters, statistics) {
     .check_class(parameters, "compphysiol_parameter_specs")
     .check_class(statistics, "compphysiol_statistical_model")
     if (inherits(experiments, "compphysiol_experiment")) {
-        experiments <- .new_experiments(list(experiments))
+        elements <- list(experiments)
+        experiments <- .new_experiments(
+            elements, .experiments_compute_component_homogeneity(elements)
+        )
     }
     .check_class(experiments, "compphysiol_experiments")
     if (!length(experiments)) stop("Estimation requires at least one experiment.", call. = FALSE)
@@ -456,7 +459,10 @@ estimate.compphysiol_estimation_problem <- function(
             e
         })
         names(estimation_experiments) <- names(problem$experiments)
-        estimation_experiments <- .new_experiments(estimation_experiments)
+        estimation_experiments <- .new_experiments(
+            estimation_experiments,
+            .experiments_compute_component_homogeneity(estimation_experiments)
+        )
         simulated <- simulate(
             simulation_model,
             experiment = estimation_experiments,
