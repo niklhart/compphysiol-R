@@ -246,11 +246,14 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
     args <- c(list(object = artifact$compiled, params = params, events = records,
                    returnType = "data.frame"), engine$arguments, list(...))
     solved <- as.data.frame(do.call(rxode2::rxSolve, args))
+    solved_rows_by_id <- split(seq_len(nrow(solved)), solved$id)
 
     out <- lapply(seq_along(experiments), function(i) {
         solver_time <- .simulation_numeric_time(times[[i]], dimensions)
-        rows <- solved$id == i & solved$time %in% solver_time
-        states <- solved[rows, c("time", unname(object$identifiers$states)), drop = FALSE]
+        individual_rows <- solved_rows_by_id[[as.character(i)]]
+        individual <- solved[individual_rows, , drop = FALSE]
+        rows <- individual$time %in% solver_time
+        states <- individual[rows, c("time", unname(object$identifiers$states)), drop = FALSE]
         states <- states[match(solver_time, states$time), , drop = FALSE]
         rownames(states) <- NULL
         names(states) <- c("time", object$stateNames)
