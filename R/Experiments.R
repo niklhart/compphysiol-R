@@ -84,32 +84,13 @@ experiments <- function(...) {
     switch(
         category,
         start = identical(x$start, y$start),
-        parameter_schema = .experiments_parameter_schema_identical(x$parameters, y$parameters),
+        parameter_schema = .parameters_schema_identical(x$parameters, y$parameters),
         parameters = identical(x$parameters, y$parameters),
         dosing = identical(x$dosing, y$dosing),
         observation_plan = identical(x$observations$time, y$observations$time) &&
             identical(x$observations$observable, y$observations$observable),
         observations = identical(x$observations, y$observations),
         stop("Unknown experiment component category: ", category, ".", call. = FALSE)
-    )
-}
-
-.experiments_parameter_schema_identical <- function(x, y) {
-    if (!identical(names(x), names(y))) return(FALSE)
-    if (length(x) == 0L) return(TRUE)
-    identical(
-        lapply(unclass(x), .experiments_parameter_value_schema),
-        lapply(unclass(y), .experiments_parameter_value_schema)
-    )
-}
-
-.experiments_parameter_value_schema <- function(x) {
-    list(
-        type = typeof(x),
-        class = class(x),
-        length = length(x),
-        dim = dim(x),
-        unit = if (inherits(x, "units")) units::deparse_unit(x) else NULL
     )
 }
 

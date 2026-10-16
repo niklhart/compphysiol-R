@@ -17,6 +17,23 @@ test_that("ParameterSets hold named and unnamed Parameters objects", {
     expect_error(parameter_sets(a, 1), "parameters")
 })
 
+test_that("ParameterSets record parameter schema homogeneity", {
+    homogeneous <- parameter_sets(
+        parameters(BW = 65 [kg], sex = "female"),
+        parameters(BW = 82 [kg], sex = "male")
+    )
+    heterogeneous <- parameter_sets(
+        parameters(BW = 65 [kg]),
+        parameters(age = 40 [year])
+    )
+
+    expect_true(.parameter_sets_schema_homogeneous(homogeneous))
+    expect_identical(attr(homogeneous, "schema_homogeneous"), TRUE)
+    expect_false(.parameter_sets_schema_homogeneous(heterogeneous))
+    expect_true(.parameter_sets_schema_homogeneous(heterogeneous[1]))
+    expect_true(.parameter_sets_schema_homogeneous(parameter_sets()))
+})
+
 test_that("ParameterSets subsetting preserves the collection", {
     population <- parameter_sets(
         a = parameters(BW = 65 [kg]),
@@ -46,6 +63,25 @@ test_that("ParameterSets combine collections and reject duplicate names", {
     unnamed <- c(parameter_sets(parameters(BW = 65)), parameter_sets(parameters(BW = 82)))
     expect_length(unnamed, 2)
     expect_null(names(unnamed))
+
+    different <- c(
+        parameter_sets(parameters(BW = 65 [kg])),
+        parameter_sets(parameters(age = 40 [year]))
+    )
+    expect_false(.parameter_sets_schema_homogeneous(different))
+})
+
+test_that("ParameterSets replacement refreshes schema homogeneity", {
+    population <- parameter_sets(
+        a = parameters(BW = 65 [kg]),
+        b = parameters(BW = 82 [kg])
+    )
+    population[[2]] <- parameters(age = 40 [year])
+    expect_false(.parameter_sets_schema_homogeneous(population))
+
+    population[2] <- parameter_sets(b = parameters(BW = 82 [kg]))
+    expect_true(.parameter_sets_schema_homogeneous(population))
+    expect_error(population[[1]] <- 1, "Parameters")
 })
 
 test_that("shared parameter names require compatible units", {

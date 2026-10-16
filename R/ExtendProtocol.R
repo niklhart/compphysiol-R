@@ -42,8 +42,9 @@ extend_protocol <- function(protocol, population) {
         )
     }
 
-    individuals <- vector("list", length(population))
-    for (i in seq_along(population)) {
+    schema_homogeneous <- .parameter_sets_schema_homogeneous(population)
+    overlap_indices <- if (schema_homogeneous) 1L else seq_along(population)
+    for (i in overlap_indices) {
         overlap <- intersect(names(protocol$parameters), names(population[[i]]))
         if (length(overlap)) {
             stop(
@@ -52,6 +53,10 @@ extend_protocol <- function(protocol, population) {
                 call. = FALSE
             )
         }
+    }
+
+    individuals <- vector("list", length(population))
+    for (i in seq_along(population)) {
         individuals[[i]] <- experiment(
             parameters = c(protocol$parameters, population[[i]]),
             dosing = protocol$dosing,
@@ -62,9 +67,9 @@ extend_protocol <- function(protocol, population) {
 
     component_names <- .experiments_component_names()
     homogeneity <- stats::setNames(rep(TRUE, length(component_names)), component_names)
-    parameter_components <- c("parameter_schema", "parameters")
-    homogeneity[parameter_components] <- .experiments_compute_component_homogeneity(
-        individuals, categories = parameter_components
+    homogeneity[["parameter_schema"]] <- schema_homogeneous
+    homogeneity[["parameters"]] <- .experiments_compute_component_homogeneity(
+        individuals, categories = "parameters"
     )
     .new_experiments(setNames(individuals, labels), homogeneity)
 }

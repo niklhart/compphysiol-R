@@ -307,6 +307,11 @@ A parameter-set collection contains only parameter objects and carries no
 metadata about individuals or about how their values were generated. It
 therefore represents a realized population, not a population distribution or
 sampling model. Parameter names shared across sets must have compatible units.
+The collection records whether every set has the same parameter schema: names,
+order, value types, classes, dimensions, lengths, and units. This structural
+homogeneity metadata does not imply equal parameter values or retain sampling
+provenance. It allows downstream operations to validate and prepare a shared
+schema once.
 
 Implementation anchor: realized parameter sets use `compphysiol_parameter_sets`,
 created with `parameter_sets()`. Subsetting with `[` retains the collection,

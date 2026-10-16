@@ -97,7 +97,7 @@ sample_population <- function(statistics, parameters, n, targets = NULL) {
         .new_parameters(values)
     })
     names(people) <- paste0("individual_", seq_len(n))
-    .new_parameter_sets(people)
+    .new_parameter_sets(people, schema_homogeneous = TRUE)
 }
 
 .sample_correlated_standard_normals <- function(correlation, n) {

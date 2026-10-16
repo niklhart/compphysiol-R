@@ -38,6 +38,17 @@ test_that("extend_protocol creates one experiment per individual", {
     )
 })
 
+test_that("extend_protocol propagates heterogeneous parameter schemas", {
+    population <- parameter_sets(
+        first = parameters(BW = 65 [kg]),
+        second = parameters(age = 40 [year])
+    )
+
+    result <- extend_protocol(experiment(), population)
+
+    expect_false(.experiments_component_homogeneity(result)[["parameter_schema"]])
+})
+
 test_that("extend_protocol generates names for unnamed individuals", {
     protocol <- experiment()
     unnamed <- parameter_sets(parameters(id = 1), parameters(id = 2))

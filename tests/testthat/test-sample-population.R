@@ -24,6 +24,7 @@ test_that("sample_population realizes independent individual distributions", {
     expect_true(all(vapply(population, function(x) inherits(x$CL, "units"), logical(1))))
     expect_true(all(vapply(population, function(x) inherits(x$V, "units"), logical(1))))
     expect_true(all(vapply(population, function(x) as.numeric(x$V) > 0, logical(1))))
+    expect_true(.parameter_sets_schema_homogeneous(population))
     expect_false(any(c("CL_pop", "omega_CL", "V_pop", "omega_V") %in%
                      names(population[[1]])))
 })

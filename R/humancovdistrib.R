@@ -47,7 +47,7 @@ humancovdistrib <- function(N, sex) {
     species <- "human"
     type <- "Caucasian"
 
-    # Create realized parameter sets without attaching generation metadata.
+    # Create realized parameter sets without attaching generation provenance.
     humans <- vector("list", N)
     for (i in seq_len(N)) {
         humans[[i]] <- parameters(
@@ -60,5 +60,5 @@ humancovdistrib <- function(N, sex) {
         )
     }
 
-    .new_parameter_sets(humans)
+    .new_parameter_sets(humans, schema_homogeneous = TRUE)
 }

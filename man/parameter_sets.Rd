@@ -23,6 +23,11 @@ or how the parameter sets were generated.
 compphysiol_parameters shared across elements must both be unit-free or have convertible
 units. Compatible values are retained as supplied and are not converted.
 Numeric and categorical covariates are ordinary parameters.
+
+The collection stores a \code{schema_homogeneous} metadata attribute indicating
+whether all elements have identical parameter names, order, value types,
+classes, dimensions, lengths, and units. It does not compare parameter values
+or record how those values were generated.
 }
 \examples{
 population <- parameter_sets(
