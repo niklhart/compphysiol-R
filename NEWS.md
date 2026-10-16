@@ -3,6 +3,7 @@
 * Optimization methods now validate that effective parameter bounds are
   supported, and fitted coordinates and back-transformed values are checked
   before results are constructed.
+* Implemented `rxode2`-based simulation
 
 # compphysiol 0.4.3
 
