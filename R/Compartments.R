@@ -76,25 +76,11 @@ compartments <- function(name = character(0), volume = "V{name}", unit = NULL) {
     }
 
     x <- .new_compartments(data.frame(name = name, volume = I(volume)))
-    .validate_compartments(x)
+    x
 }
 
 .new_compartments <- function(x) {
     structure(x, class = .compphysiol_class("compphysiol_compartments"))
-}
-
-.validate_compartments <- function(x) {
-    if (!is.list(unclass(x)) || !all(c("name", "volume") %in% names(unclass(x)))) {
-        stop("Compartments must contain name and volume columns.", call. = FALSE)
-    }
-    if (!is.character(x$name) || anyNA(x$name) || any(!nzchar(x$name))) {
-        stop("Compartment names must be nonempty character values.", call. = FALSE)
-    }
-    if (anyDuplicated(x$name)) stop("Duplicate compartment names are not allowed.", call. = FALSE)
-    if (!is.list(x$volume) || length(x$volume) != length(x$name)) {
-        stop("Compartment volumes must contain one value per compartment.", call. = FALSE)
-    }
-    x
 }
 
 #' Add one or several compartments to a `compphysiol_compartment_model` object.
@@ -200,8 +186,9 @@ print.compphysiol_compartments <- function(x, ...) {
 #' @return A combined `compphysiol_compartments` object
 #' @export
 c.compphysiol_compartments <- function(...) {
-    x <- .new_compartments(as.data.frame(.combine_df_like(...)))
-    .validate_compartments(x)
+    x <- as.data.frame(.combine_df_like(...))
+    if (anyDuplicated(x$name)) stop("Duplicate compartment names are not allowed.")
+    .new_compartments(x)
 }
 
 #' Subset a `compphysiol_compartments` object

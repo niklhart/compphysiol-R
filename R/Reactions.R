@@ -453,7 +453,7 @@ reactions <- function(
 
     # Early return for empty reactions
     if ((length(input) == 0 && length(output) == 0) || length(cmt) == 0) {
-        return(.validate_reactions(.new_reactions(
+        return(.new_reactions(
                 data.frame(
                     rate = I(list()),
                     const = I(list()),
@@ -462,7 +462,7 @@ reactions <- function(
                     participants = I(list()),
                     stringsAsFactors = FALSE
                 )
-        )))
+        ))
     }
 
     uses_states <- inherits(input, "compphysiol_states") ||
@@ -589,28 +589,11 @@ reactions <- function(
                 stringsAsFactors = FALSE
             )
     )
-    .validate_reactions(x)
+    x
 }
 
 .new_reactions <- function(x) {
     structure(x, class = .compphysiol_class("compphysiol_reactions"))
-}
-
-.validate_reactions <- function(x) {
-    required <- c("rate", "const", "type", "scale_cmt", "participants")
-    if (!is.list(unclass(x)) || !all(required %in% names(unclass(x)))) {
-        stop("Reactions must contain the canonical reaction columns.", call. = FALSE)
-    }
-    if (!is.list(x$rate) || !is.list(x$const) || !is.character(x$type) ||
-        any(!x$type %in% c("elementary", "complex")) ||
-        !is.character(x$scale_cmt) || !is.list(x$participants)) {
-        stop("Reaction columns do not satisfy the reaction representation.", call. = FALSE)
-    }
-    valid_participants <- vapply(x$participants, function(p) {
-        is.data.frame(p) && all(c("role", "molec", "cmt", "stoich") %in% names(p))
-    }, logical(1))
-    if (!all(valid_participants)) stop("Reaction participants are malformed.", call. = FALSE)
-    x
 }
 
 #' Add one or several reactions to a `compphysiol_compartment_model` object.
@@ -676,8 +659,7 @@ length.compphysiol_reactions <- function(x) {
 #' @return A combined `compphysiol_reactions` object
 #' @export
 c.compphysiol_reactions <- function(...) {
-    x <- .new_reactions(as.data.frame(.combine_df_like(...)))
-    .validate_reactions(x)
+    .new_reactions(as.data.frame(.combine_df_like(...)))
 }
 
 #' Subset a `compphysiol_reactions` object

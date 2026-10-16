@@ -22,8 +22,11 @@
 #' population[["individual_2"]]
 #' @export
 parameter_sets <- function(...) {
-    x <- .new_parameter_sets(list(...))
-    .validate_parameter_sets(x)
+    x <- list(...)
+    .parameter_sets_check_elements(x)
+    .parameter_sets_check_names(x)
+    .parameter_sets_check_units(x)
+    .new_parameter_sets(x)
 }
 
 .new_parameter_sets <- function(x) {
@@ -32,17 +35,20 @@ parameter_sets <- function(...) {
     ))
 }
 
-.validate_parameter_sets <- function(x, check_units = TRUE) {
+.parameter_sets_check_elements <- function(x) {
     if (!all(vapply(x, inherits, logical(1), "compphysiol_parameters"))) {
         stop("All elements must be parameters objects.", call. = FALSE)
     }
+    invisible(NULL)
+}
+
+.parameter_sets_check_names <- function(x) {
     labels <- names(x)
     named <- !is.null(labels) & !is.na(labels) & nzchar(labels)
     if (anyDuplicated(labels[named])) {
         stop("Parameter set names must be unique.", call. = FALSE)
     }
-    if (check_units) .parameter_sets_check_units(x)
-    x
+    invisible(NULL)
 }
 
 .parameter_sets_check_units <- function(x) {
@@ -107,8 +113,10 @@ c.compphysiol_parameter_sets <- function(...) {
         stop("All arguments must be parameter sets objects.", call. = FALSE)
     }
     combined <- do.call(c, unname(lapply(objects, unclass)))
-    combined <- .new_parameter_sets(combined %||% list())
-    .validate_parameter_sets(combined)
+    combined <- combined %||% list()
+    .parameter_sets_check_names(combined)
+    .parameter_sets_check_units(combined)
+    .new_parameter_sets(combined)
 }
 
 #' Print realized parameter sets

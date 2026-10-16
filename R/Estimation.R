@@ -33,43 +33,33 @@ parameter_spec <- function(
         upper <- .estimation_default_bound(if (identical(transform, "logit")) 1 else Inf,
                                            initial)
     }
-    x <- .new_parameter_spec(
-        list(initial = initial, lower = lower, upper = upper, transform = transform)
-    )
-    .validate_parameter_spec(x)
+    .estimation_scalar(lower, "lower", finite = FALSE)
+    .estimation_scalar(upper, "upper", finite = FALSE)
+    lower_numeric <- .estimation_bound_numeric(lower, initial, "lower")
+    upper_numeric <- .estimation_bound_numeric(upper, initial, "upper")
+    initial_numeric <- as.numeric(initial)
+    if (identical(transform, "log") && initial_numeric <= 0) {
+        stop("A log-transformed parameter must have a positive initial value.", call. = FALSE)
+    }
+    if (lower_numeric > upper_numeric) {
+        stop("Parameter lower bound cannot exceed its upper bound.", call. = FALSE)
+    }
+    if (initial_numeric < lower_numeric || initial_numeric > upper_numeric) {
+        stop("Parameter initial value must lie within its bounds.", call. = FALSE)
+    }
+    if (identical(transform, "logit") &&
+        (!is.finite(lower_numeric) || !is.finite(upper_numeric) ||
+         initial_numeric <= lower_numeric || initial_numeric >= upper_numeric)) {
+        stop("A logit-transformed parameter requires finite bounds and an initial value strictly between them.",
+             call. = FALSE)
+    }
+    .new_parameter_spec(list(
+        initial = initial, lower = lower, upper = upper, transform = transform
+    ))
 }
 
 .new_parameter_spec <- function(x) {
     structure(x, class = .compphysiol_class("compphysiol_parameter_spec"))
-}
-
-.validate_parameter_spec <- function(x) {
-    .check_class(x, "compphysiol_parameter_spec")
-    .estimation_scalar(x$initial, "initial", finite = TRUE)
-    .estimation_scalar(x$lower, "lower", finite = FALSE)
-    .estimation_scalar(x$upper, "upper", finite = FALSE)
-    if (!is.character(x$transform) || length(x$transform) != 1L ||
-        !x$transform %in% c("identity", "log", "logit")) {
-        stop("Unknown parameter transform; use identity, log, or logit.", call. = FALSE)
-    }
-    lower <- .estimation_bound_numeric(x$lower, x$initial, "lower")
-    upper <- .estimation_bound_numeric(x$upper, x$initial, "upper")
-    initial <- as.numeric(x$initial)
-    if (identical(x$transform, "log") && initial <= 0) {
-        stop("A log-transformed parameter must have a positive initial value.", call. = FALSE)
-    }
-    if (lower > upper) {
-        stop("Parameter lower bound cannot exceed its upper bound.", call. = FALSE)
-    }
-    if (initial < lower || initial > upper) {
-        stop("Parameter initial value must lie within its bounds.", call. = FALSE)
-    }
-    if (identical(x$transform, "logit") &&
-        (!is.finite(lower) || !is.finite(upper) || initial <= lower || initial >= upper)) {
-        stop("A logit-transformed parameter requires finite bounds and an initial value strictly between them.",
-             call. = FALSE)
-    }
-    x
 }
 
 .estimation_default_bound <- function(value, initial) {
@@ -173,29 +163,14 @@ c.compphysiol_parameter_specs <- function(..., recursive = FALSE) {
         }
         out <- append(out, part)
     }
-    out <- .new_parameter_specs(out)
-    .validate_parameter_specs(out)
+    .check_unique_names(names(out), "parameter specification")
+    .new_parameter_specs(out)
 }
 
 .new_parameter_specs <- function(x = list()) {
     structure(x, class = .compphysiol_class(
         "compphysiol_parameter_specs", base = "list"
     ))
-}
-
-.validate_parameter_specs <- function(x) {
-    nm <- names(x)
-    if (length(x) && (is.null(nm) || anyNA(nm) || any(!nzchar(nm)))) {
-        stop("Every parameter specification must be named.", call. = FALSE)
-    }
-    if (anyDuplicated(nm)) {
-        stop("Parameter specification names must be unique; duplicated names are not allowed.",
-             call. = FALSE)
-    }
-    if (!all(vapply(x, inherits, logical(1), "compphysiol_parameter_spec"))) {
-        stop("Every parameter specification must be a parameter specification object.", call. = FALSE)
-    }
-    x
 }
 
 #' Subset parameter-estimation specifications

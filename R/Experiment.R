@@ -50,12 +50,25 @@ experiment <- function(
     if (is.null(parameters)) parameters <- parameters()
     if (is.null(dosing)) dosing <- dosing()
     if (is.null(observations)) observations <- observation_schedule()
+    .check_class(parameters, "compphysiol_parameters")
+    .check_class(dosing, "compphysiol_dosing")
     .check_class(observations, "compphysiol_observation_schedule")
     if (is.null(start)) start <- .experiment_default_start(dosing, observations)
-    x <- .new_experiment(
-        list(parameters = parameters, dosing = dosing, observations = observations, start = start)
-    )
-    .validate_experiment(x)
+    if (length(start) != 1L) stop("Experiment start must be a scalar.", call. = FALSE)
+    .experiment_check_time(start, "start")
+    .experiment_check_time(observations$time, "observation time", start)
+    .experiment_check_time(dosing$time, "dosing time", start)
+    infusion <- is_infusion(dosing)
+    if (any(infusion)) {
+        infusion_duration <- dosing$duration[infusion]
+        .experiment_check_time(infusion_duration, "infusion duration", start, check_start = FALSE)
+        if (any(as.numeric(infusion_duration) <= 0)) {
+            stop("Experiment infusion duration must be positive.", call. = FALSE)
+        }
+    }
+    .new_experiment(list(
+        parameters = parameters, dosing = dosing, observations = observations, start = start
+    ))
 }
 
 .new_experiment <- function(x) {
@@ -63,41 +76,15 @@ experiment <- function(
 }
 
 .experiment_default_start <- function(dosing, observations) {
-    .check_class(dosing, "compphysiol_dosing")
     time <- dosing$time
-    label <- "dosing time"
     if (!length(time)) {
         time <- observations$time
-        label <- "observation time"
     }
     if (!length(time)) return(0)
-    .experiment_check_time(time, label)
     if (inherits(time, "units")) {
         return(units::set_units(0, units::deparse_unit(time), mode = "standard"))
     }
     0
-}
-
-.validate_experiment <- function(x) {
-    .check_class(x, "compphysiol_experiment")
-    .check_class(x$parameters, "compphysiol_parameters")
-    .check_class(x$dosing, "compphysiol_dosing")
-    .check_class(x$observations, "compphysiol_observation_schedule")
-    if (length(x$start) != 1L) stop("Experiment start must be a scalar.", call. = FALSE)
-    .experiment_check_time(x$start, "start")
-
-    observations <- x$observations
-    .experiment_check_time(observations$time, "observation time", x$start)
-    .experiment_check_time(x$dosing$time, "dosing time", x$start)
-    infusion <- is_infusion(x$dosing)
-    if (any(infusion)) {
-        duration <- x$dosing$duration[infusion]
-        .experiment_check_time(duration, "infusion duration", x$start, check_start = FALSE)
-        if (any(as.numeric(duration) <= 0)) {
-            stop("Experiment infusion duration must be positive.", call. = FALSE)
-        }
-    }
-    x
 }
 
 .experiment_check_time <- function(value, label, start = NULL, check_start = TRUE) {

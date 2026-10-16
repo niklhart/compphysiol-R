@@ -684,15 +684,15 @@ intrinsically valid while being incompatible with a particular model.
 
 Because these are S3 objects, users can manually alter attributes or otherwise
 bypass the supported constructors. Consumers are not required to defend
-against every such modification by revalidating the entire object. Internal
-validation remains available to package construction paths, and cheap class
+against every such modification by rechecking the entire object. Cheap class
 checks remain appropriate at public API boundaries.
 
 Implementation convention: migrated classes use an internal
-`.new_<class>()` for cheap construction, an internal `.validate_<class>()` for
-intrinsic semantic validation, and a public `<class>()` helper for input
-normalization and full construction. Validators remain internal unless a
-separate public validation workflow has a demonstrated use case.
+`.new_<class>()` for cheap construction and a public `<class>()` helper for
+input normalization and checking. Focused helpers may check conflicts that can
+be introduced by several operations, such as duplicate names during
+concatenation or incompatible units across collections; consumers do not run a
+general per-class validator.
 
 ## Model representations and execution
 

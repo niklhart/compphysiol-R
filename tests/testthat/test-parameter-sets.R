@@ -63,21 +63,12 @@ test_that("shared parameter names require compatible units", {
     }
 })
 
-test_that("low-level construction trusts input and validation is explicit", {
+test_that("low-level parameter-set construction trusts canonical input", {
     incompatible <- list(parameters(x = 1), parameters(x = 1 [kg]))
     trusted <- .new_parameter_sets(incompatible)
 
     expect_s3_class(trusted, "compphysiol_parameter_sets")
     expect_s3_class(trusted[1], "compphysiol_parameter_sets")
-    expect_error(.validate_parameter_sets(trusted), "parameter 'x'.*units")
-    expect_error(.validate_parameter_sets(.new_parameter_sets(list(parameters(), 1))),
-                 "parameters")
-    expect_error(
-        .validate_parameter_sets(.new_parameter_sets(
-            list(a = parameters(), a = parameters())
-        )),
-        "unique"
-    )
 })
 
 test_that("ParameterSets print a compact summary", {

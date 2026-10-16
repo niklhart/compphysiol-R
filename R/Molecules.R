@@ -82,7 +82,7 @@ molecules <- function(name = character(0), cmt = NULL, initial = 0, unit = NULL,
 
     # Early return for empty molecules
     if (identical(name, character(0))) {
-        return(.validate_molecules(.new_molecules(
+        return(.new_molecules(
                 data.frame(
                     name = character(),
                     cmt = character(),
@@ -90,7 +90,7 @@ molecules <- function(name = character(0), cmt = NULL, initial = 0, unit = NULL,
                     type = character(),
                     stringsAsFactors = FALSE
                 )
-        )))
+        ))
     }
 
     # Construct the molecules object as a data frame with its package class.
@@ -102,26 +102,11 @@ molecules <- function(name = character(0), cmt = NULL, initial = 0, unit = NULL,
         stringsAsFactors = FALSE
     )
     molec <- .new_molecules(molec)
-    .validate_molecules(molec)
+    molec
 }
 
 .new_molecules <- function(x) {
     structure(x, class = .compphysiol_class("compphysiol_molecules"))
-}
-
-.validate_molecules <- function(x) {
-    required <- c("name", "cmt", "init", "type")
-    if (!is.list(unclass(x)) || !all(required %in% names(unclass(x)))) {
-        stop("Molecules must contain name, cmt, init, and type columns.", call. = FALSE)
-    }
-    if (!is.character(x$name) || anyNA(x$name) || any(!nzchar(x$name))) {
-        stop("Molecule names must be nonempty character values.", call. = FALSE)
-    }
-    if (!is.character(x$cmt) || (!is.list(x$init) && length(x$init)) ||
-        !is.character(x$type) || any(!x$type %in% c("concentration", "amount"))) {
-        stop("Molecule columns do not satisfy the molecule representation.", call. = FALSE)
-    }
-    x
 }
 
 #' Add one or several molecules to a `compphysiol_compartment_model` object.
@@ -164,8 +149,7 @@ add_molecule <- function(
 #' @return A combined `compphysiol_molecules` object
 #' @export
 c.compphysiol_molecules <- function(...) {
-    x <- .new_molecules(as.data.frame(.combine_df_like(...)))
-    .validate_molecules(x)
+    .new_molecules(as.data.frame(.combine_df_like(...)))
 }
 
 #' Subset a `compphysiol_molecules` object

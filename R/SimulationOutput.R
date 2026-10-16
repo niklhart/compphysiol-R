@@ -13,8 +13,8 @@
 #' @export
 as_observables_long <- function(x) {
     if (is.data.frame(x)) {
-        x <- .new_observation_data(x)
-        return(.validate_observation_data(x))
+        .observation_check_table(x, require_value = TRUE)
+        return(.new_observation_data(x))
     }
     .check_class(x, "compphysiol_simulation_result")
     if (!is.null(x$observables)) return(x$observables)

@@ -38,16 +38,14 @@ test_that("observation data extend schedules with canonical values", {
                  "observation schedule")
 })
 
-test_that("observation low-level constructors and validators have separate roles", {
+test_that("observation low-level constructors trust canonical input", {
     schedule <- data.frame(time = NA_real_, observable = "")
     schedule <- .new_observation_schedule(schedule)
     expect_s3_class(schedule, "compphysiol_observation_schedule")
-    expect_error(.validate_observation_schedule(schedule), "finite")
 
     data <- .new_observation_data(data.frame(time = 1, observable = "C", value = "bad"))
     expect_s3_class(data, "compphysiol_observation_data")
     expect_s3_class(data, "compphysiol_observation_schedule")
-    expect_error(.validate_observation_data(data), "numeric")
 })
 
 test_that("experiments store schedules and data polymorphically as observations", {
@@ -60,7 +58,6 @@ test_that("experiments store schedules and data polymorphically as observations"
     expect_identical(x$dosing, d)
     expect_identical(x$observations, schedule)
     expect_equal(x$start, with_units(0 [h]))
-    expect_identical(.validate_experiment(x), x)
 
     observed <- observation_data(c(1, 2) [h], "C", c(8, 5) [mg/L])
     y <- experiment(observations = observed)
@@ -144,18 +141,9 @@ test_that("model compatibility is checked by simulation", {
     expect_no_error(simulate(model, experiment = x))
     x$observations$observable <- "a[drug,Central]"
     expect_error(simulate(model, experiment = x), "Unknown observable")
-    x$observations$time <- -1
-    expect_error(.validate_experiment(x), "before.*start")
 })
 
-test_that("experiment validation trusts its constructed components", {
-    x <- experiment(observations = observation_data(1, "C", 2))
-    x$observations$value <- "invalid"
-    expect_identical(.validate_experiment(x), x)
-    expect_error(.validate_observation_data(x$observations), "numeric")
-})
-
-test_that("experiment low-level construction defers intrinsic validation", {
+test_that("experiment low-level construction trusts canonical input", {
     x <- .new_experiment(list(
         parameters = parameters(),
         dosing = dosing(),
@@ -163,5 +151,4 @@ test_that("experiment low-level construction defers intrinsic validation", {
         start = c(0, 1)
     ))
     expect_s3_class(x, "compphysiol_experiment")
-    expect_error(.validate_experiment(x), "scalar")
 })

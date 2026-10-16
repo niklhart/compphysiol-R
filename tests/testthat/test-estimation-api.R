@@ -87,7 +87,7 @@ test_that("estimated parameter specifications reject ambiguous inputs", {
     expect_error(parameter_spec(initial = 1, transform = "unknown"), "transform")
 })
 
-test_that("parameter specification construction and validation are separate", {
+test_that("parameter specification low-level construction trusts canonical input", {
     spec <- .new_parameter_spec(list(
         initial = -1,
         lower = 0,
@@ -95,11 +95,9 @@ test_that("parameter specification construction and validation are separate", {
         transform = "log"
     ))
     expect_s3_class(spec, "compphysiol_parameter_spec")
-    expect_error(.validate_parameter_spec(spec), "positive")
 
     specs <- .new_parameter_specs(list(unnamed = spec, unnamed = spec))
     expect_s3_class(specs, "compphysiol_parameter_specs")
-    expect_error(.validate_parameter_specs(specs), "unique")
 })
 
 test_that("parameter specification defaults follow the transform and initial units", {

@@ -40,24 +40,12 @@ equations <- function(..., name = character(0), expr = character(0)) {
     names(expr) <- name
     expr <- lapply(expr, .as_call)
 
-    x <- .new_equations(expr)
-    .validate_equations(x)
+    .check_named_values(expr, "equation")
+    .new_equations(expr)
 }
 
 .new_equations <- function(x = list()) {
     structure(x, class = .compphysiol_class("compphysiol_equations"))
-}
-
-.validate_equations <- function(x) {
-    nm <- names(x)
-    if (length(x) && (is.null(nm) || anyNA(nm) || any(!nzchar(nm)))) {
-        stop("Every equation must have a nonempty name.", call. = FALSE)
-    }
-    if (anyDuplicated(nm)) stop("Equation names must be unique.", call. = FALSE)
-    if (!all(vapply(x, function(value) is.call(value) || is.name(value) || is.atomic(value), logical(1)))) {
-        stop("Every equation must contain an expression.", call. = FALSE)
-    }
-    x
 }
 
 #' Add one or several equations to a `compphysiol_compartment_model` object.
@@ -147,7 +135,7 @@ c.compphysiol_equations <- function(...) {
     }
     x <- eq_list |>
          lapply(FUN = unclass) |> 
-         do.call(what = "c") |>
-         .new_equations()
-    .validate_equations(x)
+         do.call(what = "c")
+    .check_unique_names(names(x), "equation")
+    .new_equations(x)
 }

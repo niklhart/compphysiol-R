@@ -99,24 +99,12 @@ observables <- function(..., name = character(0), expr = character(0), cmt = NUL
     names(expr) <- name
     expr <- lapply(expr, .as_call)
 
-    x <- .new_observables(expr)
-    .validate_observables(x)
+    .check_named_values(expr, "observable")
+    .new_observables(expr)
 }
 
 .new_observables <- function(x = list()) {
     structure(x, class = .compphysiol_class("compphysiol_observables"))
-}
-
-.validate_observables <- function(x) {
-    nm <- names(x)
-    if (length(x) && (is.null(nm) || anyNA(nm) || any(!nzchar(nm)))) {
-        stop("Every observable must have a nonempty name.", call. = FALSE)
-    }
-    if (anyDuplicated(nm)) stop("Observable names must be unique.", call. = FALSE)
-    if (!all(vapply(x, function(value) is.call(value) || is.name(value) || is.atomic(value), logical(1)))) {
-        stop("Every observable must contain an expression.", call. = FALSE)
-    }
-    x
 }
 
 #' Add one or several observables to a `compphysiol_compartment_model` object.
@@ -218,7 +206,7 @@ c.compphysiol_observables <- function(...) {
     }
     x <- obs_list |>
          lapply(FUN = unclass) |> 
-         do.call(what = "c") |>
-         .new_observables()
-    .validate_observables(x)
+         do.call(what = "c")
+    .check_unique_names(names(x), "observable")
+    .new_observables(x)
 }

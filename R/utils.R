@@ -522,6 +522,21 @@ with_units <- function(expr) {
     lapply(seq_len(nrow(x)), function(i) as.list(x[i, , drop = FALSE]))
 }
 
+.check_named_values <- function(x, label) {
+    nm <- names(x)
+    if (length(x) && (is.null(nm) || anyNA(nm) || any(!nzchar(nm)))) {
+        stop("Every ", label, " must have a nonempty name.", call. = FALSE)
+    }
+    .check_unique_names(nm, label)
+}
+
+.check_unique_names <- function(nm, label) {
+    if (anyDuplicated(nm)) {
+        stop(paste0(tools::toTitleCase(label), " names must be unique."), call. = FALSE)
+    }
+    invisible(NULL)
+}
+
 #' Replace all occurrences of `[x]` in a call by `[x,val]` or `[val,x]`
 #' @param expr A call
 #' @param pos The position to insert the index in (1 for first argument, 2 for second)
