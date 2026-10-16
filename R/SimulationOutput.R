@@ -96,7 +96,10 @@ as_observables_wide <- function(x) {
     .new_observation_data(schedule)
 }
 
-.simulation_observables <- function(solver_output, time, model, odeinfo, solver_time, dimensions, parameters = model$parameters) {
+.simulation_observables <- function(
+    solver_output, time, model, odeinfo, solver_time, dimensions,
+    parameters = model$parameters, observation_plan = NULL
+) {
     if (!length(odeinfo$obsFuncs)) return(NULL)
     schedule <- attr(model, "observation_schedule")
     if (is.null(schedule)) {
@@ -107,20 +110,33 @@ as_observables_wide <- function(x) {
                                observable = rep(obs, each = length(time)))
         return(.simulation_pack_observables(schedule, wide[obs]))
     }
-    groups <- lapply(unique(schedule$observable), function(nm) {
+    observation_plan <- observation_plan %||% .simulation_prepare_observation_plan(
+        schedule, solver_output[, "time"], dimensions
+    )
+    groups <- lapply(observation_plan, function(group) {
+        info <- odeinfo
+        info$obsFuncs <- info$obsFuncs[group$observable]
+        values <- .simulation_observable_columns(
+            solver_output[group$unique_idx, , drop = FALSE], time[group$unique_idx], model, info,
+            solver_output[group$unique_idx, "time"], dimensions, parameters
+        )[[group$observable]]
+        values[group$rematch]
+    })
+    names(groups) <- vapply(observation_plan, `[[`, character(1), "observable")
+    .simulation_pack_observables(schedule, groups)
+}
+
+.simulation_prepare_observation_plan <- function(schedule, solver_time, dimensions) {
+    lapply(unique(schedule$observable), function(nm) {
         rows <- which(schedule$observable == nm)
         requested <- .simulation_numeric_time(schedule$time[rows], dimensions)
-        idx <- match(requested, solver_output[, "time"])
+        idx <- match(requested, solver_time)
         if (anyNA(idx)) stop("Solver output is missing requested observation times.", call. = FALSE)
         unique_idx <- unique(idx)
-        info <- odeinfo
-        info$obsFuncs <- info$obsFuncs[nm]
-        values <- .simulation_observable_columns(
-            solver_output[unique_idx, , drop = FALSE], time[unique_idx], model, info,
-            solver_output[unique_idx, "time"], dimensions, parameters
-        )[[nm]]
-        values[match(idx, unique_idx)]
+        list(
+            observable = nm,
+            unique_idx = unique_idx,
+            rematch = match(idx, unique_idx)
+        )
     })
-    names(groups) <- unique(schedule$observable)
-    .simulation_pack_observables(schedule, groups)
 }

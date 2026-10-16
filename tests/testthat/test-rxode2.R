@@ -134,3 +134,27 @@ test_that("rxode2 batches experiment collections by individual", {
         expect_equal(actual[[nm]]$observables, expected[[nm]]$observables, tolerance = 1e-5)
     }
 })
+
+test_that("rxode2 homogeneous preparation agrees with the fallback path", {
+    skip_if_not_installed("rxode2")
+    model <- compartment_model() |>
+        add_compartment("Central", volume = 10 [L]) |>
+        add_molecule("drug", initial = "A0", type = "amount") |>
+        add_transport("Central", "", const = "k") |>
+        add_observable(A = a[drug, Central], C = c[drug, Central])
+    schedule <- observation_schedule(c(0, 1, 2) [h], c("A", "C", "A"))
+    dose <- dosing(time = 0.5 [h], amount = 20 [mg])
+    designs <- experiments(
+        first = experiment(parameters = parameters(A0 = 100 [mg], k = 0.2 [1/h]),
+                           dosing = dose, observations = schedule),
+        second = experiment(parameters = parameters(A0 = 50 [mg], k = 0.1 [1/h]),
+                            dosing = dose, observations = schedule)
+    )
+    fallback <- designs
+    attr(fallback, "component_homogeneity")[] <- FALSE
+
+    optimized <- simulate(model, experiment = designs, engine = rxode2_engine())
+    unoptimized <- simulate(model, experiment = fallback, engine = rxode2_engine())
+
+    expect_equal(optimized, unoptimized, tolerance = 1e-5)
+})

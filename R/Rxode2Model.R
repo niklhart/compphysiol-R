@@ -187,21 +187,23 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
     )
 }
 
-.rxode2_experiment_time <- function(experiment) {
-    start <- experiment$start
-    if (inherits(experiment$observations$time, "units")) {
-        start <- units::set_units(start, units::deparse_unit(experiment$observations$time), mode = "standard")
-    }
-    sort(unique(c(start, experiment$observations$time)))
-}
-
-.simulate_rxode2_experiments <- function(object, experiments, dimensions = NULL, engine, ...) {
+.simulate_rxode2_experiments <- function(
+    object, experiments, dimensions = NULL, engine, homogeneity, ...
+) {
     ode <- object$ode_model
     supplied <- lapply(experiments, function(e) .simulation_parameters_object(e$parameters))
-    unknown <- unique(unlist(lapply(supplied, function(x) setdiff(names(x), object$parameterNames))))
+    parameter_indices <- if (homogeneity[["parameter_schema"]]) 1L else seq_along(supplied)
+    unknown <- unique(unlist(lapply(supplied[parameter_indices], function(x) {
+        setdiff(names(x), object$parameterNames)
+    })))
     if (length(unknown)) stop("Unknown rxode2 model parameter(s): ", paste(unknown, collapse = ", "), ".", call. = FALSE)
 
-    times <- lapply(experiments, .rxode2_experiment_time)
+    shared_time <- homogeneity[["start"]] && homogeneity[["observation_plan"]]
+    times <- if (shared_time) {
+        rep(list(.simulation_experiment_time(experiments[[1]])), length(experiments))
+    } else {
+        lapply(experiments, .simulation_experiment_time)
+    }
     cached <- if (exists("artifact", envir = object$cache, inherits = FALSE)) get("artifact", object$cache) else NULL
     if (is.null(cached)) {
         merged <- .merge_ode_parameters(ode$parameters, supplied[[1]])
@@ -219,16 +221,34 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
 
     parameter_values <- vector("list", length(experiments))
     records <- vector("list", length(experiments))
+    shared_events <- if (homogeneity[["dosing"]]) {
+        .simulation_experiment_events(
+            ode, experiments[[1]]$dosing, dimensions, supplied[[1]],
+            state_unit_values = artifact$stateUnitValues
+        )$data
+    } else {
+        NULL
+    }
     for (i in seq_along(experiments)) {
-        .simulation_check_free_parameter_names_available(
-            ode,
-            union(names(ode$parameters), names(supplied[[i]]))
-        )
-        .compiled_ode_model_check_runtime_parameter_signature(artifact$parameterSignature, supplied[[i]])
-        .compiled_ode_model_check_time_mode(artifact, times[[i]])
-        parameter_values[[i]] <- .rxode2_runtime_parameter_values(artifact, supplied[[i]], dimensions)
+        if (!homogeneity[["parameter_schema"]] || i == 1L) {
+            .simulation_check_free_parameter_names_available(
+                ode,
+                union(names(ode$parameters), names(supplied[[i]]))
+            )
+            .compiled_ode_model_check_runtime_parameter_signature(
+                artifact$parameterSignature, supplied[[i]]
+            )
+        }
+        if (!shared_time || i == 1L) {
+            .compiled_ode_model_check_time_mode(artifact, times[[i]])
+        }
+        parameter_values[[i]] <- if (homogeneity[["parameters"]] && i > 1L) {
+            parameter_values[[1]]
+        } else {
+            .rxode2_runtime_parameter_values(artifact, supplied[[i]], dimensions)
+        }
         solver_time <- .simulation_numeric_time(times[[i]], dimensions)
-        events <- .simulation_experiment_events(
+        events <- shared_events %||% .simulation_experiment_events(
             ode, experiments[[i]]$dosing, dimensions, supplied[[i]],
             state_unit_values = artifact$stateUnitValues
         )$data
@@ -253,6 +273,15 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
                    returnType = "data.frame"), engine$arguments, list(...))
     solved <- as.data.frame(do.call(rxode2::rxSolve, args))
     solved_rows_by_id <- split(seq_len(nrow(solved)), solved$id)
+    shared_observation_plan <- if (shared_time) {
+        .simulation_prepare_observation_plan(
+            experiments[[1]]$observations,
+            .simulation_numeric_time(times[[1]], dimensions),
+            dimensions
+        )
+    } else {
+        NULL
+    }
 
     out <- lapply(seq_along(experiments), function(i) {
         solver_time <- .simulation_numeric_time(times[[i]], dimensions)
@@ -272,7 +301,7 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
         states$time <- .simulation_attach_time_units(states$time, times[[i]], dimensions)
         observables <- .simulation_observables(
             matrix_out, states$time, ode_i, info, solver_time, dimensions,
-            parameters = supplied[[i]]
+            parameters = supplied[[i]], observation_plan = shared_observation_plan
         )
         structure(list(states = states, observables = observables),
                   class = .compphysiol_class("compphysiol_simulation_result"))

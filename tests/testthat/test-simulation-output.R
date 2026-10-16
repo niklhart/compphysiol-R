@@ -118,6 +118,27 @@ test_that("experiment collections prepare inactive infusion structures", {
     expect_error(simulate(to_compiled_ode_model(m), experiment = a), "absent")
 })
 
+test_that("compiled homogeneous preparation agrees with the fallback path", {
+    m <- output_test_model()
+    schedule <- observation_schedule(c(0, 1, 2) [h], c("A", "C", "A"))
+    dose <- dosing(time = 0.5 [h], amount = 10 [mg])
+    designs <- experiments(
+        first = experiment(parameters = parameters(k = 0.2 [1/h]),
+                           dosing = dose, observations = schedule),
+        second = experiment(parameters = parameters(k = 0.1 [1/h]),
+                            dosing = dose, observations = schedule)
+    )
+    fallback <- designs
+    attr(fallback, "component_homogeneity")[] <- FALSE
+    compiled <- to_compiled_ode_model(m |> add_dosing(dose = dose))
+    simulate(compiled, experiment = designs[[1]])
+
+    optimized <- simulate(compiled, experiment = designs)
+    unoptimized <- simulate(compiled, experiment = fallback)
+
+    expect_equal(optimized, unoptimized, tolerance = 1e-6)
+})
+
 test_that("simulation trusts constructed experiment objects", {
     m <- output_test_model()
     e <- experiment(observations = observation_schedule(c(0, 1) [h], "A"))

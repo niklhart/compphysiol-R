@@ -1,10 +1,24 @@
 .simulate_experiments <- function(object, experiment, dimensions = NULL, engine = NULL, ...) {
     multiple <- inherits(experiment, "compphysiol_experiments")
-    experiments <- if (multiple) unclass(experiment) else {
+    homogeneity <- if (multiple) {
+        .experiments_component_homogeneity(experiment)
+    } else {
+        stats::setNames(rep(TRUE, length(.experiments_component_names())),
+                        .experiments_component_names())
+    }
+    experiments <- if (multiple) .experiments_elements(experiment) else {
         .check_class(experiment, "compphysiol_experiment")
         list(experiment)
     }
-    for (e in experiments) {
+    validation_indices <- if (!length(experiments)) {
+        integer()
+    } else if (homogeneity[["observation_plan"]]) {
+        1L
+    } else {
+        seq_along(experiments)
+    }
+    for (i in validation_indices) {
+        e <- experiments[[i]]
         if (!nrow(e$observations)) stop("Experiment simulation requires nonempty observations.", call. = FALSE)
         model <- if (inherits(object, c("compphysiol_desolve_compiled_model", "compphysiol_rxode2_model"))) object$ode_model else object
         unknown <- setdiff(e$observations$observable, names(model$observables))
@@ -26,8 +40,34 @@
     if (multiple && inherits(engine, "compphysiol_rxode2_engine")) {
         executable <- if (inherits(object, "compphysiol_rxode2_model")) object else to_rxode2_model(object)
         return(.simulate_rxode2_experiments(
-            executable, experiments, dimensions = dimensions, engine = engine, ...
+            executable, experiments, dimensions = dimensions, engine = engine,
+            homogeneity = homogeneity, ...
         ))
+    }
+    shared_time <- NULL
+    if (length(experiments) && homogeneity[["start"]] && homogeneity[["observation_plan"]]) {
+        shared_time <- .simulation_experiment_time(experiments[[1]])
+    }
+    shared_events <- NULL
+    shared_observation_plan <- NULL
+    if (multiple && inherits(object, "compphysiol_desolve_compiled_model")) {
+        artifact <- .compiled_ode_model_cached_artifact(object)
+        if (!is.null(artifact)) {
+            if (homogeneity[["dosing"]]) {
+                shared_events <- .simulation_experiment_events(
+                    object$ode_model, experiments[[1]]$dosing, artifact$dimensions,
+                    experiments[[1]]$parameters,
+                    state_unit_values = artifact$stateUnitValues
+                )
+            }
+            if (!is.null(shared_time)) {
+                shared_observation_plan <- .simulation_prepare_observation_plan(
+                    experiments[[1]]$observations,
+                    .simulation_numeric_time(shared_time, artifact$dimensions),
+                    artifact$dimensions
+                )
+            }
+        }
     }
     out <- lapply(seq_along(experiments), function(i) {
         e <- experiments[[i]]
@@ -36,14 +76,11 @@
             model$doses <- prepared_doses[[i]]
         } else {
             attr(model, "experiment_dosing") <- e$dosing
+            attr(model, "prepared_experiment_events") <- shared_events
         }
         attr(model, "observation_schedule") <- e$observations
-        # Use observation time units for the state grid, including the initial time.
-        start <- e$start
-        if (inherits(e$observations$time, "units")) {
-            start <- units::set_units(start, units::deparse_unit(e$observations$time), mode = "standard")
-        }
-        time <- sort(unique(c(start, e$observations$time)))
+        attr(model, "prepared_observation_plan") <- shared_observation_plan
+        time <- shared_time %||% .simulation_experiment_time(e)
         if (is.null(engine)) {
             simulate(model, time = time, parameters = e$parameters, dimensions = dimensions, ...)
         } else {
@@ -52,6 +89,16 @@
     })
     names(out) <- names(experiments)
     if (multiple) out else out[[1]]
+}
+
+.simulation_experiment_time <- function(experiment) {
+    start <- experiment$start
+    if (inherits(experiment$observations$time, "units")) {
+        start <- units::set_units(
+            start, units::deparse_unit(experiment$observations$time), mode = "standard"
+        )
+    }
+    sort(unique(c(start, experiment$observations$time)))
 }
 
 .simulation_experiment_events <- function(
