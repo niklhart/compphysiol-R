@@ -76,6 +76,7 @@ parameter_sets <- lapply(seq_len(n_max), function(i) {
 ode_model <- to_ode_model(model)
 compiled_model <- to_compiled_ode_model(ode_model)
 rxode2_model <- to_rxode2_model(ode_model)
+rx_engine <- rxode2_engine(rtol = 1e-10, atol = 1e-10)
 benchmark_experiments <- do.call(experiments, lapply(seq_len(max(n_compiled, n_rxode2)), function(i) {
     observable_names <- names(ode_model$observables)
     experiment(
@@ -90,6 +91,13 @@ benchmark_experiments <- do.call(experiments, lapply(seq_len(max(n_compiled, n_r
 }))
 compiled_batch_experiments <- benchmark_experiments[seq_len(n_compiled)]
 rxode2_batch_experiments <- benchmark_experiments[seq_len(n_rxode2)]
+rxode2_trace_warmup_experiments <- do.call(
+    experiments,
+    list(
+        trace_warmup_1 = benchmark_experiments[[1]],
+        trace_warmup_2 = benchmark_experiments[[1]]
+    )
+)
 
 cat("Executable ODE benchmark: sMD_PBPK_12CMT_wellstirred\n")
 cat("Repeated simulations:\n")
@@ -106,7 +114,9 @@ compiled_warmup_time <- system.time({
     compiled_warmup <- simulate(compiled_model, time = times, parameters = parameter_sets[[1]])
 })
 rxode2_warmup_time <- system.time({
-    rxode2_warmup <- simulate(rxode2_model, time = times, parameters = parameter_sets[[1]])
+    rxode2_warmup <- simulate(
+        rxode2_model, time = times, parameters = parameter_sets[[1]], engine = rx_engine
+    )
 })
 
 reference <- simulate(ode_model, time = times, parameters = parameter_sets[[1]])
@@ -123,16 +133,85 @@ stopifnot(isTRUE(all.equal(
     check.attributes = FALSE
 )))
 
-run_many <- function(object, n) {
+run_many <- function(object, n, engine = NULL) {
     for (i in seq_len(n)) {
-        simulate(object, time = times, parameters = parameter_sets[[i]])
+        if (is.null(engine)) {
+            simulate(object, time = times, parameters = parameter_sets[[i]])
+        } else {
+            simulate(object, time = times, parameters = parameter_sets[[i]], engine = engine)
+        }
     }
     invisible(NULL)
 }
 
-time_one <- function(label, n, expr) {
-    gc()
+time_with_solver_trace <- function(expr, backend, warmup = NULL) {
+    timer <- new.env(parent = emptyenv())
+    timer$elapsed <- 0
+    timer$calls <- 0L
+    timer$depth <- 0L
+    package <- if (identical(backend, "deSolve")) "deSolve" else "rxode2"
+    fun <- if (identical(backend, "deSolve")) "ode" else "rxSolve"
+    namespace <- asNamespace(package)
+    old_option <- options(compphysiol.benchmark_solver_timer = timer)
+    on.exit(options(old_option), add = TRUE)
+
+    entry <- quote({
+        .compphysiol_benchmark_solver_timer <- getOption("compphysiol.benchmark_solver_timer")
+        if (is.environment(.compphysiol_benchmark_solver_timer)) {
+            if (.compphysiol_benchmark_solver_timer$depth == 0L) {
+                .compphysiol_benchmark_solver_timer$started <- proc.time()
+            }
+            .compphysiol_benchmark_solver_timer$depth <-
+                .compphysiol_benchmark_solver_timer$depth + 1L
+        }
+    })
+    exit <- quote({
+        .compphysiol_benchmark_solver_timer <- getOption("compphysiol.benchmark_solver_timer")
+        if (is.environment(.compphysiol_benchmark_solver_timer)) {
+            .compphysiol_benchmark_solver_timer$depth <-
+                .compphysiol_benchmark_solver_timer$depth - 1L
+            if (.compphysiol_benchmark_solver_timer$depth == 0L) {
+                .compphysiol_benchmark_solver_elapsed <- unname(
+                    (proc.time() - .compphysiol_benchmark_solver_timer$started)[["elapsed"]]
+                )
+                .compphysiol_benchmark_solver_timer$elapsed <-
+                    .compphysiol_benchmark_solver_timer$elapsed + .compphysiol_benchmark_solver_elapsed
+                .compphysiol_benchmark_solver_timer$calls <-
+                    .compphysiol_benchmark_solver_timer$calls + 1L
+            }
+        }
+    })
+    suppressMessages(trace(fun, tracer = entry, exit = exit, print = FALSE, where = namespace))
+    on.exit(suppressMessages(untrace(fun, where = namespace)), add = TRUE)
+
+    # Tracing can trigger one-time reconstruction/JIT work on its first call.
+    # Prime the traced function outside the timed batch, then reset the collector.
+    if (!is.null(warmup)) warmup()
+    timer$elapsed <- 0
+    timer$calls <- 0L
+    timer$depth <- 0L
     timing <- system.time(force(expr))
+    list(timing = timing, solver_elapsed = timer$elapsed, solver_calls = timer$calls)
+}
+
+time_one <- function(label, n, expr, solver_backend = NULL, solver_warmup = NULL) {
+    gc()
+    if (is.null(solver_backend)) {
+        timing <- system.time(force(expr))
+        solver_elapsed <- NA_real_
+        solver_calls <- NA_integer_
+    } else {
+        measured <- time_with_solver_trace(expr, solver_backend, warmup = solver_warmup)
+        timing <- measured$timing
+        solver_elapsed <- measured$solver_elapsed
+        solver_calls <- measured$solver_calls
+    }
+    overhead_elapsed <- if (!is.null(solver_backend)) {
+        # Subtract only after accumulating all solver calls in this benchmark batch.
+        max(0, unname(timing[["elapsed"]]) - solver_elapsed)
+    } else {
+        NA_real_
+    }
     data.frame(
         route = label,
         replicates = n,
@@ -140,6 +219,16 @@ time_one <- function(label, n, expr) {
         system = unname(timing[["sys.self"]]),
         elapsed = unname(timing[["elapsed"]]),
         seconds_per_simulation = unname(timing[["elapsed"]]) / n,
+        solver_calls = solver_calls,
+        solver_elapsed = solver_elapsed,
+        solver_seconds_per_simulation = solver_elapsed / n,
+        overhead_elapsed = overhead_elapsed,
+        overhead_seconds_per_simulation = overhead_elapsed / n,
+        overhead_percent = if (!is.null(solver_backend) && timing[["elapsed"]] > 0) {
+            100 * overhead_elapsed / unname(timing[["elapsed"]])
+        } else {
+            NA_real_
+        },
         stringsAsFactors = FALSE
     )
 }
@@ -152,6 +241,12 @@ warmup_row <- function(label, timing) {
         system = unname(timing[["sys.self"]]),
         elapsed = unname(timing[["elapsed"]]),
         seconds_per_simulation = unname(timing[["elapsed"]]),
+        solver_calls = NA_integer_,
+        solver_elapsed = NA_real_,
+        solver_seconds_per_simulation = NA_real_,
+        overhead_elapsed = NA_real_,
+        overhead_seconds_per_simulation = NA_real_,
+        overhead_percent = NA_real_,
         stringsAsFactors = FALSE
     )
 }
@@ -161,15 +256,35 @@ results <- rbind(
     warmup_row("rxode2 model warm-up", rxode2_warmup_time),
     time_one("CompartmentModel", n_compartment, run_many(model, n_compartment)),
     time_one("OdeModel", n_ode, run_many(ode_model, n_ode)),
-    time_one("CompiledOdeModel cached", n_compiled, run_many(compiled_model, n_compiled)),
+    time_one(
+        "CompiledOdeModel cached", n_compiled,
+        run_many(compiled_model, n_compiled), solver_backend = "deSolve",
+        solver_warmup = function() simulate(
+            compiled_model, time = times, parameters = parameter_sets[[1]]
+        )
+    ),
     time_one(
         "CompiledOdeModel batched", n_compiled,
-        simulate(compiled_model, experiment = compiled_batch_experiments)
+        simulate(compiled_model, experiment = compiled_batch_experiments),
+        solver_backend = "deSolve",
+        solver_warmup = function() simulate(
+            compiled_model, experiment = compiled_batch_experiments[1]
+        )
     ),
-    time_one("rxode2 model cached", n_rxode2, run_many(rxode2_model, n_rxode2)),
+    time_one(
+        "rxode2 model cached", n_rxode2,
+        run_many(rxode2_model, n_rxode2, engine = rx_engine), solver_backend = "rxode2",
+        solver_warmup = function() simulate(
+            rxode2_model, time = times, parameters = parameter_sets[[1]], engine = rx_engine
+        )
+    ),
     time_one(
         "rxode2 model batched", n_rxode2,
-        simulate(rxode2_model, experiment = rxode2_batch_experiments)
+        simulate(rxode2_model, experiment = rxode2_batch_experiments, engine = rx_engine),
+        solver_backend = "rxode2",
+        solver_warmup = function() simulate(
+            rxode2_model, experiment = rxode2_trace_warmup_experiments, engine = rx_engine
+        )
     )
 )
 
@@ -194,6 +309,11 @@ cat("\nNotes:\n")
 cat("- The CompiledOdeModel warm-up includes C source generation, R CMD SHLIB, dyn.load(), and one simulation.\n")
 cat("- The rxode2 warm-up includes source rendering, rxode2 compilation, and one simulation.\n")
 cat("- Cached rows measure repeated simulations after backend compilation.\n")
+cat("- The benchmark temporarily traces the backend functions; no package-level timing code is used.\n")
+cat("- Each traced backend is primed once outside the timed batch to exclude tracing/JIT setup.\n")
+cat("- Compiled-route solver time is accumulated inside the actual backend calls made by each timed batch.\n")
+cat("- Overhead is total batch time minus accumulated solver time; it is not derived from separate microbenchmarks.\n")
+cat("- deSolve and rxode2 use matching rtol = 1e-10 and atol = 1e-10.\n")
 cat("- The batched CompiledOdeModel row uses one experiment-collection call but still performs one deSolve call per individual.\n")
 cat("- The batched rxode2 row solves all experiment individuals in one rxSolve() call and reports time per individual.\n")
 cat("- Set COMPPHYSIOL_BENCH_N_COMPARTMENT, COMPPHYSIOL_BENCH_N_ODE, COMPPHYSIOL_BENCH_N_COMPILED, or COMPPHYSIOL_BENCH_N_RXODE2 to change route-specific replicate counts.\n")

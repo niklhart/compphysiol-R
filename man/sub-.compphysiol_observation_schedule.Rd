@@ -16,7 +16,8 @@
 \item{drop}{Whether to simplify the result.}
 }
 \value{
-A validated observation object when its required columns remain.
+An observation object with its class restored when the required
+columns remain.
 }
 \description{
 Row subsets retain their class. Column subsets retain \code{compphysiol_observation_data} when
