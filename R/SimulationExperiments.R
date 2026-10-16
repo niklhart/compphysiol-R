@@ -1,11 +1,10 @@
 .simulate_experiments <- function(object, experiment, dimensions = NULL, engine = NULL, ...) {
     multiple <- inherits(experiment, "compphysiol_experiments")
-    experiments <- if (multiple) unclass(.new_experiments(unclass(experiment))) else {
+    experiments <- if (multiple) unclass(experiment) else {
         .check_class(experiment, "compphysiol_experiment")
         list(experiment)
     }
     for (e in experiments) {
-        validate_experiment(e)
         if (!nrow(e$observations)) stop("Experiment simulation requires nonempty observations.", call. = FALSE)
         model <- if (inherits(object, c("compphysiol_desolve_compiled_model", "compphysiol_rxode2_model"))) object$ode_model else object
         unknown <- setdiff(e$observations$observable, names(model$observables))

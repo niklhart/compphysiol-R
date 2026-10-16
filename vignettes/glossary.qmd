@@ -906,6 +906,14 @@ an independent individual and the collection is executed in one batched
 in experiment order. This is a simulation concern and does not require nlmixr2;
 nlmixr2 enters when population estimation semantics are requested.
 
+Experiment constructors establish the structural validity of experiments and
+experiment collections. Methods such as collection subsetting and simulation
+trust objects carrying those S3 classes rather than repeating full constructor
+validation. Simulation still checks requirements that depend on the selected
+model or execution request, including nonempty observation schedules, known
+observable names, available parameters, dosing targets, and solver-boundary
+unit compatibility.
+
 Implementation anchor: simulation is handled by `simulate()` methods for
 `compphysiol_compartment_model`, `compphysiol_ode_model`,
 `compphysiol_desolve_compiled_model`, `compphysiol_rxode2_model`,

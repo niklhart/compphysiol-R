@@ -28,6 +28,16 @@ test_that("Experiments subsetting preserves the collection and requested order",
     expect_error(x[NA_integer_], "experiment")
 })
 
+test_that("Experiments subsetting trusts the collection contract", {
+    x <- experiments(a = experiment(observations = observation_schedule(1, "A")))
+    x[[1]]$observations$observable <- ""
+
+    subset <- x[1]
+
+    expect_s3_class(subset, "compphysiol_experiments")
+    expect_identical(subset[[1]], x[[1]])
+})
+
 test_that("Experiments concatenation retains names, units, and empty collections", {
     a <- experiments(a = experiment(start = 0 [h]))
     b <- experiments(b = experiment(start = -1 [h]))

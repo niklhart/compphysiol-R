@@ -98,7 +98,11 @@ experiments <- function(...) {
 #' @returns A `compphysiol_experiments` object.
 #' @export
 `[.compphysiol_experiments` <- function(x, i, ...) {
-    .new_experiments(unclass(x)[i])
+    out <- unclass(x)[i]
+    if (any(vapply(out, is.null, logical(1)))) {
+        stop("Cannot subset experiments with missing or unknown indices.", call. = FALSE)
+    }
+    structure(out, class = class(x))
 }
 
 #' Extract an experiment
