@@ -60,7 +60,11 @@ extend_protocol <- function(protocol, population) {
         )
     }
 
-    homogeneity <- .experiments_compute_component_homogeneity(individuals)
-    homogeneity[c("start", "dosing", "observation_plan", "observations")] <- TRUE
+    component_names <- .experiments_component_names()
+    homogeneity <- stats::setNames(rep(TRUE, length(component_names)), component_names)
+    parameter_components <- c("parameter_schema", "parameters")
+    homogeneity[parameter_components] <- .experiments_compute_component_homogeneity(
+        individuals, categories = parameter_components
+    )
     .new_experiments(setNames(individuals, labels), homogeneity)
 }

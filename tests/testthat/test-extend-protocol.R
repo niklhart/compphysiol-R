@@ -32,6 +32,10 @@ test_that("extend_protocol creates one experiment per individual", {
     homogeneity <- .experiments_component_homogeneity(result)
     expect_true(all(homogeneity[c("start", "parameter_schema", "dosing", "observation_plan", "observations")]))
     expect_false(homogeneity[["parameters"]])
+    expect_identical(
+        homogeneity,
+        .experiments_compute_component_homogeneity(lapply(result, identity))
+    )
 })
 
 test_that("extend_protocol generates names for unnamed individuals", {

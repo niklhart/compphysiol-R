@@ -62,8 +62,9 @@ experiments <- function(...) {
     out
 }
 
-.experiments_compute_component_homogeneity <- function(x) {
-    categories <- .experiments_component_names()
+.experiments_compute_component_homogeneity <- function(
+    x, categories = .experiments_component_names()
+) {
     out <- stats::setNames(rep(TRUE, length(categories)), categories)
     if (length(x) < 2L) return(out)
 
