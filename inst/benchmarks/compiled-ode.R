@@ -103,9 +103,11 @@ cat("Executable ODE benchmark: sMD_PBPK_12CMT_wellstirred\n")
 cat("Repeated simulations:\n")
 cat("  CompartmentModel:", n_compartment, "\n")
 cat("  OdeModel:", n_ode, "\n")
-cat("  CompiledOdeModel cached:", n_compiled, "\n")
+cat("  CompiledOdeModel direct repeated:", n_compiled, "\n")
+cat("  CompiledOdeModel experiments individually:", n_compiled, "individuals\n")
 cat("  CompiledOdeModel batched:", n_compiled, "individuals\n")
-cat("  rxode2 model cached:", n_rxode2, "\n")
+cat("  rxode2 model direct repeated:", n_rxode2, "\n")
+cat("  rxode2 model experiments individually:", n_rxode2, "individuals\n")
 cat("  rxode2 model batched:", n_rxode2, "individuals\n")
 cat("Output times:", length(times), "\n\n")
 
@@ -139,6 +141,17 @@ run_many <- function(object, n, engine = NULL) {
             simulate(object, time = times, parameters = parameter_sets[[i]])
         } else {
             simulate(object, time = times, parameters = parameter_sets[[i]], engine = engine)
+        }
+    }
+    invisible(NULL)
+}
+
+run_experiments_individually <- function(object, experiment_collection, engine = NULL) {
+    for (i in seq_along(experiment_collection)) {
+        if (is.null(engine)) {
+            simulate(object, experiment = experiment_collection[[i]])
+        } else {
+            simulate(object, experiment = experiment_collection[[i]], engine = engine)
         }
     }
     invisible(NULL)
@@ -257,10 +270,18 @@ results <- rbind(
     time_one("CompartmentModel", n_compartment, run_many(model, n_compartment)),
     time_one("OdeModel", n_ode, run_many(ode_model, n_ode)),
     time_one(
-        "CompiledOdeModel cached", n_compiled,
+        "CompiledOdeModel direct repeated", n_compiled,
         run_many(compiled_model, n_compiled), solver_backend = "deSolve",
         solver_warmup = function() simulate(
             compiled_model, time = times, parameters = parameter_sets[[1]]
+        )
+    ),
+    time_one(
+        "CompiledOdeModel experiments individually", n_compiled,
+        run_experiments_individually(compiled_model, compiled_batch_experiments),
+        solver_backend = "deSolve",
+        solver_warmup = function() simulate(
+            compiled_model, experiment = compiled_batch_experiments[[1]]
         )
     ),
     time_one(
@@ -272,10 +293,18 @@ results <- rbind(
         )
     ),
     time_one(
-        "rxode2 model cached", n_rxode2,
+        "rxode2 model direct repeated", n_rxode2,
         run_many(rxode2_model, n_rxode2, engine = rx_engine), solver_backend = "rxode2",
         solver_warmup = function() simulate(
             rxode2_model, time = times, parameters = parameter_sets[[1]], engine = rx_engine
+        )
+    ),
+    time_one(
+        "rxode2 model experiments individually", n_rxode2,
+        run_experiments_individually(rxode2_model, rxode2_batch_experiments, engine = rx_engine),
+        solver_backend = "rxode2",
+        solver_warmup = function() simulate(
+            rxode2_model, experiment = rxode2_batch_experiments[[1]], engine = rx_engine
         )
     ),
     time_one(
@@ -291,8 +320,9 @@ results <- rbind(
 results$speedup_vs_ode_model <- NA_real_
 ode_seconds <- results$seconds_per_simulation[results$route == "OdeModel"]
 cached_routes <- c(
-    "CompiledOdeModel cached", "CompiledOdeModel batched",
-    "rxode2 model cached", "rxode2 model batched"
+    "CompiledOdeModel direct repeated", "CompiledOdeModel experiments individually",
+    "CompiledOdeModel batched", "rxode2 model direct repeated",
+    "rxode2 model experiments individually", "rxode2 model batched"
 )
 if (length(ode_seconds) == 1L) {
     for (route in cached_routes) {
@@ -308,7 +338,9 @@ print(results, row.names = FALSE, digits = 4)
 cat("\nNotes:\n")
 cat("- The CompiledOdeModel warm-up includes C source generation, R CMD SHLIB, dyn.load(), and one simulation.\n")
 cat("- The rxode2 warm-up includes source rendering, rxode2 compilation, and one simulation.\n")
-cat("- Cached rows measure repeated simulations after backend compilation.\n")
+cat("- All executable-model rows run after backend compilation and cache warm-up.\n")
+cat("- Direct repeated rows use time and parameters without constructing experiments.\n")
+cat("- Experiments individually and batched use identical experiment inputs; compare them to isolate batching.\n")
 cat("- The benchmark temporarily traces the backend functions; no package-level timing code is used.\n")
 cat("- Each traced backend is primed once outside the timed batch to exclude tracing/JIT setup.\n")
 cat("- Compiled-route solver time is accumulated inside the actual backend calls made by each timed batch.\n")
