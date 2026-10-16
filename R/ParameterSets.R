@@ -72,11 +72,12 @@ parameter_sets <- function(...) {
 #' @returns A `compphysiol_parameter_sets` object.
 #' @export
 `[.compphysiol_parameter_sets` <- function(x, i, ...) {
+    if (missing(i)) return(x)
+    .check_unique_subset_index(i, "Parameter set")
     out <- unclass(x)[i]
     if (any(vapply(out, is.null, logical(1)))) {
         stop("Cannot subset parameters with missing or unknown indices.", call. = FALSE)
     }
-    .parameter_sets_check_names(out)
     .new_parameter_sets(out)
 }
 

@@ -172,9 +172,7 @@ c.compphysiol_molecules <- function(...) {
 #' @return A subsetted `compphysiol_molecules` object
 #' @export
 `[.compphysiol_molecules` <- function(x, i, ...) {
-    out <- .subset_df_like(x, i, byname = TRUE)
-    .check_unique_molecule_states(out)
-    .new_molecules(out)
+    .new_molecules(.subset_df_like(x, i, byname = TRUE, unique = TRUE))
 }
 
 #' Extraction method for `compphysiol_molecules` class

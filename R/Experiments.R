@@ -105,11 +105,12 @@ experiments <- function(...) {
 #' @returns A `compphysiol_experiments` object.
 #' @export
 `[.compphysiol_experiments` <- function(x, i, ...) {
+    if (missing(i)) return(x)
+    .check_unique_subset_index(i, "Experiment")
     out <- unclass(x)[i]
     if (any(vapply(out, is.null, logical(1)))) {
         stop("Cannot subset experiments with missing or unknown indices.", call. = FALSE)
     }
-    .check_optional_unique_names(out, "experiment")
     .new_experiments(out)
 }
 

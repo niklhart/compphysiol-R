@@ -21,7 +21,7 @@ test_that("Experiments subsetting preserves the collection and requested order",
     expect_identical(x[c("b", "a")], experiments(b = x[[2]], a = x[[1]]))
     expect_identical(x[-1], experiments(b = x[[2]]))
     expect_identical(x[c(TRUE, FALSE)], experiments(a = x[[1]]))
-    expect_error(x[c(1, 1)], "Experiment names must be unique")
+    expect_error(x[c(1, 1)], "unique")
     expect_s3_class(x[integer()], "compphysiol_experiments")
     expect_length(x[integer()], 0)
     expect_error(x["missing"], "experiment")
@@ -39,7 +39,7 @@ test_that("Experiment names are optional but nonempty names are unique", {
     )
 
     unnamed <- experiments(experiment(), experiment())
-    expect_identical(unnamed[c(1, 1)], experiments(experiment(), experiment()))
+    expect_error(unnamed[c(1, 1)], "unique")
     expect_length(c(unnamed, experiments(experiment())), 3L)
 })
 

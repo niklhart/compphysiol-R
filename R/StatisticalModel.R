@@ -280,8 +280,9 @@ statistical_model <- function(...) {
 `[.compphysiol_statistical_model` <- function(x, i, ...) {
     distributions <- unclass(x)
     attr(distributions, "correlations") <- NULL
+    if (missing(i)) return(x)
+    .check_unique_subset_index(i, "Statistical-model target")
     selected <- distributions[i]
-    .check_unique_names(names(selected), "statistical-model target")
     retained <- names(selected)
     correlations <- Filter(function(pair) {
         pair$first %in% retained && pair$second %in% retained

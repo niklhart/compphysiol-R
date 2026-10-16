@@ -68,6 +68,20 @@ test_that("named component subsetting rejects newly duplicated names", {
     expect_error(equations(a = 1, b = 2)[c(1, 1)], "unique")
     expect_error(observables(a = 1, b = 2)[c(1, 1)], "unique")
     expect_error(parameters(a = 1, b = 2)[c(1, 1)], "unique")
+
+    compartments_abc <- compartments(c("A", "B", "C"), volume = 1)
+    expect_identical(compartments_abc[-c(1, 1)], compartments_abc[-1])
+    expect_identical(
+        compartments_abc[c(TRUE, FALSE, TRUE)],
+        compartments_abc[c(1, 3)]
+    )
+
+    parameters_abc <- parameters(a = 1, b = 2, c = 3)
+    expect_identical(parameters_abc[-c(1, 1)], parameters_abc[-1])
+    expect_identical(
+        parameters_abc[c(TRUE, FALSE, TRUE)],
+        parameters_abc[c(1, 3)]
+    )
 })
 
 test_that("molecule-compartment states stay unique", {
@@ -80,7 +94,7 @@ test_that("molecule-compartment states stay unique", {
         "Molecule-compartment states must be unique"
     )
     x <- molecules(c("A", "A"), cmt = c("cyt", "nuc"))
-    expect_error(x[c(1, 1)], "Molecule-compartment states must be unique")
+    expect_error(x[c(1, 1)], "unique")
 
     model <- compartment_model() |>
         add_compartment(c("cyt", "nuc"), volume = 1) |>

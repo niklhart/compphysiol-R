@@ -198,9 +198,7 @@ c.compphysiol_compartments <- function(...) {
 #' @return A subsetted `compphysiol_compartments` object
 #' @export
 `[.compphysiol_compartments` <- function(x, i, ...) {
-    out <- .subset_df_like(x, i, byname = TRUE)
-    .check_unique_names(out$name, "compartment")
-    .new_compartments(out)
+    .new_compartments(.subset_df_like(x, i, byname = TRUE, unique = TRUE))
 }
 
 #' Extraction method for `compphysiol_compartments` class

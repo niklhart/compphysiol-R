@@ -182,11 +182,11 @@ c.compphysiol_parameter_specs <- function(..., recursive = FALSE) {
 #' @export
 `[.compphysiol_parameter_specs` <- function(x, i, ...) {
     if (missing(i)) return(x)
+    .check_unique_subset_index(i, "Parameter specification")
     out <- unclass(x)[i]
     if (any(vapply(out, is.null, logical(1)))) {
         stop("Cannot subset parameter specifications with missing or unknown indices.", call. = FALSE)
     }
-    .check_named_values(out, "parameter specification")
     .new_parameter_specs(out)
 }
 

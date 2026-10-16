@@ -448,8 +448,19 @@ with_units <- function(expr) {
     }) |> do.call(what = "c")
 }
 
-
-
+.check_unique_subset_index <- function(i, label = "Subset") {
+    duplicated <- if (is.logical(i)) {
+        FALSE
+    } else if (is.character(i)) {
+        anyDuplicated(i)
+    } else if (is.numeric(i)) {
+        anyDuplicated(i[i > 0 & !is.na(i)])
+    } else {
+        FALSE
+    }
+    if (duplicated) stop(label, " indices must be unique.", call. = FALSE)
+    invisible(NULL)
+}
 
 #' Subsetting logic for data frame-like classes (named or unnamed)
 #' 
@@ -460,16 +471,19 @@ with_units <- function(expr) {
 #' @param x The object to subset (e.g. a `compphysiol_molecules` object)
 #' @param i The row indices to subset
 #' @param byname If `TRUE`, allows subsetting by name; if `FALSE` (default), only allows numeric indices
+#' @param unique If `TRUE`, checks that the indices are unique; if `FALSE` (default), does not check
 #' @param ... Additional arguments (not used)
 #' @returns The subsetted underlying data frame.
 #' @noRd
-.subset_df_like <- function(x, i, byname = FALSE, ...) {
-
-    # Handle character indexing via names
+.subset_df_like <- function(x, i, byname = FALSE, unique = FALSE, ...) {
+    if (missing(i)) i <- seq_len(length(x))
+    if (unique) .check_unique_subset_index(i)
     if (is.character(i)) {
-        if (!byname) stop(sprintf("Subsetting by name is not allowed for class '%s'.", class(x)[1]))
+        if (!byname) stop(sprintf(
+            "Subsetting by name is not allowed for class '%s'.", class(x)[1]
+        ))
         i <- match(i, names(x))
-        if (any(is.na(i))) stop("Unknown name.")
+        if (anyNA(i)) stop("Unknown name.", call. = FALSE)
     }
 
     df_subset <- as.data.frame(x)[i, , drop = FALSE]
