@@ -72,6 +72,7 @@ test_that("statistical_model uses names as random-quantity targets", {
     expect_named(model, c("CL", "V", "C"))
     expect_s3_class(model["CL"], "compphysiol_statistical_model")
     expect_s3_class(model[["CL"]], "compphysiol_normal_distribution")
+    expect_error(model[c("CL", "CL")], "unique")
     expect_error(statistical_model(normal(sd = "sigma")), "named|random quantity")
     expect_error(
         statistical_model(C = normal(sd = "a"), C = normal(sd = "b")),

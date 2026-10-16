@@ -94,17 +94,27 @@ molecules <- function(name = character(0), cmt = NULL, initial = 0, unit = NULL,
     }
 
     # Construct the molecules object as a data frame with its package class.
-    .new_molecules(data.frame(
+    x <- data.frame(
         name = name,
         cmt = cmt %||% NA_character_,
         init = I(initial),
         type = type,
         stringsAsFactors = FALSE
-    ))
+    )
+    .check_unique_molecule_states(x)
+    .new_molecules(x)
 }
 
 .new_molecules <- function(x) {
     structure(x, class = .compphysiol_class("compphysiol_molecules"))
+}
+
+.check_unique_molecule_states <- function(x) {
+    key <- paste(x$name, ifelse(is.na(x$cmt), "<all cmt>", x$cmt), sep = "\r")
+    if (anyDuplicated(key)) {
+        stop("Molecule-compartment states must be unique.", call. = FALSE)
+    }
+    invisible(NULL)
 }
 
 #' Add one or several molecules to a `compphysiol_compartment_model` object.
@@ -136,6 +146,8 @@ add_molecule <- function(
         parent_env = parent.frame()
     )
 
+    .check_class(molec, "compphysiol_molecules")
+
     model$molecules <- c(model$molecules, molec)
 
     model
@@ -147,7 +159,9 @@ add_molecule <- function(
 #' @return A combined `compphysiol_molecules` object
 #' @export
 c.compphysiol_molecules <- function(...) {
-    .new_molecules(as.data.frame(.combine_df_like(...)))
+    out <- .combine_df_like(...)
+    .check_unique_molecule_states(out)
+    .new_molecules(out)
 }
 
 #' Subset a `compphysiol_molecules` object
@@ -158,7 +172,9 @@ c.compphysiol_molecules <- function(...) {
 #' @return A subsetted `compphysiol_molecules` object
 #' @export
 `[.compphysiol_molecules` <- function(x, i, ...) {
-    .new_molecules(as.data.frame(.subset_df_like(x, i, byname = TRUE)))
+    out <- .subset_df_like(x, i, byname = TRUE)
+    .check_unique_molecule_states(out)
+    .new_molecules(out)
 }
 
 #' Extraction method for `compphysiol_molecules` class

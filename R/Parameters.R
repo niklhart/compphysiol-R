@@ -159,7 +159,9 @@ names.compphysiol_parameters <- function(x) names(unclass(x))
 #' @returns A subset of the `compphysiol_parameters` object
 #' @export
 `[.compphysiol_parameters` <- function(x, i, ...) {
-    .new_parameters(unclass(x)[i])
+    out <- unclass(x)[i]
+    .check_unique_names(names(out), "parameter")
+    .new_parameters(out)
 }
 
 #' Replace parts of a `compphysiol_parameters` object
@@ -169,6 +171,7 @@ names.compphysiol_parameters <- function(x) names(unclass(x))
 #' @returns The modified `compphysiol_parameters` object
 #' @export
 `[<-.compphysiol_parameters` <- function(x, i, value) {
+    .check_class(value, "compphysiol_parameters")
     x <- unclass(x)
     x[i] <- unclass(value)
     if (is.character(i)) i <- match(i, names(x))

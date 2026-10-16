@@ -43,12 +43,7 @@ parameter_sets <- function(...) {
 }
 
 .parameter_sets_check_names <- function(x) {
-    labels <- names(x)
-    named <- !is.null(labels) & !is.na(labels) & nzchar(labels)
-    if (anyDuplicated(labels[named])) {
-        stop("Parameter set names must be unique.", call. = FALSE)
-    }
-    invisible(NULL)
+    .check_optional_unique_names(x, "parameter set")
 }
 
 .parameter_sets_check_units <- function(x) {
@@ -81,11 +76,7 @@ parameter_sets <- function(...) {
     if (any(vapply(out, is.null, logical(1)))) {
         stop("Cannot subset parameters with missing or unknown indices.", call. = FALSE)
     }
-    labels <- names(out)
-    named <- !is.null(labels) & !is.na(labels) & nzchar(labels)
-    if (anyDuplicated(labels[named])) {
-        stop("Parameter set names must be unique.", call. = FALSE)
-    }
+    .parameter_sets_check_names(out)
     .new_parameter_sets(out)
 }
 

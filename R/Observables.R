@@ -192,7 +192,9 @@ print.compphysiol_observables <- function(x, ...) {
 #' @returns A subset of the `compphysiol_observables` object
 #' @export
 `[.compphysiol_observables` <- function(x, i, ...) {
-    .new_observables(unclass(x)[i])
+    out <- unclass(x)[i]
+    .check_unique_names(names(out), "observable")
+    .new_observables(out)
 }
 
 #' Combine multiple `compphysiol_observables` objects into one

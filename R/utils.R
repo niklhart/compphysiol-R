@@ -454,13 +454,14 @@ with_units <- function(expr) {
 #' Subsetting logic for data frame-like classes (named or unnamed)
 #' 
 #' This function is used to implement the `[` method for classes like `compphysiol_molecules`, `compphysiol_compartments`, etc. 
-#' It applies the subset to the underlying data frame and then reconstructs the object with the same class.
+#' It applies the subset to the underlying data frame. The caller restores the
+#' package class with the corresponding low-level constructor.
 #' 
 #' @param x The object to subset (e.g. a `compphysiol_molecules` object)
 #' @param i The row indices to subset
 #' @param byname If `TRUE`, allows subsetting by name; if `FALSE` (default), only allows numeric indices
 #' @param ... Additional arguments (not used)
-#' @returns A subsetted object of the same class (e.g. a `compphysiol_molecules` object)
+#' @returns The subsetted underlying data frame.
 #' @noRd
 .subset_df_like <- function(x, i, byname = FALSE, ...) {
 
@@ -474,24 +475,23 @@ with_units <- function(expr) {
     df_subset <- as.data.frame(x)[i, , drop = FALSE]
     rownames(df_subset) <- NULL
     
-    structure(df_subset, class = class(x))
+    df_subset
 }
 
 #' Combine multiple data frame-like objects (e.g. `compphysiol_molecules`, `compphysiol_compartments`) into one
 #'
 #' @param ... Multiple objects of the same class to combine
-#' @returns A combined object of the same class
+#' @returns The combined underlying data frame.
 #' @noRd
 .combine_df_like <- function(...) {
     objs <- list(...)
-    class1 <- class(objs[[1]])
-    if (!all(sapply(objs, function(o) inherits(o, class1)))) {
-        stop(sprintf("All inputs must be of class '%s'.", class1[1]))
+    expected_class <- class(objs[[1]])[[1L]]
+    if (!all(vapply(objs, inherits, logical(1), what = expected_class))) {
+        stop(sprintf("All inputs must be of class '%s'.", expected_class))
     }
 
     # Combine the data frames by row-binding
-    combined_df <- do.call(rbind, lapply(objs, as.data.frame))
-    structure(combined_df, class = class(objs[[1]]))
+    do.call(rbind, lapply(objs, as.data.frame))
 }
 
 #' Extraction method for data frame-like class
@@ -535,6 +535,12 @@ with_units <- function(expr) {
         stop(paste0(tools::toTitleCase(label), " names must be unique."), call. = FALSE)
     }
     invisible(NULL)
+}
+
+.check_optional_unique_names <- function(x, label) {
+    nm <- names(x)
+    named <- !is.null(nm) & !is.na(nm) & nzchar(nm)
+    .check_unique_names(nm[named], label)
 }
 
 #' Replace all occurrences of `[x]` in a call by `[x,val]` or `[val,x]`

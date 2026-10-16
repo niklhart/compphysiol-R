@@ -186,10 +186,7 @@ c.compphysiol_parameter_specs <- function(..., recursive = FALSE) {
     if (any(vapply(out, is.null, logical(1)))) {
         stop("Cannot subset parameter specifications with missing or unknown indices.", call. = FALSE)
     }
-    nm <- names(out)
-    if (length(out) && (is.null(nm) || anyNA(nm) || any(!nzchar(nm)) || anyDuplicated(nm))) {
-        stop("Parameter specification names must be present and unique.", call. = FALSE)
-    }
+    .check_named_values(out, "parameter specification")
     .new_parameter_specs(out)
 }
 
@@ -333,9 +330,7 @@ estimation_problem <- function(model, experiments, parameters, statistics) {
         stop("Statistical model parameter(s) are not declared for estimation: ",
              paste(missing_parameters, collapse = ", "), ".", call. = FALSE)
     }
-    initial_values <- structure(
-        lapply(parameters, `[[`, "initial"), class = .class_parameters()
-    )
+    initial_values <- .new_parameters(lapply(parameters, `[[`, "initial"))
     for (e in unclass(experiments)) {
         validation_values <- .merge_ode_parameters(e$parameters, initial_values)
         .resolve_statistical_model(statistics, model, validation_values)
@@ -455,7 +450,7 @@ estimate.compphysiol_estimation_problem <- function(
     evaluate <- function(par, diagnostics = FALSE) {
         values <- .estimation_decode(par, specs)
         runtime <- values[intersect(names(values), model_parameters)]
-        runtime <- structure(runtime, class = .class_parameters())
+        runtime <- .new_parameters(runtime)
         estimation_experiments <- lapply(unclass(problem$experiments), function(e) {
             e$parameters <- .merge_ode_parameters(e$parameters, runtime)
             e
@@ -503,7 +498,7 @@ estimate.compphysiol_estimation_problem <- function(
     raw <- do.call(stats::optim, optim_args)
     coefficients <- .estimation_validate_optim_result(raw$par, coordinates, specs)
     diagnostics <- evaluate(raw$par, diagnostics = TRUE)
-    coefficients <- structure(coefficients, class = .class_parameters())
+    coefficients <- .new_parameters(coefficients)
     structure(
         list(
             coefficients = coefficients,

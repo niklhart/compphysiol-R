@@ -133,7 +133,8 @@ observation_data <- function(time = numeric(), observable = character(), value =
 #' @param i,j Row and column indices.
 #' @param drop Whether to simplify the result.
 #' @param ... Unused.
-#' @returns A validated observation object when its required columns remain.
+#' @returns An observation object with its class restored when the required
+#'   columns remain.
 #' @export
 `[.compphysiol_observation_schedule` <- function(x, i, j, ..., drop = FALSE) {
     out <- NextMethod("[")

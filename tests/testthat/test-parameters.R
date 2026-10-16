@@ -90,4 +90,5 @@ test_that("Parameter replacement works correctly", {
     p <- parameters(name = c('A', 'B'), value = c(2, 3), unit = c("", "kg"))
     p["A"] <- parameters(name = 'C', value = 5, unit = "m")
     expect_equal(p[["C"]], units::set_units(5, "m"))
+    expect_error(p["C"] <- list(D = 1), "Parameters")
 })

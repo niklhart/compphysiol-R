@@ -24,16 +24,17 @@ state <- function(..., molec, cmt) {
     if (length(molec) == 1) molec <- rep(molec, n)
     if (length(cmt) == 1) cmt <- rep(cmt, n)
 
-    structure(
-        data.frame(
+    .new_states(data.frame(
             molec = molec,
             cmt = cmt,
             stringsAsFactors = FALSE
-        ),
-        class = .compphysiol_class(
-            "compphysiol_states", base = "data.frame"
-        )
-    )
+        ))
+}
+
+.new_states <- function(x) {
+    structure(x, class = .compphysiol_class(
+        "compphysiol_states", base = "data.frame"
+    ))
 }
 
 #' @export
@@ -53,16 +54,13 @@ c.compphysiol_states <- function(...) {
     if (!all(vapply(objs, inherits, logical(1), what = "compphysiol_states"))) {
         stop("All inputs must be of class 'states'.", call. = FALSE)
     }
-    structure(
-        do.call(rbind, lapply(objs, as.data.frame)),
-        class = .compphysiol_class(
-            "compphysiol_states", base = "data.frame"
-        )
-    )
+    .new_states(do.call(rbind, lapply(objs, as.data.frame)))
 }
 
 #' @export
-`[.compphysiol_states` <- function(x, i, ...) .subset_df_like(x, i, byname = FALSE)
+`[.compphysiol_states` <- function(x, i, ...) {
+    .new_states(.subset_df_like(x, i, byname = FALSE))
+}
 
 #' @export
 `[[.compphysiol_states` <- function(x, i, ...) .extract_df_like(x, i)
@@ -627,6 +625,8 @@ add_reaction <- function(
         parent_env = parent.frame()
     )
 
+    .check_class(react, "compphysiol_reactions")
+
     model$reactions <- c(model$reactions, react)
 
     model
@@ -658,7 +658,7 @@ length.compphysiol_reactions <- function(x) {
 #' @return A combined `compphysiol_reactions` object
 #' @export
 c.compphysiol_reactions <- function(...) {
-    .new_reactions(as.data.frame(.combine_df_like(...)))
+    .new_reactions(.combine_df_like(...))
 }
 
 #' Subset a `compphysiol_reactions` object
@@ -670,7 +670,7 @@ c.compphysiol_reactions <- function(...) {
 #' @return A subsetted `compphysiol_reactions` object
 #' @export
 `[.compphysiol_reactions` <- function(x, i, ...) {
-    .new_reactions(as.data.frame(.subset_df_like(x, i, byname = FALSE)))
+    .new_reactions(.subset_df_like(x, i, byname = FALSE))
 }
 
 #' Extraction method for `compphysiol_reactions` class

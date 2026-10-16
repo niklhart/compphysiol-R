@@ -1082,7 +1082,7 @@ print.compphysiol_simulation_result <- function(x, ...) {
     if (!is.list(parameters)) {
         stop("Argument 'parameters' must be a named list or parameters object.", call. = FALSE)
     }
-    structure(parameters, class = .class_parameters())
+    .new_parameters(parameters)
 }
 
 .simulation_model_with_parameters <- function(model, parameters) {

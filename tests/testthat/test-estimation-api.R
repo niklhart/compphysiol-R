@@ -55,6 +55,7 @@ test_that("ParameterSpecs compose, subset, and print by row", {
     expect_named(spec["k"], "k")
     expect_s3_class(spec[["k"]], "compphysiol_parameter_spec")
     expect_identical(spec[], spec)
+    expect_error(spec[c("k", "k")], "unique")
     expect_error(c(spec, k = parameter_spec(1)), "unique|duplicated")
     expect_error(c(spec, invalid = 1), "parameter specification")
 

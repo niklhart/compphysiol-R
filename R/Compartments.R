@@ -185,7 +185,7 @@ print.compphysiol_compartments <- function(x, ...) {
 #' @return A combined `compphysiol_compartments` object
 #' @export
 c.compphysiol_compartments <- function(...) {
-    x <- as.data.frame(.combine_df_like(...))
+    x <- .combine_df_like(...)
     if (anyDuplicated(x$name)) stop("Duplicate compartment names are not allowed.")
     .new_compartments(x)
 }
@@ -198,7 +198,9 @@ c.compphysiol_compartments <- function(...) {
 #' @return A subsetted `compphysiol_compartments` object
 #' @export
 `[.compphysiol_compartments` <- function(x, i, ...) {
-    .new_compartments(as.data.frame(.subset_df_like(x, i, byname = TRUE)))
+    out <- .subset_df_like(x, i, byname = TRUE)
+    .check_unique_names(out$name, "compartment")
+    .new_compartments(out)
 }
 
 #' Extraction method for `compphysiol_compartments` class

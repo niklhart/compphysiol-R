@@ -309,7 +309,7 @@ as.list.compphysiol_transports <- function(x, ...) {
 #' @return A subsetted `compphysiol_transports` object
 #' @export
 `[.compphysiol_transports` <- function(x, i, ...) {
-    .new_transports(as.data.frame(.subset_df_like(x, i, byname = FALSE)))
+    .new_transports(.subset_df_like(x, i, byname = FALSE))
 }
 
 #' Combine multiple `compphysiol_transports` objects into one
@@ -318,7 +318,7 @@ as.list.compphysiol_transports <- function(x, ...) {
 #' @return A combined `compphysiol_transports` object
 #' @export
 c.compphysiol_transports <- function(...) {
-    .new_transports(as.data.frame(.combine_df_like(...)))
+    .new_transports(.combine_df_like(...))
 }
 
 #' Access an element in a `compphysiol_transports` object

@@ -121,7 +121,9 @@ print.compphysiol_equations <- function(x, ...) {
 #' @returns A subset of the `compphysiol_equations` object
 #' @export
 `[.compphysiol_equations` <- function(x, i, ...) {
-    .new_equations(unclass(x)[i])
+    out <- unclass(x)[i]
+    .check_unique_names(names(out), "equation")
+    .new_equations(out)
 }
 
 #' Combine multiple `compphysiol_equations` objects

@@ -21,11 +21,26 @@ test_that("Experiments subsetting preserves the collection and requested order",
     expect_identical(x[c("b", "a")], experiments(b = x[[2]], a = x[[1]]))
     expect_identical(x[-1], experiments(b = x[[2]]))
     expect_identical(x[c(TRUE, FALSE)], experiments(a = x[[1]]))
-    expect_identical(x[c(1, 1)], experiments(a = x[[1]], a = x[[1]]))
+    expect_error(x[c(1, 1)], "Experiment names must be unique")
     expect_s3_class(x[integer()], "compphysiol_experiments")
     expect_length(x[integer()], 0)
     expect_error(x["missing"], "experiment")
     expect_error(x[NA_integer_], "experiment")
+})
+
+test_that("Experiment names are optional but nonempty names are unique", {
+    expect_error(
+        experiments(a = experiment(), a = experiment()),
+        "Experiment names must be unique"
+    )
+    expect_error(
+        c(experiments(a = experiment()), experiments(a = experiment())),
+        "Experiment names must be unique"
+    )
+
+    unnamed <- experiments(experiment(), experiment())
+    expect_identical(unnamed[c(1, 1)], experiments(experiment(), experiment()))
+    expect_length(c(unnamed, experiments(experiment())), 3L)
 })
 
 test_that("Experiments subsetting trusts the collection contract", {

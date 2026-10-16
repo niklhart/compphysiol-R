@@ -487,7 +487,7 @@ and time-dependent model equations are not part of the current experiment
 contract. Dosing may be calculated from known experimental values before
 constructing the experiment.
 
-Current support covers construction, printing, validation, and ODE simulation.
+Current support covers construction, printing, and ODE simulation.
 An experiment supplies the complete dosing schedule, replacing model-attached
 dosing even when the experiment schedule is empty. Its known parameters override
 model defaults. Simulation starts at the initial time and evaluates only the
@@ -502,6 +502,8 @@ with `experiment()`; collections use `compphysiol_experiments`, created with
 An experiment collection holds several
 independent individual units. The element name is the individual identifier;
 unnamed elements remain accepted for workflows that do not yet assign one.
+Nonempty identifiers must be unique, while any number of elements may remain
+unnamed.
 Subsetting with `[` retains a collection; `[[` extracts an individual
 experiment. Collections can be combined with `c()`. Printing a collection
 shows one summary per experiment, while printing an individual experiment shows

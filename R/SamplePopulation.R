@@ -94,7 +94,7 @@ sample_population <- function(statistics, parameters, n, targets = NULL) {
 
     people <- lapply(seq_len(n), function(i) {
         values <- lapply(sampled, `[[`, i)
-        structure(values, class = .class_parameters())
+        .new_parameters(values)
     })
     names(people) <- paste0("individual_", seq_len(n))
     .new_parameter_sets(people)

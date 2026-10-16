@@ -13,7 +13,6 @@
 #' @export
 print.compphysiol_desolve_compiled_model <- function(x, ...) {
     ode_model <- x$ode_model
-    .check_class(ode_model, "compphysiol_ode_model")
 
     cat("Compiled deSolve model (", .compiled_ode_model_status(x), "):\n", sep = "")
     cat(" ODE model:\n")

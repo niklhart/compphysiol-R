@@ -2,7 +2,8 @@
 #'
 #' Creates a list-like collection of independent individual simulation or
 #' estimation units. Element names are individual identifiers; unnamed inputs
-#' remain supported. Names, order, and duplicates are preserved. Each element
+#' remain supported, while nonempty names must be unique. Order is preserved.
+#' Each element
 #' retains its own parameters and units. Use `[` to obtain a collection and
 #' `[[` to extract a single experiment.
 #'
@@ -27,6 +28,7 @@
 experiments <- function(...) {
     x <- list(...)
     .experiments_check_elements(x)
+    .check_optional_unique_names(x, "experiment")
     .experiments_check_units(x)
     .new_experiments(x)
 }
@@ -107,7 +109,8 @@ experiments <- function(...) {
     if (any(vapply(out, is.null, logical(1)))) {
         stop("Cannot subset experiments with missing or unknown indices.", call. = FALSE)
     }
-    structure(out, class = class(x))
+    .check_optional_unique_names(out, "experiment")
+    .new_experiments(out)
 }
 
 #' Extract an experiment
@@ -133,6 +136,7 @@ c.compphysiol_experiments <- function(...) {
     }
     combined <- do.call(c, unname(lapply(objects, unclass)))
     combined <- combined %||% list()
+    .check_optional_unique_names(combined, "experiment")
     .experiments_check_units(combined)
     .new_experiments(combined)
 }

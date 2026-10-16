@@ -359,6 +359,7 @@ wire <- function(model, what = c("molec", "cmt")) {
                     list_cols = "init"
                 ) |>
                 do.call(what = "c")
+            .check_unique_molecule_states(model$molecules)
 
             # process reaction participants with wildcard compartments
             model$reactions <- expand_reaction_participant_field(

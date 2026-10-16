@@ -281,6 +281,7 @@ statistical_model <- function(...) {
     distributions <- unclass(x)
     attr(distributions, "correlations") <- NULL
     selected <- distributions[i]
+    .check_unique_names(names(selected), "statistical-model target")
     retained <- names(selected)
     correlations <- Filter(function(pair) {
         pair$first %in% retained && pair$second %in% retained
@@ -468,7 +469,7 @@ statistical_model <- function(...) {
         }
         runtime[[target]] <- .statistical_value(location, parameters, "location")
     }
-    runtime <- structure(runtime, class = .class_parameters())
+    runtime <- .new_parameters(runtime)
     missing <- setdiff(model$freeParams, names(runtime))
     if (length(missing)) {
         stop("Cannot validate statistical-model units; missing dynamic-model free parameter(s): ",

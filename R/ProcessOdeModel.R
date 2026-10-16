@@ -132,12 +132,8 @@ to_process_model.compphysiol_compartment_model <- function(model) {
         ))
     }
 
-    lowered_equations <- lapply(model$equations, lower) |> structure(
-        class = .compphysiol_class("compphysiol_equations")
-    )
-    lowered_observables <- lapply(model$observables, lower) |> structure(
-        class = .compphysiol_class("compphysiol_observables")
-    )
+    lowered_equations <- .new_equations(lapply(model$equations, lower))
+    lowered_observables <- .new_observables(lapply(model$observables, lower))
     dosing <- .ode_model_dosing(model, name2idx)
     process_rates <- lapply(process_list, `[[`, "rate")
     process_consts <- lapply(process_list, `[[`, "const")
