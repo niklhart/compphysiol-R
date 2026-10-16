@@ -61,7 +61,7 @@ dosing <- function(
     # Early return for empty dosing
     ndose <- length(time)
     if (ndose == 0) {
-        return(structure(
+        return(.validate_dosing(.new_dosing(
             .dosing_data_frame(
                 time = numeric(0),
                 amount = numeric(0),
@@ -69,11 +69,8 @@ dosing <- function(
                 duration = numeric(0),
                 molec = character(0),
                 cmt = character(0)
-            ),
-            class = .compphysiol_class(
-                "compphysiol_dosing"
             )
-        ))
+        )))
     }
 
     # Validate inputs (using sign to support variables with/without units)
@@ -102,7 +99,7 @@ dosing <- function(
 
     # Case 1: bolus dosing -- early return
     if (!is.null(amount) && is.null(rate) && is.null(duration)) {
-        return(structure(
+        return(.validate_dosing(.new_dosing(
             .dosing_data_frame(
                 time = time,
                 amount = amount,
@@ -110,11 +107,8 @@ dosing <- function(
                 duration = rep(NA_real_, ndose),
                 molec = molec,
                 cmt = cmt
-            ),
-            class = .compphysiol_class(
-                "compphysiol_dosing"
             )
-        ))
+        )))
     }
 
     # Case 2: infusion dosing (need exactly two out of amount, rate, duration)
@@ -130,7 +124,7 @@ dosing <- function(
         duration <- amount / rate
     }
 
-    structure(
+    x <- .new_dosing(
         .dosing_data_frame(
             time = time,
             amount = amount,
@@ -138,11 +132,33 @@ dosing <- function(
             duration = duration,
             molec = molec,
             cmt = cmt
-        ),
-        class = .compphysiol_class(
-            "compphysiol_dosing"
         )
     )
+    .validate_dosing(x)
+}
+
+.new_dosing <- function(x) {
+    structure(x, class = .compphysiol_class("compphysiol_dosing"))
+}
+
+.validate_dosing <- function(x) {
+    required <- c("time", "amount", "rate", "duration", "molec", "cmt")
+    if (!is.list(unclass(x)) || !all(required %in% names(unclass(x)))) {
+        stop("Dosing must contain the canonical dosing columns.", call. = FALSE)
+    }
+    if (!is.numeric(x$time) || any(!is.finite(x$time)) ||
+        !is.list(x$amount) || !is.list(x$rate) || !is.numeric(x$duration) ||
+        !is.character(x$molec) || !is.character(x$cmt)) {
+        stop("Dosing columns do not satisfy the dosing representation.", call. = FALSE)
+    }
+    bolus <- .dosing_is_na_col(x$rate) & is.na(x$duration)
+    infusion <- !bolus
+    if (any(vapply(x$amount, function(value) !is.numeric(value), logical(1))) ||
+        any(infusion & (!is.finite(x$duration) | as.numeric(x$duration) <= 0)) ||
+        any(vapply(x$rate, function(value) !is.numeric(value), logical(1)))) {
+        stop("Dosing amounts and rates must be numeric and infusion durations positive.", call. = FALSE)
+    }
+    x
 }
 
 .dosing_data_frame <- function(time, amount, rate, duration, molec, cmt) {
@@ -325,9 +341,7 @@ print.compphysiol_dosing <- function(x, ...) {
 #' @export
 `[.compphysiol_dosing` <- function(x, i, ...) {
     x_subset <- as.data.frame(x)[i, , drop = FALSE]
-    structure(x_subset, class = .compphysiol_class(
-        "compphysiol_dosing"
-    ))
+    .new_dosing(x_subset)
 }
 
 #' Combine multiple `compphysiol_dosing` objects into one
@@ -351,9 +365,8 @@ c.compphysiol_dosing <- function(...) {
     combined_df <- combined_df[order(combined_df$time), ]
 
     # output as object of class Dosing
-    structure(combined_df, class = .compphysiol_class(
-        "compphysiol_dosing"
-    ))
+    combined <- .new_dosing(combined_df)
+    .validate_dosing(combined)
 }
 
 #' Convert a `compphysiol_dosing` object to a data frame

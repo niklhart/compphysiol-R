@@ -48,7 +48,7 @@ transports <- function(from, to, molec = NA_character_, ..., rate = NULL, const 
 
     # Early return for empty transports (if from or to is missing or empty)
     if (missing(from) || missing(to) || identical(from, character(0)) || identical(to, character(0))) {
-        return(structure(
+        return(.validate_transports(.new_transports(
             data.frame(
                 from = character(),
                 to = character(),
@@ -57,11 +57,8 @@ transports <- function(from, to, molec = NA_character_, ..., rate = NULL, const 
                 const = I(list()),
                 type = character(),
                 stringsAsFactors = FALSE
-            ),
-            class = .compphysiol_class(
-                "compphysiol_transports"
             )
-        ))
+        )))
     }
 
     # Convert NULL/"" from/to to NA for easier handling of source/sink compartments
@@ -151,8 +148,7 @@ transports <- function(from, to, molec = NA_character_, ..., rate = NULL, const 
     )
 
     # Assemble into a data frame (`I()` to prevent data.frame from attempting to convert list columns)
-    structure(
-        data.frame(
+    x <- .new_transports(data.frame(
             from = from,
             to = to,
             molec = if (is.null(molec)) NA_character_ else molec,
@@ -160,11 +156,28 @@ transports <- function(from, to, molec = NA_character_, ..., rate = NULL, const 
             const = I(const),
             type = type,
             stringsAsFactors = FALSE
-        ),
-        class = .compphysiol_class(
-            "compphysiol_transports"
-        )
-    )
+        ))
+    .validate_transports(x)
+}
+
+.new_transports <- function(x) {
+    structure(x, class = .compphysiol_class("compphysiol_transports"))
+}
+
+.validate_transports <- function(x) {
+    required <- c("from", "to", "molec", "rate", "const", "type")
+    if (!is.list(unclass(x)) || !all(required %in% names(unclass(x)))) {
+        stop("Transports must contain the canonical transport columns.", call. = FALSE)
+    }
+    if (!is.character(x$from) || !is.character(x$to) || !is.character(x$molec) ||
+        !is.list(x$rate) || !is.list(x$const) || !is.character(x$type) ||
+        any(!x$type %in% c("linear", "nonlinear"))) {
+        stop("Transport columns do not satisfy the transport representation.", call. = FALSE)
+    }
+    if (any(x$type == "linear" & is.na(x$from))) {
+        stop("Linear transports must have a valid source compartment.", call. = FALSE)
+    }
+    x
 }
 
 
@@ -312,14 +325,19 @@ as.list.compphysiol_transports <- function(x, ...) {
 #' @param ... Additional arguments (not used)
 #' @return A subsetted `compphysiol_transports` object
 #' @export
-`[.compphysiol_transports` <- function(x, i, ...) .subset_df_like(x, i, byname = FALSE)
+`[.compphysiol_transports` <- function(x, i, ...) {
+    .new_transports(as.data.frame(.subset_df_like(x, i, byname = FALSE)))
+}
 
 #' Combine multiple `compphysiol_transports` objects into one
 #' 
 #' @param ... Multiple `compphysiol_transports` objects to combine
 #' @return A combined `compphysiol_transports` object
 #' @export
-c.compphysiol_transports <- function(...) .combine_df_like(...)
+c.compphysiol_transports <- function(...) {
+    x <- .new_transports(as.data.frame(.combine_df_like(...)))
+    .validate_transports(x)
+}
 
 #' Access an element in a `compphysiol_transports` object
 #' 

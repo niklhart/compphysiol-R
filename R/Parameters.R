@@ -50,10 +50,18 @@ parameters <- function(..., name = NULL, value = NULL, unit = NULL) {
         value <- setNames(value, nm = name)
     }
 
-    structure(
-        value %||% list(),
-        class = .class_parameters()
-    )
+    x <- .new_parameters(value %||% list())
+    .validate_parameters(x)
+}
+
+.new_parameters <- function(x = list()) {
+    structure(x, class = .class_parameters())
+}
+
+.validate_parameters <- function(x) {
+    if (!is.list(unclass(x))) stop("Parameters must use a list representation.", call. = FALSE)
+    if (length(x)) .check_parameter_names(names(x))
+    x
 }
 
 .process_parameter_args <- function(args, envir) {
@@ -158,10 +166,7 @@ names.compphysiol_parameters <- function(x) names(unclass(x))
 #' @returns A subset of the `compphysiol_parameters` object
 #' @export
 `[.compphysiol_parameters` <- function(x, i, ...) {
-    structure(
-        unclass(x)[i],
-        class = .class_parameters()
-    )
+    .new_parameters(unclass(x)[i])
 }
 
 #' Replace parts of a `compphysiol_parameters` object
@@ -175,10 +180,8 @@ names.compphysiol_parameters <- function(x) names(unclass(x))
     x[i] <- unclass(value)
     if (is.character(i)) i <- match(i, names(x))
     names(x)[i] <- names(value)
-    structure(
-        x,
-        class = .class_parameters()
-    )
+    x <- .new_parameters(x)
+    .validate_parameters(x)
 }
 
 #' Combine multiple `compphysiol_parameters` objects into one
@@ -194,8 +197,8 @@ c.compphysiol_parameters <- function(...) {
         lapply(FUN = unclass) |>
         do.call(what = "c")
     .check_parameter_names(names(params))
-    params |>
-        structure(class = .class_parameters())
+    params <- .new_parameters(params)
+    .validate_parameters(params)
 }
 
 #' Print a `compphysiol_parameters` object
@@ -232,8 +235,6 @@ print.compphysiol_parameters <- function(x, ...) {
 #' @export
 unlist.compphysiol_parameters <- function(x, ...) {
     unlisted <- unlist(unclass(x), recursive = FALSE, use.names = TRUE)
-    structure(
-        as.list(unlisted),
-        class = .class_parameters()
-    )
+    x <- .new_parameters(as.list(unlisted))
+    .validate_parameters(x)
 }

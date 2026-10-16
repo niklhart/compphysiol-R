@@ -40,12 +40,24 @@ equations <- function(..., name = character(0), expr = character(0)) {
     names(expr) <- name
     expr <- lapply(expr, .as_call)
 
-    structure(
-        expr,
-        class = .compphysiol_class(
-            "compphysiol_equations"
-        )
-    )
+    x <- .new_equations(expr)
+    .validate_equations(x)
+}
+
+.new_equations <- function(x = list()) {
+    structure(x, class = .compphysiol_class("compphysiol_equations"))
+}
+
+.validate_equations <- function(x) {
+    nm <- names(x)
+    if (length(x) && (is.null(nm) || anyNA(nm) || any(!nzchar(nm)))) {
+        stop("Every equation must have a nonempty name.", call. = FALSE)
+    }
+    if (anyDuplicated(nm)) stop("Equation names must be unique.", call. = FALSE)
+    if (!all(vapply(x, function(value) is.call(value) || is.name(value) || is.atomic(value), logical(1)))) {
+        stop("Every equation must contain an expression.", call. = FALSE)
+    }
+    x
 }
 
 #' Add one or several equations to a `compphysiol_compartment_model` object.
@@ -121,12 +133,7 @@ print.compphysiol_equations <- function(x, ...) {
 #' @returns A subset of the `compphysiol_equations` object
 #' @export
 `[.compphysiol_equations` <- function(x, i, ...) {
-    structure(
-        unclass(x)[i],
-        class = .compphysiol_class(
-            "compphysiol_equations"
-        )
-    )
+    .new_equations(unclass(x)[i])
 }
 
 #' Combine multiple `compphysiol_equations` objects
@@ -138,10 +145,9 @@ c.compphysiol_equations <- function(...) {
     if (!all(sapply(eq_list, inherits, "compphysiol_equations"))) {
         stop("All arguments must be of class 'equations'")
     }
-    eq_list |> 
+    x <- eq_list |>
          lapply(FUN = unclass) |> 
          do.call(what = "c") |>
-         structure(class = .compphysiol_class(
-             "compphysiol_equations"
-         ))
+         .new_equations()
+    .validate_equations(x)
 }

@@ -82,20 +82,15 @@ molecules <- function(name = character(0), cmt = NULL, initial = 0, unit = NULL,
 
     # Early return for empty molecules
     if (identical(name, character(0))) {
-        return(
-            structure(
+        return(.validate_molecules(.new_molecules(
                 data.frame(
                     name = character(),
                     cmt = character(),
                     init = numeric(),
                     type = character(),
                     stringsAsFactors = FALSE
-                ),
-                class = .compphysiol_class(
-                    "compphysiol_molecules"
                 )
-            )
-        )
+        )))
     }
 
     # Construct the molecules object as a data frame with its package class.
@@ -106,9 +101,27 @@ molecules <- function(name = character(0), cmt = NULL, initial = 0, unit = NULL,
         type = type,
         stringsAsFactors = FALSE
     )
-    structure(molec, class = .compphysiol_class(
-        "compphysiol_molecules"
-    ))
+    molec <- .new_molecules(molec)
+    .validate_molecules(molec)
+}
+
+.new_molecules <- function(x) {
+    structure(x, class = .compphysiol_class("compphysiol_molecules"))
+}
+
+.validate_molecules <- function(x) {
+    required <- c("name", "cmt", "init", "type")
+    if (!is.list(unclass(x)) || !all(required %in% names(unclass(x)))) {
+        stop("Molecules must contain name, cmt, init, and type columns.", call. = FALSE)
+    }
+    if (!is.character(x$name) || anyNA(x$name) || any(!nzchar(x$name))) {
+        stop("Molecule names must be nonempty character values.", call. = FALSE)
+    }
+    if (!is.character(x$cmt) || (!is.list(x$init) && length(x$init)) ||
+        !is.character(x$type) || any(!x$type %in% c("concentration", "amount"))) {
+        stop("Molecule columns do not satisfy the molecule representation.", call. = FALSE)
+    }
+    x
 }
 
 #' Add one or several molecules to a `compphysiol_compartment_model` object.
@@ -150,7 +163,10 @@ add_molecule <- function(
 #' @param ... Multiple `compphysiol_molecules` objects to combine
 #' @return A combined `compphysiol_molecules` object
 #' @export
-c.compphysiol_molecules <- function(...) .combine_df_like(...)
+c.compphysiol_molecules <- function(...) {
+    x <- .new_molecules(as.data.frame(.combine_df_like(...)))
+    .validate_molecules(x)
+}
 
 #' Subset a `compphysiol_molecules` object
 #'
@@ -159,7 +175,9 @@ c.compphysiol_molecules <- function(...) .combine_df_like(...)
 #' @param ... Additional arguments (not used)
 #' @return A subsetted `compphysiol_molecules` object
 #' @export
-`[.compphysiol_molecules` <- function(x, i, ...) .subset_df_like(x, i, byname = TRUE)
+`[.compphysiol_molecules` <- function(x, i, ...) {
+    .new_molecules(as.data.frame(.subset_df_like(x, i, byname = TRUE)))
+}
 
 #' Extraction method for `compphysiol_molecules` class
 #'

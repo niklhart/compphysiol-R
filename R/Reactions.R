@@ -453,8 +453,7 @@ reactions <- function(
 
     # Early return for empty reactions
     if ((length(input) == 0 && length(output) == 0) || length(cmt) == 0) {
-        return(
-            structure(
+        return(.validate_reactions(.new_reactions(
                 data.frame(
                     rate = I(list()),
                     const = I(list()),
@@ -462,12 +461,8 @@ reactions <- function(
                     scale_cmt = character(),
                     participants = I(list()),
                     stringsAsFactors = FALSE
-                ),
-                class = .compphysiol_class(
-                    "compphysiol_reactions"
                 )
-            )
-        )
+        )))
     }
 
     uses_states <- inherits(input, "compphysiol_states") ||
@@ -584,8 +579,7 @@ reactions <- function(
     )
 
     # Construct the reactions object as a data frame with its package class.
-    return(
-        structure(
+    x <- .new_reactions(
             data.frame(
                 rate = I(rate),
                 const = I(const),
@@ -593,12 +587,30 @@ reactions <- function(
                 scale_cmt = scale_cmt,
                 participants = I(reaction_participants),
                 stringsAsFactors = FALSE
-            ),
-            class = .compphysiol_class(
-                "compphysiol_reactions"
             )
-        )
     )
+    .validate_reactions(x)
+}
+
+.new_reactions <- function(x) {
+    structure(x, class = .compphysiol_class("compphysiol_reactions"))
+}
+
+.validate_reactions <- function(x) {
+    required <- c("rate", "const", "type", "scale_cmt", "participants")
+    if (!is.list(unclass(x)) || !all(required %in% names(unclass(x)))) {
+        stop("Reactions must contain the canonical reaction columns.", call. = FALSE)
+    }
+    if (!is.list(x$rate) || !is.list(x$const) || !is.character(x$type) ||
+        any(!x$type %in% c("elementary", "complex")) ||
+        !is.character(x$scale_cmt) || !is.list(x$participants)) {
+        stop("Reaction columns do not satisfy the reaction representation.", call. = FALSE)
+    }
+    valid_participants <- vapply(x$participants, function(p) {
+        is.data.frame(p) && all(c("role", "molec", "cmt", "stoich") %in% names(p))
+    }, logical(1))
+    if (!all(valid_participants)) stop("Reaction participants are malformed.", call. = FALSE)
+    x
 }
 
 #' Add one or several reactions to a `compphysiol_compartment_model` object.
@@ -663,7 +675,10 @@ length.compphysiol_reactions <- function(x) {
 #' @param ... Multiple `compphysiol_reactions` objects to combine
 #' @return A combined `compphysiol_reactions` object
 #' @export
-c.compphysiol_reactions <- function(...) .combine_df_like(...)
+c.compphysiol_reactions <- function(...) {
+    x <- .new_reactions(as.data.frame(.combine_df_like(...)))
+    .validate_reactions(x)
+}
 
 #' Subset a `compphysiol_reactions` object
 #' 
@@ -673,7 +688,9 @@ c.compphysiol_reactions <- function(...) .combine_df_like(...)
 #' @param ... Additional arguments (not used)
 #' @return A subsetted `compphysiol_reactions` object
 #' @export
-`[.compphysiol_reactions` <- function(x, i, ...) .subset_df_like(x, i, byname = FALSE)
+`[.compphysiol_reactions` <- function(x, i, ...) {
+    .new_reactions(as.data.frame(.subset_df_like(x, i, byname = FALSE)))
+}
 
 #' Extraction method for `compphysiol_reactions` class
 #'

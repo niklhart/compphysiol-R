@@ -99,12 +99,24 @@ observables <- function(..., name = character(0), expr = character(0), cmt = NUL
     names(expr) <- name
     expr <- lapply(expr, .as_call)
 
-    structure(
-        expr,
-        class = .compphysiol_class(
-            "compphysiol_observables"
-        )
-    )
+    x <- .new_observables(expr)
+    .validate_observables(x)
+}
+
+.new_observables <- function(x = list()) {
+    structure(x, class = .compphysiol_class("compphysiol_observables"))
+}
+
+.validate_observables <- function(x) {
+    nm <- names(x)
+    if (length(x) && (is.null(nm) || anyNA(nm) || any(!nzchar(nm)))) {
+        stop("Every observable must have a nonempty name.", call. = FALSE)
+    }
+    if (anyDuplicated(nm)) stop("Observable names must be unique.", call. = FALSE)
+    if (!all(vapply(x, function(value) is.call(value) || is.name(value) || is.atomic(value), logical(1)))) {
+        stop("Every observable must contain an expression.", call. = FALSE)
+    }
+    x
 }
 
 #' Add one or several observables to a `compphysiol_compartment_model` object.
@@ -192,12 +204,7 @@ print.compphysiol_observables <- function(x, ...) {
 #' @returns A subset of the `compphysiol_observables` object
 #' @export
 `[.compphysiol_observables` <- function(x, i, ...) {
-    structure(
-        unclass(x)[i],
-        class = .compphysiol_class(
-            "compphysiol_observables"
-        )
-    )
+    .new_observables(unclass(x)[i])
 }
 
 #' Combine multiple `compphysiol_observables` objects into one
@@ -209,10 +216,9 @@ c.compphysiol_observables <- function(...) {
     if (!all(sapply(obs_list, inherits, "compphysiol_observables"))) {
         stop("All arguments must be of class 'observables'")
     }
-    obs_list |> 
+    x <- obs_list |>
          lapply(FUN = unclass) |> 
          do.call(what = "c") |>
-         structure(class = .compphysiol_class(
-             "compphysiol_observables"
-         ))
+         .new_observables()
+    .validate_observables(x)
 }
