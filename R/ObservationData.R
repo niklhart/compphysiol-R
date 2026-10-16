@@ -28,7 +28,8 @@ observation_schedule <- function(time = numeric(), observable = character(), ...
         list(time = time, observable = observable), dots,
         list(check.names = FALSE, stringsAsFactors = FALSE)
     ))
-    .new_observation_schedule(x)
+    x <- .new_observation_schedule(x)
+    .validate_observation_schedule(x)
 }
 
 .observation_recycle <- function(x, n, label) {
@@ -46,6 +47,14 @@ observation_schedule <- function(time = numeric(), observable = character(), ...
 }
 
 .new_observation_schedule <- function(x) {
+    class(x) <- unique(c(
+        "compphysiol_observation_schedule",
+        class(x)
+    ))
+    x
+}
+
+.validate_observation_schedule <- function(x) {
     if (!is.data.frame(x) || anyDuplicated(names(x)) ||
         !all(c("time", "observable") %in% names(x))) {
         stop("A observation schedule must be a data frame with unique time and observable columns.",
@@ -56,10 +65,6 @@ observation_schedule <- function(time = numeric(), observable = character(), ...
         any(!nzchar(trimws(x$observable)))) {
         stop("Observation schedule observable names must be nonempty character values.", call. = FALSE)
     }
-    class(x) <- unique(c(
-        "compphysiol_observation_schedule",
-        class(x)
-    ))
     x
 }
 
@@ -97,25 +102,30 @@ observation_data <- function(time = numeric(), observable = character(), value =
         list(time = time, observable = observable, value = value), dots,
         list(check.names = FALSE, stringsAsFactors = FALSE)
     ))
-    .new_observation_data(x)
+    x <- .new_observation_data(x)
+    .validate_observation_data(x)
 }
 
 .new_observation_data <- function(x) {
-    if (!is.data.frame(x) || anyDuplicated(names(x)) ||
-        !all(c("time", "observable", "value") %in% names(x))) {
-        stop("observation data must be a data frame with unique time, observable, and value columns.",
-             call. = FALSE)
-    }
-    .new_observation_schedule(x)
-    value <- x$value
-    if ((!is.numeric(value) && !inherits(value, "mixed_units")) || !is.null(dim(value))) {
-        stop("Observation data values must be numeric, units, or mixed_units values.", call. = FALSE)
-    }
     class(x) <- unique(c(
         "compphysiol_observation_data",
         "compphysiol_observation_schedule",
         class(x)
     ))
+    x
+}
+
+.validate_observation_data <- function(x) {
+    if (!is.data.frame(x) || anyDuplicated(names(x)) ||
+        !all(c("time", "observable", "value") %in% names(x))) {
+        stop("observation data must be a data frame with unique time, observable, and value columns.",
+             call. = FALSE)
+    }
+    .validate_observation_schedule(x)
+    value <- x$value
+    if ((!is.numeric(value) && !inherits(value, "mixed_units")) || !is.null(dim(value))) {
+        stop("Observation data values must be numeric, units, or mixed_units values.", call. = FALSE)
+    }
     x
 }
 

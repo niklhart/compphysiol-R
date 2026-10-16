@@ -38,6 +38,12 @@ test_that("Experiments subsetting trusts the collection contract", {
     expect_identical(subset[[1]], x[[1]])
 })
 
+test_that("experiment collection construction and validation are separate", {
+    x <- .new_experiments(list(experiment(), "not an experiment"))
+    expect_s3_class(x, "compphysiol_experiments")
+    expect_error(.validate_experiments(x), "experiment objects")
+})
+
 test_that("Experiments concatenation retains names, units, and empty collections", {
     a <- experiments(a = experiment(start = 0 [h]))
     b <- experiments(b = experiment(start = -1 [h]))

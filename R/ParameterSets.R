@@ -22,10 +22,17 @@
 #' population[["individual_2"]]
 #' @export
 parameter_sets <- function(...) {
-    .new_parameter_sets(list(...))
+    x <- .new_parameter_sets(list(...))
+    .validate_parameter_sets(x)
 }
 
-.new_parameter_sets <- function(x, check_units = TRUE) {
+.new_parameter_sets <- function(x) {
+    structure(x, class = .compphysiol_class(
+        "compphysiol_parameter_sets", base = "list"
+    ))
+}
+
+.validate_parameter_sets <- function(x, check_units = TRUE) {
     if (!all(vapply(x, inherits, logical(1), "compphysiol_parameters"))) {
         stop("All elements must be parameters objects.", call. = FALSE)
     }
@@ -35,9 +42,7 @@ parameter_sets <- function(...) {
         stop("Parameter set names must be unique.", call. = FALSE)
     }
     if (check_units) .parameter_sets_check_units(x)
-    structure(x, class = .compphysiol_class(
-        "compphysiol_parameter_sets", base = "list"
-    ))
+    x
 }
 
 .parameter_sets_check_units <- function(x) {
@@ -66,7 +71,16 @@ parameter_sets <- function(...) {
 #' @returns A `compphysiol_parameter_sets` object.
 #' @export
 `[.compphysiol_parameter_sets` <- function(x, i, ...) {
-    .new_parameter_sets(unclass(x)[i], check_units = FALSE)
+    out <- unclass(x)[i]
+    if (any(vapply(out, is.null, logical(1)))) {
+        stop("Cannot subset parameters with missing or unknown indices.", call. = FALSE)
+    }
+    labels <- names(out)
+    named <- !is.null(labels) & !is.na(labels) & nzchar(labels)
+    if (anyDuplicated(labels[named])) {
+        stop("Parameter set names must be unique.", call. = FALSE)
+    }
+    .new_parameter_sets(out)
 }
 
 #' Extract one realized parameter set
@@ -93,7 +107,8 @@ c.compphysiol_parameter_sets <- function(...) {
         stop("All arguments must be parameter sets objects.", call. = FALSE)
     }
     combined <- do.call(c, unname(lapply(objects, unclass)))
-    .new_parameter_sets(combined %||% list())
+    combined <- .new_parameter_sets(combined %||% list())
+    .validate_parameter_sets(combined)
 }
 
 #' Print realized parameter sets

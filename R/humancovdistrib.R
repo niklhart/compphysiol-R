@@ -60,5 +60,5 @@ humancovdistrib <- function(N, sex) {
         )
     }
 
-    .new_parameter_sets(humans, check_units = FALSE)
+    .new_parameter_sets(humans)
 }

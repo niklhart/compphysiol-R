@@ -25,18 +25,22 @@
 #' c(x, experiments(repeat_run = experiment()))
 #' @export
 experiments <- function(...) {
-    .new_experiments(list(...))
+    x <- .new_experiments(list(...))
+    .validate_experiments(x)
 }
 
 .new_experiments <- function(x) {
-    if (!all(vapply(x, inherits, logical(1), "compphysiol_experiment"))) {
-        stop("All elements must be experiment objects.", call. = FALSE)
-    }
-    invisible(lapply(x, validate_experiment))
-    .experiments_check_units(x)
     structure(x, class = .compphysiol_class(
         "compphysiol_experiments", base = "list"
     ))
+}
+
+.validate_experiments <- function(x) {
+    if (!all(vapply(x, inherits, logical(1), "compphysiol_experiment"))) {
+        stop("All elements must be experiment objects.", call. = FALSE)
+    }
+    .experiments_check_units(x)
+    x
 }
 
 .experiments_check_units <- function(x) {
@@ -127,7 +131,8 @@ c.compphysiol_experiments <- function(...) {
         stop("All arguments must be experiments objects.", call. = FALSE)
     }
     combined <- do.call(c, unname(lapply(objects, unclass)))
-    .new_experiments(combined %||% list())
+    combined <- .new_experiments(combined %||% list())
+    .validate_experiments(combined)
 }
 
 #' Print a collection of experiments

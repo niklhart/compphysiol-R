@@ -123,7 +123,7 @@ test_that("simulation trusts constructed experiment objects", {
     e <- experiment(observations = observation_schedule(c(0, 1) [h], "A"))
     x <- experiments(subject = e)
     local_mocked_bindings(
-        validate_experiment = function(...) stop("unexpected full validation"),
+        .validate_experiment = function(...) stop("unexpected full validation"),
         .package = "compphysiol"
     )
 

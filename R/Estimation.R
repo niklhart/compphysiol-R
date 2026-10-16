@@ -33,34 +33,43 @@ parameter_spec <- function(
         upper <- .estimation_default_bound(if (identical(transform, "logit")) 1 else Inf,
                                            initial)
     }
-    if (identical(transform, "log") && as.numeric(initial) <= 0) {
+    x <- .new_parameter_spec(
+        list(initial = initial, lower = lower, upper = upper, transform = transform)
+    )
+    .validate_parameter_spec(x)
+}
+
+.new_parameter_spec <- function(x) {
+    structure(x, class = .compphysiol_class("compphysiol_parameter_spec"))
+}
+
+.validate_parameter_spec <- function(x) {
+    .check_class(x, "compphysiol_parameter_spec")
+    .estimation_scalar(x$initial, "initial", finite = TRUE)
+    .estimation_scalar(x$lower, "lower", finite = FALSE)
+    .estimation_scalar(x$upper, "upper", finite = FALSE)
+    if (!is.character(x$transform) || length(x$transform) != 1L ||
+        !x$transform %in% c("identity", "log", "logit")) {
+        stop("Unknown parameter transform; use identity, log, or logit.", call. = FALSE)
+    }
+    lower <- .estimation_bound_numeric(x$lower, x$initial, "lower")
+    upper <- .estimation_bound_numeric(x$upper, x$initial, "upper")
+    initial <- as.numeric(x$initial)
+    if (identical(x$transform, "log") && initial <= 0) {
         stop("A log-transformed parameter must have a positive initial value.", call. = FALSE)
     }
-    .estimation_scalar(lower, "lower", finite = FALSE)
-    .estimation_scalar(upper, "upper", finite = FALSE)
-
-    lower_numeric <- .estimation_bound_numeric(lower, initial, "lower")
-    upper_numeric <- .estimation_bound_numeric(upper, initial, "upper")
-    initial_numeric <- as.numeric(initial)
-    if (lower_numeric > upper_numeric) {
+    if (lower > upper) {
         stop("Parameter lower bound cannot exceed its upper bound.", call. = FALSE)
     }
-    if (initial_numeric < lower_numeric || initial_numeric > upper_numeric) {
+    if (initial < lower || initial > upper) {
         stop("Parameter initial value must lie within its bounds.", call. = FALSE)
     }
-    if (identical(transform, "logit")) {
-        if (!is.finite(lower_numeric) || !is.finite(upper_numeric) ||
-            initial_numeric <= lower_numeric || initial_numeric >= upper_numeric) {
-            stop("A logit-transformed parameter requires finite bounds and an initial value strictly between them.",
-                 call. = FALSE)
-        }
+    if (identical(x$transform, "logit") &&
+        (!is.finite(lower) || !is.finite(upper) || initial <= lower || initial >= upper)) {
+        stop("A logit-transformed parameter requires finite bounds and an initial value strictly between them.",
+             call. = FALSE)
     }
-    structure(
-        list(initial = initial, lower = lower, upper = upper, transform = transform),
-        class = .compphysiol_class(
-            "compphysiol_parameter_spec"
-        )
-    )
+    x
 }
 
 .estimation_default_bound <- function(value, initial) {
@@ -164,10 +173,17 @@ c.compphysiol_parameter_specs <- function(..., recursive = FALSE) {
         }
         out <- append(out, part)
     }
-    .new_parameter_specs(out)
+    out <- .new_parameter_specs(out)
+    .validate_parameter_specs(out)
 }
 
 .new_parameter_specs <- function(x = list()) {
+    structure(x, class = .compphysiol_class(
+        "compphysiol_parameter_specs", base = "list"
+    ))
+}
+
+.validate_parameter_specs <- function(x) {
     nm <- names(x)
     if (length(x) && (is.null(nm) || anyNA(nm) || any(!nzchar(nm)))) {
         stop("Every parameter specification must be named.", call. = FALSE)
@@ -179,9 +195,7 @@ c.compphysiol_parameter_specs <- function(..., recursive = FALSE) {
     if (!all(vapply(x, inherits, logical(1), "compphysiol_parameter_spec"))) {
         stop("Every parameter specification must be a parameter specification object.", call. = FALSE)
     }
-    structure(x, class = .compphysiol_class(
-        "compphysiol_parameter_specs", base = "list"
-    ))
+    x
 }
 
 #' Subset parameter-estimation specifications
@@ -193,7 +207,15 @@ c.compphysiol_parameter_specs <- function(..., recursive = FALSE) {
 #' @export
 `[.compphysiol_parameter_specs` <- function(x, i, ...) {
     if (missing(i)) return(x)
-    .new_parameter_specs(unclass(x)[i])
+    out <- unclass(x)[i]
+    if (any(vapply(out, is.null, logical(1)))) {
+        stop("Cannot subset parameter specifications with missing or unknown indices.", call. = FALSE)
+    }
+    nm <- names(out)
+    if (length(out) && (is.null(nm) || anyNA(nm) || any(!nzchar(nm)) || anyDuplicated(nm))) {
+        stop("Parameter specification names must be present and unique.", call. = FALSE)
+    }
+    .new_parameter_specs(out)
 }
 
 #' Print parameter-estimation specifications
@@ -301,7 +323,6 @@ estimation_problem <- function(model, experiments, parameters, statistics) {
     observed_names <- character()
     for (i in seq_along(experiments)) {
         e <- experiments[[i]]
-        validate_experiment(e)
         if (!inherits(e$observations, "compphysiol_observation_data")) {
             stop("Estimation requires observation data in every experiment.", call. = FALSE)
         }

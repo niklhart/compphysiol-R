@@ -55,6 +55,3 @@ e <- experiment(
 )
 e
 }
-\seealso{
-\code{\link[=validate_experiment]{validate_experiment()}}
-}

@@ -32,7 +32,6 @@
 #'   unit-free zero if both schedules are empty. It does not mean the earliest
 #'   scheduled time. Incompatible schedules still produce an error.
 #' @returns A `compphysiol_experiment` object.
-#' @seealso [validate_experiment()]
 #' @examples
 #' e <- experiment(
 #'     parameters = parameters(BW = 70 [kg]),
@@ -53,14 +52,14 @@ experiment <- function(
     if (is.null(observations)) observations <- observation_schedule()
     .check_class(observations, "compphysiol_observation_schedule")
     if (is.null(start)) start <- .experiment_default_start(dosing, observations)
-    x <- structure(
-        list(parameters = parameters, dosing = dosing, observations = observations, start = start),
-        class = .compphysiol_class(
-            "compphysiol_experiment"
-        )
+    x <- .new_experiment(
+        list(parameters = parameters, dosing = dosing, observations = observations, start = start)
     )
-    validate_experiment(x)
-    x
+    .validate_experiment(x)
+}
+
+.new_experiment <- function(x) {
+    structure(x, class = .compphysiol_class("compphysiol_experiment"))
 }
 
 .experiment_default_start <- function(dosing, observations) {
@@ -79,18 +78,7 @@ experiment <- function(
     0
 }
 
-#' Validate an experiment
-#'
-#' Checks the experiment's components and time compatibility. When a model is
-#' supplied, every scheduled row must reference a declared observable; state names
-#' are not accepted unless explicitly declared as observable names. This does
-#' not wire dosing targets, resolve model parameters, or check model equations.
-#'
-#' @param x A `compphysiol_experiment` object.
-#' @param model Optional `compphysiol_compartment_model` against which to check observable names.
-#' @returns `x`, invisibly, after successful validation.
-#' @export
-validate_experiment <- function(x, model = NULL) {
+.validate_experiment <- function(x) {
     .check_class(x, "compphysiol_experiment")
     .check_class(x$parameters, "compphysiol_parameters")
     .check_class(x$dosing, "compphysiol_dosing")
@@ -99,11 +87,6 @@ validate_experiment <- function(x, model = NULL) {
     .experiment_check_time(x$start, "start")
 
     observations <- x$observations
-    if (inherits(observations, "compphysiol_observation_data")) {
-        .new_observation_data(observations)
-    } else {
-        .new_observation_schedule(observations)
-    }
     .experiment_check_time(observations$time, "observation time", x$start)
     .experiment_check_time(x$dosing$time, "dosing time", x$start)
     infusion <- is_infusion(x$dosing)
@@ -114,15 +97,7 @@ validate_experiment <- function(x, model = NULL) {
             stop("Experiment infusion duration must be positive.", call. = FALSE)
         }
     }
-    if (!is.null(model)) {
-        .check_class(model, "compphysiol_compartment_model")
-        unknown <- setdiff(observations$observable, names(model$observables))
-        if (length(unknown)) {
-            stop("Unknown observable(s) in experiment observations: ",
-                 paste(unknown, collapse = ", "), ".", call. = FALSE)
-        }
-    }
-    invisible(x)
+    x
 }
 
 .experiment_check_time <- function(value, label, start = NULL, check_start = TRUE) {

@@ -63,17 +63,19 @@ test_that("shared parameter names require compatible units", {
     }
 })
 
-test_that("trusted construction can skip only unit validation", {
+test_that("low-level construction trusts input and validation is explicit", {
     incompatible <- list(parameters(x = 1), parameters(x = 1 [kg]))
-    trusted <- .new_parameter_sets(incompatible, check_units = FALSE)
+    trusted <- .new_parameter_sets(incompatible)
 
     expect_s3_class(trusted, "compphysiol_parameter_sets")
     expect_s3_class(trusted[1], "compphysiol_parameter_sets")
-    expect_error(.new_parameter_sets(incompatible), "parameter 'x'.*units")
-    expect_error(.new_parameter_sets(list(parameters(), 1), check_units = FALSE),
+    expect_error(.validate_parameter_sets(trusted), "parameter 'x'.*units")
+    expect_error(.validate_parameter_sets(.new_parameter_sets(list(parameters(), 1))),
                  "parameters")
     expect_error(
-        .new_parameter_sets(list(a = parameters(), a = parameters()), check_units = FALSE),
+        .validate_parameter_sets(.new_parameter_sets(
+            list(a = parameters(), a = parameters())
+        )),
         "unique"
     )
 })
