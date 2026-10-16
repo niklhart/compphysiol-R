@@ -54,13 +54,19 @@
     if (multiple) out else out[[1]]
 }
 
-.simulation_experiment_events <- function(model, dosing, dimensions, parameters) {
+.simulation_experiment_events <- function(
+    model, dosing, dimensions, parameters, state_unit_values = NULL
+) {
     states <- lapply(model$states$dsl_name, .dsl_parse_state)
     state_molec <- vapply(states, `[[`, character(1), "molec")
     state_cmt <- vapply(states, `[[`, character(1), "cmt")
     biological <- !grepl("^(Depot|ReleaseRate)_", state_cmt)
-    parameters <- .merge_ode_parameters(model$parameters, parameters)
-    state_units <- .ode_model_state_unit_values(model, parameters, allow_unresolved = FALSE)
+    if (is.null(state_unit_values)) {
+        parameters <- .merge_ode_parameters(model$parameters, parameters)
+        state_units <- .ode_model_state_unit_values(model, parameters, allow_unresolved = FALSE)
+    } else {
+        state_units <- state_unit_values[model$states$output_name]
+    }
     events <- list()
     append_event <- function(molec, cmt, time, value) {
         dsl <- .dsl_make_state(molec = molec, cmt = cmt, prefix = "a")

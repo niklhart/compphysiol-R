@@ -220,12 +220,18 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
     parameter_values <- vector("list", length(experiments))
     records <- vector("list", length(experiments))
     for (i in seq_along(experiments)) {
-        .simulation_check_free_parameters_available(ode, .merge_ode_parameters(ode$parameters, supplied[[i]]))
+        .simulation_check_free_parameter_names_available(
+            ode,
+            union(names(ode$parameters), names(supplied[[i]]))
+        )
         .compiled_ode_model_check_runtime_parameter_signature(artifact$parameterSignature, supplied[[i]])
         .compiled_ode_model_check_time_mode(artifact, times[[i]])
         parameter_values[[i]] <- .rxode2_runtime_parameter_values(artifact, supplied[[i]], dimensions)
         solver_time <- .simulation_numeric_time(times[[i]], dimensions)
-        events <- .simulation_experiment_events(ode, experiments[[i]]$dosing, dimensions, supplied[[i]])$data
+        events <- .simulation_experiment_events(
+            ode, experiments[[i]]$dosing, dimensions, supplied[[i]],
+            state_unit_values = artifact$stateUnitValues
+        )$data
         events <- events[events$time >= min(solver_time) & events$time <= max(solver_time), , drop = FALSE]
         observations <- data.frame(id = i, time = solver_time, evid = 0L, cmt = NA_character_, amt = NA_real_)
         if (nrow(events)) {
@@ -325,7 +331,10 @@ simulate.compphysiol_rxode2_model <- function(
     parameter_values <- .rxode2_runtime_parameter_values(artifact, supplied, dimensions)
     info <- .rxode2_runtime_info(object, artifact, parameter_values)
     if (!is.null(attr(ode, "experiment_dosing"))) {
-        info$events <- .simulation_experiment_events(ode, attr(ode, "experiment_dosing"), dimensions, supplied)
+        info$events <- .simulation_experiment_events(
+            ode, attr(ode, "experiment_dosing"), dimensions, supplied,
+            state_unit_values = artifact$stateUnitValues
+        )
     }
     solver_time <- .simulation_numeric_time(time, dimensions)
     event_data <- info$events$data

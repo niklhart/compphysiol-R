@@ -608,7 +608,11 @@ simulate.compphysiol_stochastic_model <- function(
 }
 
 .simulation_check_free_parameters_available <- function(model, parameters) {
-    missing <- setdiff(model$freeParams, names(parameters))
+    .simulation_check_free_parameter_names_available(model, names(parameters))
+}
+
+.simulation_check_free_parameter_names_available <- function(model, parameter_names) {
+    missing <- setdiff(model$freeParams, parameter_names)
     if (length(missing) > 0) {
         stop(
             "Missing parameter(s) for simulation: ",
