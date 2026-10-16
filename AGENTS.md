@@ -21,6 +21,15 @@ Guidance for AI coding agents working on `compphysiol`, an R package for computa
 - The repo uses `renv`; avoid changing `renv.lock` unless dependency changes are intentional.
 - Never work on the `main` branch. If asked to do a change and the current branch is `main`, abort and notify about that a branch change was forgotten.
 
+## S3 Construction And Validity
+
+- Use `.new_<class>()` for cheap internal construction, `.validate_<class>()` for intrinsic semantic validation, and `<class>()` for the user-facing helper that normalizes input and returns a validated object.
+- Keep validators internal unless a separate public validation workflow has a demonstrated use case.
+- Consumers may trust the intrinsic validity of an object carrying a package S3 class. Keep cheap class/interface checks at public boundaries, but do not repeat full constructor validation in simulation, printing, subsetting, or other consumers.
+- Continue to check requirements that depend on the operation or on another object. Examples include whether an experiment's observable names occur in a selected model, whether dosing targets exist, and whether solver-facing units are compatible.
+- Methods that create a new combination, such as `c()`, replacement methods, and model mutators, must establish the invariants of their result. Pure subsetting should preserve the representation and restore the class without round-tripping through a public constructor.
+- Split tests by responsibility: low-level representation, intrinsic validation, public input normalization, operation-specific compatibility, and class restoration.
+
 ## Testing
 
 - Run focused tests while developing, for example:

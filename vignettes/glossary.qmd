@@ -496,8 +496,8 @@ simulation. Collections return a list of simulation results in experiment
 order. Experiments containing observation data can be used for estimation.
 
 Implementation anchor: one experiment uses `compphysiol_experiment`, created
-with `experiment()` and checked with `validate_experiment()`; collections use
-`compphysiol_experiments`, created with `experiments()`.
+with `experiment()`; collections use `compphysiol_experiments`, created with
+`experiments()`.
 
 An experiment collection holds several
 independent individual units. The element name is the individual identifier;
@@ -658,6 +658,41 @@ merging or a separate copy/renaming helper.
 
 Implementation anchor: `mergeModels()` combines two
 `compphysiol_compartment_model` objects.
+
+## Object construction and validity
+
+Package constructors establish the intrinsic validity of the objects they
+return. Intrinsic validity consists of facts that can be checked from the
+object alone, such as its required fields, allowed values, consistent lengths,
+and internal unit relationships. User-facing constructors accept convenient
+input and report domain-specific errors; internal low-level constructors attach
+the canonical representation and S3 classes to values that have already been
+normalized.
+
+Code that receives a package S3 object trusts this intrinsic class contract.
+For example, printing, subsetting, and simulation do not need to repeat every
+check performed by the object's constructor. Operations that create a new
+combination, such as concatenation, replacement, or adding a model component,
+must establish any invariants that their result could newly violate.
+
+Contextual compatibility is distinct from intrinsic validity and remains the
+responsibility of the operation with the necessary context. Simulation must,
+for example, check that an experiment's observables and dosing targets occur in
+the selected model, that required parameters are available, and that values
+are compatible with the solver boundary. An experiment can therefore be
+intrinsically valid while being incompatible with a particular model.
+
+Because these are S3 objects, users can manually alter attributes or otherwise
+bypass the supported constructors. Consumers are not required to defend
+against every such modification by revalidating the entire object. Internal
+validation remains available to package construction paths, and cheap class
+checks remain appropriate at public API boundaries.
+
+Implementation convention: migrated classes use an internal
+`.new_<class>()` for cheap construction, an internal `.validate_<class>()` for
+intrinsic semantic validation, and a public `<class>()` helper for input
+normalization and full construction. Validators remain internal unless a
+separate public validation workflow has a demonstrated use case.
 
 ## Model representations and execution
 
