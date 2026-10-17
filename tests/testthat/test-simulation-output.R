@@ -166,6 +166,31 @@ test_that("only scheduled observable-time pairs are evaluated", {
     expect_equal(nrow(out$observables), 2L)
 })
 
+test_that("observation plans group matching evaluation grids and preserve rows", {
+    schedule <- observation_schedule(
+        c(2, 1, 1, 2) [h], c("A", "A", "C", "C"),
+        sample = c("a2", "a1", "c1", "c2")
+    )
+    plan <- .simulation_prepare_observation_plan(
+        schedule, solver_time = 0:2, dimensions = list(time = "h")
+    )
+
+    expect_length(plan$evaluations, 1L)
+    expect_identical(plan$evaluations[[1]]$observable_indices, 1:2)
+    expect_identical(plan$evaluations[[1]]$solver_indices, 2:3)
+
+    out <- simulate(output_test_model(), experiment = experiment(observations = schedule))
+    expect_identical(out$observables$time, schedule$time)
+    expect_identical(out$observables$observable, schedule$observable)
+    expect_identical(out$observables$sample, schedule$sample)
+
+    sparse <- observation_schedule(c(1, 2) [h], c("A", "C"))
+    sparse_plan <- .simulation_prepare_observation_plan(
+        sparse, solver_time = 0:2, dimensions = list(time = "h")
+    )
+    expect_length(sparse_plan$evaluations, 2L)
+})
+
 test_that("single initial-time observations and intermediate dosing work", {
     m <- output_test_model()
     e <- experiment(observations = observation_schedule(0 [h], "A"))

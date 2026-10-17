@@ -78,12 +78,18 @@ as_observables_wide <- function(x) {
     out
 }
 
-.simulation_pack_observables <- function(schedule, groups) {
+.simulation_pack_observables <- function(schedule, groups, rows_by_observable = NULL) {
     labels <- vapply(groups, function(x) if (inherits(x, "units")) units::deparse_unit(x) else "", character(1))
     value <- numeric(nrow(schedule))
     row_units <- rep("1", nrow(schedule))
+    if (is.null(rows_by_observable)) {
+        rows_by_observable <- lapply(names(groups), function(nm) {
+            which(schedule$observable == nm)
+        })
+        names(rows_by_observable) <- names(groups)
+    }
     for (nm in names(groups)) {
-        idx <- which(schedule$observable == nm)
+        idx <- rows_by_observable[[nm]]
         value[idx] <- as.numeric(groups[[nm]])
         if (nzchar(labels[[nm]])) row_units[idx] <- labels[[nm]]
     }
@@ -103,40 +109,73 @@ as_observables_wide <- function(x) {
     if (!length(odeinfo$obsFuncs)) return(NULL)
     schedule <- attr(model, "observation_schedule")
     if (is.null(schedule)) {
-        wide <- .simulation_observable_columns(solver_output, time, model, odeinfo,
-                                               solver_time, dimensions, parameters)
         obs <- names(odeinfo$obsFuncs)
         schedule <- data.frame(time = rep(time, times = length(obs)),
                                observable = rep(obs, each = length(time)))
-        return(.simulation_pack_observables(schedule, wide[obs]))
     }
     observation_plan <- observation_plan %||% .simulation_prepare_observation_plan(
         schedule, solver_output[, "time"], dimensions
     )
-    groups <- lapply(observation_plan, function(group) {
+    groups <- vector("list", length(observation_plan$observable_names))
+    names(groups) <- observation_plan$observable_names
+    for (evaluation in observation_plan$evaluations) {
         info <- odeinfo
-        info$obsFuncs <- info$obsFuncs[group$observable]
+        observable_names <- observation_plan$observable_names[evaluation$observable_indices]
+        info$obsFuncs <- info$obsFuncs[observable_names]
         values <- .simulation_observable_columns(
-            solver_output[group$unique_idx, , drop = FALSE], time[group$unique_idx], model, info,
-            solver_output[group$unique_idx, "time"], dimensions, parameters
-        )[[group$observable]]
-        values[group$rematch]
-    })
-    names(groups) <- vapply(observation_plan, `[[`, character(1), "observable")
-    .simulation_pack_observables(schedule, groups)
+            solver_output[evaluation$solver_indices, , drop = FALSE],
+            time[evaluation$solver_indices], model, info,
+            solver_output[evaluation$solver_indices, "time"], dimensions, parameters
+        )
+        for (observable_index in evaluation$observable_indices) {
+            nm <- observation_plan$observable_names[[observable_index]]
+            groups[[observable_index]] <- values[[nm]][
+                observation_plan$rematch[[observable_index]]
+            ]
+        }
+    }
+    .simulation_pack_observables(
+        schedule, groups, rows_by_observable = observation_plan$rows_by_observable
+    )
 }
 
 .simulation_prepare_observation_plan <- function(schedule, solver_time, dimensions) {
-    lapply(unique(schedule$observable), function(nm) {
-        rows <- which(schedule$observable == nm)
+    observable_names <- unique(schedule$observable)
+    rows_by_observable <- lapply(observable_names, function(nm) {
+        which(schedule$observable == nm)
+    })
+    names(rows_by_observable) <- observable_names
+    solver_indices <- vector("list", length(observable_names))
+    rematch <- vector("list", length(observable_names))
+    for (i in seq_along(observable_names)) {
+        rows <- rows_by_observable[[i]]
         requested <- .simulation_numeric_time(schedule$time[rows], dimensions)
         idx <- match(requested, solver_time)
         if (anyNA(idx)) stop("Solver output is missing requested observation times.", call. = FALSE)
-        unique_idx <- unique(idx)
-        list(
-            observable = nm,
-            unique_idx = unique_idx,
-            rematch = match(idx, unique_idx)
-        )
-    })
+        solver_indices[[i]] <- sort(unique(idx))
+        rematch[[i]] <- match(idx, solver_indices[[i]])
+    }
+    evaluations <- list()
+    for (i in seq_along(observable_names)) {
+        matching <- which(vapply(evaluations, function(x) {
+            identical(x$solver_indices, solver_indices[[i]])
+        }, logical(1)))
+        if (length(matching)) {
+            j <- matching[[1]]
+            evaluations[[j]]$observable_indices <- c(
+                evaluations[[j]]$observable_indices, i
+            )
+        } else {
+            evaluations[[length(evaluations) + 1L]] <- list(
+                observable_indices = i,
+                solver_indices = solver_indices[[i]]
+            )
+        }
+    }
+    list(
+        observable_names = observable_names,
+        rows_by_observable = rows_by_observable,
+        rematch = rematch,
+        evaluations = evaluations
+    )
 }
