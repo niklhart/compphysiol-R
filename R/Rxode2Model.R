@@ -220,7 +220,10 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
     }
 
     parameter_values <- vector("list", length(experiments))
-    records <- vector("list", length(experiments))
+    solver_times <- vector("list", length(experiments))
+    records <- if (shared_time && homogeneity[["dosing"]]) NULL else {
+        vector("list", length(experiments))
+    }
     shared_events <- if (homogeneity[["dosing"]]) {
         .simulation_experiment_events(
             ode, experiments[[1]]$dosing, dimensions, supplied[[1]],
@@ -247,24 +250,26 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
         } else {
             .rxode2_runtime_parameter_values(artifact, supplied[[i]], dimensions)
         }
-        solver_time <- .simulation_numeric_time(times[[i]], dimensions)
-        events <- shared_events %||% .simulation_experiment_events(
-            ode, experiments[[i]]$dosing, dimensions, supplied[[i]],
-            state_unit_values = artifact$stateUnitValues
-        )$data
-        events <- events[events$time >= min(solver_time) & events$time <= max(solver_time), , drop = FALSE]
-        observations <- data.frame(id = i, time = solver_time, evid = 0L, cmt = NA_character_, amt = NA_real_)
-        if (nrow(events)) {
-            doses <- data.frame(
-                id = i, time = events$time, evid = 1L,
-                cmt = unname(object$identifiers$states[events$var]), amt = events$value
+        solver_times[[i]] <- .simulation_numeric_time(times[[i]], dimensions)
+        if (!is.null(records)) {
+            events <- shared_events %||% .simulation_experiment_events(
+                ode, experiments[[i]]$dosing, dimensions, supplied[[i]],
+                state_unit_values = artifact$stateUnitValues
+            )$data
+            records[[i]] <- .rxode2_individual_records(
+                i, solver_times[[i]], events, object$identifiers$states
             )
-            observations <- rbind(doses, observations)
         }
-        records[[i]] <- observations
     }
-    records <- do.call(rbind, records)
-    records <- records[order(records$id, records$time, -records$evid), , drop = FALSE]
+    records <- if (is.null(records)) {
+        .rxode2_shared_experiment_records(
+            length(experiments), solver_times[[1]], shared_events,
+            object$identifiers$states
+        )
+    } else {
+        records <- do.call(rbind, records)
+        records[order(records$id, records$time, -records$evid), , drop = FALSE]
+    }
 
     params <- as.data.frame(do.call(rbind, parameter_values), check.names = FALSE)
     names(params) <- unname(object$identifiers$parameters[names(params)])
@@ -273,6 +278,7 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
                    returnType = "data.frame"), engine$arguments, list(...))
     solved <- as.data.frame(do.call(rxode2::rxSolve, args))
     solved_rows_by_id <- split(seq_len(nrow(solved)), solved$id)
+    state_columns <- match(c("time", unname(object$identifiers$states)), names(solved))
     shared_observation_plan <- if (shared_time) {
         .simulation_prepare_observation_plan(
             experiments[[1]]$observations,
@@ -284,12 +290,11 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
     }
 
     out <- lapply(seq_along(experiments), function(i) {
-        solver_time <- .simulation_numeric_time(times[[i]], dimensions)
+        solver_time <- solver_times[[i]]
         individual_rows <- solved_rows_by_id[[as.character(i)]]
-        individual <- solved[individual_rows, , drop = FALSE]
-        rows <- individual$time %in% solver_time
-        states <- individual[rows, c("time", unname(object$identifiers$states)), drop = FALSE]
-        states <- states[match(solver_time, states$time), , drop = FALSE]
+        candidate_rows <- individual_rows[solved$time[individual_rows] %in% solver_time]
+        state_rows <- candidate_rows[match(solver_time, solved$time[candidate_rows])]
+        states <- solved[state_rows, state_columns, drop = FALSE]
         rownames(states) <- NULL
         names(states) <- c("time", object$stateNames)
         matrix_out <- as.matrix(states)
@@ -308,6 +313,39 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
     })
     names(out) <- names(experiments)
     out
+}
+
+.rxode2_individual_records <- function(id, solver_time, events, state_identifiers) {
+    events <- events[
+        events$time >= min(solver_time) & events$time <= max(solver_time), , drop = FALSE
+    ]
+    observations <- data.frame(
+        id = id, time = solver_time, evid = 0L,
+        cmt = NA_character_, amt = NA_real_
+    )
+    if (nrow(events)) {
+        doses <- data.frame(
+            id = id, time = events$time, evid = 1L,
+            cmt = unname(state_identifiers[events$var]), amt = events$value
+        )
+        observations <- rbind(doses, observations)
+    }
+    observations
+}
+
+.rxode2_shared_experiment_records <- function(n, solver_time, events, state_identifiers) {
+    template <- .rxode2_individual_records(
+        1L, solver_time, events, state_identifiers
+    )
+    template <- template[order(template$time, -template$evid), , drop = FALSE]
+    rows_per_individual <- nrow(template)
+    data.frame(
+        id = rep.int(seq_len(n), rep.int(rows_per_individual, n)),
+        time = rep(template$time, times = n),
+        evid = rep(template$evid, times = n),
+        cmt = rep(template$cmt, times = n),
+        amt = rep(template$amt, times = n)
+    )
 }
 
 #' @export
