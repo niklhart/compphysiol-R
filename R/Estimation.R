@@ -255,6 +255,37 @@ optim_engine <- function(
     )
 }
 
+#' Configure the nlmixr2 estimation engine
+#'
+#' The first nlmixr2 integration supports FOCEi with diagonal
+#' individual-level variability. The engine owns ODE execution and mixed-effects
+#' estimation; it does not contain a separate simulation engine.
+#'
+#' @param method Estimation method. Currently only `"focei"` is supported.
+#' @param control Named arguments passed to [nlmixr2est::foceiControl()].
+#' @param table Named arguments passed to [nlmixr2est::tableControl()].
+#' @returns A `compphysiol_nlmixr2_engine` object.
+#' @export
+nlmixr2_engine <- function(method = "focei", control = list(), table = list()) {
+    if (!is.character(method) || length(method) != 1L || is.na(method) ||
+        !identical(tolower(method), "focei")) {
+        stop("The nlmixr2 engine currently supports only the FOCEi method.", call. = FALSE)
+    }
+    if (!is.list(control) || is.null(names(control)) && length(control)) {
+        stop("nlmixr2 control must be a named list.", call. = FALSE)
+    }
+    if (!is.list(table) || is.null(names(table)) && length(table)) {
+        stop("nlmixr2 table must be a named list.", call. = FALSE)
+    }
+    structure(
+        list(method = "focei", control = control, table = table),
+        class = .compphysiol_class(
+            "compphysiol_nlmixr2_engine",
+            parents = c("compphysiol_estimation_engine", "compphysiol_engine")
+        )
+    )
+}
+
 #' Create an engine-neutral estimation problem
 #'
 #' @param model A `compphysiol_compartment_model`, `compphysiol_process_model`, `compphysiol_ode_model`, or
@@ -336,6 +367,20 @@ estimation_problem <- function(model, experiments, parameters, statistics) {
     initial_values <- .new_parameters(lapply(parameters, `[[`, "initial"))
     for (e in unclass(experiments)) {
         validation_values <- .merge_ode_parameters(e$parameters, initial_values)
+        individual_targets <- names(resolved_statistics)[vapply(
+            resolved_statistics, function(x) identical(x$level, "individual"), logical(1)
+        )]
+        if (length(individual_targets)) {
+            typical_values <- lapply(individual_targets, function(target) {
+                distribution <- resolved_statistics[[target]]
+                location <- if (inherits(distribution, "compphysiol_normal_distribution")) {
+                    distribution$mean
+                } else distribution$median
+                .estimation_spec_value(location, validation_values, "individual location")
+            })
+            names(typical_values) <- individual_targets
+            validation_values <- .new_parameters(c(unclass(validation_values), typical_values))
+        }
         .resolve_statistical_model(statistics, model, validation_values)
     }
     structure(
@@ -418,7 +463,7 @@ estimate.default <- function(object, ...) {
          paste(class(object), collapse = "/"), ".", call. = FALSE)
 }
 
-#' @param engine An estimation engine, currently [optim_engine()].
+#' @param engine An estimation engine, [optim_engine()] or [nlmixr2_engine()].
 #' @param dimensions Optional solver-facing unit dimensions passed to simulation.
 #' @rdname estimate
 #' @export
@@ -429,10 +474,13 @@ estimate.compphysiol_estimation_problem <- function(
     ...
 ) {
     .check_class(engine, "compphysiol_estimation_engine")
-    if (!inherits(engine, "compphysiol_optim_engine")) {
-        stop("Unsupported estimation engine: ", class(engine)[1], ".", call. = FALSE)
+    if (inherits(engine, "compphysiol_optim_engine")) {
+        return(.estimate_optim(object, engine, dimensions = dimensions, ...))
     }
-    .estimate_optim(object, engine, dimensions = dimensions, ...)
+    if (inherits(engine, "compphysiol_nlmixr2_engine")) {
+        return(.estimate_nlmixr2(object, engine, dimensions = dimensions, ...))
+    }
+    stop("Unsupported estimation engine: ", class(engine)[1], ".", call. = FALSE)
 }
 
 .optim_parameter_overlay_plan <- function(experiments, runtime_names) {
@@ -583,6 +631,8 @@ print.compphysiol_estimation_result <- function(x, ...) {
     engine <- .compphysiol_class_label(x$engine)
     if (inherits(x$engine, "compphysiol_optim_engine")) {
         engine <- paste0(engine, " (", x$engine$method, ")")
+    } else if (inherits(x$engine, "compphysiol_nlmixr2_engine")) {
+        engine <- paste0(engine, " (", toupper(x$engine$method), ")")
     }
     cat(" engine: ", engine, "\n", sep = "")
     invisible(x)
@@ -907,7 +957,9 @@ coef.compphysiol_estimation_result <- function(object, ...) object$coefficients
 #' @param ... Unused.
 #' @returns Unit-aware `compphysiol_observation_data` of fitted values in estimation-row order.
 #' @export
-fitted.compphysiol_estimation_result <- function(object, ...) object$predictions
+fitted.compphysiol_estimation_result <- function(object, ...) {
+    object$individual_predictions %||% object$predictions
+}
 
 #' Extract estimation residuals
 #' @param object A `compphysiol_estimation_result`.

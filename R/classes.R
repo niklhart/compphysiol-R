@@ -97,6 +97,7 @@
         compphysiol_rxode2_engine = "rxode2 engine",
         compphysiol_estimation_engine = "Estimation engine",
         compphysiol_optim_engine = "optim engine",
+        compphysiol_nlmixr2_engine = "nlmixr2 engine",
         compphysiol_simulation_result = "Simulation result",
         compphysiol_estimation_problem = "Estimation problem",
         compphysiol_estimation_result = "Estimation result",

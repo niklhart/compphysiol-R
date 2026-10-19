@@ -594,7 +594,7 @@ estimation result exposes coefficients, the negative log-likelihood as
 `neg_log_lik`, convergence
 information, fitted values, residuals, and the raw engine result.
 
-An engine that integrates mixed effects, such as a future `nlmixr2` engine,
+The nlmixr2 engine integrates mixed effects and
 owns more than an outer optimization algorithm: ODE evaluation, residual
 likelihoods, random-effect approximation or integration, and the estimation
 algorithm belong to that engine. It therefore consumes the scientific model,
@@ -626,7 +626,8 @@ Implementation anchor: `estimation_problem()` creates
 `compphysiol_estimation_problem`; `parameter_spec()` creates
 `compphysiol_parameter_spec`; `c()` combines them into
 `compphysiol_parameter_specs`; `optim_engine()` configures the optimizer and
-its `deSolve_engine()`; and `estimate()` returns
+its `deSolve_engine()`; `nlmixr2_engine()` creates
+`compphysiol_nlmixr2_engine`; and `estimate()` returns
 `compphysiol_estimation_result`.
 
 ## Source and sink

@@ -14,7 +14,7 @@ estimate(object, ...)
 
 \item{...}{Additional method arguments.}
 
-\item{engine}{An estimation engine, currently \code{\link[=optim_engine]{optim_engine()}}.}
+\item{engine}{An estimation engine, \code{\link[=optim_engine]{optim_engine()}} or \code{\link[=nlmixr2_engine]{nlmixr2_engine()}}.}
 
 \item{dimensions}{Optional solver-facing unit dimensions passed to simulation.}
 }

@@ -43,6 +43,7 @@
 \alias{is_rxode2_engine}
 \alias{is_estimation_engine}
 \alias{is_optim_engine}
+\alias{is_nlmixr2_engine}
 \alias{is_simulation_result}
 \alias{is_estimation_problem}
 \alias{is_estimation_result}
@@ -132,6 +133,8 @@ is_rxode2_engine(x)
 is_estimation_engine(x)
 
 is_optim_engine(x)
+
+is_nlmixr2_engine(x)
 
 is_simulation_result(x)
 

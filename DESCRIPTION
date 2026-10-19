@@ -31,6 +31,7 @@ Suggests:
     ggplot2,
     quarto,
     reshape2,
+    nlmixr2est,
     rxode2,
     testthat (>= 3.0.0),
     Ryacas

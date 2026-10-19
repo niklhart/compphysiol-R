@@ -47,6 +47,7 @@ test_that("model representations use the compphysiol hierarchy", {
 test_that("engines use role-based prefixed classes", {
     simulation <- deSolve_engine()
     estimation <- optim_engine()
+    mixed_effects <- nlmixr2_engine()
 
     expect_identical(
         class(simulation)[1:3],
@@ -60,6 +61,14 @@ test_that("engines use role-based prefixed classes", {
         class(estimation)[1:3],
         c(
             "compphysiol_optim_engine",
+            "compphysiol_estimation_engine",
+            "compphysiol_engine"
+        )
+    )
+    expect_identical(
+        class(mixed_effects)[1:3],
+        c(
+            "compphysiol_nlmixr2_engine",
             "compphysiol_estimation_engine",
             "compphysiol_engine"
         )
@@ -165,6 +174,7 @@ test_that("public predicates mirror prefixed class names", {
         desolve_engine = deSolve_engine(),
         estimation_engine = optim_engine(),
         optim_engine = optim_engine(),
+        nlmixr2_engine = nlmixr2_engine(),
         physiology = physiology(),
         drug = drug(),
         drugs = drugs()
@@ -203,4 +213,5 @@ test_that("model predicates follow concrete and abstract inheritance", {
     expect_false(is_executable_model(ode))
     expect_true(is_engine(deSolve_engine()))
     expect_true(is_engine(optim_engine()))
+    expect_true(is_engine(nlmixr2_engine()))
 })

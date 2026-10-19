@@ -179,6 +179,10 @@ is_optim_engine <- function(x) .inherits_compphysiol(x, "optim_engine")
 
 #' @rdname class_predicates
 #' @export
+is_nlmixr2_engine <- function(x) .inherits_compphysiol(x, "nlmixr2_engine")
+
+#' @rdname class_predicates
+#' @export
 is_simulation_result <- function(x) .inherits_compphysiol(x, "simulation_result")
 
 #' @rdname class_predicates
