@@ -632,9 +632,10 @@ estimate.compphysiol_estimation_problem <- function(
 #'   fit, which provides its own residual diagnostics.
 #' - `problem`: the [estimation_problem()] that was fitted.
 #'
-#' Use [coef()] for coefficients. For an optim result, `fitted(object)` returns
-#' population predictions. An nlmixr2 result requires an explicit prediction
-#' type: `fitted(object, "PRED")` or `fitted(object, "IPRED")`.
+#' Use [coef()] for coefficients. When only population predictions exist,
+#' `fitted(object)` returns them directly. A mixed-effects nlmixr2 result
+#' requires an explicit prediction type: `fitted(object, "PRED")` or
+#' `fitted(object, "IPRED")`.
 #'
 #' @name compphysiol_estimation_result
 #' @seealso [estimate()], [optim_engine()], [nlmixr2_engine()]
@@ -985,9 +986,10 @@ coef.compphysiol_estimation_result <- function(object, ...) object$coefficients
 
 #' Extract fitted observable values
 #' @param object A `compphysiol_estimation_result`.
-#' @param type Prediction type. Leave as `NULL` for an optim result. An nlmixr2
-#'   result requires `"PRED"` for population predictions or `"IPRED"` for
-#'   individual predictions.
+#' @param type Prediction type: `"PRED"` for population predictions or
+#'   `"IPRED"` for individual predictions. Leave as `NULL` when the result has
+#'   only one prediction level. For a population-only nlmixr2 result, all three
+#'   forms return the same sole prediction table.
 #' @param ... Unused.
 #' @returns Unit-aware `compphysiol_observation_data` of fitted values in estimation-row order.
 #' @export
@@ -1000,7 +1002,9 @@ fitted.compphysiol_estimation_result <- function(object, type = NULL, ...) {
         return(object$population_predictions)
     }
     if (inherits(object$engine, "compphysiol_nlmixr2_engine")) {
+        population_only <- is.null(object$individual_predictions)
         if (is.null(type)) {
+            if (population_only) return(object$population_predictions)
             stop("An nlmixr2 estimation result requires an explicit prediction type: 'PRED' or 'IPRED'.",
                  call. = FALSE)
         }
@@ -1011,13 +1015,9 @@ fitted.compphysiol_estimation_result <- function(object, type = NULL, ...) {
         if (!type %in% c("PRED", "IPRED")) {
             stop("Prediction type must be 'PRED' or 'IPRED'.", call. = FALSE)
         }
-        value <- if (identical(type, "PRED")) object$population_predictions else
-            object$individual_predictions
-        if (is.null(value)) {
-            stop("Prediction type '", type, "' is unavailable for this estimation result.",
-                 call. = FALSE)
-        }
-        value
+        if (population_only || identical(type, "PRED")) {
+            object$population_predictions
+        } else object$individual_predictions
     } else {
         stop("Unsupported estimation engine in fitted estimation result.", call. = FALSE)
     }

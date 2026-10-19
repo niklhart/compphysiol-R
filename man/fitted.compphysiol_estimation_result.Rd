@@ -9,9 +9,10 @@
 \arguments{
 \item{object}{A \code{compphysiol_estimation_result}.}
 
-\item{type}{Prediction type. Leave as \code{NULL} for an optim result. An nlmixr2
-result requires \code{"PRED"} for population predictions or \code{"IPRED"} for
-individual predictions.}
+\item{type}{Prediction type: \code{"PRED"} for population predictions or
+\code{"IPRED"} for individual predictions. Leave as \code{NULL} when the result has
+only one prediction level. For a population-only nlmixr2 result, all three
+forms return the same sole prediction table.}
 
 \item{...}{Unused.}
 }

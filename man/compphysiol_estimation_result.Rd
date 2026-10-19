@@ -29,9 +29,10 @@ fit, which provides its own residual diagnostics.
 \item \code{problem}: the \code{\link[=estimation_problem]{estimation_problem()}} that was fitted.
 }
 
-Use \code{\link[=coef]{coef()}} for coefficients. For an optim result, \code{fitted(object)} returns
-population predictions. An nlmixr2 result requires an explicit prediction
-type: \code{fitted(object, "PRED")} or \code{fitted(object, "IPRED")}.
+Use \code{\link[=coef]{coef()}} for coefficients. When only population predictions exist,
+\code{fitted(object)} returns them directly. A mixed-effects nlmixr2 result
+requires an explicit prediction type: \code{fitted(object, "PRED")} or
+\code{fitted(object, "IPRED")}.
 }
 
 \seealso{

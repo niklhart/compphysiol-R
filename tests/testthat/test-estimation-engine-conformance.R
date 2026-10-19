@@ -64,9 +64,13 @@ test_that("optim and nlmixr2 conform on a fixed-effects problem", {
     )
 
     expect_null(nlmixr2_fit$individual_predictions)
-    expect_error(fitted(nlmixr2_fit), "explicit prediction type")
+    expect_identical(
+        fitted(nlmixr2_fit), nlmixr2_fit$population_predictions
+    )
     expect_identical(
         fitted(nlmixr2_fit, "PRED"), nlmixr2_fit$population_predictions
     )
-    expect_error(fitted(nlmixr2_fit, "IPRED"), "unavailable")
+    expect_identical(
+        fitted(nlmixr2_fit, "IPRED"), nlmixr2_fit$population_predictions
+    )
 })

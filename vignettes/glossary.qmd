@@ -628,7 +628,9 @@ be ambiguous and is not part of the mixed-effects result contract. Prediction
 tables preserve the observation rows and their order. Because a mixed-effects
 fit has both levels, fitted-value extraction requires the caller to select the
 population or individual prediction explicitly. An estimation without
-individual effects has only population predictions and needs no selection.
+individual effects has only one prediction level and needs no selection; for an
+nlmixr2 result, the backend labels for population and individual predictions
+both resolve to that same table.
 Residuals are not currently normalized across engines because their definitions
 depend on both the prediction level and the backend-specific residual type.
 
