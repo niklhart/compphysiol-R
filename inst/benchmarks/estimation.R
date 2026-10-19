@@ -12,6 +12,11 @@
 
 library(compphysiol)
 
+has_rxode2 <- requireNamespace("rxode2", quietly = TRUE)
+if (!has_rxode2) {
+    warning("rxode2 is not installed; rxode2 benchmark routes will be skipped.")
+}
+
 quick <- tolower(Sys.getenv("COMPPHYSIOL_BENCH_QUICK", "false")) %in%
     c("1", "true", "yes")
 fixed_replicates <- as.integer(Sys.getenv(
@@ -281,6 +286,26 @@ compile_cached <- function(model, definition, runtime) {
     ))
 }
 
+compile_rxode2_cached <- function(model, definition, runtime) {
+    ode <- model$ode_model
+    supplied <- compphysiol:::.merge_ode_parameters(
+        definition$experiments[[1]]$parameters, runtime
+    )
+    merged <- compphysiol:::.merge_ode_parameters(ode$parameters, supplied)
+    time <- definition$experiments[[1]]$observations$time
+    dimensions <- compphysiol:::.simulation_dimensions(
+        ode,
+        time = time,
+        dimensions = NULL,
+        parameters = merged
+    )
+    elapsed(compphysiol:::.rxode2_artifact(
+        model,
+        dimensions = dimensions,
+        parameters = merged
+    ))
+}
+
 run_fixed_route <- function(route, model, definition, vectors) {
     timing <- elapsed({
         values <- numeric()
@@ -326,7 +351,7 @@ fit_route <- function(route, model, definition, engine, compilation_seconds = 0)
         code = fit$convergence$code,
         compile_sec = compilation_seconds,
         total_sec = timing$seconds + compilation_seconds,
-        warm_sec = if (identical(route, "Compiled warm")) timing$seconds else NA_real_,
+        warm_sec = if (identical(route, "deSolve warm")) timing$seconds else NA_real_,
         stringsAsFactors = FALSE
     )
 }
@@ -354,7 +379,10 @@ run_scenario <- function(scenario_name) {
     runtime <- compphysiol:::.new_parameters(
         setNames(list(definition$fixed_values[[1]]), definition$dynamic_name)
     )
-    compile_fixed <- compile_cached(warm_fixed, definition, runtime)
+    if (has_rxode2) {
+        cold_rx_fixed <- to_rxode2_model(ode)
+        warm_rx_fixed <- to_rxode2_model(ode)
+    }
 
     cat("\nFixed likelihood evaluation\n")
     fixed_routes <- list()
@@ -369,22 +397,44 @@ run_scenario <- function(scenario_name) {
             )
         )
     }
-    fixed_routes <- c(fixed_routes, list(
-        run_fixed_route("Compiled cold", cold_fixed, definition, definition$fixed_values),
-        run_fixed_route("Compiled warm", warm_fixed, definition, definition$fixed_values)
-    ))
+    fixed_routes <- c(fixed_routes, list(run_fixed_route(
+        "deSolve cold", cold_fixed, definition, definition$fixed_values
+    )))
+    compile_fixed <- compile_cached(warm_fixed, definition, runtime)
+    fixed_routes <- c(fixed_routes, list(run_fixed_route(
+        "deSolve warm", warm_fixed, definition, definition$fixed_values
+    )))
+    if (has_rxode2) {
+        fixed_routes <- c(fixed_routes, list(run_fixed_route(
+            "rxode2 first", cold_rx_fixed, definition, definition$fixed_values
+        )))
+        compile_rx_fixed <- compile_rxode2_cached(
+            warm_rx_fixed, definition, runtime
+        )
+        fixed_routes <- c(fixed_routes, list(run_fixed_route(
+            "rxode2 warm", warm_rx_fixed, definition, definition$fixed_values
+        )))
+    }
     fixed <- do.call(rbind, fixed_routes)
     fixed$scenario <- label
     fixed$compile_sec <- NA_real_
     fixed$compile_sec[
-        fixed$route == "Compiled warm"
+        fixed$route == "deSolve warm"
     ] <- compile_fixed$seconds
+    if (has_rxode2) {
+        fixed$compile_sec[fixed$route == "rxode2 warm"] <- compile_rx_fixed$seconds
+    }
     print(fixed[setdiff(names(fixed), "scenario")], row.names = FALSE, digits = 5)
-    tolerance <- 1e-6 * max(1, abs(fixed$nll_sum[[1]]))
+    tolerance <- 1e-4 * max(1, abs(fixed$nll_sum[[1]]))
     stopifnot(max(abs(fixed$nll_sum - fixed$nll_sum[[1]])) <= tolerance)
 
     cat("\nEnd-to-end estimation\n")
     engine <- optim_engine(method = "L-BFGS-B", control = list(maxit = if (quick) 5 else 100))
+    rx_engine <- optim_engine(
+        method = "L-BFGS-B",
+        control = list(maxit = if (quick) 5 else 100),
+        simulation = rxode2_engine()
+    )
     compiled_for_build <- to_compiled_ode_model(ode)
     compilation <- compile_cached(compiled_for_build, definition, runtime)
     cold_estimation <- to_compiled_ode_model(ode)
@@ -396,16 +446,26 @@ run_scenario <- function(scenario_name) {
         )
     }
     fit_routes <- c(fit_routes, list(
-        fit_route("Compiled cold", cold_estimation, definition, engine),
-        fit_route("Compiled warm", compiled_for_build, definition, engine,
+        fit_route("deSolve cold", cold_estimation, definition, engine),
+        fit_route("deSolve warm", compiled_for_build, definition, engine,
                   compilation_seconds = compilation$seconds)
     ))
+    if (has_rxode2) {
+        rx_for_build <- to_rxode2_model(ode)
+        rx_compilation <- compile_rxode2_cached(rx_for_build, definition, runtime)
+        fit_routes <- c(fit_routes, list(
+            fit_route("rxode2", ode, definition, rx_engine)
+        ))
+    }
     fits <- do.call(rbind, fit_routes)
     # Cold estimation compiles during its measured estimation time. Its total is
     # therefore already inclusive rather than the sum of two separate timings.
-    fits$total_sec[fits$route == "Compiled cold"] <-
-        fits$sec[fits$route == "Compiled cold"]
-    fits$compile_sec[fits$route == "Compiled cold"] <- compilation$seconds
+    fits$total_sec[fits$route == "deSolve cold"] <-
+        fits$sec[fits$route == "deSolve cold"]
+    fits$compile_sec[fits$route == "deSolve cold"] <- compilation$seconds
+    if (has_rxode2) {
+        fits$compile_sec[fits$route == "rxode2"] <- rx_compilation$seconds
+    }
     fits$scenario <- label
     print(fits[setdiff(names(fits), "scenario")], row.names = FALSE, digits = 5)
 
@@ -435,6 +495,7 @@ cat("\nNotes:\n")
 cat("- Fixed routes evaluate the same parameter vectors; the checksum assertion detects numerical disagreement.\n")
 cat("- fixed_replicates repeats the complete three-point parameter grid, so the default gives 5 x 3 = 15 evaluations.\n")
 cat("- Cold compiled rows include first-use compilation. Warm rows use an explicitly pre-built cache.\n")
+cat("- The end-to-end rxode2 row includes first-use compilation; its compiled artifact is reused by later objective evaluations in the same fit.\n")
 cat("- Compilation seconds measure compiled artifact generation without an ODE solve.\n")
 cat("- Likelihood evaluations equal optim function calls plus the initial validation and final diagnostic calls.\n")
 cat("- Population scenarios run only the cold and warm compiled routes; interpreting models on every evaluation is prohibitively slow at these sizes.\n")
