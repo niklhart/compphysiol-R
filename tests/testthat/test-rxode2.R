@@ -63,7 +63,8 @@ test_that("rxode2 handles bolus, infusion, experiments, and cache reuse", {
         artifact,
         c(
             "source", "compiled", "dimensions", "parameterIndex", "defaultParms",
-            "parameterSignature", "obsFuncs", "stateUnitValues", "stateUnitScales",
+            "parameterSignature", "parameterTransforms", "obsFuncs",
+            "stateUnitValues", "stateUnitScales",
             "observableUnitValues", "observableExportUnitValues", "observableUnitScales",
             "events", "modelUsesTime", "modelHasTimeDependentProcess"
         )

@@ -286,6 +286,11 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
         parameterSignature = .compiled_ode_model_parameter_signature(
             model$parameterNames,
             parameters
+        ),
+        parameterTransforms = .compiled_ode_model_parameter_transforms(
+            model$parameterNames,
+            parameters,
+            dimensions
         )
     )
     artifact$observableExportUnitValues <- lapply(artifact$observableUnitValues, function(x) {
@@ -321,7 +326,16 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
                 call. = FALSE
             )
         }
-        value <- .to_dimensions_value(parameters[[nm]], dimensions)
+        transform <- artifact$parameterTransforms[[nm]]
+        use_transform <- !is.null(transform) && (
+            is.null(transform$unit) ||
+            identical(units::deparse_unit(parameters[[nm]]), transform$unit)
+        )
+        value <- if (use_transform) {
+            transform$offset + transform$scale * as.numeric(parameters[[nm]])
+        } else {
+            .to_dimensions_value(parameters[[nm]], dimensions)
+        }
         if (!is.numeric(value) || length(value) != 1L) {
             stop("Compiled ODE parameter '", nm, "' must be a numeric scalar.", call. = FALSE)
         }
@@ -360,13 +374,15 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
                 call. = FALSE
             )
         }
-        if (has_units && !units::ud_are_convertible(units(value), expected$unit)) {
+        if (has_units && !identical(
+            units::deparse_unit(value), expected$unit_label
+        )) {
             stop(
                 "compiled deSolve model parameter '",
                 nm,
                 "' has units ",
                 units(value),
-                ", but cached compiled model signature expects units convertible to ",
+                ", but cached compiled model signature requires exactly ",
                 expected$unit,
                 ".",
                 call. = FALSE
@@ -484,10 +500,42 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
     out <- lapply(parameter_names, function(nm) {
         value <- parameters[[nm]]
         if (inherits(value, "units")) {
-            list(has_units = TRUE, unit = units(value))
+            list(
+                has_units = TRUE,
+                unit = units(value),
+                unit_label = units::deparse_unit(value)
+            )
         } else {
-            list(has_units = FALSE, unit = NULL)
+            list(has_units = FALSE, unit = NULL, unit_label = NULL)
         }
+    })
+    names(out) <- parameter_names
+    out
+}
+
+.compiled_ode_model_parameter_transforms <- function(
+    parameter_names, parameters, dimensions
+) {
+    out <- lapply(parameter_names, function(nm) {
+        template <- parameters[[nm]]
+        if (!is.numeric(template) || length(template) != 1L) return(NULL)
+        if (!inherits(template, "units")) return(list(offset = 0, scale = 1))
+
+        zero <- template
+        one <- template
+        check <- template
+        zero[] <- 0
+        one[] <- 1
+        check[] <- 2
+        offset <- as.numeric(.to_dimensions_value(zero, dimensions))
+        scale <- as.numeric(.to_dimensions_value(one, dimensions)) - offset
+        converted_check <- as.numeric(.to_dimensions_value(check, dimensions))
+        if (!isTRUE(all.equal(converted_check, offset + 2 * scale))) return(NULL)
+        list(
+            offset = offset,
+            scale = scale,
+            unit = units::deparse_unit(template)
+        )
     })
     names(out) <- parameter_names
     out
@@ -508,13 +556,15 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
                 call. = FALSE
             )
         }
-        if (has_units && !units::ud_are_convertible(units(value), expected$unit)) {
+        if (has_units && !identical(
+            units::deparse_unit(value), expected$unit_label
+        )) {
             stop(
                 "compiled deSolve model parameter '",
                 nm,
                 "' has units ",
                 units(value),
-                ", but cached compiled model signature expects units convertible to ",
+                ", but cached compiled model signature requires exactly ",
                 expected$unit,
                 ".",
                 call. = FALSE

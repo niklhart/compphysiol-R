@@ -144,6 +144,9 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
         parameterIndex = stats::setNames(seq_along(model$parameterNames), model$parameterNames),
         defaultParms = .compiled_ode_model_parameter_values(model$parameterNames, parameters, dimensions),
         parameterSignature = .compiled_ode_model_parameter_signature(model$parameterNames, parameters),
+        parameterTransforms = .compiled_ode_model_parameter_transforms(
+            model$parameterNames, parameters, dimensions
+        ),
         obsFuncs = .compiled_ode_model_observable_functions(ode, model$parameterNames, dimensions),
         stateUnitValues = state_unit_values,
         stateUnitScales = .compiled_ode_model_unit_scales(state_unit_values, state_unit_values),
@@ -163,7 +166,16 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
     if (!length(parameters)) return(values)
     for (nm in names(parameters)) {
         idx <- artifact$parameterIndex[[nm]]
-        value <- .to_dimensions_value(parameters[[nm]], dimensions)
+        transform <- artifact$parameterTransforms[[nm]]
+        use_transform <- !is.null(transform) && (
+            is.null(transform$unit) ||
+            identical(units::deparse_unit(parameters[[nm]]), transform$unit)
+        )
+        value <- if (use_transform) {
+            transform$offset + transform$scale * as.numeric(parameters[[nm]])
+        } else {
+            .to_dimensions_value(parameters[[nm]], dimensions)
+        }
         if (is.null(idx) || !is.numeric(value) || length(value) != 1L) {
             stop("rxode2 model parameter '", nm, "' must be a numeric scalar in the fixed interface.", call. = FALSE)
         }

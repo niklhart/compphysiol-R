@@ -449,7 +449,7 @@ estimate.compphysiol_estimation_problem <- function(
 .optim_apply_parameter_overlay <- function(plan, runtime) {
     if (!length(plan$runtime_names)) return(plan$experiments)
 
-    runtime_values <- unclass(runtime)[plan$runtime_names]
+    runtime_values <- runtime[plan$runtime_names]
     elements <- lapply(seq_along(plan$elements), function(i) {
         out <- plan$elements[[i]]
         out$parameters <- .new_parameters(c(plan$fixed_parameters[[i]], runtime_values))
@@ -481,7 +481,6 @@ estimate.compphysiol_estimation_problem <- function(
     evaluate <- function(par, diagnostics = FALSE) {
         values <- .estimation_decode(par, specs)
         runtime <- values[runtime_names]
-        runtime <- .new_parameters(runtime)
         estimation_experiments <- .optim_apply_parameter_overlay(
             parameter_overlay, runtime
         )

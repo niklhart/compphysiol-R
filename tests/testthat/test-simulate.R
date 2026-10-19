@@ -483,6 +483,77 @@ test_that("CompiledOdeModel checks cached parameter unit signatures", {
         ),
         "A0.*cached compiled model signature"
     )
+    expect_error(
+        simulate(
+            compiled_model,
+            time = time,
+            parameters = parameters(A0 = 0.1 [g], ke = 0.2 [1/h]),
+            dimensions = dimensions
+        ),
+        "A0.*requires exactly"
+    )
+})
+
+test_that("compiled parameter transforms support scale and offset conversions", {
+    supplied <- parameters(
+        rate = 1 [1/h],
+        temperature = 0 [degC],
+        unitless = 2
+    )
+    dimensions <- list(time = "min", temperature = "K")
+    transforms <- .compiled_ode_model_parameter_transforms(
+        names(supplied), supplied, dimensions
+    )
+
+    expect_equal(transforms$rate$offset, 0)
+    expect_equal(transforms$rate$scale, 1 / 60)
+    expect_identical(transforms$rate$unit, "h-1")
+    expect_equal(transforms$temperature$offset, 273.15)
+    expect_equal(transforms$temperature$scale, 1)
+    expect_identical(transforms$temperature$unit, "°C")
+    expect_equal(transforms$unitless, list(offset = 0, scale = 1))
+
+    artifact <- list(
+        defaultParms = c(rate = 0, temperature = 0, unitless = 0),
+        parameterIndex = c(rate = 1L, temperature = 2L, unitless = 3L),
+        parameterTransforms = transforms
+    )
+    runtime <- parameters(
+        rate = 6 [1/h],
+        temperature = 10 [degC],
+        unitless = 4
+    )
+    expected <- c(rate = 0.1, temperature = 283.15, unitless = 4)
+
+    expect_equal(
+        .compiled_ode_model_runtime_parameter_values(
+            artifact, runtime, dimensions
+        ),
+        expected
+    )
+    expect_equal(
+        .rxode2_runtime_parameter_values(artifact, runtime, dimensions),
+        expected
+    )
+
+    signature <- .compiled_ode_model_parameter_signature(
+        names(supplied), supplied
+    )
+    alternate_units <- parameters(
+        rate = 1 [1/min],
+        temperature = 283.15 [K],
+        unitless = 4
+    )
+    expect_error(
+        .compiled_ode_model_check_parameter_signature(signature, alternate_units),
+        "rate.*requires exactly"
+    )
+    expect_error(
+        .compiled_ode_model_check_runtime_parameter_signature(
+            signature, alternate_units
+        ),
+        "rate.*requires exactly"
+    )
 })
 
 test_that("CompiledOdeModel uses fixed solver dimensions after compilation", {
