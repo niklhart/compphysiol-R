@@ -58,19 +58,27 @@ elapsed_with_compilation <- function(expr, compile_fun = NULL) {
 
     timer <- new.env(parent = emptyenv())
     timer$seconds <- 0
+    timer$measuring <- FALSE
+    timer$measured <- FALSE
     old_option <- options(compphysiol.benchmark_compile_timer = timer)
     on.exit(options(old_option), add = TRUE)
     namespace <- asNamespace("compphysiol")
     entry <- quote({
         .compphysiol_compile_timer <- getOption("compphysiol.benchmark_compile_timer")
-        .compphysiol_compile_timer$started <- proc.time()
+        if (!.compphysiol_compile_timer$measured) {
+            .compphysiol_compile_timer$started <- proc.time()
+            .compphysiol_compile_timer$measuring <- TRUE
+        }
     })
     exit <- quote({
         .compphysiol_compile_timer <- getOption("compphysiol.benchmark_compile_timer")
-        .compphysiol_compile_timer$seconds <-
-            .compphysiol_compile_timer$seconds + unname(
+        if (.compphysiol_compile_timer$measuring) {
+            .compphysiol_compile_timer$seconds <- unname(
                 (proc.time() - .compphysiol_compile_timer$started)[["elapsed"]]
             )
+            .compphysiol_compile_timer$measuring <- FALSE
+            .compphysiol_compile_timer$measured <- TRUE
+        }
     })
     suppressMessages(trace(
         compile_fun, tracer = entry, exit = exit, print = FALSE, where = namespace
@@ -80,6 +88,23 @@ elapsed_with_compilation <- function(expr, compile_fun = NULL) {
     timing <- elapsed(expr)
     timing$compile_sec <- timer$seconds
     timing
+}
+
+count_function_calls <- function(expr, fun) {
+    counter <- new.env(parent = emptyenv())
+    counter$calls <- 0L
+    old_option <- options(compphysiol.benchmark_call_counter = counter)
+    on.exit(options(old_option), add = TRUE)
+    namespace <- asNamespace("compphysiol")
+    entry <- quote({
+        .compphysiol_call_counter <- getOption("compphysiol.benchmark_call_counter")
+        .compphysiol_call_counter$calls <- .compphysiol_call_counter$calls + 1L
+    })
+    suppressMessages(trace(fun, tracer = entry, print = FALSE, where = namespace))
+    on.exit(suppressMessages(untrace(fun, where = namespace)), add = TRUE)
+
+    value <- force(expr)
+    list(value = value, calls = counter$calls)
 }
 
 one_compartment_model <- function() {
@@ -369,16 +394,19 @@ fit_route <- function(route, model, definition, engine, compile_fun = NULL) {
         definition$specs,
         definition$statistics
     )
-    timing <- elapsed_with_compilation(
-        estimate(problem, engine = engine), compile_fun = compile_fun
+    counted <- count_function_calls(
+        elapsed_with_compilation(
+            estimate(problem, engine = engine), compile_fun = compile_fun
+        ),
+        fun = ".estimation_likelihood"
     )
+    timing <- counted$value
     fit <- timing$value
     estimates <- paste(
         sprintf("%s=%.8g", names(coef(fit)), vapply(coef(fit), as.numeric, numeric(1))),
         collapse = "; "
     )
-    optim_evaluations <- unname(fit$engine_result$counts[["function"]])
-    n_eval <- optim_evaluations + 2L
+    n_eval <- counted$calls
     compile_sec <- timing$compile_sec
     compile_for_total <- if (is.na(compile_sec)) 0 else compile_sec
     one_eval_sec <- (timing$seconds - compile_for_total) / n_eval
@@ -468,7 +496,7 @@ run_scenario <- function(scenario_name) {
     fit_routes <- c(fit_routes, list(
         fit_route(
             "deSolve", cold_estimation, definition, engine,
-            compile_fun = ".compiled_ode_model_compile"
+            compile_fun = ".compiled_ode_model_artifact"
         )
     ))
     if (has_rxode2) {
@@ -514,7 +542,7 @@ cat("- For end-to-end fits, one_eval_sec amortizes optimizer and fitting overhea
 cat("- The benchmark clears rxode2's anonymous DLL cache before measured cold rxode2 preparation and estimation.\n")
 cat("- The end-to-end rxode2 artifact is reused by later objective evaluations in the same fit.\n")
 cat("- End-to-end compiled routes include one local artifact build.\n")
-cat("- Likelihood evaluations equal optim function calls plus the initial validation and final diagnostic calls.\n")
+cat("- n_eval counts actual likelihood calls, including finite-difference calls that optim omits from its reported function count.\n")
 cat("- Population scenarios omit interpreted model routes; interpreting models on every evaluation is prohibitively slow at these sizes.\n")
 cat("- The heterogeneous-design collection is stable across objective evaluations even though its components are not homogeneous within an evaluation.\n")
 cat("- Population sizes are controlled by COMPPHYSIOL_BENCH_ESTIMATION_N and COMPPHYSIOL_BENCH_ESTIMATION_HETEROGENEOUS_N.\n")
