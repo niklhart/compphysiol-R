@@ -232,12 +232,15 @@ print.compphysiol_parameter_specs <- function(x, ...) {
 #'   optimizer-coordinate bounds to be unbounded after transformation.
 #' @param control Control list passed to [stats::optim()].
 #' @param simulation A simulation engine, currently [deSolve_engine()].
+#' @param hessian Whether to calculate a numerical Hessian at the fitted
+#'   coordinates and normalize its inverse as parameter uncertainty.
 #' @returns A `compphysiol_optim_engine` object.
 #' @export
 optim_engine <- function(
     method = "L-BFGS-B",
     control = list(),
-    simulation = deSolve_engine()
+    simulation = deSolve_engine(),
+    hessian = TRUE
 ) {
     methods <- c("Nelder-Mead", "BFGS", "CG", "L-BFGS-B", "SANN", "Brent")
     if (!is.character(method) || length(method) != 1L || is.na(method) ||
@@ -245,9 +248,15 @@ optim_engine <- function(
         stop("Unknown optim method.", call. = FALSE)
     }
     if (!is.list(control)) stop("optim control must be a list.", call. = FALSE)
+    if (!is.logical(hessian) || length(hessian) != 1L || is.na(hessian)) {
+        stop("optim hessian must be TRUE or FALSE.", call. = FALSE)
+    }
     .check_class(simulation, "compphysiol_simulation_engine")
     structure(
-        list(method = method, control = control, simulation = simulation),
+        list(
+            method = method, control = control, simulation = simulation,
+            hessian = hessian
+        ),
         class = .compphysiol_class(
             "compphysiol_optim_engine",
             parents = c("compphysiol_estimation_engine", "compphysiol_engine")
@@ -580,7 +589,8 @@ estimate.compphysiol_estimation_problem <- function(
         par = coordinates$initial,
         fn = objective,
         method = engine$method,
-        control = engine$control
+        control = engine$control,
+        hessian = engine$hessian
     )
     if (engine$method %in% c("L-BFGS-B", "Brent")) {
         optim_args$lower <- coordinates$lower
@@ -588,12 +598,15 @@ estimate.compphysiol_estimation_problem <- function(
     }
     raw <- do.call(stats::optim, optim_args)
     coefficients <- .estimation_validate_optim_result(raw$par, coordinates, specs)
+    uncertainty <- .estimation_optim_uncertainty(raw, specs)
     diagnostics <- evaluate(raw$par, diagnostics = TRUE)
     raw$residuals <- diagnostics$residuals
     coefficients <- .new_parameters(coefficients)
     structure(
         list(
             coefficients = coefficients,
+            standard_errors = uncertainty$standard_errors,
+            estimate_correlations = uncertainty$correlations,
             neg_log_lik = unname(raw$value),
             population_predictions = diagnostics$predictions,
             individual_predictions = NULL,
@@ -620,6 +633,11 @@ estimate.compphysiol_estimation_problem <- function(
 #'
 #' - `coefficients`: fitted values on the public parameter scale, represented as
 #'   a `compphysiol_parameters` object.
+#' - `standard_errors`: standard errors on the same public parameter scale and
+#'   in the same units as `coefficients`. Values are `NA` when uncertainty was
+#'   not requested or could not be calculated.
+#' - `estimate_correlations`: unitless correlations between the estimates, in
+#'   coefficient order. Entries are `NA` where joint uncertainty is unavailable.
 #' - `neg_log_lik`: the negative log-likelihood reported for the fitted model.
 #' - `population_predictions`: predictions for the population or fixed-effects
 #'   model, in estimation-row order.
@@ -651,11 +669,14 @@ print.compphysiol_estimation_result <- function(x, ...) {
     cat("Estimation result:\n")
     cat(" Coefficients:\n")
     if (length(x$coefficients)) {
-        cat(sprintf(
-            "  %s = %s\n",
-            names(x$coefficients),
-            vapply(x$coefficients, format, character(1))
-        ), sep = "")
+        for (name in names(x$coefficients)) {
+            line <- paste0("  ", name, " = ", format(x$coefficients[[name]]))
+            standard_error <- x$standard_errors[[name]]
+            if (!is.null(standard_error) && !is.na(standard_error)) {
+                line <- paste0(line, " (SE ", format(standard_error), ")")
+            }
+            cat(line, "\n", sep = "")
+        }
     } else {
         cat("  (none)\n")
     }
@@ -772,6 +793,105 @@ print.compphysiol_estimation_result <- function(x, ...) {
         }
     })
     setNames(out, names(specs))
+}
+
+.estimation_missing_standard_errors <- function(specs) {
+    out <- lapply(specs, function(spec) {
+        value <- NA_real_
+        if (inherits(spec$initial, "units")) {
+            value <- units::set_units(
+                value, units::deparse_unit(spec$initial), mode = "standard"
+            )
+        }
+        value
+    })
+    .new_parameters(out)
+}
+
+.estimation_missing_correlations <- function(names) {
+    matrix(
+        NA_real_, nrow = length(names), ncol = length(names),
+        dimnames = list(names, names)
+    )
+}
+
+.estimation_public_uncertainty <- function(covariance, derivatives, specs) {
+    parameter_names <- names(specs)
+    standard_errors <- .estimation_missing_standard_errors(specs)
+    correlations <- .estimation_missing_correlations(parameter_names)
+    if (is.null(covariance) || !length(covariance)) {
+        return(list(
+            standard_errors = standard_errors, correlations = correlations
+        ))
+    }
+    available <- intersect(parameter_names, rownames(covariance))
+    available <- intersect(available, colnames(covariance))
+    available <- available[is.finite(derivatives[available])]
+    if (!length(available)) {
+        return(list(
+            standard_errors = standard_errors, correlations = correlations
+        ))
+    }
+    covariance <- covariance[available, available, drop = FALSE]
+    if (any(!is.finite(covariance))) {
+        return(list(
+            standard_errors = standard_errors, correlations = correlations
+        ))
+    }
+    public_covariance <- diag(derivatives[available], nrow = length(available)) %*%
+        covariance %*% diag(derivatives[available], nrow = length(available))
+    dimnames(public_covariance) <- list(available, available)
+    variances <- diag(public_covariance)
+    valid <- is.finite(variances) & variances >= 0
+    for (name in available[valid]) {
+        value <- sqrt(variances[[name]])
+        spec <- specs[[name]]
+        if (inherits(spec$initial, "units")) {
+            value <- units::set_units(
+                value, units::deparse_unit(spec$initial), mode = "standard"
+            )
+        }
+        standard_errors[[name]] <- value
+    }
+    positive <- available[is.finite(variances) & variances > 0]
+    if (length(positive)) {
+        correlations[positive, positive] <- stats::cov2cor(
+            public_covariance[positive, positive, drop = FALSE]
+        )
+    }
+    list(standard_errors = standard_errors, correlations = correlations)
+}
+
+.estimation_optim_uncertainty <- function(raw, specs) {
+    parameter_names <- names(specs)
+    unavailable <- list(
+        standard_errors = .estimation_missing_standard_errors(specs),
+        correlations = .estimation_missing_correlations(parameter_names)
+    )
+    if (is.null(raw$hessian)) return(unavailable)
+    hessian <- raw$hessian
+    dimnames(hessian) <- list(parameter_names, parameter_names)
+    covariance <- tryCatch({
+        if (any(!is.finite(hessian))) stop("non-finite Hessian")
+        chol2inv(chol((hessian + t(hessian)) / 2))
+    }, error = function(e) NULL)
+    if (is.null(covariance)) return(unavailable)
+    dimnames(covariance) <- list(parameter_names, parameter_names)
+    derivatives <- vapply(seq_along(specs), function(i) {
+        spec <- specs[[i]]
+        value <- as.numeric(.estimation_decode(raw$par[i], specs[i])[[1]])
+        switch(spec$transform,
+            identity = 1,
+            log = value,
+            logit = {
+                lower <- .estimation_bound_numeric(spec$lower, spec$initial, "lower")
+                upper <- .estimation_bound_numeric(spec$upper, spec$initial, "upper")
+                (value - lower) * (upper - value) / (upper - lower)
+            }
+        )
+    }, numeric(1))
+    names(derivatives) <- parameter_names
+    .estimation_public_uncertainty(covariance, derivatives, specs)
 }
 
 .estimation_likelihood <- function(experiments, simulated, statistics, parameters,
@@ -983,6 +1103,72 @@ print.compphysiol_estimation_result <- function(x, ...) {
 #' @returns Estimated coefficients as a `compphysiol_parameters` object.
 #' @export
 coef.compphysiol_estimation_result <- function(object, ...) object$coefficients
+
+#' Parameter uncertainty
+#'
+#' `standard_errors()` returns marginal standard errors on the public parameter
+#' scale. `estimate_correlations()` returns their unitless correlation matrix.
+#' Both use the parameter order returned by [coef()].
+#'
+#' For the optim engine, setting `hessian = TRUE` in [optim_engine()] requests
+#' the numerical Hessian `H` of the minimized negative log-likelihood in
+#' optimizer coordinates. Its inverse, `solve(H)`, is used as the coordinate-
+#' scale covariance matrix. No factor of two is applied because the optimized
+#' objective is the negative log-likelihood, not minus twice the
+#' log-likelihood. A non-finite, singular, or non-positive-definite Hessian
+#' produces missing uncertainty values rather than a generalized inverse.
+#'
+#' For the nlmixr2 engine, the native covariance returned by
+#' `stats::vcov(fit$engine_result)` is used. The covariance estimator is selected
+#' by nlmixr2's `covMethod` control and is recorded in the native result. Only
+#' parameters present in the returned covariance can receive normalized
+#' uncertainty; for example, nlmixr2 may return a fixed-effect covariance that
+#' omits an omega parameter when a full covariance calculation is unavailable.
+#'
+#' Both engine covariances are transformed with the multivariate delta method.
+#' If `g` maps engine coordinates to public parameters, the public-scale
+#' covariance is `J %*% covariance %*% t(J)`, where `J` is the Jacobian of `g`
+#' at the estimate. The current mappings include identity, log, and bounded
+#' logit parameter transformations; solver-to-public unit conversion; and the
+#' square-root mapping from an nlmixr2 omega variance to a public individual-
+#' variability standard deviation. Consequently each returned standard error
+#' has the same unit as its coefficient.
+#'
+#' A covariance matrix is not exposed because entries between differently
+#' dimensioned parameters have product units. The returned correlation matrix
+#' is unitless. In a chosen set of numerical parameter units, users can
+#' reconstruct a covariance matrix as
+#' `outer(as.numeric(SE), as.numeric(SE)) * CORR`. These estimate correlations
+#' describe sampling uncertainty among fitted parameters and are distinct from
+#' correlations between individual random effects in a statistical model.
+#'
+#' @param object A `compphysiol_estimation_result`.
+#' @param ... Unused.
+#' @returns `standard_errors()` returns a `compphysiol_parameters` object.
+#'   `estimate_correlations()` returns a numeric matrix. Entries are `NA` where
+#'   uncertainty was not requested or could not be calculated.
+#' @name estimation_uncertainty
+NULL
+
+#' @rdname estimation_uncertainty
+#' @export
+standard_errors <- function(object, ...) UseMethod("standard_errors")
+
+#' @rdname estimation_uncertainty
+#' @export
+standard_errors.compphysiol_estimation_result <- function(object, ...) {
+    object$standard_errors
+}
+
+#' @rdname estimation_uncertainty
+#' @export
+estimate_correlations <- function(object, ...) UseMethod("estimate_correlations")
+
+#' @rdname estimation_uncertainty
+#' @export
+estimate_correlations.compphysiol_estimation_result <- function(object, ...) {
+    object$estimate_correlations
+}
 
 #' Extract fitted observable values
 #' @param object A `compphysiol_estimation_result`.

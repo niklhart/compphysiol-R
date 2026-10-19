@@ -97,6 +97,70 @@
     .nlmixr2_restore_value(decoded, spec, dimensions)
 }
 
+.nlmixr2_public_unit_scale <- function(spec, dimensions) {
+    if (!inherits(spec$initial, "units")) return(1)
+    as.numeric(.nlmixr2_restore_value(1, spec, dimensions))
+}
+
+.nlmixr2_uncertainty <- function(problem, raw, translated, coefficients) {
+    covariance <- tryCatch(stats::vcov(raw), error = function(e) NULL)
+    .nlmixr2_uncertainty_from_covariance(
+        problem, covariance, raw$theta, raw$omega, translated, coefficients
+    )
+}
+
+.nlmixr2_uncertainty_from_covariance <- function(
+    problem, covariance, theta, omega, translated, coefficients
+) {
+    specs <- problem$parameters
+    if (is.null(covariance) || !is.matrix(covariance) ||
+        is.null(rownames(covariance)) || is.null(colnames(covariance))) {
+        return(.estimation_public_uncertainty(NULL, numeric(), specs))
+    }
+    backend_names <- character()
+    derivatives <- numeric()
+    for (name in names(specs)) {
+        omega_target <- names(translated$omega_parameters)[
+            translated$omega_parameters == name
+        ]
+        spec <- specs[[name]]
+        scale <- .nlmixr2_public_unit_scale(spec, translated$dimensions)
+        if (length(omega_target)) {
+            eta <- translated$eta_ids[[omega_target[[1]]]]
+            backend <- paste0("om.", eta)
+            variance <- as.numeric(omega[eta, eta])
+            derivative <- if (is.finite(variance) && variance > 0) {
+                scale / (2 * sqrt(variance))
+            } else NA_real_
+        } else {
+            backend <- translated$theta_ids[[name]]
+            coordinate <- unname(theta[[backend]])
+            derivative <- switch(spec$transform,
+                identity = scale,
+                log = as.numeric(coefficients[[name]]),
+                logit = {
+                    bounds <- .nlmixr2_theta_bounds(spec, translated$dimensions)
+                    probability <- stats::plogis(coordinate)
+                    scale * (bounds[["upper"]] - bounds[["lower"]]) *
+                        probability * (1 - probability)
+                }
+            )
+        }
+        backend_names[[name]] <- backend
+        derivatives[[name]] <- derivative
+    }
+    available <- names(backend_names)[backend_names %in% rownames(covariance)]
+    available <- available[backend_names[available] %in% colnames(covariance)]
+    if (!length(available)) {
+        return(.estimation_public_uncertainty(NULL, derivatives, specs))
+    }
+    covariance <- covariance[
+        backend_names[available], backend_names[available], drop = FALSE
+    ]
+    dimnames(covariance) <- list(available, available)
+    .estimation_public_uncertainty(covariance, derivatives, specs)
+}
+
 .nlmixr2_validate_scope <- function(problem) {
     if (length(.statistical_correlations(problem$statistics))) {
         stop("The nlmixr2 engine currently supports diagonal individual variability only; correlations are not yet supported.",
@@ -337,10 +401,15 @@
     diagnostics <- .nlmixr2_diagnostics(
         problem, raw, translated, has_individual = has_individual
     )
+    uncertainty <- .nlmixr2_uncertainty(
+        problem, raw, translated, coefficients
+    )
     neg_log_lik <- -as.numeric(stats::logLik(raw)) +
         translated$log_likelihood_unit_jacobian
     structure(list(
         coefficients = .new_parameters(coefficients),
+        standard_errors = uncertainty$standard_errors,
+        estimate_correlations = uncertainty$correlations,
         neg_log_lik = neg_log_lik,
         individual_predictions = diagnostics$individual_predictions,
         population_predictions = diagnostics$population_predictions,

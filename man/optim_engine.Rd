@@ -7,7 +7,8 @@
 optim_engine(
   method = "L-BFGS-B",
   control = list(),
-  simulation = deSolve_engine()
+  simulation = deSolve_engine(),
+  hessian = TRUE
 )
 }
 \arguments{
@@ -19,6 +20,9 @@ optimizer-coordinate bounds to be unbounded after transformation.}
 \item{control}{Control list passed to \code{\link[stats:optim]{stats::optim()}}.}
 
 \item{simulation}{A simulation engine, currently \code{\link[=deSolve_engine]{deSolve_engine()}}.}
+
+\item{hessian}{Whether to calculate a numerical Hessian at the fitted
+coordinates and normalize its inverse as parameter uncertainty.}
 }
 \value{
 A \code{compphysiol_optim_engine} object.

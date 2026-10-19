@@ -577,8 +577,6 @@ coordinates, whereas an additional finite bound requires `L-BFGS-B`.
 An individual specification is a parameter specification. Named specifications are
 combined with `c()` into a parameter-specification collection. Collections can be
 combined again; `[` retains a collection, while `[[` extracts one specification.
-`ParameterEstimate` and `ParameterEstimates` are reserved for future fitted
-results that contain parameter estimates and their uncertainty.
 
 Current estimation supports compartment model, process model, ODE model, and
 compiled deSolve model inputs. These are model representations, not engines.
@@ -594,6 +592,15 @@ estimation result exposes coefficients, the negative log-likelihood, population
 predictions, optional individual predictions, and the native engine result.
 Convergence information, residual diagnostics, objectives, and other
 backend-specific quantities remain in the native engine result.
+Parameter standard errors are normalized to the public parameter scale, after
+accounting for optimization transformations, backend parameterizations such as
+variance versus standard deviation, and solver-unit conversion. They therefore
+have the same units as their corresponding estimates. Joint uncertainty is
+exposed as a unitless correlation matrix in the same parameter order. This
+correlation describes uncertainty among estimates; it is distinct from a
+correlation between individual random effects in the statistical model.
+Uncertainty entries remain missing when an engine did not calculate them or
+when its covariance calculation did not cover a parameter.
 For unit-bearing continuous observations, the shared negative log-likelihood is
 reported on the numerical scale of the units in which the observations were
 supplied. When an engine evaluates densities after converting observations to

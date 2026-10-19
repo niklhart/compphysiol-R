@@ -135,7 +135,7 @@ test_that("optim and nlmixr2 conform on a fully unit-aware workflow", {
         problem,
         nlmixr2_engine(control = list(
             print = 0L, maxOuterIterations = 500L, sigdig = 8L,
-            covMethod = ""
+            covMethod = "r"
         ))
     )
 
@@ -150,6 +150,21 @@ test_that("optim and nlmixr2 conform on a fully unit-aware workflow", {
     expect_equal(
         nlmixr2_fit$neg_log_lik, optim_fit$neg_log_lik,
         tolerance = 1e-4
+    )
+    expect_equal(
+        standard_errors(nlmixr2_fit)$CL,
+        standard_errors(optim_fit)$CL,
+        tolerance = 0.05
+    )
+    expect_equal(
+        standard_errors(nlmixr2_fit)$sigma,
+        standard_errors(optim_fit)$sigma,
+        tolerance = 0.05
+    )
+    expect_equal(
+        estimate_correlations(nlmixr2_fit),
+        estimate_correlations(optim_fit),
+        tolerance = 0.1
     )
 
     expect_s3_class(coef(nlmixr2_fit)$CL, "units")

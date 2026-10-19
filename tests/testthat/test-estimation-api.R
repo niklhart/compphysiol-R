@@ -344,6 +344,7 @@ test_that("optim_engine keeps optimizer configuration out of estimate", {
     expect_error(optim_engine(method = "not-an-optim-method"), "method")
     expect_error(optim_engine(control = 1), "control")
     expect_error(optim_engine(simulation = list()), "Simulation engine")
+    expect_error(optim_engine(hessian = NA), "hessian")
 })
 
 test_that("deSolve_engine configures the representation used by estimation", {
@@ -451,6 +452,38 @@ test_that("optimization results are validated before decoding", {
     )
 })
 
+test_that("optim uncertainty is transformed to the public parameter scale", {
+    specs <- c(
+        identity = parameter_spec(2),
+        log = parameter_spec(2, transform = "log"),
+        logit = parameter_spec(0.5, lower = 0, upper = 1, transform = "logit")
+    )
+    raw <- list(
+        par = c(identity = 2, log = log(2), logit = 0),
+        hessian = diag(3)
+    )
+
+    uncertainty <- .estimation_optim_uncertainty(raw, specs)
+
+    expect_equal(
+        vapply(uncertainty$standard_errors, as.numeric, numeric(1)),
+        c(identity = 1, log = 2, logit = 0.25)
+    )
+    expect_equal(
+        uncertainty$correlations,
+        structure(
+            diag(3),
+            dimnames = rep(list(c("identity", "log", "logit")), 2)
+        )
+    )
+
+    unavailable <- .estimation_optim_uncertainty(list(par = raw$par), specs)
+    expect_true(all(is.na(vapply(
+        unavailable$standard_errors, as.numeric, numeric(1)
+    ))))
+    expect_true(all(is.na(unavailable$correlations)))
+})
+
 test_that("estimate consumes an EstimationProblem and returns a stable result", {
     problem <- estimation_problem(
         estimation_test_model(),
@@ -472,9 +505,24 @@ test_that("estimate consumes an EstimationProblem and returns a stable result", 
     expect_named(coef(fit), c("k", "sigma"))
     expect_true(is.numeric(fit$neg_log_lik) && length(fit$neg_log_lik) == 1L)
     expect_named(fit, c(
-        "coefficients", "neg_log_lik", "population_predictions",
-        "individual_predictions", "engine", "engine_result", "problem"
+        "coefficients", "standard_errors", "estimate_correlations",
+        "neg_log_lik", "population_predictions", "individual_predictions",
+        "engine", "engine_result", "problem"
     ))
+    expect_named(standard_errors(fit), names(coef(fit)))
+    expect_s3_class(standard_errors(fit)$k, "units")
+    expect_s3_class(standard_errors(fit)$sigma, "units")
+    expect_true(all(vapply(standard_errors(fit), function(x) {
+        is.finite(as.numeric(x)) && as.numeric(x) >= 0
+    }, logical(1))))
+    expect_identical(
+        dimnames(estimate_correlations(fit)),
+        list(names(coef(fit)), names(coef(fit)))
+    )
+    expect_equal(
+        diag(estimate_correlations(fit)),
+        stats::setNames(rep(1, length(coef(fit))), names(coef(fit)))
+    )
     expect_null(fit$individual_predictions)
     expect_s3_class(fitted(fit), "compphysiol_observation_data")
     expect_s3_class(fitted(fit)$time, "units")

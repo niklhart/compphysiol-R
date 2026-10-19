@@ -16,6 +16,11 @@ An estimation result contains:
 \itemize{
 \item \code{coefficients}: fitted values on the public parameter scale, represented as
 a \code{compphysiol_parameters} object.
+\item \code{standard_errors}: standard errors on the same public parameter scale and
+in the same units as \code{coefficients}. Values are \code{NA} when uncertainty was
+not requested or could not be calculated.
+\item \code{estimate_correlations}: unitless correlations between the estimates, in
+coefficient order. Entries are \code{NA} where joint uncertainty is unavailable.
 \item \code{neg_log_lik}: the negative log-likelihood reported for the fitted model.
 \item \code{population_predictions}: predictions for the population or fixed-effects
 model, in estimation-row order.

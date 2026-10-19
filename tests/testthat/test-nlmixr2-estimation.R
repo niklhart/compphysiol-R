@@ -29,6 +29,42 @@ nlmixr2_test_problem <- function() {
     )
 }
 
+test_that("nlmixr2 uncertainty maps theta and omega to public scales", {
+    problem <- nlmixr2_test_problem()
+    theta <- c(cp_fix_1 = log(0.2), cp_fix_2 = log(2))
+    omega <- matrix(0.04, dimnames = list("cp_eta_1", "cp_eta_1"))
+    covariance <- structure(
+        diag(c(0.01, 0.04, 0.0004)),
+        dimnames = list(
+            c("cp_fix_1", "cp_fix_2", "om.cp_eta_1"),
+            c("cp_fix_1", "cp_fix_2", "om.cp_eta_1")
+        )
+    )
+    translated <- list(
+        dimensions = list(),
+        theta_ids = c(CL_pop = "cp_fix_1", sigma = "cp_fix_2"),
+        eta_ids = c(CL = "cp_eta_1"),
+        omega_parameters = c(CL = "omega_CL")
+    )
+    coefficients <- list(CL_pop = 0.2, omega_CL = 0.2, sigma = 2)
+
+    uncertainty <- .nlmixr2_uncertainty_from_covariance(
+        problem, covariance, theta, omega, translated, coefficients
+    )
+
+    expect_equal(
+        vapply(uncertainty$standard_errors, as.numeric, numeric(1)),
+        c(CL_pop = 0.02, omega_CL = 0.05, sigma = 0.4)
+    )
+    expect_equal(
+        uncertainty$correlations,
+        structure(
+            diag(3),
+            dimnames = rep(list(c("CL_pop", "omega_CL", "sigma")), 2)
+        )
+    )
+})
+
 test_that("nlmixr2_engine represents the initial FOCEi scope", {
     engine <- nlmixr2_engine(control = list(print = 0L), table = list(cwres = TRUE))
 
