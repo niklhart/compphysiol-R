@@ -439,19 +439,27 @@ fit_nlmixr2_route <- function(model, definition) {
         maxOuterIterations = if (quick) 5L else 100L,
         covMethod = ""
     ))
-    timing <- elapsed(estimate(problem, engine = engine))
-    fit <- timing$value
+    cold <- elapsed(estimate(problem, engine = engine))
+    warm <- elapsed(estimate(problem, engine = engine))
+    cold_coefficients <- vapply(coef(cold$value), as.numeric, numeric(1))
+    warm_coefficients <- vapply(coef(warm$value), as.numeric, numeric(1))
+    stopifnot(
+        isTRUE(all.equal(cold_coefficients, warm_coefficients, tolerance = 1e-8)),
+        isTRUE(all.equal(
+            cold$value$neg_log_lik, warm$value$neg_log_lik, tolerance = 1e-8
+        ))
+    )
     estimates <- paste(
-        sprintf("%s=%.8g", names(coef(fit)), vapply(coef(fit), as.numeric, numeric(1))),
+        sprintf("%s=%.8g", names(warm_coefficients), warm_coefficients),
         collapse = "; "
     )
     data.frame(
         route = "nlmixr2",
         n_eval = NA_integer_,
-        compile_sec = NA_real_,
+        compile_sec = cold$seconds - warm$seconds,
         one_eval_sec = NA_real_,
-        total_sec = timing$seconds,
-        nll = fit$neg_log_lik,
+        total_sec = cold$seconds,
+        nll = warm$value$neg_log_lik,
         estimates = estimates,
         code = NA_integer_,
         stringsAsFactors = FALSE
@@ -578,13 +586,13 @@ rownames(design_results) <- NULL
 cat("\nNotes:\n")
 cat("- Fixed routes repeatedly evaluate the initial parameter point; the NLL assertion detects numerical disagreement.\n")
 cat("- deSolve and rxode2 both use rtol = atol = 1e-10.\n")
-cat("- one_eval_sec excludes compilation; total_sec equals compile_sec (zero when NA) plus n_eval times one_eval_sec.\n")
+cat("- For optim routes, one_eval_sec excludes compilation; total_sec equals compile_sec (zero when NA) plus n_eval times one_eval_sec.\n")
 cat("- For end-to-end fits, one_eval_sec amortizes optimizer and fitting overhead as well as likelihood evaluation.\n")
 cat("- The benchmark clears rxode2's anonymous DLL cache before measured cold rxode2 preparation and estimation.\n")
 cat("- The end-to-end rxode2 artifact is reused by later objective evaluations in the same fit.\n")
 cat("- End-to-end compiled routes include one local artifact build.\n")
 cat("- n_eval counts actual likelihood calls, including finite-difference calls that optim omits from its reported function count.\n")
-cat("- nlmixr2 is benchmarked end to end on the same fixed-effects problems; its internal evaluation and compilation timings are not separated.\n")
+cat("- nlmixr2 is benchmarked end to end on the same fixed-effects problems; compile_sec estimates one-time cache/startup overhead as cold-fit time minus an immediately repeated warm fit, so warm-fit time is total_sec minus compile_sec.\n")
 cat("- Population scenarios omit interpreted model routes; interpreting models on every evaluation is prohibitively slow at these sizes.\n")
 cat("- The heterogeneous-design collection is stable across objective evaluations even though its components are not homogeneous within an evaluation.\n")
 cat("- Population sizes are controlled by COMPPHYSIOL_BENCH_ESTIMATION_N and COMPPHYSIOL_BENCH_ESTIMATION_HETEROGENEOUS_N.\n")
