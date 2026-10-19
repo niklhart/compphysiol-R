@@ -495,6 +495,63 @@ test_that("estimate consumes an EstimationProblem and returns a stable result", 
     expect_match(output, "optim engine (L-BFGS-B)", fixed = TRUE)
 })
 
+test_that("optim parameter overlays preserve fixed experiments and metadata", {
+    studies <- experiments(
+        first = experiment(parameters = parameters(BW = 70, group = "A")),
+        second = experiment(parameters = parameters(BW = 80))
+    )
+    homogeneity <- .experiments_component_homogeneity(studies)
+    plan <- .optim_parameter_overlay_plan(studies, c("k", "V"))
+
+    first <- .optim_apply_parameter_overlay(
+        plan, .new_parameters(list(k = 0.1, V = 3))
+    )
+    second <- .optim_apply_parameter_overlay(
+        plan, .new_parameters(list(k = 0.2, V = 4))
+    )
+
+    expect_identical(names(first), c("first", "second"))
+    expect_s3_class(first[[1]]$parameters, "compphysiol_parameters")
+    expect_named(first[[1]]$parameters, c("BW", "group", "k", "V"))
+    expect_named(first[[2]]$parameters, c("BW", "k", "V"))
+    expect_identical(first[[1]]$parameters$k, 0.1)
+    expect_identical(first[[2]]$parameters$V, 3)
+    expect_identical(second[[1]]$parameters$k, 0.2)
+    expect_identical(second[[2]]$parameters$V, 4)
+    expect_identical(.experiments_component_homogeneity(first), homogeneity)
+    expect_identical(.experiments_component_homogeneity(second), homogeneity)
+    expect_false(homogeneity[["parameter_schema"]])
+    expect_false(homogeneity[["parameters"]])
+    expect_named(studies[[1]]$parameters, c("BW", "group"))
+    expect_named(studies[[2]]$parameters, "BW")
+})
+
+test_that("optim parameter overlays preserve homogeneous parameter schemas", {
+    studies <- experiments(
+        first = experiment(parameters = parameters(BW = 70)),
+        second = experiment(parameters = parameters(BW = 80))
+    )
+    homogeneity <- .experiments_component_homogeneity(studies)
+    plan <- .optim_parameter_overlay_plan(studies, "k")
+    overlaid <- .optim_apply_parameter_overlay(
+        plan, .new_parameters(list(k = 0.1))
+    )
+
+    expect_true(homogeneity[["parameter_schema"]])
+    expect_false(homogeneity[["parameters"]])
+    expect_identical(.experiments_component_homogeneity(overlaid), homogeneity)
+})
+
+test_that("optim skips parameter overlays without estimated model parameters", {
+    studies <- experiments(first = experiment(), second = experiment())
+    plan <- .optim_parameter_overlay_plan(studies, character())
+
+    expect_identical(
+        .optim_apply_parameter_overlay(plan, .new_parameters()),
+        studies
+    )
+})
+
 test_that("estimation diagnostics retain rows with missing observations", {
     study <- estimation_test_experiment()
     study$observations$value[[2]] <- NA_real_ * study$observations$value[[2]]

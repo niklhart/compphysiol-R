@@ -435,6 +435,30 @@ estimate.compphysiol_estimation_problem <- function(
     .estimate_optim(object, engine, dimensions = dimensions, ...)
 }
 
+.optim_parameter_overlay_plan <- function(experiments, runtime_names) {
+    elements <- .experiments_elements(experiments)
+    list(
+        experiments = experiments,
+        elements = elements,
+        fixed_parameters = lapply(elements, function(x) unclass(x$parameters)),
+        runtime_names = runtime_names,
+        component_homogeneity = .experiments_component_homogeneity(experiments)
+    )
+}
+
+.optim_apply_parameter_overlay <- function(plan, runtime) {
+    if (!length(plan$runtime_names)) return(plan$experiments)
+
+    runtime_values <- unclass(runtime)[plan$runtime_names]
+    elements <- lapply(seq_along(plan$elements), function(i) {
+        out <- plan$elements[[i]]
+        out$parameters <- .new_parameters(c(plan$fixed_parameters[[i]], runtime_values))
+        out
+    })
+    names(elements) <- names(plan$elements)
+    .new_experiments(elements, plan$component_homogeneity)
+}
+
 .estimate_optim <- function(problem, engine, dimensions = NULL, ...) {
     individual <- names(problem$statistics)[vapply(
         problem$statistics, function(x) identical(x$level, "individual"), logical(1)
@@ -449,19 +473,17 @@ estimate.compphysiol_estimation_problem <- function(
     .estimation_validate_optim_method(engine$method, specs, coordinates)
     simulation_model <- .simulation_model_for_engine(problem$model, engine$simulation)
     model_parameters <- .estimation_model_parameter_names(problem$model)
+    runtime_names <- intersect(names(specs), model_parameters)
+    parameter_overlay <- .optim_parameter_overlay_plan(
+        problem$experiments, runtime_names
+    )
 
     evaluate <- function(par, diagnostics = FALSE) {
         values <- .estimation_decode(par, specs)
-        runtime <- values[intersect(names(values), model_parameters)]
+        runtime <- values[runtime_names]
         runtime <- .new_parameters(runtime)
-        estimation_experiments <- lapply(unclass(problem$experiments), function(e) {
-            e$parameters <- .merge_ode_parameters(e$parameters, runtime)
-            e
-        })
-        names(estimation_experiments) <- names(problem$experiments)
-        estimation_experiments <- .new_experiments(
-            estimation_experiments,
-            .experiments_compute_component_homogeneity(estimation_experiments)
+        estimation_experiments <- .optim_apply_parameter_overlay(
+            parameter_overlay, runtime
         )
         simulated <- simulate(
             simulation_model,
