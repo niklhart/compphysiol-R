@@ -1011,8 +1011,13 @@ fitted.compphysiol_estimation_result <- function(object, type = NULL, ...) {
         if (!type %in% c("PRED", "IPRED")) {
             stop("Prediction type must be 'PRED' or 'IPRED'.", call. = FALSE)
         }
-        if (identical(type, "PRED")) object$population_predictions else
+        value <- if (identical(type, "PRED")) object$population_predictions else
             object$individual_predictions
+        if (is.null(value)) {
+            stop("Prediction type '", type, "' is unavailable for this estimation result.",
+                 call. = FALSE)
+        }
+        value
     } else {
         stop("Unsupported estimation engine in fitted estimation result.", call. = FALSE)
     }

@@ -85,10 +85,6 @@
              call. = FALSE)
     }
     individual <- .nlmixr2_individual_targets(problem$statistics)
-    if (!length(individual)) {
-        stop("The nlmixr2 engine requires at least one individual-level distribution.",
-             call. = FALSE)
-    }
     for (target in individual) {
         distribution <- problem$statistics[[target]]
         scale <- .nlmixr2_scale_name(distribution)
@@ -317,7 +313,10 @@
         }
     })
     names(coefficients) <- names(problem$parameters)
-    diagnostics <- .nlmixr2_diagnostics(problem, raw, translated)
+    has_individual <- length(.nlmixr2_individual_targets(problem$statistics)) > 0L
+    diagnostics <- .nlmixr2_diagnostics(
+        problem, raw, translated, has_individual = has_individual
+    )
     neg_log_lik <- -as.numeric(stats::logLik(raw))
     structure(list(
         coefficients = .new_parameters(coefficients),
@@ -328,7 +327,7 @@
     ), class = .compphysiol_class("compphysiol_estimation_result"))
 }
 
-.nlmixr2_diagnostics <- function(problem, raw, translated) {
+.nlmixr2_diagnostics <- function(problem, raw, translated, has_individual) {
     tab <- as.data.frame(raw)
     observation_rows <- if ("EVID" %in% names(tab)) {
         tab[is.na(tab$EVID) | tab$EVID == 0L, , drop = FALSE]
@@ -366,6 +365,12 @@
         }
         .estimation_bind_diagnostic_rows(rows)
     }
-    list(individual_predictions = make("IPRED"),
-         population_predictions = make("PRED"))
+    if (has_individual) {
+        list(individual_predictions = make("IPRED"),
+             population_predictions = make("PRED"))
+    } else {
+        # nlmixr2 labels the sole prediction column IPRED even without etas.
+        list(individual_predictions = NULL,
+             population_predictions = make("IPRED"))
+    }
 }

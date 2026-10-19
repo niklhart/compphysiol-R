@@ -614,6 +614,12 @@ boundary, individual-level standard deviations are squared to form diagonal
 omega variances; fitted omega variances are square-rooted when translated back
 to the public result.
 
+The same engine can fit a population-only problem without individual-level
+random effects. This provides an independent execution path for a fixed-effects
+problem that can also be fitted by the optim engine. Agreement of parameter
+estimates, predictions, and likelihood values on such a problem is used as an
+engine-conformance check.
+
 A mixed-effects result distinguishes individual predictions, conditional on
 the fitted random effects for each individual, from population predictions,
 calculated for the typical individual with random effects set to zero. These
