@@ -318,17 +318,13 @@
     })
     names(coefficients) <- names(problem$parameters)
     diagnostics <- .nlmixr2_diagnostics(problem, raw, translated)
-    objective <- raw$objf %||% attr(raw, "objf") %||% NA_real_
+    neg_log_lik <- -as.numeric(stats::logLik(raw))
     structure(list(
         coefficients = .new_parameters(coefficients),
-        neg_log_lik = as.numeric(objective) / 2,
-        objective = as.numeric(objective),
-        convergence = list(code = if (isTRUE(raw$conv)) 0L else NA_integer_, message = NULL),
+        neg_log_lik = neg_log_lik,
         individual_predictions = diagnostics$individual_predictions,
         population_predictions = diagnostics$population_predictions,
-        residuals = diagnostics$residuals,
-        engine = engine, engine_result = raw, problem = problem,
-        translation = translated[c("source", "data")]
+        engine = engine, engine_result = raw, problem = problem
     ), class = .compphysiol_class("compphysiol_estimation_result"))
 }
 
@@ -348,7 +344,7 @@
     observation_rows <- observation_rows[
         order(input_observations$ID, input_observations$CP_ROW), , drop = FALSE
     ]
-    make <- function(column, residual = FALSE) {
+    make <- function(column) {
         rows <- list()
         k <- 0L
         for (i in seq_along(problem$experiments)) {
@@ -363,9 +359,6 @@
                 ]]
                 if (!is.null(scale)) value <- value * scale
                 unit <- if (inherits(observed$value, "units")) units::deparse_unit(observed$value) else ""
-                if (residual && !is.na(observed$value[[j]])) {
-                    value <- as.numeric(observed$value[[j]]) - value
-                } else if (residual) value <- NA_real_
                 rows[[k]] <- list(experiment = label, time = observed$time[[j]],
                                   observable = observed$observable[[j]],
                                   value = .estimation_restore_unit(value, unit))
@@ -374,6 +367,5 @@
         .estimation_bind_diagnostic_rows(rows)
     }
     list(individual_predictions = make("IPRED"),
-         population_predictions = make("PRED"),
-         residuals = make("IPRED", residual = TRUE))
+         population_predictions = make("PRED"))
 }

@@ -171,23 +171,25 @@ fit <- estimate(problem, engine = engine)
 
 coef(fit)
 fit$neg_log_lik
-fit$convergence
 ```
 
 `coef()` returns a `Parameters` object and therefore retains parameter units.
-`neg_log_lik` is the joint negative log-likelihood. Engine-independent
-convergence information is available in `fit$convergence`, while the complete
-`stats::optim()` return value remains available as `fit$engine_result`.
+`neg_log_lik` is the joint negative log-likelihood. The complete
+`stats::optim()` return value, including its convergence information, remains
+available as `fit$engine_result`. The optim engine's observed-minus-fitted
+residuals are available as `fit$engine_result$residuals`; residuals are not yet
+normalized across estimation engines.
 
-Fitted values and observed-minus-fitted residuals are `ObservationData` objects.
-They retain observation-row order and an experiment identifier as well as
-unit-bearing `time` and `value` columns. Rows with missing observations are
-retained: their fitted value is available and their residual is missing.
+Fitted values are `ObservationData` objects. They retain observation-row order
+and an experiment identifier as well as unit-bearing `time` and `value`
+columns. Rows with missing observations are retained and still have a fitted
+value. An optim fit has only population predictions, so no prediction type is
+needed. Mixed-effects results require an explicit `"PRED"` or `"IPRED"`
+selection.
 
 ```{r}
 #| label: diagnostics
 fitted(fit)
-residuals(fit)
 ```
 
 ## Goodness-of-fit plot

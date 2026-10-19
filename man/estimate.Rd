@@ -18,6 +18,12 @@ estimate(object, ...)
 
 \item{dimensions}{Optional solver-facing unit dimensions passed to simulation.}
 }
+\value{
+A \link{compphysiol_estimation_result} object.
+}
 \description{
 Estimate model parameters
+}
+\seealso{
+\link{compphysiol_estimation_result}
 }

@@ -471,21 +471,26 @@ test_that("estimate consumes an EstimationProblem and returns a stable result", 
     expect_s3_class(fit$engine, "compphysiol_optim_engine")
     expect_named(coef(fit), c("k", "sigma"))
     expect_true(is.numeric(fit$neg_log_lik) && length(fit$neg_log_lik) == 1L)
-    expect_null(fit$objective)
-    expect_true(is.list(fit$convergence))
+    expect_named(fit, c(
+        "coefficients", "neg_log_lik", "population_predictions",
+        "individual_predictions", "engine", "engine_result", "problem"
+    ))
+    expect_null(fit$individual_predictions)
     expect_s3_class(fitted(fit), "compphysiol_observation_data")
-    expect_s3_class(residuals(fit), "compphysiol_observation_data")
     expect_s3_class(fitted(fit)$time, "units")
     expect_s3_class(fitted(fit)$value, "units")
-    expect_s3_class(residuals(fit)$time, "units")
-    expect_s3_class(residuals(fit)$value, "units")
     expect_equal(fitted(fit)$time, with_units(c(1, 2, 4) [h]))
     expect_identical(units::deparse_unit(fitted(fit)$value), "mg L-1")
     expect_identical(names(fitted(fit)), c("time", "observable", "value", "experiment"))
-    expect_identical(names(residuals(fit)), c("time", "observable", "value", "experiment"))
     expect_true(is.list(fit$engine_result))
+    expect_s3_class(fit$engine_result$residuals, "compphysiol_observation_data")
+    expect_identical(
+        names(fit$engine_result$residuals),
+        c("time", "observable", "value", "experiment")
+    )
     expect_equal(as.numeric(coef(fit)$k), 0.197, tolerance = 0.01)
-    expect_identical(fit$convergence$code, 0L)
+    expect_identical(fit$engine_result$convergence, 0L)
+    expect_error(fitted(fit, "PRED"), "only population predictions")
 
     output <- capture.output(returned <- print(fit))
     output <- paste(output, collapse = "\n")
@@ -552,7 +557,7 @@ test_that("optim skips parameter overlays without estimated model parameters", {
     )
 })
 
-test_that("estimation diagnostics retain rows with missing observations", {
+test_that("estimation predictions retain rows with missing observations", {
     study <- estimation_test_experiment()
     study$observations$value[[2]] <- NA_real_ * study$observations$value[[2]]
     problem <- estimation_problem(
@@ -568,9 +573,9 @@ test_that("estimation diagnostics retain rows with missing observations", {
     fit <- estimate(problem, engine = optim_engine(control = list(maxit = 50)))
 
     expect_equal(nrow(fitted(fit)), nrow(study$observations))
-    expect_equal(nrow(residuals(fit)), nrow(study$observations))
+    expect_equal(nrow(fit$engine_result$residuals), nrow(study$observations))
     expect_false(is.na(fitted(fit)$value[[2]]))
-    expect_true(is.na(residuals(fit)$value[[2]]))
+    expect_true(is.na(fit$engine_result$residuals$value[[2]]))
 })
 
 test_that("estimate runs lowered deterministic representations", {
@@ -592,7 +597,7 @@ test_that("estimate runs lowered deterministic representations", {
         )
         fit <- estimate(problem, engine = optim_engine(control = list(maxit = 50)))
         expect_s3_class(fit, "compphysiol_estimation_result")
-        expect_identical(fit$convergence$code, 0L)
+        expect_identical(fit$engine_result$convergence, 0L)
         expect_equal(as.numeric(coef(fit)$k), 0.197, tolerance = 0.01)
     }
 })

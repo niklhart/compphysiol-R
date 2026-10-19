@@ -4,10 +4,14 @@
 \alias{fitted.compphysiol_estimation_result}
 \title{Extract fitted observable values}
 \usage{
-\method{fitted}{compphysiol_estimation_result}(object, ...)
+\method{fitted}{compphysiol_estimation_result}(object, type = NULL, ...)
 }
 \arguments{
 \item{object}{A \code{compphysiol_estimation_result}.}
+
+\item{type}{Prediction type. Leave as \code{NULL} for an optim result. An nlmixr2
+result requires \code{"PRED"} for population predictions or \code{"IPRED"} for
+individual predictions.}
 
 \item{...}{Unused.}
 }

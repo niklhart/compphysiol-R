@@ -454,6 +454,8 @@ print.compphysiol_estimation_problem <- function(x, ...) {
 #'
 #' @param object A `compphysiol_estimation_problem`.
 #' @param ... Additional method arguments.
+#' @returns A [compphysiol_estimation_result] object.
+#' @seealso [compphysiol_estimation_result]
 #' @export
 estimate <- function(object, ...) UseMethod("estimate")
 
@@ -587,14 +589,14 @@ estimate.compphysiol_estimation_problem <- function(
     raw <- do.call(stats::optim, optim_args)
     coefficients <- .estimation_validate_optim_result(raw$par, coordinates, specs)
     diagnostics <- evaluate(raw$par, diagnostics = TRUE)
+    raw$residuals <- diagnostics$residuals
     coefficients <- .new_parameters(coefficients)
     structure(
         list(
             coefficients = coefficients,
             neg_log_lik = unname(raw$value),
-            convergence = list(code = raw$convergence, message = raw$message %||% NULL),
-            predictions = diagnostics$predictions,
-            residuals = diagnostics$residuals,
+            population_predictions = diagnostics$predictions,
+            individual_predictions = NULL,
             engine = engine,
             engine_result = raw,
             problem = problem
@@ -604,6 +606,39 @@ estimate.compphysiol_estimation_problem <- function(
         )
     )
 }
+
+#' Estimation results
+#'
+#' An estimation result contains the engine-neutral outputs of [estimate()]
+#' together with the selected engine, the original estimation problem, and the
+#' unmodified backend result. Backend-specific diagnostics remain in
+#' `engine_result` rather than being normalized into potentially ambiguous
+#' top-level fields.
+#'
+#' @section Components:
+#' An estimation result contains:
+#'
+#' - `coefficients`: fitted values on the public parameter scale, represented as
+#'   a `compphysiol_parameters` object.
+#' - `neg_log_lik`: the negative log-likelihood reported for the fitted model.
+#' - `population_predictions`: predictions for the population or fixed-effects
+#'   model, in estimation-row order.
+#' - `individual_predictions`: predictions conditional on fitted individual
+#'   random effects, or `NULL` when the engine has no individual effects.
+#' - `engine`: the estimation-engine configuration.
+#' - `engine_result`: the engine-specific result. For the optim engine this is
+#'   the return value from [stats::optim()] supplemented with the residuals
+#'   calculated by the engine; for the nlmixr2 engine it is the native nlmixr2
+#'   fit, which provides its own residual diagnostics.
+#' - `problem`: the [estimation_problem()] that was fitted.
+#'
+#' Use [coef()] for coefficients. For an optim result, `fitted(object)` returns
+#' population predictions. An nlmixr2 result requires an explicit prediction
+#' type: `fitted(object, "PRED")` or `fitted(object, "IPRED")`.
+#'
+#' @name compphysiol_estimation_result
+#' @seealso [estimate()], [optim_engine()], [nlmixr2_engine()]
+NULL
 
 #' Print an estimation result
 #'
@@ -624,10 +659,6 @@ print.compphysiol_estimation_result <- function(x, ...) {
         cat("  (none)\n")
     }
     cat(" negative log-likelihood: ", format(x$neg_log_lik, digits = 7), "\n", sep = "")
-    cat(" convergence code: ", x$convergence$code, "\n", sep = "")
-    if (!is.null(x$convergence$message)) {
-        cat(" convergence message: ", x$convergence$message, "\n", sep = "")
-    }
     engine <- .compphysiol_class_label(x$engine)
     if (inherits(x$engine, "compphysiol_optim_engine")) {
         engine <- paste0(engine, " (", x$engine$method, ")")
@@ -954,16 +985,35 @@ coef.compphysiol_estimation_result <- function(object, ...) object$coefficients
 
 #' Extract fitted observable values
 #' @param object A `compphysiol_estimation_result`.
+#' @param type Prediction type. Leave as `NULL` for an optim result. An nlmixr2
+#'   result requires `"PRED"` for population predictions or `"IPRED"` for
+#'   individual predictions.
 #' @param ... Unused.
 #' @returns Unit-aware `compphysiol_observation_data` of fitted values in estimation-row order.
 #' @export
-fitted.compphysiol_estimation_result <- function(object, ...) {
-    object$individual_predictions %||% object$predictions
+fitted.compphysiol_estimation_result <- function(object, type = NULL, ...) {
+    if (inherits(object$engine, "compphysiol_optim_engine")) {
+        if (!is.null(type)) {
+            stop("An optim estimation result has only population predictions; use fitted(object) without a type.",
+                 call. = FALSE)
+        }
+        return(object$population_predictions)
+    }
+    if (inherits(object$engine, "compphysiol_nlmixr2_engine")) {
+        if (is.null(type)) {
+            stop("An nlmixr2 estimation result requires an explicit prediction type: 'PRED' or 'IPRED'.",
+                 call. = FALSE)
+        }
+        if (!is.character(type) || length(type) != 1L || is.na(type)) {
+            stop("Prediction type must be 'PRED' or 'IPRED'.", call. = FALSE)
+        }
+        type <- toupper(type)
+        if (!type %in% c("PRED", "IPRED")) {
+            stop("Prediction type must be 'PRED' or 'IPRED'.", call. = FALSE)
+        }
+        if (identical(type, "PRED")) object$population_predictions else
+            object$individual_predictions
+    } else {
+        stop("Unsupported estimation engine in fitted estimation result.", call. = FALSE)
+    }
 }
-
-#' Extract estimation residuals
-#' @param object A `compphysiol_estimation_result`.
-#' @param ... Unused.
-#' @returns Unit-aware `compphysiol_observation_data` of observed-minus-fitted residuals.
-#' @export
-residuals.compphysiol_estimation_result <- function(object, ...) object$residuals

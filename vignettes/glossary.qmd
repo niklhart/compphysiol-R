@@ -590,9 +590,10 @@ ODE evaluation to a deSolve simulation engine. The latter can prepare either an
 ODE model or a compiled deSolve model; compilation changes the representation
 consumed by the same deSolve path rather than selecting another estimation
 engine. An
-estimation result exposes coefficients, the negative log-likelihood as
-`neg_log_lik`, convergence
-information, fitted values, residuals, and the raw engine result.
+estimation result exposes coefficients, the negative log-likelihood, population
+predictions, optional individual predictions, and the native engine result.
+Convergence information, residual diagnostics, objectives, and other
+backend-specific quantities remain in the native engine result.
 
 The nlmixr2 engine integrates mixed effects and
 owns more than an outer optimization algorithm: ODE evaluation, residual
@@ -618,9 +619,12 @@ the fitted random effects for each individual, from population predictions,
 calculated for the typical individual with random effects set to zero. These
 two explicit names are sufficient; an unqualified predictions component would
 be ambiguous and is not part of the mixed-effects result contract. Prediction
-and residual tables preserve the observation rows and their order. Rows with
-missing observed values retain predictions and have missing residuals, and a
-residual quantity must state which prediction level it uses.
+tables preserve the observation rows and their order. Because a mixed-effects
+fit has both levels, fitted-value extraction requires the caller to select the
+population or individual prediction explicitly. An estimation without
+individual effects has only population predictions and needs no selection.
+Residuals are not currently normalized across engines because their definitions
+depend on both the prediction level and the backend-specific residual type.
 
 Implementation anchor: `estimation_problem()` creates
 `compphysiol_estimation_problem`; `parameter_spec()` creates
