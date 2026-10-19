@@ -594,6 +594,11 @@ estimation result exposes coefficients, the negative log-likelihood, population
 predictions, optional individual predictions, and the native engine result.
 Convergence information, residual diagnostics, objectives, and other
 backend-specific quantities remain in the native engine result.
+For unit-bearing continuous observations, the shared negative log-likelihood is
+reported on the numerical scale of the units in which the observations were
+supplied. When an engine evaluates densities after converting observations to
+solver units, the corresponding change-of-units Jacobian is applied before the
+likelihood is exposed in the estimation result.
 
 The nlmixr2 engine integrates mixed effects and
 owns more than an outer optimization algorithm: ODE evaluation, residual

@@ -33,6 +33,24 @@
         as.numeric(value)
 }
 
+.nlmixr2_log_likelihood_unit_jacobian <- function(problem, dimensions) {
+    sum(vapply(.experiments_elements(problem$experiments), function(experiment) {
+        observed <- experiment$observations$value
+        sum(vapply(seq_along(observed), function(i) {
+            value <- observed[[i]]
+            if (is.na(value) || !inherits(value, "units")) return(0)
+            solver_value <- do.call(.to_dimensions, c(list(value), dimensions))
+            scale <- as.numeric(units::set_units(
+                units::set_units(
+                    1, units::deparse_unit(solver_value), mode = "standard"
+                ),
+                units::deparse_unit(value), mode = "standard"
+            ))
+            log(scale)
+        }, numeric(1)))
+    }, numeric(1)))
+}
+
 .nlmixr2_theta_bounds <- function(spec, dimensions = list()) {
     c(lower = .nlmixr2_solver_value(spec$lower, dimensions),
       initial = .nlmixr2_solver_value(spec$initial, dimensions),
@@ -235,7 +253,9 @@
     list(model = model_function, source = source, data = data,
          executable = executable, artifact = artifact, dimensions = dimensions,
          theta_ids = theta_ids, eta_ids = eta_ids,
-         omega_parameters = omega_parameters, observation = observation)
+         omega_parameters = omega_parameters, observation = observation,
+         log_likelihood_unit_jacobian =
+             .nlmixr2_log_likelihood_unit_jacobian(problem, dimensions))
 }
 
 .nlmixr2_data <- function(problem, executable, artifact, dimensions,
@@ -317,7 +337,8 @@
     diagnostics <- .nlmixr2_diagnostics(
         problem, raw, translated, has_individual = has_individual
     )
-    neg_log_lik <- -as.numeric(stats::logLik(raw))
+    neg_log_lik <- -as.numeric(stats::logLik(raw)) +
+        translated$log_likelihood_unit_jacobian
     structure(list(
         coefficients = .new_parameters(coefficients),
         neg_log_lik = neg_log_lik,
