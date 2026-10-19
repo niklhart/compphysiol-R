@@ -16,6 +16,10 @@ has_rxode2 <- requireNamespace("rxode2", quietly = TRUE)
 if (!has_rxode2) {
     warning("rxode2 is not installed; rxode2 benchmark routes will be skipped.")
 }
+has_nlmixr2 <- requireNamespace("nlmixr2est", quietly = TRUE)
+if (!has_nlmixr2) {
+    warning("nlmixr2est is not installed; the nlmixr2 estimation route will be skipped.")
+}
 solver_rtol <- 1e-10
 solver_atol <- 1e-10
 
@@ -418,7 +422,38 @@ fit_route <- function(route, model, definition, engine, compile_fun = NULL) {
         total_sec = compile_for_total + n_eval * one_eval_sec,
         nll = fit$neg_log_lik,
         estimates = estimates,
-        code = fit$convergence$code,
+        code = fit$engine_result$convergence,
+        stringsAsFactors = FALSE
+    )
+}
+
+fit_nlmixr2_route <- function(model, definition) {
+    problem <- estimation_problem(
+        model,
+        definition$experiments,
+        definition$specs,
+        definition$statistics
+    )
+    engine <- nlmixr2_engine(control = list(
+        print = 0L,
+        maxOuterIterations = if (quick) 5L else 100L,
+        covMethod = ""
+    ))
+    timing <- elapsed(estimate(problem, engine = engine))
+    fit <- timing$value
+    estimates <- paste(
+        sprintf("%s=%.8g", names(coef(fit)), vapply(coef(fit), as.numeric, numeric(1))),
+        collapse = "; "
+    )
+    data.frame(
+        route = "nlmixr2",
+        n_eval = NA_integer_,
+        compile_sec = NA_real_,
+        one_eval_sec = NA_real_,
+        total_sec = timing$seconds,
+        nll = fit$neg_log_lik,
+        estimates = estimates,
+        code = NA_integer_,
         stringsAsFactors = FALSE
     )
 }
@@ -508,6 +543,12 @@ run_scenario <- function(scenario_name) {
             )
         ))
     }
+    if (has_nlmixr2) {
+        rxode2::rxClean()
+        fit_routes <- c(fit_routes, list(
+            fit_nlmixr2_route(ode, definition)
+        ))
+    }
     fits <- do.call(rbind, fit_routes)
     fits$scenario <- label
     print(fits[setdiff(names(fits), "scenario")], row.names = FALSE, digits = 5)
@@ -543,6 +584,7 @@ cat("- The benchmark clears rxode2's anonymous DLL cache before measured cold rx
 cat("- The end-to-end rxode2 artifact is reused by later objective evaluations in the same fit.\n")
 cat("- End-to-end compiled routes include one local artifact build.\n")
 cat("- n_eval counts actual likelihood calls, including finite-difference calls that optim omits from its reported function count.\n")
+cat("- nlmixr2 is benchmarked end to end on the same fixed-effects problems; its internal evaluation and compilation timings are not separated.\n")
 cat("- Population scenarios omit interpreted model routes; interpreting models on every evaluation is prohibitively slow at these sizes.\n")
 cat("- The heterogeneous-design collection is stable across objective evaluations even though its components are not homogeneous within an evaluation.\n")
 cat("- Population sizes are controlled by COMPPHYSIOL_BENCH_ESTIMATION_N and COMPPHYSIOL_BENCH_ESTIMATION_HETEROGENEOUS_N.\n")
