@@ -477,6 +477,7 @@ estimate.compphysiol_estimation_problem <- function(
     parameter_overlay <- .optim_parameter_overlay_plan(
         problem$experiments, runtime_names
     )
+    prepared_simulation <- NULL
 
     evaluate <- function(par, diagnostics = FALSE) {
         values <- .estimation_decode(par, specs)
@@ -484,13 +485,22 @@ estimate.compphysiol_estimation_problem <- function(
         estimation_experiments <- .optim_apply_parameter_overlay(
             parameter_overlay, runtime
         )
-        simulated <- simulate(
-            simulation_model,
-            experiment = estimation_experiments,
-            dimensions = dimensions,
-            engine = engine$simulation,
-            ...
-        )
+        simulated <- if (is.null(prepared_simulation)) {
+            simulate(
+                simulation_model,
+                experiment = estimation_experiments,
+                dimensions = dimensions,
+                engine = engine$simulation,
+                ...
+            )
+        } else {
+            .simulate_prepared_compiled_experiments(
+                simulation_model, estimation_experiments,
+                prepared = prepared_simulation,
+                engine = engine$simulation,
+                ...
+            )
+        }
         .estimation_likelihood(
             problem$experiments,
             simulated,
@@ -508,6 +518,9 @@ estimate.compphysiol_estimation_problem <- function(
     if (!is.finite(initial)) {
         stop("The estimation objective is not finite at its initial values.", call. = FALSE)
     }
+    prepared_simulation <- .simulation_prepare_compiled_experiments(
+        simulation_model, problem$experiments
+    )
     objective <- function(par) {
         if (!.estimation_coordinates_within_bounds(par, coordinates)) return(1e100)
         value <- tryCatch(evaluate(par), error = function(e) Inf)

@@ -556,6 +556,76 @@ test_that("compiled parameter transforms support scale and offset conversions", 
     )
 })
 
+test_that("prepared compiled experiment designs preserve heterogeneous simulations", {
+    model <- compartment_model() |>
+        add_compartment("Central", volume = 1 [L]) |>
+        add_molecule("drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+        add_transport("Central", NULL, molec = "drug", const = "k") |>
+        add_observable(C = c[drug, Central]) |>
+        add_parameter(k = 0.2 [1/h])
+    studies <- experiments(
+        first = experiment(
+            observations = observation_schedule(c(0, 1) [h], c("C", "C")),
+            start = 0 [h]
+        ),
+        second = experiment(
+            dosing = dosing(
+                time = 1 [h], amount = 10 [mg],
+                molec = "drug", cmt = "Central"
+            ),
+            observations = observation_schedule(c(0, 2) [h], c("C", "C")),
+            start = 0 [h]
+        )
+    )
+    executable <- to_compiled_ode_model(model)
+    expected <- simulate(executable, experiment = studies)
+    prepared <- .simulation_prepare_compiled_experiments(executable, studies)
+    actual <- .simulate_prepared_compiled_experiments(
+        executable, studies, prepared, deSolve_engine(compiled = TRUE)
+    )
+
+    expect_length(prepared$times, 2L)
+    expect_length(prepared$events, 2L)
+    expect_length(prepared$observation_plans, 2L)
+    expect_false(prepared$homogeneity[["dosing"]])
+    expect_false(prepared$homogeneity[["observation_plan"]])
+    expect_equal(actual, expected)
+})
+
+test_that("prepared rxode2 experiment designs preserve heterogeneous simulations", {
+    skip_if_not_installed("rxode2")
+    model <- compartment_model() |>
+        add_compartment("Central", volume = 1 [L]) |>
+        add_molecule("drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+        add_transport("Central", NULL, molec = "drug", const = "k") |>
+        add_observable(C = c[drug, Central]) |>
+        add_parameter(k = 0.2 [1/h])
+    studies <- experiments(
+        first = experiment(
+            observations = observation_schedule(c(0, 1) [h], c("C", "C")),
+            start = 0 [h]
+        ),
+        second = experiment(
+            dosing = dosing(
+                time = 1 [h], amount = 10 [mg],
+                molec = "drug", cmt = "Central"
+            ),
+            observations = observation_schedule(c(0, 2) [h], c("C", "C")),
+            start = 0 [h]
+        )
+    )
+    executable <- to_rxode2_model(model)
+    engine <- rxode2_engine()
+    expected <- simulate(executable, experiment = studies, engine = engine)
+    prepared <- .simulation_prepare_compiled_experiments(executable, studies)
+    actual <- .simulate_prepared_compiled_experiments(
+        executable, studies, prepared, engine
+    )
+
+    expect_s3_class(prepared$rx_records, "data.frame")
+    expect_equal(actual, expected, tolerance = 1e-8)
+})
+
 test_that("CompiledOdeModel uses fixed solver dimensions after compilation", {
     model <- compartment_model() |>
         add_compartment("Central", volume = NA_real_) |>

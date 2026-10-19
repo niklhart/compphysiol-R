@@ -101,6 +101,113 @@
     sort(unique(c(start, experiment$observations$time)))
 }
 
+.simulation_prepare_compiled_experiments <- function(object, experiments) {
+    if (!inherits(object, c(
+        "compphysiol_desolve_compiled_model", "compphysiol_rxode2_model"
+    ))) return(NULL)
+
+    artifact <- if (inherits(object, "compphysiol_desolve_compiled_model")) {
+        .compiled_ode_model_cached_artifact(object)
+    } else if (exists("artifact", envir = object$cache, inherits = FALSE)) {
+        get("artifact", envir = object$cache, inherits = FALSE)
+    } else {
+        NULL
+    }
+    if (is.null(artifact)) return(NULL)
+
+    elements <- .experiments_elements(experiments)
+    homogeneity <- .experiments_component_homogeneity(experiments)
+    dimensions <- artifact$dimensions
+    shared_time <- homogeneity[["start"]] && homogeneity[["observation_plan"]]
+    times <- if (shared_time) {
+        rep(list(.simulation_experiment_time(elements[[1]])), length(elements))
+    } else {
+        lapply(elements, .simulation_experiment_time)
+    }
+    solver_times <- lapply(times, .simulation_numeric_time, dimensions = dimensions)
+
+    event_indices <- if (homogeneity[["dosing"]]) 1L else seq_along(elements)
+    events <- lapply(event_indices, function(i) {
+        .simulation_experiment_events(
+            object$ode_model, elements[[i]]$dosing, dimensions,
+            elements[[i]]$parameters,
+            state_unit_values = artifact$stateUnitValues
+        )
+    })
+    if (homogeneity[["dosing"]]) events <- rep(events, length(elements))
+
+    plan_indices <- if (shared_time) 1L else seq_along(elements)
+    observation_plans <- lapply(plan_indices, function(i) {
+        .simulation_prepare_observation_plan(
+            elements[[i]]$observations, solver_times[[i]], dimensions
+        )
+    })
+    if (shared_time) observation_plans <- rep(observation_plans, length(elements))
+
+    rx_records <- NULL
+    if (inherits(object, "compphysiol_rxode2_model")) {
+        if (shared_time && homogeneity[["dosing"]]) {
+            rx_records <- .rxode2_shared_experiment_records(
+                length(elements), solver_times[[1]], events[[1]]$data,
+                object$identifiers$states
+            )
+        } else {
+            records <- lapply(seq_along(elements), function(i) {
+                .rxode2_individual_records(
+                    i, solver_times[[i]], events[[i]]$data,
+                    object$identifiers$states
+                )
+            })
+            rx_records <- do.call(rbind, records)
+            rx_records <- rx_records[
+                order(rx_records$id, rx_records$time, -rx_records$evid),,
+                drop = FALSE
+            ]
+        }
+    }
+
+    list(
+        dimensions = dimensions,
+        homogeneity = homogeneity,
+        times = times,
+        solver_times = solver_times,
+        events = events,
+        observation_plans = observation_plans,
+        rx_records = rx_records
+    )
+}
+
+.simulate_prepared_compiled_experiments <- function(
+    object, experiments, prepared, engine, ...
+) {
+    elements <- .experiments_elements(experiments)
+    if (inherits(object, "compphysiol_rxode2_model")) {
+        return(.simulate_rxode2_experiments(
+            object, elements, dimensions = prepared$dimensions, engine = engine,
+            homogeneity = prepared$homogeneity, prepared = prepared, ...
+        ))
+    }
+
+    out <- lapply(seq_along(elements), function(i) {
+        model <- object
+        attr(model, "experiment_dosing") <- elements[[i]]$dosing
+        attr(model, "prepared_experiment_events") <- prepared$events[[i]]
+        attr(model, "observation_schedule") <- elements[[i]]$observations
+        attr(model, "prepared_observation_plan") <- prepared$observation_plans[[i]]
+        attr(model, "prepared_solver_time") <- prepared$solver_times[[i]]
+        simulate(
+            model,
+            time = prepared$times[[i]],
+            parameters = elements[[i]]$parameters,
+            dimensions = prepared$dimensions,
+            engine = engine,
+            ...
+        )
+    })
+    names(out) <- names(elements)
+    out
+}
+
 .simulation_experiment_events <- function(
     model, dosing, dimensions, parameters, state_unit_values = NULL
 ) {

@@ -200,7 +200,7 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
 }
 
 .simulate_rxode2_experiments <- function(
-    object, experiments, dimensions = NULL, engine, homogeneity, ...
+    object, experiments, dimensions = NULL, engine, homogeneity, prepared = NULL, ...
 ) {
     ode <- object$ode_model
     supplied <- lapply(experiments, function(e) .simulation_parameters_object(e$parameters))
@@ -211,7 +211,9 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
     if (length(unknown)) stop("Unknown rxode2 model parameter(s): ", paste(unknown, collapse = ", "), ".", call. = FALSE)
 
     shared_time <- homogeneity[["start"]] && homogeneity[["observation_plan"]]
-    times <- if (shared_time) {
+    times <- if (!is.null(prepared)) {
+        prepared$times
+    } else if (shared_time) {
         rep(list(.simulation_experiment_time(experiments[[1]])), length(experiments))
     } else {
         lapply(experiments, .simulation_experiment_time)
@@ -232,11 +234,17 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
     }
 
     parameter_values <- vector("list", length(experiments))
-    solver_times <- vector("list", length(experiments))
-    records <- if (shared_time && homogeneity[["dosing"]]) NULL else {
+    solver_times <- if (is.null(prepared)) vector("list", length(experiments)) else {
+        prepared$solver_times
+    }
+    records <- if (!is.null(prepared)) {
+        prepared$rx_records
+    } else if (shared_time && homogeneity[["dosing"]]) NULL else {
         vector("list", length(experiments))
     }
-    shared_events <- if (homogeneity[["dosing"]]) {
+    shared_events <- if (!is.null(prepared)) {
+        prepared$events[[1]]$data
+    } else if (homogeneity[["dosing"]]) {
         .simulation_experiment_events(
             ode, experiments[[1]]$dosing, dimensions, supplied[[1]],
             state_unit_values = artifact$stateUnitValues
@@ -262,8 +270,10 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
         } else {
             .rxode2_runtime_parameter_values(artifact, supplied[[i]], dimensions)
         }
-        solver_times[[i]] <- .simulation_numeric_time(times[[i]], dimensions)
-        if (!is.null(records)) {
+        if (is.null(prepared)) {
+            solver_times[[i]] <- .simulation_numeric_time(times[[i]], dimensions)
+        }
+        if (is.null(prepared) && !is.null(records)) {
             events <- shared_events %||% .simulation_experiment_events(
                 ode, experiments[[i]]$dosing, dimensions, supplied[[i]],
                 state_unit_values = artifact$stateUnitValues
@@ -273,7 +283,9 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
             )
         }
     }
-    records <- if (is.null(records)) {
+    records <- if (!is.null(prepared)) {
+        records
+    } else if (is.null(records)) {
         .rxode2_shared_experiment_records(
             length(experiments), solver_times[[1]], shared_events,
             object$identifiers$states
@@ -295,7 +307,7 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
         split(seq_len(nrow(solved)), solved$id)
     }
     state_columns <- match(c("time", unname(object$identifiers$states)), names(solved))
-    shared_observation_plan <- if (shared_time) {
+    shared_observation_plan <- if (is.null(prepared) && shared_time) {
         .simulation_prepare_observation_plan(
             experiments[[1]]$observations,
             .simulation_numeric_time(times[[1]], dimensions),
@@ -322,7 +334,12 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
         states$time <- .simulation_attach_time_units(states$time, times[[i]], dimensions)
         observables <- .simulation_observables(
             matrix_out, states$time, ode_i, info, solver_time, dimensions,
-            parameters = supplied[[i]], observation_plan = shared_observation_plan
+            parameters = supplied[[i]],
+            observation_plan = if (is.null(prepared)) {
+                shared_observation_plan
+            } else {
+                prepared$observation_plans[[i]]
+            }
         )
         structure(list(states = states, observables = observables),
                   class = .compphysiol_class("compphysiol_simulation_result"))

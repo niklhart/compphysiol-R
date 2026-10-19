@@ -313,6 +313,7 @@ simulate.compphysiol_desolve_compiled_model <- function(
     attr(ode_model, "experiment_dosing") <- attr(object, "experiment_dosing")
     attr(ode_model, "prepared_experiment_events") <- attr(object, "prepared_experiment_events")
     attr(ode_model, "prepared_observation_plan") <- attr(object, "prepared_observation_plan")
+    attr(ode_model, "prepared_solver_time") <- attr(object, "prepared_solver_time")
     .check_class(ode_model, "compphysiol_ode_model")
 
     time <- .process_nse_arg(substitute(time), envir = parent.frame())
@@ -644,7 +645,8 @@ simulate.compphysiol_stochastic_model <- function(
 }
 
 .simulation_solve_ode_model <- function(model, odeinfo, time, dimensions, parameters, ...) {
-    solver_time <- .simulation_numeric_time(time, dimensions)
+    solver_time <- attr(model, "prepared_solver_time") %||%
+        .simulation_numeric_time(time, dimensions)
     experiment_dosing <- attr(model, "experiment_dosing")
     prepared_events <- attr(model, "prepared_experiment_events")
     if (!is.null(prepared_events)) {
