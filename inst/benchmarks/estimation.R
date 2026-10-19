@@ -348,11 +348,15 @@ run_fixed_route <- function(route, model, definition, compile_sec = NA_real_) {
         function(i) likelihood_at(model, definition, definition$fixed_value),
         numeric(1)
     ))
+    one_eval_sec <- timing$seconds / length(timing$value)
+    compile_for_total <- if (is.na(compile_sec)) 0 else compile_sec
+    total_sec <- compile_for_total + length(timing$value) * one_eval_sec
     data.frame(
         route = route,
         n_eval = length(timing$value),
         compile_sec = compile_sec,
-        sec_iter = timing$seconds / length(timing$value),
+        one_eval_sec = one_eval_sec,
+        total_sec = total_sec,
         nll = timing$value[[1]],
         stringsAsFactors = FALSE
     )
@@ -374,15 +378,19 @@ fit_route <- function(route, model, definition, engine, compile_fun = NULL) {
         collapse = "; "
     )
     optim_evaluations <- unname(fit$engine_result$counts[["function"]])
+    n_eval <- optim_evaluations + 2L
+    compile_sec <- timing$compile_sec
+    compile_for_total <- if (is.na(compile_sec)) 0 else compile_sec
+    one_eval_sec <- (timing$seconds - compile_for_total) / n_eval
     data.frame(
         route = route,
-        sec = timing$seconds,
-        n_eval = optim_evaluations + 2L,
-        estimates = estimates,
+        n_eval = n_eval,
+        compile_sec = compile_sec,
+        one_eval_sec = one_eval_sec,
+        total_sec = compile_for_total + n_eval * one_eval_sec,
         nll = fit$neg_log_lik,
+        estimates = estimates,
         code = fit$convergence$code,
-        compile_sec = timing$compile_sec,
-        total_sec = timing$seconds,
         stringsAsFactors = FALSE
     )
 }
@@ -501,7 +509,8 @@ rownames(design_results) <- NULL
 cat("\nNotes:\n")
 cat("- Fixed routes repeatedly evaluate the initial parameter point; the NLL assertion detects numerical disagreement.\n")
 cat("- deSolve and rxode2 both use rtol = atol = 1e-10.\n")
-cat("- compile_sec is measured once before the repeated fixed evaluations; sec_iter excludes compilation.\n")
+cat("- one_eval_sec excludes compilation; total_sec equals compile_sec (zero when NA) plus n_eval times one_eval_sec.\n")
+cat("- For end-to-end fits, one_eval_sec amortizes optimizer and fitting overhead as well as likelihood evaluation.\n")
 cat("- The benchmark clears rxode2's anonymous DLL cache before measured cold rxode2 preparation and estimation.\n")
 cat("- The end-to-end rxode2 artifact is reused by later objective evaluations in the same fit.\n")
 cat("- End-to-end compiled routes include one local artifact build.\n")
