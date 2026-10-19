@@ -361,6 +361,39 @@ test_that("deSolve_engine configures the representation used by estimation", {
     expect_error(deSolve_engine(compiled = NA), "TRUE or FALSE")
 })
 
+test_that("estimation forwards the configured simulation engine", {
+    problem <- estimation_problem(
+        estimation_test_model(),
+        estimation_test_experiment(),
+        c(
+            k = parameter_spec(0.1 [1/h], transform = "log"),
+            sigma = parameter_spec(1 [mg/L], transform = "log")
+        ),
+        statistical_model(C = normal(sd = "sigma"))
+    )
+
+    compiled <- estimate(
+        problem,
+        engine = optim_engine(
+            control = list(maxit = 1),
+            simulation = deSolve_engine(compiled = TRUE)
+        )
+    )
+    expect_s3_class(compiled, "compphysiol_estimation_result")
+
+    skip_if_not_installed("rxode2")
+    expect_error(
+        estimate(
+            problem,
+            engine = optim_engine(
+                control = list(maxit = 1),
+                simulation = rxode2_engine(rtol = "invalid")
+            )
+        ),
+        "initial values|rtol|numeric"
+    )
+})
+
 test_that("optim methods accept only bounds supported in optimizer coordinates", {
     identity_unbounded <- c(x = parameter_spec(0))
     identity_bounded <- c(x = parameter_spec(0.5, lower = 0, upper = 1))

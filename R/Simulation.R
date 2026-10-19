@@ -292,14 +292,20 @@ simulate.compphysiol_desolve_compiled_model <- function(
     unit = NULL,
     parameters = list(),
     dimensions = NULL,
+    engine = deSolve_engine(compiled = TRUE),
     ...,
     experiment = NULL
 ) {
+    if (!inherits(engine, "compphysiol_desolve_engine")) {
+        stop("A compiled deSolve model requires deSolve_engine().", call. = FALSE)
+    }
     if (!is.null(experiment)) {
         if (!missing(time) || !missing(unit) || !missing(parameters)) {
             stop("experiment cannot be combined with time, unit, or parameters.", call. = FALSE)
         }
-        return(.simulate_experiments(object, experiment, dimensions = dimensions, ...))
+        return(.simulate_experiments(
+            object, experiment, dimensions = dimensions, engine = engine, ...
+        ))
     }
 
     ode_model <- object$ode_model

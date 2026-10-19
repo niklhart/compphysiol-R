@@ -467,6 +467,7 @@ estimate.compphysiol_estimation_problem <- function(
             simulation_model,
             experiment = estimation_experiments,
             dimensions = dimensions,
+            engine = engine$simulation,
             ...
         )
         .estimation_likelihood(

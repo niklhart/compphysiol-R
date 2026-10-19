@@ -16,6 +16,8 @@ has_rxode2 <- requireNamespace("rxode2", quietly = TRUE)
 if (!has_rxode2) {
     warning("rxode2 is not installed; rxode2 benchmark routes will be skipped.")
 }
+solver_rtol <- 1e-10
+solver_atol <- 1e-10
 
 quick <- tolower(Sys.getenv("COMPPHYSIOL_BENCH_QUICK", "false")) %in%
     c("1", "true", "yes")
@@ -260,7 +262,12 @@ likelihood_at <- function(model, definition, dynamic) {
     })
     names(studies) <- names(definition$experiments)
     studies <- do.call(experiments, studies)
-    simulated <- simulate(model, experiment = studies)
+    simulated <- simulate(
+        model,
+        experiment = studies,
+        rtol = solver_rtol,
+        atol = solver_atol
+    )
     compphysiol:::.estimation_likelihood(
         definition$experiments,
         simulated,
@@ -433,7 +440,7 @@ run_scenario <- function(scenario_name) {
     rx_engine <- optim_engine(
         method = "L-BFGS-B",
         control = list(maxit = if (quick) 5 else 100),
-        simulation = rxode2_engine()
+        simulation = rxode2_engine(rtol = solver_rtol, atol = solver_atol)
     )
     compiled_for_build <- to_compiled_ode_model(ode)
     compilation <- compile_cached(compiled_for_build, definition, runtime)
@@ -493,6 +500,7 @@ rownames(design_results) <- NULL
 
 cat("\nNotes:\n")
 cat("- Fixed routes evaluate the same parameter vectors; the checksum assertion detects numerical disagreement.\n")
+cat("- deSolve and rxode2 both use rtol = atol = 1e-10.\n")
 cat("- fixed_replicates repeats the complete three-point parameter grid, so the default gives 5 x 3 = 15 evaluations.\n")
 cat("- Cold compiled rows include first-use compilation. Warm rows use an explicitly pre-built cache.\n")
 cat("- The end-to-end rxode2 row includes first-use compilation; its compiled artifact is reused by later objective evaluations in the same fit.\n")
