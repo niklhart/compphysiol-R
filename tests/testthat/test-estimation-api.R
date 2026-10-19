@@ -16,6 +16,25 @@ estimation_test_experiment <- function(observable = "C") {
     experiment(observations = data, start = 0 [h])
 }
 
+test_that("estimation diagnostics preserve experiment order in a factor", {
+    rows <- lapply(c("individual_1", "individual_2", "individual_10"), function(id) {
+        list(
+            experiment = id,
+            time = units::set_units(1, h),
+            observable = "C",
+            value = units::set_units(1, mg/L)
+        )
+    })
+
+    diagnostics <- .estimation_bind_diagnostic_rows(rows)
+
+    expect_s3_class(diagnostics$experiment, "factor")
+    expect_identical(
+        levels(diagnostics$experiment),
+        c("individual_1", "individual_2", "individual_10")
+    )
+})
+
 test_that("parameter specifications combine into a named collection", {
     spec <- c(
         k = parameter_spec(

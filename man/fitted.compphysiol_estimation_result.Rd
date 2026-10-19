@@ -17,7 +17,9 @@ forms return the same sole prediction table.}
 \item{...}{Unused.}
 }
 \value{
-Unit-aware \code{compphysiol_observation_data} of fitted values in estimation-row order.
+Unit-aware \code{compphysiol_observation_data} of fitted values in
+estimation-row order. The \code{experiment} column is a factor whose levels
+preserve experiment-collection order.
 }
 \description{
 Extract fitted observable values

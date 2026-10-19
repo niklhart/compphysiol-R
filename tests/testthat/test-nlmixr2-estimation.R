@@ -118,6 +118,12 @@ test_that("nlmixr2 FOCEi estimation maps coefficients and both prediction levels
     expect_equal(nrow(fit$individual_predictions), 6L)
     expect_false(anyNA(fit$individual_predictions$value))
     expect_false(anyNA(fit$population_predictions$value))
+    expect_s3_class(fit$individual_predictions$experiment, "factor")
+    expect_identical(levels(fit$individual_predictions$experiment), c("first", "second"))
+    expect_identical(
+        levels(fit$population_predictions$experiment),
+        levels(fit$individual_predictions$experiment)
+    )
     expect_error(fitted(fit), "explicit prediction type")
     expect_identical(fitted(fit, "PRED"), fit$population_predictions)
     expect_identical(fitted(fit, "IPRED"), fit$individual_predictions)

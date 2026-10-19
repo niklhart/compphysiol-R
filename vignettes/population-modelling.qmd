@@ -149,6 +149,44 @@ are deliberately not copied into `estimation_studies`: they are unknown random
 effects in the estimation problem. The dose, time, and sampled concentration
 data retain their units.
 
+Before fitting, a spaghetti plot provides a quick view of the between-person
+variation in the observed concentration-time profiles. The experiment names
+serve as individual identifiers when the observation tables are combined for
+plotting.
+
+```{r}
+#| label: observed-spaghetti
+#| eval: !expr has_nlmixr2
+observed_data <- do.call(
+    rbind,
+    lapply(seq_along(estimation_studies), function(i) {
+        observed <- as.data.frame(estimation_studies[[i]]$observations)
+        observed$individual <- names(estimation_studies)[[i]]
+        observed[c("individual", "time", "observable", "value")]
+    })
+)
+
+rownames(observed_data) <- NULL
+observed_data$individual <- factor(
+    observed_data$individual,
+    levels = names(estimation_studies)
+)
+
+ggplot(
+    observed_data,
+    aes(x = time, y = value, group = individual, colour = individual)
+) +
+    geom_line(alpha = 0.6) +
+    geom_point(size = 1.5) +
+    labs(
+        x = "Time",
+        y = "Observed concentration",
+        title = "Observed concentration-time profiles"
+    ) +
+    guides(colour = "none") +
+    theme_minimal()
+```
+
 ## Estimate with nlmixr2
 
 The estimation problem contains unit-aware initial estimates for every
@@ -199,13 +237,8 @@ the prediction type explicitly prevents these two meanings from being mixed.
 pred <- fitted(fit, "PRED")
 ipred <- fitted(fit, "IPRED")
 
-observed_values <- do.call(
-    c,
-    lapply(estimation_studies, function(study) study$observations$value)
-)
-
 gof <- data.frame(
-    OBS = observed_values,
+    OBS = observed_data$value,
     PRED = pred$value,
     IPRED = ipred$value
 )
@@ -238,6 +271,54 @@ ggplot(gof, aes(x = IPRED, y = OBS)) +
 The plotting table remains unit-aware because the observations and both kinds
 of predictions already carry their concentration units. The axis labels derive
 their units directly from these `units` columns.
+
+## Individual concentration-time profiles
+
+The individual predictions retain the experiment identifier and observation
+times. This makes it possible to compare each fitted individual profile with
+its observations without extracting information from the native nlmixr2 fit.
+Here, solid lines connect the IPRED values at the sampling times, dashed lines
+show PRED, and the observed values are shown as points. Prediction tables carry
+the experiment identifier as a factor in experiment-collection order, so
+facets appear as `individual_1`, `individual_2`, and so on rather than in
+lexicographic order.
+
+```{r}
+#| label: individual-profiles
+#| eval: !expr has_nlmixr2
+profile_data <- data.frame(
+    individual = ipred$experiment,
+    time = ipred$time,
+    PRED = pred$value,
+    IPRED = ipred$value,
+    OBS = observed_data$value
+)
+
+ggplot(profile_data, aes(x = time, group = individual)) +
+    geom_line(
+        aes(y = PRED, linetype = "PRED"),
+        linewidth = 0.7,
+        colour = "#3366AA"
+    ) +
+    geom_line(
+        aes(y = IPRED, linetype = "IPRED"),
+        linewidth = 0.7,
+        colour = "#3366AA"
+    ) +
+    geom_point(aes(y = OBS), size = 1.5, colour = "#AA5533") +
+    facet_wrap(~ individual) +
+    scale_linetype_manual(
+        name = NULL,
+        breaks = c("PRED", "IPRED"),
+        values = c(PRED = "dashed", IPRED = "solid")
+    ) +
+    labs(
+        x = "Time",
+        y = "Concentration",
+        title = "Individual predictions and observed concentrations"
+    ) +
+    theme_minimal()
+```
 
 If nlmixr2 is not installed, the backend-dependent chunks are skipped while
 the model and statistical specification remain visible.

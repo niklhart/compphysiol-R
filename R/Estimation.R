@@ -640,9 +640,11 @@ estimate.compphysiol_estimation_problem <- function(
 #'   coefficient order. Entries are `NA` where joint uncertainty is unavailable.
 #' - `neg_log_lik`: the negative log-likelihood reported for the fitted model.
 #' - `population_predictions`: predictions for the population or fixed-effects
-#'   model, in estimation-row order.
+#'   model, in estimation-row order. Their `experiment` column is a factor whose
+#'   levels preserve experiment-collection order.
 #' - `individual_predictions`: predictions conditional on fitted individual
-#'   random effects, or `NULL` when the engine has no individual effects.
+#'   random effects, with the same ordered experiment levels, or `NULL` when the
+#'   engine has no individual effects.
 #' - `engine`: the estimation-engine configuration.
 #' - `engine_result`: the engine-specific result. For the optim engine this is
 #'   the return value from [stats::optim()] supplemented with the residuals
@@ -958,11 +960,13 @@ print.compphysiol_estimation_result <- function(x, ...) {
     if (!length(rows)) return(observation_data())
     time <- .estimation_combine_times(lapply(rows, `[[`, "time"))
     value <- .estimation_combine_values(lapply(rows, `[[`, "value"))
+    experiment <- vapply(rows, `[[`, character(1), "experiment")
+    experiment <- factor(experiment, levels = unique(experiment))
     observation_data(
         time = time,
         observable = vapply(rows, `[[`, character(1), "observable"),
         value = value,
-        experiment = vapply(rows, `[[`, character(1), "experiment")
+        experiment = experiment
     )
 }
 
@@ -1177,7 +1181,9 @@ estimate_correlations.compphysiol_estimation_result <- function(object, ...) {
 #'   only one prediction level. For a population-only nlmixr2 result, all three
 #'   forms return the same sole prediction table.
 #' @param ... Unused.
-#' @returns Unit-aware `compphysiol_observation_data` of fitted values in estimation-row order.
+#' @returns Unit-aware `compphysiol_observation_data` of fitted values in
+#'   estimation-row order. The `experiment` column is a factor whose levels
+#'   preserve experiment-collection order.
 #' @export
 fitted.compphysiol_estimation_result <- function(object, type = NULL, ...) {
     if (inherits(object$engine, "compphysiol_optim_engine")) {

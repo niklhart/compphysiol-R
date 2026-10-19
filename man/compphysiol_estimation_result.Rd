@@ -23,9 +23,11 @@ not requested or could not be calculated.
 coefficient order. Entries are \code{NA} where joint uncertainty is unavailable.
 \item \code{neg_log_lik}: the negative log-likelihood reported for the fitted model.
 \item \code{population_predictions}: predictions for the population or fixed-effects
-model, in estimation-row order.
+model, in estimation-row order. Their \code{experiment} column is a factor whose
+levels preserve experiment-collection order.
 \item \code{individual_predictions}: predictions conditional on fitted individual
-random effects, or \code{NULL} when the engine has no individual effects.
+random effects, with the same ordered experiment levels, or \code{NULL} when the
+engine has no individual effects.
 \item \code{engine}: the estimation-engine configuration.
 \item \code{engine_result}: the engine-specific result. For the optim engine this is
 the return value from \code{\link[stats:optim]{stats::optim()}} supplemented with the residuals
