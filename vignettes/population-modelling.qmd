@@ -1,0 +1,243 @@
+---
+title: "Population modelling with nlmixr2"
+format:
+  html:
+    toc: true
+    number-sections: false
+    embed-resources: true
+vignette: >
+  %\VignetteIndexEntry{Population modelling with nlmixr2}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+---
+
+This vignette follows a complete population-modelling workflow: define a
+dynamic and statistical model, simulate a population, sample observations,
+estimate the population parameters with nlmixr2, and inspect population and
+individual predictions.
+
+Physical quantities carry units throughout. Only the log-normal variability
+`omega_CL` is dimensionless by definition. Solver and estimation backends work
+on numerical scales internally, but compphysiol restores units at their public
+boundaries.
+
+```{r}
+#| label: setup
+library(compphysiol)
+library(units)
+library(ggplot2)
+
+has_nlmixr2 <- requireNamespace("nlmixr2est", quietly = TRUE)
+```
+
+## Dynamic model
+
+We use a one-compartment model for an intravenous bolus. Drug amount is
+measured in milligrams, central volume in litres, clearance in litres per hour,
+and the observable concentration in milligrams per litre.
+
+```{r}
+#| label: dynamic-model
+model <- compartment_model() |>
+    add_compartment("Central", volume = 10 [L]) |>
+    add_molecule(
+        "drug",
+        cmt = "Central",
+        initial = 0 [mg],
+        type = "amount"
+    ) |>
+    add_transport(
+        from = "Central",
+        to = NULL,
+        molec = "drug",
+        rate = "CL * c[drug, Central]"
+    ) |>
+    add_observable(C = c[drug, Central])
+
+model
+```
+
+## Statistical model and true parameters
+
+Individual clearances follow a log-normal distribution around the typical
+clearance `CL_pop`. Concentration measurements have additive normal error. The
+clearance median and residual standard deviation therefore carry their natural
+physical units, whereas the standard deviation on the log-clearance scale is
+dimensionless.
+
+```{r}
+#| label: statistical-model
+statistics <- statistical_model(
+    CL = lognormal(median = "CL_pop", sdlog = "omega_CL"),
+    C = normal(sd = "sigma")
+)
+
+truth <- parameters(
+    CL_pop = 1 [L/h],
+    omega_CL = 0.25,
+    sigma = 0.15 [mg/L]
+)
+```
+
+## Simulate a population dataset
+
+`sample_population()` realizes individual clearances with units. A common
+unit-aware protocol supplies the dose and observation times;
+`extend_protocol()` combines that protocol with every realized individual.
+
+```{r}
+#| label: population
+set.seed(2026)
+
+population <- sample_population(
+    statistics,
+    parameters = truth,
+    n = 16,
+    targets = "CL"
+)
+
+protocol <- experiment(
+    dosing = dosing(
+        time = 0 [h],
+        amount = 100 [mg],
+        molec = "drug",
+        cmt = "Central"
+    ),
+    observations = observation_schedule(
+        time = c(0.25, 0.5, 1, 2, 4, 8, 12, 24) [h],
+        observable = "C"
+    ),
+    start = 0 [h]
+)
+
+simulation_studies <- extend_protocol(protocol, population)
+```
+
+The full collection is simulated in one call through rxode2. Each result is
+then converted to long-format conditional predictions and sampled according to
+the observation-level distribution. The sampled concentration values remain
+in milligrams per litre.
+
+```{r}
+#| label: simulate-observations
+#| eval: !expr has_nlmixr2
+simulated <- simulate(
+    model,
+    experiment = simulation_studies,
+    engine = rxode2_engine()
+)
+
+estimation_studies <- lapply(seq_along(simulation_studies), function(i) {
+    observed <- simulated[[i]] |>
+        as_observables_long() |>
+        sample_observations(statistics, truth)
+
+    experiment(
+        dosing = simulation_studies[[i]]$dosing,
+        observations = observed,
+        start = simulation_studies[[i]]$start
+    )
+})
+names(estimation_studies) <- names(simulation_studies)
+estimation_studies <- do.call(experiments, estimation_studies)
+
+estimation_studies[[1]]
+```
+
+The individual clearances are used to generate the simulated predictions but
+are deliberately not copied into `estimation_studies`: they are unknown random
+effects in the estimation problem. The dose, time, and sampled concentration
+data retain their units.
+
+## Estimate with nlmixr2
+
+The estimation problem contains unit-aware initial estimates for every
+physical parameter. Log transformations enforce positivity in the numerical
+optimizer without changing the scale on which estimates are reported.
+
+```{r}
+#| label: estimation
+#| eval: !expr has_nlmixr2
+specs <- c(
+    CL_pop = parameter_spec(0.8 [L/h], transform = "log"),
+    omega_CL = parameter_spec(0.2, transform = "log"),
+    sigma = parameter_spec(0.2 [mg/L], transform = "log")
+)
+
+problem <- estimation_problem(
+    model = model,
+    experiments = estimation_studies,
+    parameters = specs,
+    statistics = statistics
+)
+
+fit <- estimate(
+    problem,
+    engine = nlmixr2_engine(
+        control = list(print = 0L, maxOuterIterations = 100L)
+    )
+)
+
+coef(fit)
+standard_errors(fit)
+fit$neg_log_lik
+```
+
+`coef()` and `standard_errors()` return parameter collections: clearance and
+residual-error quantities retain their declared units, while `omega_CL`
+remains dimensionless.
+
+## Goodness-of-fit plots
+
+For a mixed-effects fit, `PRED` is the prediction for the typical individual
+and `IPRED` is conditional on each fitted individual's random effect. Selecting
+the prediction type explicitly prevents these two meanings from being mixed.
+
+```{r}
+#| label: goodness-of-fit
+#| eval: !expr has_nlmixr2
+pred <- fitted(fit, "PRED")
+ipred <- fitted(fit, "IPRED")
+
+observed_values <- do.call(
+    c,
+    lapply(estimation_studies, function(study) study$observations$value)
+)
+
+gof <- data.frame(
+    OBS = observed_values,
+    PRED = pred$value,
+    IPRED = ipred$value
+)
+
+plot_limits <- range(c(gof$OBS, gof$PRED, gof$IPRED))
+
+ggplot(gof, aes(x = PRED, y = OBS)) +
+    geom_abline(slope = 1, intercept = 0, colour = "#666666") +
+    geom_point(alpha = 0.7, colour = "#3366AA") +
+    coord_equal(xlim = plot_limits, ylim = plot_limits) +
+    labs(
+        x = "Population prediction",
+        y = "Observed concentration",
+        title = "OBS versus PRED"
+    ) +
+    theme_minimal()
+
+ggplot(gof, aes(x = IPRED, y = OBS)) +
+    geom_abline(slope = 1, intercept = 0, colour = "#666666") +
+    geom_point(alpha = 0.7, colour = "#AA5533") +
+    coord_equal(xlim = plot_limits, ylim = plot_limits) +
+    labs(
+        x = "Individual prediction",
+        y = "Observed concentration",
+        title = "OBS versus IPRED"
+    ) +
+    theme_minimal()
+```
+
+The plotting table remains unit-aware because the observations and both kinds
+of predictions already carry their concentration units. The axis labels derive
+their units directly from these `units` columns.
+
+If nlmixr2 is not installed, the backend-dependent chunks are skipped while
+the model and statistical specification remain visible.
