@@ -597,14 +597,30 @@ information, fitted values, residuals, and the raw engine result.
 An engine that integrates mixed effects, such as a future `nlmixr2` engine,
 owns more than an outer optimization algorithm: ODE evaluation, residual
 likelihoods, random-effect approximation or integration, and the estimation
-algorithm belong to that engine. The public `simulate()` API does not yet take
-an engine because ODE, analytical, SSA, and hybrid simulation types describe
-different semantics rather than interchangeable implementations of one
-algorithm. A public simulation-engine choice becomes useful when another ODE
-implementation is supported.
+algorithm belong to that engine. It therefore consumes the scientific model,
+experiments, parameter specifications, and statistical model directly; it is
+not an outer optimizer configured with a separate simulation engine. This is
+distinct from numerical ODE simulation, where the simulation type selects ODE
+semantics and a deSolve or rxode2 engine selects the interchangeable execution
+backend.
 
-Fitted values and residuals preserve the observation rows and their order.
-Rows with missing observed values have a fitted value and a missing residual.
+The initial mixed-effects scope is FOCEi estimation with independent
+individual-level random effects. Correlated random effects remain part of the
+statistical-model vocabulary but are outside this first engine milestone, as
+is SAEM estimation. Standard deviations in normal and log-normal distribution
+specifications retain their public standard-deviation scale. At the nlmixr2
+boundary, individual-level standard deviations are squared to form diagonal
+omega variances; fitted omega variances are square-rooted when translated back
+to the public result.
+
+A mixed-effects result distinguishes individual predictions, conditional on
+the fitted random effects for each individual, from population predictions,
+calculated for the typical individual with random effects set to zero. These
+two explicit names are sufficient; an unqualified predictions component would
+be ambiguous and is not part of the mixed-effects result contract. Prediction
+and residual tables preserve the observation rows and their order. Rows with
+missing observed values retain predictions and have missing residuals, and a
+residual quantity must state which prediction level it uses.
 
 Implementation anchor: `estimation_problem()` creates
 `compphysiol_estimation_problem`; `parameter_spec()` creates
