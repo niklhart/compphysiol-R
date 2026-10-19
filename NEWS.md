@@ -1,5 +1,10 @@
 # compphysiol (development version)
 
+* Implemented mixed-effect model estimation via `nlmixr2`; currently only 
+  for uncorrelated random effects and FOCE with interaction.
+* Introduced parameter uncertainty into the normalized estimation results, 
+  calculated via the observed Fisher information + multivariate Delta method.
+
 # compphysiol 0.4.4
 
 * Optimization methods now validate that effective parameter bounds are
