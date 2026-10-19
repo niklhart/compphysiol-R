@@ -1,9 +1,13 @@
-# compphysiol (development version)
+# compphysiol 0.4.4
 
 * Optimization methods now validate that effective parameter bounds are
   supported, and fitted coordinates and back-transformed values are checked
   before results are constructed.
 * Implemented `rxode2`-based simulation
+* Implemented several performance optimizations during repeated ODE solves 
+  (either during simulation of a virtual population or during estimation),
+  using repeated parameter schema/dosing/observation schedules/data whenever possible.
+* Updated the simulation and estimation benchmark accordingly.
 
 # compphysiol 0.4.3
 
