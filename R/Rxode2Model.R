@@ -277,7 +277,11 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
     args <- c(list(object = artifact$compiled, params = params, events = records,
                    returnType = "data.frame"), engine$arguments, list(...))
     solved <- as.data.frame(do.call(rxode2::rxSolve, args))
-    solved_rows_by_id <- split(seq_len(nrow(solved)), solved$id)
+    solved_rows_by_id <- if (length(experiments) == 1L && !"id" %in% names(solved)) {
+        list(`1` = seq_len(nrow(solved)))
+    } else {
+        split(seq_len(nrow(solved)), solved$id)
+    }
     state_columns <- match(c("time", unname(object$identifiers$states)), names(solved))
     shared_observation_plan <- if (shared_time) {
         .simulation_prepare_observation_plan(

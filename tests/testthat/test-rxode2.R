@@ -135,6 +135,26 @@ test_that("rxode2 batches experiment collections by individual", {
     }
 })
 
+test_that("rxode2 handles a one-experiment collection without an id column", {
+    skip_if_not_installed("rxode2")
+    model <- compartment_model() |>
+        add_compartment("Central", volume = 10 [L]) |>
+        add_molecule("drug", initial = "A0", type = "amount") |>
+        add_transport("Central", "", const = "k") |>
+        add_observable(C = c[drug, Central])
+    designs <- experiments(only = experiment(
+        parameters = parameters(A0 = 100 [mg], k = 0.2 [1/h]),
+        observations = observation_schedule(c(0, 1, 2) [h], "C"),
+        start = 0 [h]
+    ))
+
+    expected <- simulate(model, experiment = designs)
+    actual <- simulate(model, experiment = designs, engine = rxode2_engine())
+
+    expect_named(actual, "only")
+    expect_equal(actual, expected, tolerance = 1e-5)
+})
+
 test_that("rxode2 homogeneous preparation agrees with the fallback path", {
     skip_if_not_installed("rxode2")
     model <- compartment_model() |>
