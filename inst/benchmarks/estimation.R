@@ -53,13 +53,11 @@ elapsed_with_compilation <- function(expr, compile_fun = NULL) {
     if (is.null(compile_fun)) {
         timing <- elapsed(expr)
         timing$compile_sec <- NA_real_
-        timing$compile_calls <- NA_integer_
         return(timing)
     }
 
     timer <- new.env(parent = emptyenv())
     timer$seconds <- 0
-    timer$calls <- 0L
     old_option <- options(compphysiol.benchmark_compile_timer = timer)
     on.exit(options(old_option), add = TRUE)
     namespace <- asNamespace("compphysiol")
@@ -73,7 +71,6 @@ elapsed_with_compilation <- function(expr, compile_fun = NULL) {
             .compphysiol_compile_timer$seconds + unname(
                 (proc.time() - .compphysiol_compile_timer$started)[["elapsed"]]
             )
-        .compphysiol_compile_timer$calls <- .compphysiol_compile_timer$calls + 1L
     })
     suppressMessages(trace(
         compile_fun, tracer = entry, exit = exit, print = FALSE, where = namespace
@@ -82,7 +79,6 @@ elapsed_with_compilation <- function(expr, compile_fun = NULL) {
 
     timing <- elapsed(expr)
     timing$compile_sec <- timer$seconds
-    timing$compile_calls <- timer$calls
     timing
 }
 
@@ -268,11 +264,7 @@ scenario_definition <- function(name) {
         specs = specs,
         statistics = statistics,
         dynamic_name = specification$dynamic_name,
-        fixed_values = list(
-            specification$dynamic_truth,
-            specification$dynamic_initial,
-            specification$dynamic_truth * 1.25
-        ),
+        fixed_value = specification$dynamic_initial,
         sigma_truth = sigma_truth,
         component_homogeneity = compphysiol:::.experiments_component_homogeneity(studies)
     )
@@ -350,26 +342,18 @@ compile_rxode2_cached <- function(model, definition, runtime) {
     ))
 }
 
-run_fixed_route <- function(route, model, definition, vectors, compile_fun = NULL) {
-    timing <- elapsed_with_compilation({
-        values <- numeric()
-        for (i in seq_len(fixed_replicates)) {
-            values <- c(values, vapply(
-                vectors,
-                function(x) likelihood_at(model, definition, x),
-                numeric(1)
-            ))
-        }
-        values
-    }, compile_fun = compile_fun)
+run_fixed_route <- function(route, model, definition, compile_sec = NA_real_) {
+    timing <- elapsed(vapply(
+        seq_len(fixed_replicates),
+        function(i) likelihood_at(model, definition, definition$fixed_value),
+        numeric(1)
+    ))
     data.frame(
         route = route,
         n_eval = length(timing$value),
-        sec = timing$seconds,
-        sec_eval = timing$seconds / length(timing$value),
-        nll_sum = sum(timing$value),
-        compile_sec = timing$compile_sec,
-        n_compile = timing$compile_calls,
+        compile_sec = compile_sec,
+        sec_iter = timing$seconds / length(timing$value),
+        nll = timing$value[[1]],
         stringsAsFactors = FALSE
     )
 }
@@ -398,9 +382,7 @@ fit_route <- function(route, model, definition, engine, compile_fun = NULL) {
         nll = fit$neg_log_lik,
         code = fit$convergence$code,
         compile_sec = timing$compile_sec,
-        n_compile = timing$compile_calls,
         total_sec = timing$seconds,
-        warm_sec = if (identical(route, "deSolve warm")) timing$seconds else NA_real_,
         stringsAsFactors = FALSE
     )
 }
@@ -423,54 +405,42 @@ run_scenario <- function(scenario_name) {
     print(definition$component_homogeneity)
     ode <- to_ode_model(definition$model)
 
-    cold_fixed <- to_compiled_ode_model(ode)
-    warm_fixed <- to_compiled_ode_model(ode)
+    compiled_fixed <- to_compiled_ode_model(ode)
     runtime <- compphysiol:::.new_parameters(
-        setNames(list(definition$fixed_values[[1]]), definition$dynamic_name)
+        setNames(list(definition$fixed_value), definition$dynamic_name)
     )
-    if (has_rxode2) {
-        cold_rx_fixed <- to_rxode2_model(ode)
-        warm_rx_fixed <- to_rxode2_model(ode)
-    }
 
     cat("\nFixed likelihood evaluation\n")
     fixed_routes <- list()
     if (!compiled_only) {
         fixed_routes <- list(
             run_fixed_route(
-                "Compartment", definition$model, definition,
-                definition$fixed_values
+                "Compartment", definition$model, definition
             ),
             run_fixed_route(
-                "ODE", ode, definition, definition$fixed_values
+                "ODE", ode, definition
             )
         )
     }
+    deSolve_compile <- compile_cached(compiled_fixed, definition, runtime)
     fixed_routes <- c(fixed_routes, list(run_fixed_route(
-        "deSolve cold", cold_fixed, definition, definition$fixed_values,
-        compile_fun = ".compiled_ode_model_compile"
-    )))
-    compile_cached(warm_fixed, definition, runtime)
-    fixed_routes <- c(fixed_routes, list(run_fixed_route(
-        "deSolve warm", warm_fixed, definition, definition$fixed_values,
-        compile_fun = ".compiled_ode_model_compile"
+        "deSolve", compiled_fixed, definition,
+        compile_sec = deSolve_compile$seconds
     )))
     if (has_rxode2) {
+        rxode2::rxClean()
+        compiled_rx_fixed <- to_rxode2_model(ode)
+        rx_compile <- compile_rxode2_cached(compiled_rx_fixed, definition, runtime)
         fixed_routes <- c(fixed_routes, list(run_fixed_route(
-            "rxode2 first", cold_rx_fixed, definition, definition$fixed_values,
-            compile_fun = ".rxode2_artifact"
-        )))
-        compile_rxode2_cached(warm_rx_fixed, definition, runtime)
-        fixed_routes <- c(fixed_routes, list(run_fixed_route(
-            "rxode2 warm", warm_rx_fixed, definition, definition$fixed_values,
-            compile_fun = ".rxode2_artifact"
+            "rxode2", compiled_rx_fixed, definition,
+            compile_sec = rx_compile$seconds
         )))
     }
     fixed <- do.call(rbind, fixed_routes)
     fixed$scenario <- label
     print(fixed[setdiff(names(fixed), "scenario")], row.names = FALSE, digits = 5)
-    tolerance <- 1e-4 * max(1, abs(fixed$nll_sum[[1]]))
-    stopifnot(max(abs(fixed$nll_sum - fixed$nll_sum[[1]])) <= tolerance)
+    tolerance <- 1e-4 * max(1, abs(fixed$nll[[1]]))
+    stopifnot(max(abs(fixed$nll - fixed$nll[[1]])) <= tolerance)
 
     cat("\nEnd-to-end estimation\n")
     engine <- optim_engine(method = "L-BFGS-B", control = list(maxit = if (quick) 5 else 100))
@@ -479,8 +449,6 @@ run_scenario <- function(scenario_name) {
         control = list(maxit = if (quick) 5 else 100),
         simulation = rxode2_engine(rtol = solver_rtol, atol = solver_atol)
     )
-    compiled_for_build <- to_compiled_ode_model(ode)
-    compile_cached(compiled_for_build, definition, runtime)
     cold_estimation <- to_compiled_ode_model(ode)
     fit_routes <- list()
     if (!compiled_only) {
@@ -491,15 +459,12 @@ run_scenario <- function(scenario_name) {
     }
     fit_routes <- c(fit_routes, list(
         fit_route(
-            "deSolve cold", cold_estimation, definition, engine,
-            compile_fun = ".compiled_ode_model_compile"
-        ),
-        fit_route(
-            "deSolve warm", compiled_for_build, definition, engine,
+            "deSolve", cold_estimation, definition, engine,
             compile_fun = ".compiled_ode_model_compile"
         )
     ))
     if (has_rxode2) {
+        rxode2::rxClean()
         fit_routes <- c(fit_routes, list(
             fit_route(
                 "rxode2", ode, definition, rx_engine,
@@ -534,14 +499,14 @@ rownames(estimation_results) <- NULL
 rownames(design_results) <- NULL
 
 cat("\nNotes:\n")
-cat("- Fixed routes evaluate the same parameter vectors; the checksum assertion detects numerical disagreement.\n")
+cat("- Fixed routes repeatedly evaluate the initial parameter point; the NLL assertion detects numerical disagreement.\n")
 cat("- deSolve and rxode2 both use rtol = atol = 1e-10.\n")
-cat("- fixed_replicates repeats the complete three-point parameter grid, so the default gives 5 x 3 = 15 evaluations.\n")
-cat("- compile_sec is measured inside the displayed route; cold/first rows compile once and warm rows compile zero times.\n")
-cat("- rxode2 may satisfy artifact generation from its process-wide source cache; n_compile counts local artifact builds, including cache hits.\n")
+cat("- compile_sec is measured once before the repeated fixed evaluations; sec_iter excludes compilation.\n")
+cat("- The benchmark clears rxode2's anonymous DLL cache before measured cold rxode2 preparation and estimation.\n")
 cat("- The end-to-end rxode2 artifact is reused by later objective evaluations in the same fit.\n")
+cat("- End-to-end compiled routes include one local artifact build.\n")
 cat("- Likelihood evaluations equal optim function calls plus the initial validation and final diagnostic calls.\n")
-cat("- Population scenarios run only the cold and warm compiled routes; interpreting models on every evaluation is prohibitively slow at these sizes.\n")
+cat("- Population scenarios omit interpreted model routes; interpreting models on every evaluation is prohibitively slow at these sizes.\n")
 cat("- The heterogeneous-design collection is stable across objective evaluations even though its components are not homogeneous within an evaluation.\n")
 cat("- Population sizes are controlled by COMPPHYSIOL_BENCH_ESTIMATION_N and COMPPHYSIOL_BENCH_ESTIMATION_HETEROGENEOUS_N.\n")
 cat("- benchmark_results, design_results, fixed_results, and estimation_results remain available after sourcing.\n")
