@@ -23,8 +23,8 @@ Combines one protocol \link[=experiment]{compphysiol_experiment} with each indiv
 the protocol, while protocol and individual parameters are combined.
 }
 \details{
-Protocol and individual parameter names must not overlap. Names of parameter
-sets become experiment names. Unnamed sets remain unnamed.
+Individual parameter values update protocol parameters by name. Names of
+parameter sets become experiment names. Unnamed sets remain unnamed.
 }
 \examples{
 protocol <- experiment(

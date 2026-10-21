@@ -5,8 +5,8 @@
 #' `compphysiol_experiment` per individual. compphysiol_dosing, observations, and start are copied from
 #' the protocol, while protocol and individual parameters are combined.
 #'
-#' Protocol and individual parameter names must not overlap. Names of parameter
-#' sets become experiment names. Unnamed sets remain unnamed.
+#' Individual parameter values update protocol parameters by name. Names of
+#' parameter sets become experiment names. Unnamed sets remain unnamed.
 #'
 #' @param protocol An [compphysiol_experiment][experiment()] defining shared dosing,
 #'   observations, start, and optional parameters.
@@ -28,42 +28,5 @@ extend_protocol <- function(protocol, population) {
     .check_class(protocol, "compphysiol_experiment")
     .check_class(population, "compphysiol_parameter_sets")
 
-    if (!length(population)) return(experiments())
-
-    labels <- names(population)
-
-    schema_homogeneous <- .parameter_sets_schema_homogeneous(population)
-    overlap_indices <- if (schema_homogeneous) 1L else seq_along(population)
-    for (i in overlap_indices) {
-        overlap <- intersect(names(protocol$parameters), names(population[[i]]))
-        if (length(overlap)) {
-            stop(
-                "Protocol and individual parameters must not overlap for '",
-                if (!is.null(labels) && !is.na(labels[[i]]) && nzchar(labels[[i]])) {
-                    labels[[i]]
-                } else i,
-                "': ", paste(overlap, collapse = ", "), ".",
-                call. = FALSE
-            )
-        }
-    }
-
-    individuals <- vector("list", length(population))
-    for (i in seq_along(population)) {
-        individuals[[i]] <- experiment(
-            parameters = c(protocol$parameters, population[[i]]),
-            dosing = protocol$dosing,
-            observations = protocol$observations,
-            start = protocol$start
-        )
-    }
-
-    component_names <- .experiments_component_names()
-    homogeneity <- stats::setNames(rep(TRUE, length(component_names)), component_names)
-    homogeneity[["parameter_schema"]] <- schema_homogeneous
-    homogeneity[["parameters"]] <- .experiments_compute_component_homogeneity(
-        individuals, categories = "parameters"
-    )
-    names(individuals) <- labels
-    .new_experiments(individuals, homogeneity)
+    update(protocol, parameters = population, mode = "update")
 }

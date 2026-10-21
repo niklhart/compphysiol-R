@@ -66,13 +66,14 @@ test_that("extend_protocol preserves named and unnamed individuals", {
     expect_identical(extend_protocol(protocol, parameter_sets()), experiments())
 })
 
-test_that("extend_protocol rejects overlapping parameter names", {
+test_that("extend_protocol lets individual parameters override protocol values", {
     protocol <- experiment(parameters = parameters(BW = 70 [kg], route = "oral"))
     population <- parameter_sets(person = parameters(BW = 65 [kg], sex = "female"))
 
-    expect_error(
-        extend_protocol(protocol, population),
-        "Protocol and individual parameters.*person.*BW"
+    result <- extend_protocol(protocol, population)
+    expect_identical(
+        result[["person"]]$parameters,
+        parameters(BW = 65 [kg], route = "oral", sex = "female")
     )
 })
 

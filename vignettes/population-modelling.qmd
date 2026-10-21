@@ -131,18 +131,12 @@ sampled <- simulated |>
     as_observables_long() |>
     sample_observations(statistics, truth)
 
-estimation_studies <- lapply(seq_along(simulation_studies), function(i) {
-    identifier <- levels(sampled$experiment)[[i]]
-    observed <- sampled[sampled$experiment == identifier, ]
-    observed$experiment <- NULL
-
-    experiment(
-        dosing = simulation_studies[[i]]$dosing,
-        observations = observed,
-        start = simulation_studies[[i]]$start
-    )
-})
-estimation_studies <- do.call(experiments, estimation_studies)
+estimation_studies <- update(
+    simulation_studies,
+    parameters = parameters(),
+    observations = sampled,
+    mode = "replace"
+)
 
 estimation_studies[[1]]
 ```

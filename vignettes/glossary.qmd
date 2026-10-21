@@ -531,6 +531,15 @@ Omitted dosing targets match identically omitted targets; matching them to
 explicit targets requires later model-based resolution. These checks also apply
 when combining collections with `c()`.
 
+Experiments can be updated component-wise with `update()`. Scalar components
+are applied to one experiment or broadcast across a collection. Component
+collections align pairwise; applying one to a single experiment broadcasts that
+experiment and produces a collection. Object-valued changes require an explicit
+`replace` or `update` mode. A callback instead transforms the existing
+component directly and needs no mode. All supplied components are resolved
+before each result is reconstructed, so coordinated changes are validated as
+one final experiment rather than through intermediate states.
+
 An experiment collection records whether its starts, parameter schemas,
 complete parameter values, dosing schedules, observation plans, and complete
 observations are each identical across all members. This homogeneity metadata
@@ -543,8 +552,9 @@ that not all values are identical; it does not imply that every value differs.
 A shared experimental protocol can be extended across a realized population
 with `extend_protocol()`. The protocol supplies dosing, observations, start,
 and shared parameters; each element of a realized population supplies
-the individual parameters for one resulting experiment. Protocol and
-individual parameter names must not overlap. This explicit transformation
+the individual parameters for one resulting experiment. Individual values
+override protocol parameters with the same name. This is the parameter-update
+specialization of broadcasting a scalar experiment. The explicit transformation
 produces an experiment collection before simulation rather than adding a
 population concept to `simulate()`.
 
