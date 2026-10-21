@@ -16,7 +16,8 @@ A \code{compphysiol_parameter_sets} object.
 \description{
 Creates a list-like collection in which each element is a complete,
 realized \link[=parameters]{compphysiol_parameters} object. Elements may be named or unnamed.
-Positive whole-number names are reserved for unnamed parameter sets.
+Positive whole-number names are reserved for transient identifiers of unnamed
+parameter sets.
 \code{compphysiol_parameter_sets} records values only: it does not describe a population model
 or how the parameter sets were generated.
 }

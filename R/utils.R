@@ -470,12 +470,11 @@ with_units <- function(expr) {
     invisible(NULL)
 }
 
-.collection_identifiers <- function(x, label, reject_reserved = FALSE) {
+.collection_identifiers <- function(x, label) {
     identifiers <- names(x)
     if (is.null(identifiers)) identifiers <- rep("", length(x))
     unnamed <- is.na(identifiers) | !nzchar(identifiers)
-    reserved <- !unnamed & grepl("^[1-9][0-9]*$", identifiers)
-    if (reject_reserved && any(reserved)) {
+    if (any(!unnamed & grepl("^[1-9][0-9]*$", identifiers))) {
         stop(
             "Explicit ", label, " names must not be positive whole numbers; ",
             "these identifiers are reserved for unnamed elements.",

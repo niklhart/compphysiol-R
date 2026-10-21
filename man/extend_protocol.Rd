@@ -24,8 +24,7 @@ the protocol, while protocol and individual parameters are combined.
 }
 \details{
 Protocol and individual parameter names must not overlap. Names of parameter
-sets become experiment names. Unnamed sets receive names based on their
-one-based position, such as \code{"1"} and \code{"2"}.
+sets become experiment names. Unnamed sets remain unnamed.
 }
 \examples{
 protocol <- experiment(

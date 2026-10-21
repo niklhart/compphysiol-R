@@ -905,7 +905,7 @@ print.compphysiol_estimation_result <- function(x, ...) {
     objective <- 0
     prediction_rows <- list()
     residual_rows <- list()
-    experiment_names <- names(experiments)
+    experiment_names <- .collection_identifiers(experiments, "Experiment")
     for (i in seq_along(experiments)) {
         observed <- experiments[[i]]$observations
         predicted <- simulated[[i]]$observables
@@ -913,11 +913,7 @@ print.compphysiol_estimation_result <- function(x, ...) {
             !identical(observed$observable, predicted$observable)) {
             stop("Simulation predictions do not match the observation rows.", call. = FALSE)
         }
-        label <- if (!is.null(experiment_names) && nzchar(experiment_names[[i]])) {
-            experiment_names[[i]]
-        } else {
-            as.character(i)
-        }
+        label <- experiment_names[[i]]
         for (j in seq_len(nrow(observed))) {
             obs <- observed$value[[j]]
             pred <- predicted$value[[j]]

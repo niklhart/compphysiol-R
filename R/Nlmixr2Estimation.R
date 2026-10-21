@@ -433,13 +433,13 @@
     observation_rows <- observation_rows[
         order(input_observations$ID, input_observations$CP_ROW), , drop = FALSE
     ]
+    experiment_names <- .collection_identifiers(problem$experiments, "Experiment")
     make <- function(column) {
         rows <- list()
         k <- 0L
         for (i in seq_along(problem$experiments)) {
             observed <- problem$experiments[[i]]$observations
-            label <- names(problem$experiments)[[i]]
-            if (is.null(label) || !nzchar(label)) label <- as.character(i)
+            label <- experiment_names[[i]]
             for (j in seq_len(nrow(observed))) {
                 k <- k + 1L
                 value <- observation_rows[[column]][[k]]

@@ -82,6 +82,10 @@ test_that("ParameterSets replacement refreshes schema homogeneity", {
     population[2] <- parameter_sets(b = parameters(BW = 82 [kg]))
     expect_true(.parameter_sets_schema_homogeneous(population))
     expect_error(population[[1]] <- 1, "Parameters")
+    expect_error(
+        population[["2"]] <- parameters(BW = 70 [kg]),
+        "positive whole numbers.*reserved"
+    )
 })
 
 test_that("shared parameter names require compatible units", {

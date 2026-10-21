@@ -138,7 +138,6 @@ estimation_studies <- lapply(seq_along(simulation_studies), function(i) {
         start = simulation_studies[[i]]$start
     )
 })
-names(estimation_studies) <- names(simulation_studies)
 estimation_studies <- do.call(experiments, estimation_studies)
 
 estimation_studies[[1]]
@@ -150,9 +149,9 @@ effects in the estimation problem. The dose, time, and sampled concentration
 data retain their units.
 
 Before fitting, a spaghetti plot provides a quick view of the between-person
-variation in the observed concentration-time profiles. The experiment names
-serve as individual identifiers when the observation tables are combined for
-plotting.
+variation in the observed concentration-time profiles. Transient experiment
+identifiers are added when the observation tables are combined for plotting;
+the experiment collection itself remains unnamed.
 
 ```{r}
 #| label: observed-spaghetti

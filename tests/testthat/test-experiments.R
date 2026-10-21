@@ -75,6 +75,11 @@ test_that("collection combination and replacement maintain homogeneity", {
     heterogeneous[2] <- experiments(replacement = a)
     expect_true(all(.experiments_component_homogeneity(heterogeneous)))
     expect_named(heterogeneous, c("c", "d"))
+
+    expect_error(
+        heterogeneous[["2"]] <- experiment(),
+        "positive whole numbers.*reserved"
+    )
 })
 
 test_that("Experiment names are optional but nonempty names are unique", {
@@ -147,6 +152,7 @@ test_that("observations preserves schedules and rejects ambiguous collections", 
         observations = observation_schedule(1, "C", experiment = "source")
     ))
     expect_error(observations(reserved), "reserved")
+
 })
 
 test_that("Experiments subsetting trusts the collection contract", {

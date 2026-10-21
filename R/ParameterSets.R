@@ -2,7 +2,8 @@
 #'
 #' Creates a list-like collection in which each element is a complete,
 #' realized [compphysiol_parameters][parameters()] object. Elements may be named or unnamed.
-#' Positive whole-number names are reserved for unnamed parameter sets.
+#' Positive whole-number names are reserved for transient identifiers of unnamed
+#' parameter sets.
 #' `compphysiol_parameter_sets` records values only: it does not describe a population model
 #' or how the parameter sets were generated.
 #'
@@ -30,7 +31,7 @@
 parameter_sets <- function(...) {
     x <- list(...)
     .parameter_sets_check_elements(x)
-    .parameter_sets_check_names(x, reject_reserved = TRUE)
+    .parameter_sets_check_names(x)
     .parameter_sets_check_units(x)
     .new_parameter_sets(x)
 }
@@ -91,9 +92,9 @@ parameter_sets <- function(...) {
     invisible(NULL)
 }
 
-.parameter_sets_check_names <- function(x, reject_reserved = FALSE) {
+.parameter_sets_check_names <- function(x) {
     .check_optional_unique_names(x, "parameter set")
-    .collection_identifiers(x, "Parameter set", reject_reserved = reject_reserved)
+    .collection_identifiers(x, "Parameter set")
 }
 
 .parameter_sets_check_units <- function(x) {

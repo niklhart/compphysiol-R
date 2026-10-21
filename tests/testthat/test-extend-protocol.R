@@ -49,21 +49,18 @@ test_that("extend_protocol propagates heterogeneous parameter schemas", {
     expect_false(.experiments_component_homogeneity(result)[["parameter_schema"]])
 })
 
-test_that("extend_protocol generates names for unnamed individuals", {
+test_that("extend_protocol preserves named and unnamed individuals", {
     protocol <- experiment()
     unnamed <- parameter_sets(parameters(id = 1), parameters(id = 2))
     mixed <- parameter_sets(control = parameters(id = 1), parameters(id = 2))
 
-    expect_named(
-        extend_protocol(protocol, unnamed),
-        c("1", "2")
-    )
+    expect_null(names(extend_protocol(protocol, unnamed)))
     expect_named(
         extend_protocol(protocol, mixed),
-        c("control", "2")
+        c("control", "")
     )
     expect_error(
-        parameter_sets(`2` = parameters(id = 1), parameters(id = 2)),
+        parameter_sets(`2` = parameters(id = 1)),
         "positive whole numbers.*reserved"
     )
     expect_identical(extend_protocol(protocol, parameter_sets()), experiments())

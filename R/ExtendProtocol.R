@@ -6,8 +6,7 @@
 #' the protocol, while protocol and individual parameters are combined.
 #'
 #' Protocol and individual parameter names must not overlap. Names of parameter
-#' sets become experiment names. Unnamed sets receive names based on their
-#' one-based position, such as `"1"` and `"2"`.
+#' sets become experiment names. Unnamed sets remain unnamed.
 #'
 #' @param protocol An [compphysiol_experiment][experiment()] defining shared dosing,
 #'   observations, start, and optional parameters.
@@ -31,7 +30,7 @@ extend_protocol <- function(protocol, population) {
 
     if (!length(population)) return(experiments())
 
-    labels <- .collection_identifiers(population, "Individual")
+    labels <- names(population)
 
     schema_homogeneous <- .parameter_sets_schema_homogeneous(population)
     overlap_indices <- if (schema_homogeneous) 1L else seq_along(population)
@@ -39,7 +38,10 @@ extend_protocol <- function(protocol, population) {
         overlap <- intersect(names(protocol$parameters), names(population[[i]]))
         if (length(overlap)) {
             stop(
-                "Protocol and individual parameters must not overlap for '", labels[[i]],
+                "Protocol and individual parameters must not overlap for '",
+                if (!is.null(labels) && !is.na(labels[[i]]) && nzchar(labels[[i]])) {
+                    labels[[i]]
+                } else i,
                 "': ", paste(overlap, collapse = ", "), ".",
                 call. = FALSE
             )
@@ -62,5 +64,6 @@ extend_protocol <- function(protocol, population) {
     homogeneity[["parameters"]] <- .experiments_compute_component_homogeneity(
         individuals, categories = "parameters"
     )
-    .new_experiments(setNames(individuals, labels), homogeneity)
+    names(individuals) <- labels
+    .new_experiments(individuals, homogeneity)
 }

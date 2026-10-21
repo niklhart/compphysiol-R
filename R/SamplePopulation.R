@@ -21,8 +21,7 @@
 #' @param targets Optional character vector of statistical-model targets to
 #'   sample. `NULL` samples all resolved individual-level entries. Explicit
 #'   targets may have unresolved levels but must not be observation-level.
-#' @returns A named `compphysiol_parameter_sets` collection with names `"1"`,
-#'   `"2"`, and so on.
+#' @returns An unnamed `compphysiol_parameter_sets` collection in sampling order.
 #' @examples
 #' statistics <- statistical_model(
 #'     CL = lognormal(median = "CL_pop", sdlog = "omega_CL"),
@@ -96,7 +95,6 @@ sample_population <- function(statistics, parameters, n, targets = NULL) {
         values <- lapply(sampled, `[[`, i)
         .new_parameters(values)
     })
-    names(people) <- .collection_identifiers(people, "Individual")
     .new_parameter_sets(people, schema_homogeneous = TRUE)
 }
 

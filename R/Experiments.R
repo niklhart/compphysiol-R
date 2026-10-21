@@ -3,7 +3,7 @@
 #' Creates a list-like collection of independent individual simulation or
 #' estimation units. Element names are individual identifiers; unnamed inputs
 #' remain supported, while nonempty names must be unique. Positive whole-number
-#' names are reserved for unnamed experiments. Order is preserved.
+#' names are reserved for transient identifiers of unnamed experiments. Order is preserved.
 #' Each element
 #' retains its own parameters and units. Use `[` to obtain a collection and
 #' `[[` to extract a single experiment.
@@ -30,7 +30,7 @@ experiments <- function(...) {
     x <- list(...)
     .experiments_check_elements(x)
     .check_optional_unique_names(x, "experiment")
-    .collection_identifiers(x, "Experiment", reject_reserved = TRUE)
+    .collection_identifiers(x, "Experiment")
     .experiments_check_units(x)
     .new_experiments(x, .experiments_compute_component_homogeneity(x))
 }
@@ -213,6 +213,7 @@ experiments <- function(...) {
 .experiments_validate_result <- function(x) {
     .experiments_check_elements(x)
     .check_optional_unique_names(x, "experiment")
+    .collection_identifiers(x, "Experiment")
     .experiments_check_units(x)
     .new_experiments(x, .experiments_compute_component_homogeneity(x))
 }
@@ -229,6 +230,7 @@ c.compphysiol_experiments <- function(...) {
     combined <- do.call(c, unname(lapply(objects, .experiments_elements)))
     combined <- combined %||% list()
     .check_optional_unique_names(combined, "experiment")
+    .collection_identifiers(combined, "Experiment")
     .experiments_check_units(combined)
     .new_experiments(combined, .experiments_combine_component_homogeneity(objects))
 }
