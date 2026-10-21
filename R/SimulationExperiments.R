@@ -39,11 +39,10 @@
     }
     if (multiple && inherits(engine, "compphysiol_rxode2_engine")) {
         executable <- if (inherits(object, "compphysiol_rxode2_model")) object else to_rxode2_model(object)
-        out <- .simulate_rxode2_experiments(
+        return(.simulate_rxode2_experiments(
             executable, experiments, dimensions = dimensions, engine = engine,
             homogeneity = homogeneity, ...
-        )
-        return(.simulation_bind_experiment_results(out, experiment))
+        ))
     }
     shared_time <- NULL
     if (length(experiments) && homogeneity[["start"]] && homogeneity[["observation_plan"]]) {
@@ -108,33 +107,18 @@
         stop("Every experiment simulation must return a simulation result.", call. = FALSE)
     }
 
-    bind_tables <- function(tables, what) {
-        if (any(vapply(tables, function(x) "experiment" %in% names(x), logical(1)))) {
-            stop(
-                "Column 'experiment' is reserved for collection simulation identifiers in ",
-                what, ".",
-                call. = FALSE
-            )
-        }
-        for (i in seq_along(tables)) {
-            tables[[i]]$experiment <- factor(
-                rep(identifiers[[i]], nrow(tables[[i]])), levels = identifiers
-            )
-            tables[[i]] <- tables[[i]][c("experiment", setdiff(names(tables[[i]]), "experiment"))]
-        }
-        out <- do.call(rbind, lapply(tables, as.data.frame))
-        rownames(out) <- NULL
-        out
-    }
-
-    states <- bind_tables(lapply(results, `[[`, "states"), "state output")
+    states <- .simulation_bind_experiment_tables(
+        lapply(results, `[[`, "states"), identifiers, "state output"
+    )
     observable_tables <- lapply(results, `[[`, "observables")
     has_observables <- !vapply(observable_tables, is.null, logical(1))
     if (any(has_observables) && !all(has_observables)) {
         stop("Experiment simulations must consistently return observable output.", call. = FALSE)
     }
     observables <- if (all(has_observables)) {
-        .new_observation_data(bind_tables(observable_tables, "observable output"))
+        .new_observation_data(.simulation_bind_experiment_tables(
+            observable_tables, identifiers, "observable output"
+        ))
     } else {
         NULL
     }
@@ -142,6 +126,27 @@
         list(states = states, observables = observables),
         class = .compphysiol_class("compphysiol_simulation_result")
     )
+}
+
+.simulation_bind_experiment_tables <- function(tables, identifiers, what) {
+    if (any(vapply(tables, function(x) "experiment" %in% names(x), logical(1)))) {
+        stop(
+            "Column 'experiment' is reserved for collection simulation identifiers in ",
+            what, ".",
+            call. = FALSE
+        )
+    }
+    for (i in seq_along(tables)) {
+        tables[[i]]$experiment <- factor(
+            rep(identifiers[[i]], nrow(tables[[i]])), levels = identifiers
+        )
+        tables[[i]] <- tables[[i]][
+            c("experiment", setdiff(names(tables[[i]]), "experiment"))
+        ]
+    }
+    out <- do.call(rbind, lapply(tables, as.data.frame))
+    rownames(out) <- NULL
+    out
 }
 
 .simulation_experiment_time <- function(experiment) {
@@ -235,11 +240,10 @@
 ) {
     elements <- .experiments_elements(experiments)
     if (inherits(object, "compphysiol_rxode2_model")) {
-        out <- .simulate_rxode2_experiments(
+        return(.simulate_rxode2_experiments(
             object, elements, dimensions = prepared$dimensions, engine = engine,
             homogeneity = prepared$homogeneity, prepared = prepared, ...
-        )
-        return(.simulation_bind_experiment_results(out, experiments))
+        ))
     }
 
     out <- lapply(seq_along(elements), function(i) {

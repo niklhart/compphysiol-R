@@ -317,23 +317,26 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
         NULL
     }
 
-    out <- lapply(seq_along(experiments), function(i) {
+    state_rows_by_experiment <- vector("list", length(experiments))
+    observable_tables <- vector("list", length(experiments))
+    for (i in seq_along(experiments)) {
         solver_time <- solver_times[[i]]
         individual_rows <- solved_rows_by_id[[as.character(i)]]
         candidate_rows <- individual_rows[solved$time[individual_rows] %in% solver_time]
         state_rows <- candidate_rows[match(solver_time, solved$time[candidate_rows])]
-        states <- solved[state_rows, state_columns, drop = FALSE]
-        rownames(states) <- NULL
-        names(states) <- c("time", object$stateNames)
-        matrix_out <- as.matrix(states)
+        state_rows_by_experiment[[i]] <- state_rows
+        solver_output <- solved[state_rows, state_columns, drop = FALSE]
+        names(solver_output) <- c("time", object$stateNames)
+        matrix_out <- as.matrix(solver_output)
         parameter_values_i <- parameter_values[[i]]
         info <- .rxode2_runtime_info(object, artifact, parameter_values_i)
         ode_i <- ode
         attr(ode_i, "observation_schedule") <- experiments[[i]]$observations
-        states <- .simulation_attach_state_units(states, ode_i, info, dimensions, parameters = supplied[[i]])
-        states$time <- .simulation_attach_time_units(states$time, times[[i]], dimensions)
+        observation_time <- .simulation_attach_time_units(
+            solver_output$time, times[[i]], dimensions
+        )
         observables <- .simulation_observables(
-            matrix_out, states$time, ode_i, info, solver_time, dimensions,
+            matrix_out, observation_time, ode_i, info, solver_time, dimensions,
             parameters = supplied[[i]],
             observation_plan = if (is.null(prepared)) {
                 shared_observation_plan
@@ -341,11 +344,38 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
                 prepared$observation_plans[[i]]
             }
         )
-        structure(list(states = states, observables = observables),
-                  class = .compphysiol_class("compphysiol_simulation_result"))
-    })
-    names(out) <- names(experiments)
-    out
+        observable_tables[[i]] <- observables
+    }
+
+    identifiers <- .collection_identifiers(experiments, "Experiment")
+    state_rows <- unlist(state_rows_by_experiment, use.names = FALSE)
+    states <- solved[state_rows, state_columns, drop = FALSE]
+    rownames(states) <- NULL
+    names(states) <- c("time", object$stateNames)
+    info <- .rxode2_runtime_info(object, artifact, parameter_values[[1]])
+    states <- .simulation_attach_state_units(
+        states, ode, info, dimensions, parameters = supplied[[1]]
+    )
+    states$time <- .simulation_attach_time_units(states$time, times[[1]], dimensions)
+    states$experiment <- factor(
+        rep(identifiers, lengths(state_rows_by_experiment)), levels = identifiers
+    )
+    states <- states[c("experiment", setdiff(names(states), "experiment"))]
+    has_observables <- !vapply(observable_tables, is.null, logical(1))
+    if (any(has_observables) && !all(has_observables)) {
+        stop("Experiment simulations must consistently return observable output.", call. = FALSE)
+    }
+    observables <- if (all(has_observables)) {
+        .new_observation_data(.simulation_bind_experiment_tables(
+            observable_tables, identifiers, "observable output"
+        ))
+    } else {
+        NULL
+    }
+    structure(
+        list(states = states, observables = observables),
+        class = .compphysiol_class("compphysiol_simulation_result")
+    )
 }
 
 .rxode2_individual_records <- function(id, solver_time, events, state_identifiers) {

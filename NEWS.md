@@ -4,6 +4,8 @@
   for uncorrelated random effects and FOCE with interaction.
 * Introduced parameter uncertainty into the normalized estimation results, 
   calculated via the observed Fisher information + multivariate Delta method.
+* Redesigned storage of simulation results for multiple experiments from list- 
+  to data frame-like 
 
 # compphysiol 0.4.4
 

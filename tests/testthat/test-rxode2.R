@@ -111,7 +111,7 @@ test_that("rxode2 batches experiment collections by individual", {
         add_transport("Central", "", const = "k") |>
         add_observable(A = a[drug, Central], C = c[drug, Central])
     schedule_a <- observation_schedule(c(0, 1, 2) [h], c("A", "C", "A"))
-    schedule_b <- observation_schedule(c(0, 0.5, 2) [h], c("C", "A", "C"))
+    schedule_b <- observation_schedule(c(0, 30, 120) [min], c("C", "A", "C"))
     designs <- experiments(
         control = experiment(
             parameters = parameters(A0 = 100 [mg], k = 0.2 [1/h]),
