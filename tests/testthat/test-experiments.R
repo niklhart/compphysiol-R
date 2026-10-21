@@ -191,7 +191,7 @@ test_that("collection printing summarizes while single printing shows details", 
     expect_identical(result, x)
     expect_length(summary, 4)
     expect_match(summary[2], "shared: start = 0.*h")
-    expect_match(summary[3], "treatment.*1 parameter.*1 dosing event.*2 observations scheduled")
+    expect_match(summary[3], "treatment.*BW = 70.*kg.*1 dosing event.*C\\(t = 1.*h.*\\).*[.][.][.] 1 more observation")
     expect_identical(summary[4], "  (2) empty")
     expect_output(print(experiments()), "Experiments: \\(none\\)")
     details <- capture.output(result <- print(x[[1]]))
@@ -238,8 +238,20 @@ test_that("collection printing distinguishes shared schemas from shared values",
     output <- capture.output(print(x))
     expect_match(output[2], "parameter schema \\(1 parameter\\)")
     expect_match(output[2], "observation plan \\(2 rows\\)")
-    expect_match(output[3], "parameter values vary; observations with data")
-    expect_match(output[4], "parameter values vary; observations with data")
+    expect_match(output[3], "CL = 1; C\\(t = 1\\) = 8, [.][.][.] 1 more observation")
+    expect_match(output[4], "CL = 2; C\\(t = 1\\) = 7, [.][.][.] 1 more observation")
+})
+
+test_that("collection printing bounds varying parameter and observation previews", {
+    make <- function(offset) experiment(
+        parameters = parameters(a = offset, b = offset + 1, c = offset + 2),
+        observations = observation_data(c(1, 2, 3), "C", offset + c(1, 2, 3))
+    )
+    output <- capture.output(print(experiments(make(0), make(10))))
+    expect_match(output[3], "a = 0, b = 1, [.][.][.] 1 more parameter")
+    expect_match(output[3], "C\\(t = 1\\) = 1, [.][.][.] 2 more observations")
+    expect_match(output[3], "more parameter; C\\(t = 1\\)")
+    expect_false(any(grepl("c = 2", output, fixed = TRUE)))
 })
 
 test_that("collection time units are consistent even without observations", {

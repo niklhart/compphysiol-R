@@ -395,17 +395,47 @@ print.compphysiol_experiments <- function(x, ...) {
     out <- character()
     if (!shared("start")) out <- c(out, paste0("start = ", format(experiment$start)))
     if (!shared("parameters") && length(experiment$parameters)) {
-        out <- c(out, if (shared("parameter_schema")) {
-            "parameter values vary"
-        } else .experiments_print_count(length(experiment$parameters), "parameter"))
+        out <- c(out, .experiments_print_parameter_preview(experiment$parameters))
     }
     if (!shared("dosing") && length(experiment$dosing)) {
         out <- c(out, .experiments_print_count(length(experiment$dosing), "dosing event"))
     }
     if (!shared("observations") && nrow(experiment$observations)) {
-        out <- c(out, .experiments_print_observations(
-            experiment$observations, count = !shared("observation_plan")
-        ))
+        out <- c(out, .experiments_print_observation_preview(experiment$observations))
+    }
+    out
+}
+
+.experiments_print_parameter_preview <- function(x, max = 2L) {
+    shown <- seq_len(min(length(x), max))
+    out <- vapply(shown, function(i) {
+        paste0(names(x)[[i]], " = ", .experiments_print_value(x[[i]]))
+    }, character(1))
+    omitted <- length(x) - length(shown)
+    if (omitted) {
+        out <- c(out, paste0("... ", .experiments_print_count(omitted, "more parameter")))
+    }
+    paste(out, collapse = ", ")
+}
+
+.experiments_print_observation_preview <- function(x) {
+    key <- paste0(
+        x$observable[[1]], "(t = ", .experiments_print_value(x$time[[1]]), ")"
+    )
+    out <- if (inherits(x, "compphysiol_observation_data")) {
+        paste0(key, " = ", .experiments_print_value(x$value[[1]]))
+    } else key
+    omitted <- nrow(x) - 1L
+    if (omitted) {
+        out <- c(out, paste0("... ", .experiments_print_count(omitted, "more observation")))
+    }
+    paste(out, collapse = ", ")
+}
+
+.experiments_print_value <- function(x, max_chars = 40L) {
+    out <- paste(format(x, trim = TRUE), collapse = ", ")
+    if (nchar(out, type = "width") > max_chars) {
+        out <- paste0(substr(out, 1L, max_chars - 3L), "...")
     }
     out
 }
