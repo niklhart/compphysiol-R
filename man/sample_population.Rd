@@ -20,8 +20,8 @@ sample. \code{NULL} samples all resolved individual-level entries. Explicit
 targets may have unresolved levels but must not be observation-level.}
 }
 \value{
-A named \code{compphysiol_parameter_sets} collection with names \code{individual_1},
-\code{individual_2}, and so on.
+A named \code{compphysiol_parameter_sets} collection with names \code{"1"},
+\code{"2"}, and so on.
 }
 \description{
 Samples structural parameters from the individual-level distributions in a

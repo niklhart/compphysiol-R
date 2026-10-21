@@ -25,7 +25,7 @@ the protocol, while protocol and individual parameters are combined.
 \details{
 Protocol and individual parameter names must not overlap. Names of parameter
 sets become experiment names. Unnamed sets receive names based on their
-position, such as \code{"individual_1"} and \code{"individual_2"}.
+one-based position, such as \code{"1"} and \code{"2"}.
 }
 \examples{
 protocol <- experiment(

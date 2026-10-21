@@ -307,6 +307,8 @@ A parameter-set collection contains only parameter objects and carries no
 metadata about individuals or about how their values were generated. It
 therefore represents a realized population, not a population distribution or
 sampling model. Parameter names shared across sets must have compatible units.
+Unnamed sets receive their one-based position as an identifier when an
+operation needs one; positive whole-number names are reserved for this policy.
 The collection records whether every set has the same parameter schema: names,
 order, value types, classes, dimensions, lengths, and units. This structural
 homogeneity metadata does not imply equal parameter values or retain sampling
@@ -508,7 +510,9 @@ An experiment collection holds several
 independent individual units. The element name is the individual identifier;
 unnamed elements remain accepted for workflows that do not yet assign one.
 Nonempty identifiers must be unique, while any number of elements may remain
-unnamed.
+unnamed. Collection-level operations that need identifiers use the one-based
+positions `"1"`, `"2"`, and so on for unnamed elements. Positive whole-number
+names are therefore reserved and cannot be supplied explicitly.
 Subsetting with `[` retains a collection; `[[` extracts an individual
 experiment. Collections can be combined with `c()`. Printing a collection
 shows one summary per experiment, while printing an individual experiment shows
@@ -542,8 +546,9 @@ population concept to `simulate()`.
 
 Simulating an experiment collection returns a list of simulation results in
 collection order, named by the individual identifiers when present. Results are
-not automatically bound into one population-scale table. A future binding
-helper may add an `experiment` identifier if that analysis pattern is needed.
+not automatically bound into one population-scale table. The `observations()`
+accessor binds stored observation schedules or data and adds an `experiment`
+identifier, but simulation results themselves remain separate.
 
 Repeated occasions within an individual and state-reset semantics are outside
 the current experiment contract.

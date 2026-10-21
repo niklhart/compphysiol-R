@@ -90,6 +90,63 @@ test_that("Experiment names are optional but nonempty names are unique", {
     unnamed <- experiments(experiment(), experiment())
     expect_error(unnamed[c(1, 1)], "unique")
     expect_length(c(unnamed, experiments(experiment())), 3L)
+    expect_error(
+        experiments(`2` = experiment()),
+        "positive whole numbers.*reserved"
+    )
+})
+
+test_that("observations collects data with stable experiment identifiers", {
+    x <- experiments(
+        treated = experiment(observations = observation_data(
+            c(1, 2) [h], "C", c(8, 5) [mg/L], replicate = c("a", "b")
+        )),
+        experiment(observations = observation_data(
+            60 [min], "C", 7 [mg/L], replicate = "a"
+        ))
+    )
+
+    out <- observations(x)
+
+    expect_s3_class(out, "compphysiol_observation_data")
+    expect_named(out, c("time", "observable", "value", "replicate", "experiment"))
+    expect_identical(as.character(out$experiment), c("treated", "treated", "2"))
+    expect_identical(levels(out$experiment), c("treated", "2"))
+    expect_equal(out$time, with_units(c(1, 2, 1) [h]))
+    expect_equal(out$value, with_units(c(8, 5, 7) [mg/L]))
+    expect_identical(out$replicate, c("a", "b", "a"))
+})
+
+test_that("observations preserves schedules and rejects ambiguous collections", {
+    schedules <- experiments(
+        experiment(observations = observation_schedule(1, "C")),
+        experiment(observations = observation_schedule(2, "C"))
+    )
+    out <- observations(schedules)
+    expect_s3_class(out, "compphysiol_observation_schedule")
+    expect_false(inherits(out, "compphysiol_observation_data"))
+    expect_identical(levels(out$experiment), c("1", "2"))
+
+    empty <- observations(experiments())
+    expect_s3_class(empty, "compphysiol_observation_schedule")
+    expect_named(empty, c("time", "observable", "experiment"))
+
+    mixed <- experiments(
+        experiment(observations = observation_schedule(1, "C")),
+        experiment(observations = observation_data(1, "C", 2))
+    )
+    expect_error(observations(mixed), "mixture")
+
+    columns <- experiments(
+        experiment(observations = observation_schedule(1, "C", note = "a")),
+        experiment(observations = observation_schedule(1, "C"))
+    )
+    expect_error(observations(columns), "identical columns")
+
+    reserved <- experiments(experiment(
+        observations = observation_schedule(1, "C", experiment = "source")
+    ))
+    expect_error(observations(reserved), "reserved")
 })
 
 test_that("Experiments subsetting trusts the collection contract", {

@@ -56,18 +56,15 @@ test_that("extend_protocol generates names for unnamed individuals", {
 
     expect_named(
         extend_protocol(protocol, unnamed),
-        c("individual_1", "individual_2")
+        c("1", "2")
     )
     expect_named(
         extend_protocol(protocol, mixed),
-        c("control", "individual_2")
+        c("control", "2")
     )
     expect_error(
-        extend_protocol(
-            protocol,
-            parameter_sets(individual_2 = parameters(id = 1), parameters(id = 2))
-        ),
-        "conflict|unique"
+        parameter_sets(`2` = parameters(id = 1), parameters(id = 2)),
+        "positive whole numbers.*reserved"
     )
     expect_identical(extend_protocol(protocol, parameter_sets()), experiments())
 })

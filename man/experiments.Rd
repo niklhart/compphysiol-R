@@ -16,7 +16,8 @@ A \code{compphysiol_experiments} object.
 \description{
 Creates a list-like collection of independent individual simulation or
 estimation units. Element names are individual identifiers; unnamed inputs
-remain supported, while nonempty names must be unique. Order is preserved.
+remain supported, while nonempty names must be unique. Positive whole-number
+names are reserved for unnamed experiments. Order is preserved.
 Each element
 retains its own parameters and units. Use \code{[} to obtain a collection and
 \code{[[} to extract a single experiment.

@@ -7,7 +7,7 @@
 #'
 #' Protocol and individual parameter names must not overlap. Names of parameter
 #' sets become experiment names. Unnamed sets receive names based on their
-#' position, such as `"individual_1"` and `"individual_2"`.
+#' one-based position, such as `"1"` and `"2"`.
 #'
 #' @param protocol An [compphysiol_experiment][experiment()] defining shared dosing,
 #'   observations, start, and optional parameters.
@@ -31,16 +31,7 @@ extend_protocol <- function(protocol, population) {
 
     if (!length(population)) return(experiments())
 
-    labels <- names(population)
-    if (is.null(labels)) labels <- rep("", length(population))
-    unnamed <- is.na(labels) | !nzchar(labels)
-    labels[unnamed] <- paste0("individual_", which(unnamed))
-    if (anyDuplicated(labels)) {
-        stop(
-            "Generated individual names conflict with named parameter sets: names must be unique.",
-            call. = FALSE
-        )
-    }
+    labels <- .collection_identifiers(population, "Individual")
 
     schema_homogeneous <- .parameter_sets_schema_homogeneous(population)
     overlap_indices <- if (schema_homogeneous) 1L else seq_along(population)

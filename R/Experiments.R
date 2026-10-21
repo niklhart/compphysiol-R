@@ -2,7 +2,8 @@
 #'
 #' Creates a list-like collection of independent individual simulation or
 #' estimation units. Element names are individual identifiers; unnamed inputs
-#' remain supported, while nonempty names must be unique. Order is preserved.
+#' remain supported, while nonempty names must be unique. Positive whole-number
+#' names are reserved for unnamed experiments. Order is preserved.
 #' Each element
 #' retains its own parameters and units. Use `[` to obtain a collection and
 #' `[[` to extract a single experiment.
@@ -29,6 +30,7 @@ experiments <- function(...) {
     x <- list(...)
     .experiments_check_elements(x)
     .check_optional_unique_names(x, "experiment")
+    .collection_identifiers(x, "Experiment", reject_reserved = TRUE)
     .experiments_check_units(x)
     .new_experiments(x, .experiments_compute_component_homogeneity(x))
 }
@@ -254,6 +256,65 @@ c.compphysiol_experiments <- function(...) {
         }
     }
     out
+}
+
+#' Collect observations from experiments
+#'
+#' Row-binds the observation tables from an experiment collection and adds an
+#' `experiment` factor identifying their source. Explicit experiment names are
+#' used as identifiers; unnamed experiments use their one-based collection
+#' positions (`"1"`, `"2"`, and so on). Factor levels preserve collection
+#' order.
+#'
+#' Every experiment must contain the same kind of observations: either all
+#' observation data or all observation schedules. Observation tables must have
+#' identical columns, and `experiment` is reserved for the added identifier.
+#'
+#' @param x A `compphysiol_experiments` collection.
+#' @returns A `compphysiol_observation_data` or
+#'   `compphysiol_observation_schedule` object with an `experiment` column.
+#' @examples
+#' studies <- experiments(
+#'     treated = experiment(observations = observation_data(1, "C", 2)),
+#'     experiment(observations = observation_data(1, "C", 3))
+#' )
+#' observations(studies)
+#' @export
+observations <- function(x) {
+    .check_class(x, "compphysiol_experiments")
+    identifiers <- .collection_identifiers(x, "Experiment")
+    if (!length(x)) {
+        out <- observation_schedule()
+        out$experiment <- factor(character())
+        return(.new_observation_schedule(out))
+    }
+
+    tables <- lapply(x, `[[`, "observations")
+    data <- vapply(tables, inherits, logical(1), "compphysiol_observation_data")
+    if (!all(data) && any(data)) {
+        stop(
+            "Cannot collect a mixture of observation schedules and observation data.",
+            call. = FALSE
+        )
+    }
+    if (any(vapply(tables, function(table) "experiment" %in% names(table), logical(1)))) {
+        stop(
+            "Observation column 'experiment' is reserved for collection identifiers.",
+            call. = FALSE
+        )
+    }
+    columns <- lapply(tables, names)
+    if (!all(vapply(columns, identical, logical(1), columns[[1]]))) {
+        stop("Observation tables must have identical columns to be collected.", call. = FALSE)
+    }
+    for (i in seq_along(tables)) {
+        tables[[i]]$experiment <- factor(
+            rep(identifiers[[i]], nrow(tables[[i]])), levels = identifiers
+        )
+    }
+    out <- do.call(rbind, lapply(tables, as.data.frame))
+    rownames(out) <- NULL
+    if (all(data)) .new_observation_data(out) else .new_observation_schedule(out)
 }
 
 #' Print a collection of experiments

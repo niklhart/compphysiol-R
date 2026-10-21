@@ -157,24 +157,11 @@ plotting.
 ```{r}
 #| label: observed-spaghetti
 #| eval: !expr has_nlmixr2
-observed_data <- do.call(
-    rbind,
-    lapply(seq_along(estimation_studies), function(i) {
-        observed <- as.data.frame(estimation_studies[[i]]$observations)
-        observed$individual <- names(estimation_studies)[[i]]
-        observed[c("individual", "time", "observable", "value")]
-    })
-)
-
-rownames(observed_data) <- NULL
-observed_data$individual <- factor(
-    observed_data$individual,
-    levels = names(estimation_studies)
-)
+observed_data <- observations(estimation_studies)
 
 ggplot(
     observed_data,
-    aes(x = time, y = value, group = individual, colour = individual)
+    aes(x = time, y = value, group = experiment, colour = experiment)
 ) +
     geom_line(alpha = 0.6) +
     geom_point(size = 1.5) +
@@ -280,8 +267,7 @@ its observations without extracting information from the native nlmixr2 fit.
 Here, solid lines connect the IPRED values at the sampling times, dashed lines
 show PRED, and the observed values are shown as points. Prediction tables carry
 the experiment identifier as a factor in experiment-collection order, so
-facets appear as `individual_1`, `individual_2`, and so on rather than in
-lexicographic order.
+facets appear in population order rather than lexicographic order.
 
 ```{r}
 #| label: individual-profiles

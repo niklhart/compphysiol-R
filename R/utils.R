@@ -470,6 +470,25 @@ with_units <- function(expr) {
     invisible(NULL)
 }
 
+.collection_identifiers <- function(x, label, reject_reserved = FALSE) {
+    identifiers <- names(x)
+    if (is.null(identifiers)) identifiers <- rep("", length(x))
+    unnamed <- is.na(identifiers) | !nzchar(identifiers)
+    reserved <- !unnamed & grepl("^[1-9][0-9]*$", identifiers)
+    if (reject_reserved && any(reserved)) {
+        stop(
+            "Explicit ", label, " names must not be positive whole numbers; ",
+            "these identifiers are reserved for unnamed elements.",
+            call. = FALSE
+        )
+    }
+    identifiers[unnamed] <- as.character(which(unnamed))
+    if (anyDuplicated(identifiers)) {
+        stop(label, " identifiers must be unique.", call. = FALSE)
+    }
+    identifiers
+}
+
 #' Subsetting logic for data frame-like classes (named or unnamed)
 #' 
 #' This function is used to implement the `[` method for classes like `compphysiol_molecules`, `compphysiol_compartments`, etc. 

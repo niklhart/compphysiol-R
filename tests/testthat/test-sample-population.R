@@ -18,7 +18,7 @@ test_that("sample_population realizes independent individual distributions", {
     population <- sample_population(statistics, population_parameters, n = 4)
 
     expect_s3_class(population, "compphysiol_parameter_sets")
-    expect_named(population, paste0("individual_", 1:4))
+    expect_named(population, as.character(1:4))
     expect_true(all(vapply(population, inherits, logical(1), "compphysiol_parameters")))
     expect_true(all(vapply(population, function(x) identical(names(x), c("CL", "V")), logical(1))))
     expect_true(all(vapply(population, function(x) inherits(x$CL, "units"), logical(1))))
@@ -128,7 +128,7 @@ test_that("sample_population returns empty parameter sets for observation-only m
 
     population <- sample_population(statistics, parameters(sigma = 1), n = 2)
 
-    expect_named(population, c("individual_1", "individual_2"))
+    expect_named(population, c("1", "2"))
     expect_true(all(lengths(population) == 0L))
 })
 
