@@ -129,11 +129,9 @@ test_that("rxode2 batches experiment collections by individual", {
     expected <- simulate(model, experiment = designs)
     actual <- simulate(model, experiment = designs, engine = rxode2_engine())
 
-    expect_named(actual, names(designs))
-    for (nm in names(designs)) {
-        expect_equal(actual[[nm]]$states, expected[[nm]]$states, tolerance = 1e-5)
-        expect_equal(actual[[nm]]$observables, expected[[nm]]$observables, tolerance = 1e-5)
-    }
+    expect_s3_class(actual, "compphysiol_simulation_result")
+    expect_identical(levels(actual$states$experiment), names(designs))
+    expect_equal(actual, expected, tolerance = 1e-5)
 })
 
 test_that("rxode2 handles a one-experiment collection without an id column", {
@@ -152,7 +150,8 @@ test_that("rxode2 handles a one-experiment collection without an id column", {
     expected <- simulate(model, experiment = designs)
     actual <- simulate(model, experiment = designs, engine = rxode2_engine())
 
-    expect_named(actual, "only")
+    expect_identical(levels(actual$states$experiment), "only")
+    expect_identical(levels(actual$observables$experiment), "only")
     expect_equal(actual, expected, tolerance = 1e-5)
 })
 

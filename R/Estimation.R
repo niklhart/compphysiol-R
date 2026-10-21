@@ -934,17 +934,22 @@ print.compphysiol_estimation_result <- function(x, ...) {
 
 .estimation_likelihood <- function(experiments, simulated, statistics, parameters,
                                    diagnostics = FALSE) {
-    if (!inherits(simulated, "list") ||
-        inherits(simulated, "compphysiol_simulation_result")) {
-        simulated <- list(simulated)
-    }
+    .check_class(simulated, "compphysiol_simulation_result")
     objective <- 0
     prediction_rows <- list()
     residual_rows <- list()
     experiment_names <- .collection_identifiers(experiments, "Experiment")
     for (i in seq_along(experiments)) {
         observed <- experiments[[i]]$observations
-        predicted <- simulated[[i]]$observables
+        predicted <- simulated$observables
+        if ("experiment" %in% names(predicted)) {
+            predicted <- predicted[predicted$experiment == experiment_names[[i]], ]
+            predicted$experiment <- NULL
+            predicted <- .new_observation_data(predicted)
+        } else if (length(experiments) != 1L) {
+            stop("Multi-experiment simulation predictions require an experiment column.",
+                 call. = FALSE)
+        }
         if (nrow(observed) != nrow(predicted) ||
             !identical(observed$observable, predicted$observable)) {
             stop("Simulation predictions do not match the observation rows.", call. = FALSE)

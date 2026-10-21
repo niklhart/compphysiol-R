@@ -1,8 +1,9 @@
 #' Extract long-format observable predictions
 #'
 #' Observable output has `time`, `observable`, and `value` columns, plus `rep`
-#' for stochastic replicates. Values are numeric for unit-free output, a `units`
-#' vector when all output units are identical, and `mixed_units` otherwise.
+#' for stochastic replicates and `experiment` for experiment-collection
+#' simulation. Values are numeric for unit-free output, a `units` vector when
+#' all output units are identical, and `mixed_units` otherwise.
 #' compphysiol_experiment schedule order and duplicate observation rows are retained.
 #' Both helpers accept an observable table directly, allowing filtering before
 #' reshaping without modifying the simulation result.
@@ -18,7 +19,11 @@ as_observables_long <- function(x) {
     }
     .check_class(x, "compphysiol_simulation_result")
     if (!is.null(x$observables)) return(x$observables)
-    out <- x$states[FALSE, intersect(c("time", "rep"), names(x$states)), drop = FALSE]
+    out <- x$states[
+        FALSE,
+        intersect(c("experiment", "time", "rep"), names(x$states)),
+        drop = FALSE
+    ]
     out$observable <- character()
     out$value <- numeric()
     .new_observation_data(out)
@@ -29,14 +34,15 @@ as_observables_long <- function(x) {
 #' Each observable becomes a numeric or ordinary `units` column. Missing
 #' time-observable combinations are filled with typed `NA`s. Time and optional
 #' replicate identify rows. Duplicate keys produce an error rather than implicit
-#' aggregation. Units within each observable must be convertible. Observable
-#' names must not collide with the identifier columns.
+#' aggregation. For collection simulation, `experiment` is part of the key.
+#' Units within each observable must be convertible. Observable names must not
+#' collide with the identifier columns.
 #' @inheritParams as_observables_long
 #' @returns A data frame with one column per observable. Rows follow first
-#'   occurrence of each time/replicate key in the long output. With no observables,
-#'   a result input returns the state's time and replicate columns; an empty
-#'   table input returns its empty identifier columns. Additional table columns
-#'   are ignored.
+#'   occurrence of each experiment/time/replicate key in the long output. With
+#'   no observables, a result input returns the state's identifier columns; an
+#'   empty table input returns its empty identifier columns. Additional table
+#'   columns are ignored.
 #' @examples
 #' predictions <- data.frame(time = c(0, 1, 0, 1),
 #'                           observable = c("A", "A", "B", "B"), value = 1:4)
@@ -46,7 +52,7 @@ as_observables_long <- function(x) {
 #' @export
 as_observables_wide <- function(x) {
     long <- as_observables_long(x)
-    ids <- intersect(c("time", "rep"), names(long))
+    ids <- intersect(c("experiment", "time", "rep"), names(long))
     if (!nrow(long)) {
         if (inherits(x, "compphysiol_simulation_result")) return(x$states[, ids, drop = FALSE])
         out <- long[, ids, drop = FALSE]
@@ -66,11 +72,14 @@ as_observables_wide <- function(x) {
         rows <- which(long$observable == nm)
         value <- long$value[rows]
         if (inherits(value, "mixed_units")) value <- units::as_units(value)
-        idx <- match(as.numeric(long$time[rows]), as.numeric(out$time))
-        if ("rep" %in% ids) {
-            idx <- match(paste(long$rep[rows], as.numeric(long$time[rows])),
-                         paste(out$rep, as.numeric(out$time)))
-        }
+        key_columns <- intersect(c("experiment", "rep"), ids)
+        input_keys <- cbind(long[rows, key_columns, drop = FALSE],
+                            time = as.numeric(long$time[rows]))
+        output_keys <- cbind(out[key_columns], time = as.numeric(out$time))
+        idx <- match(
+            do.call(paste, c(input_keys, sep = "\r")),
+            do.call(paste, c(output_keys, sep = "\r"))
+        )
         column <- value[rep(NA_integer_, nrow(out))]
         column[idx] <- value
         out[[nm]] <- column

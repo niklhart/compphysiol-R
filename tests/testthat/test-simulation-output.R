@@ -57,15 +57,23 @@ test_that("simulation predictions plug into another experiment as observation da
     )
 })
 
-test_that("experiment dosing replaces model dosing and collections retain names", {
+test_that("experiment collections bind results with identifiers", {
     m <- output_test_model() |> add_dosing(time = 0 [h], amount = 999 [mg])
     schedule <- observation_schedule(c(0, 1) [h], "A")
     a <- experiment(observations = schedule)
     b <- experiment(observations = schedule, dosing = dosing(time = 0 [h], amount = 10 [mg]))
     out <- simulate(m, experiment = experiments(control = a, treated = b))
-    expect_named(out, c("control", "treated"))
-    expect_equal(as.numeric(out$control$observables$value[1]), 100)
-    expect_equal(as.numeric(out$treated$observables$value[1]), 110)
+    expect_s3_class(out, "compphysiol_simulation_result")
+    expect_named(out, c("states", "observables"))
+    expect_named(out$states, c("experiment", "time", "a_drug_Central"))
+    expect_named(out$observables, c("experiment", "time", "observable", "value"))
+    expect_identical(levels(out$states$experiment), c("control", "treated"))
+    expect_identical(levels(out$observables$experiment), c("control", "treated"))
+    expect_equal(as.numeric(out$observables$value[out$observables$experiment == "control"][[1]]), 100)
+    expect_equal(as.numeric(out$observables$value[out$observables$experiment == "treated"][[1]]), 110)
+    wide <- as_observables_wide(out)
+    expect_named(wide, c("experiment", "time", "A"))
+    expect_equal(nrow(wide), 4L)
     expect_error(simulate(m, experiment = a, time = 0:1), "cannot.*time")
     expect_error(simulate(m, experiment = a, parameters = list()), "cannot.*parameters")
     expect_error(simulate(m, experiment = experiment()), "observations")
@@ -100,6 +108,20 @@ test_that("wide helpers handle unit-free outputs and no observables", {
     expect_equal(nrow(as_observables_long(out)), 0L)
 })
 
+test_that("empty observable extraction retains collection identifiers", {
+    m <- output_test_model()
+    m$observables <- observables()
+    individual <- simulate(m, time = c(0, 1) [h])
+    designs <- experiments(first = experiment(), second = experiment())
+    out <- .simulation_bind_experiment_results(
+        list(individual, individual), designs
+    )
+
+    long <- as_observables_long(out)
+    expect_named(long, c("experiment", "time", "observable", "value"))
+    expect_identical(levels(long$experiment), c("first", "second"))
+})
+
 test_that("experiment collections prepare inactive infusion structures", {
     m <- output_test_model()
     schedule <- observation_schedule(c(0, 1, 2) [h], "A")
@@ -107,15 +129,38 @@ test_that("experiment collections prepare inactive infusion structures", {
         dosing = dosing(time = 0 [h], amount = 10 [mg], duration = 1 [h], cmt = "Central"))
     b <- experiment(observations = schedule)
     out <- simulate(m, experiment = experiments(infusion = a, control = b))
-    expect_identical(names(out$infusion$states), names(out$control$states))
-    expect_true(any(grepl("Depot", names(out$control$states))))
-    expect_equal(out$control$observables, simulate(m, experiment = b)$observables)
-    expect_gt(as.numeric(out$infusion$observables$value[2]), as.numeric(out$control$observables$value[2]))
+    expect_true(any(grepl("Depot", names(out$states))))
+    infusion <- out$observables[out$observables$experiment == "infusion", ]
+    control <- out$observables[out$observables$experiment == "control", ]
+    infusion$experiment <- NULL
+    control$experiment <- NULL
+    rownames(control) <- NULL
+    expect_equal(.new_observation_data(control), simulate(m, experiment = b)$observables)
+    expect_gt(as.numeric(infusion$value[2]), as.numeric(control$value[2]))
     compiled <- to_compiled_ode_model(m |> add_dosing(dose = a$dosing))
     actual <- simulate(compiled, experiment = experiments(infusion = a, control = b))
-    expect_equal(actual$infusion$observables, out$infusion$observables, tolerance = 1e-6)
-    expect_equal(actual$control$observables, out$control$observables, tolerance = 1e-6)
+    expect_equal(actual$observables, out$observables, tolerance = 1e-6)
     expect_error(simulate(to_compiled_ode_model(m), experiment = a), "absent")
+})
+
+test_that("collection simulation uses transient identifiers and reserves experiment", {
+    m <- output_test_model()
+    schedule <- observation_schedule(c(0, 1) [h], "A")
+    out <- simulate(
+        m,
+        experiment = experiments(named = experiment(observations = schedule),
+                                 experiment(observations = schedule))
+    )
+    expect_identical(levels(out$states$experiment), c("named", "2"))
+    expect_identical(levels(out$observables$experiment), c("named", "2"))
+
+    conflicting <- experiment(
+        observations = observation_schedule(0 [h], "A", experiment = "source")
+    )
+    expect_error(
+        simulate(m, experiment = experiments(conflicting, conflicting)),
+        "experiment.*reserved|reserved.*experiment"
+    )
 })
 
 test_that("compiled homogeneous preparation agrees with the fallback path", {

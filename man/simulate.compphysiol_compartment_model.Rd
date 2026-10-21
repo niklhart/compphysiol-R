@@ -76,9 +76,9 @@ A \code{compphysiol_simulation_result} with rectangular \code{states} and long-f
 \code{observables} (\code{time}, \code{observable}, \code{value}, plus \code{rep} for stochastic
 replicates). Direct \code{time} input requests all observables at every output
 time. Values are numeric, \code{units}, or \code{mixed_units} depending on their units.
-Without observables the component is \code{NULL}. A \code{compphysiol_experiments} input returns
-a list of results named by individual identifier when the collection is
-named. Results are not automatically bound into a population table. See
+Without observables the component is \code{NULL}. A \code{compphysiol_experiments}
+input returns one result whose state and observable tables contain an
+\code{experiment} factor identifying each individual. See
 \code{\link[=as_observables_long]{as_observables_long()}} and
 \code{\link[=as_observables_wide]{as_observables_wide()}} for a storage-independent processing interface.
 }

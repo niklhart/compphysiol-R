@@ -116,9 +116,9 @@ rxode2_engine <- function(...) {
 #'   `observables` (`time`, `observable`, `value`, plus `rep` for stochastic
 #'   replicates). Direct `time` input requests all observables at every output
 #'   time. Values are numeric, `units`, or `mixed_units` depending on their units.
-#'   Without observables the component is `NULL`. A `compphysiol_experiments` input returns
-#'   a list of results named by individual identifier when the collection is
-#'   named. Results are not automatically bound into a population table. See
+#'   Without observables the component is `NULL`. A `compphysiol_experiments`
+#'   input returns one result whose state and observable tables contain an
+#'   `experiment` factor identifying each individual. See
 #'   [as_observables_long()] and
 #'   [as_observables_wide()] for a storage-independent processing interface.
 #' @examples
@@ -743,6 +743,7 @@ simulate.compphysiol_stochastic_model <- function(
 #' @returns The `compphysiol_simulation_result` object, invisibly.
 #' @export
 print.compphysiol_simulation_result <- function(x, ...) {
+    has_experiments <- "experiment" %in% names(x$states)
     has_replicates <- "rep" %in% names(x$states)
     n_rep <- if (has_replicates) length(unique(x$states$rep)) else 1L
     n_time <- if (has_replicates) {
@@ -750,7 +751,7 @@ print.compphysiol_simulation_result <- function(x, ...) {
     } else {
         nrow(x$states)
     }
-    state_names <- setdiff(names(x$states), c("time", "rep"))
+    state_names <- setdiff(names(x$states), c("experiment", "time", "rep"))
     observable_names <- if (is.null(x$observables)) character(0) else unique(x$observables$observable)
     n_states <- length(state_names)
     n_observables <- length(observable_names)
@@ -762,6 +763,9 @@ print.compphysiol_simulation_result <- function(x, ...) {
     }
 
     cat(" Simulation result:\n")
+    if (has_experiments) {
+        cat(sprintf("  experiments: %s\n", length(levels(x$states$experiment))))
+    }
     cat(sprintf("  time: %s (%s points)\n", time_span, n_time))
     if (has_replicates) {
         cat(sprintf("  replicates: %s\n", n_rep))

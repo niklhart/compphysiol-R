@@ -113,10 +113,10 @@ protocol <- experiment(
 simulation_studies <- extend_protocol(protocol, population)
 ```
 
-The full collection is simulated in one call through rxode2. Each result is
-then converted to long-format conditional predictions and sampled according to
-the observation-level distribution. The sampled concentration values remain
-in milligrams per litre.
+The full collection is simulated in one call through rxode2. The resulting
+long-format conditional predictions carry an experiment identifier and are
+sampled together according to the observation-level distribution. The sampled
+concentration values remain in milligrams per litre.
 
 ```{r}
 #| label: simulate-observations
@@ -127,10 +127,14 @@ simulated <- simulate(
     engine = rxode2_engine()
 )
 
+sampled <- simulated |>
+    as_observables_long() |>
+    sample_observations(statistics, truth)
+
 estimation_studies <- lapply(seq_along(simulation_studies), function(i) {
-    observed <- simulated[[i]] |>
-        as_observables_long() |>
-        sample_observations(statistics, truth)
+    identifier <- levels(sampled$experiment)[[i]]
+    observed <- sampled[sampled$experiment == identifier, ]
+    observed$experiment <- NULL
 
     experiment(
         dosing = simulation_studies[[i]]$dosing,

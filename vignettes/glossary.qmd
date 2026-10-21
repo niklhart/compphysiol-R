@@ -501,8 +501,9 @@ An experiment supplies the complete dosing schedule, replacing model-attached
 dosing even when the experiment schedule is empty. Its known parameters override
 model defaults. Simulation starts at the initial time and evaluates only the
 scheduled observable-time pairs. Stored observation values do not affect
-simulation. Collections return a list of simulation results in experiment
-order. Experiments containing observation data can be used for estimation.
+simulation. Collection simulation returns one simulation result whose tables
+carry an experiment identifier. Experiments containing observation data can be
+used for estimation.
 
 Implementation anchor: one experiment uses `compphysiol_experiment`, created
 with `experiment()`; collections use `compphysiol_experiments`, created with
@@ -547,9 +548,10 @@ individual parameter names must not overlap. This explicit transformation
 produces an experiment collection before simulation rather than adding a
 population concept to `simulate()`.
 
-Simulating an experiment collection returns a list of simulation results in
-collection order, named by the individual identifiers when present. Results are
-not automatically bound into one population-scale table. The `observations()`
+Simulating an experiment collection returns one simulation result. Its state
+and observable tables contain an `experiment` factor whose levels follow
+collection order. Supplied experiment names are used as identifiers, while
+unnamed experiments receive transient one-based identifiers. The `observations()`
 accessor binds stored observation schedules or data and adds an `experiment`
 identifier. It uses supplied experiment names and transient one-based positions
 for unnamed experiments; these identifiers are not written back to the
@@ -1005,8 +1007,9 @@ compiled model, parameter interface, solver dimensions, observable functions,
 events, and unit/output metadata are reused after the first simulation. When an
 experiment collection is simulated with `rxode2_engine()`, each experiment is
 an independent individual and the collection is executed in one batched
-`rxSolve()` call. The returned value remains a named list of simulation results
-in experiment order. This is a simulation concern and does not require nlmixr2;
+`rxSolve()` call. The returned value is one simulation result whose state and
+observable tables carry experiment identifiers in collection order. This is a
+simulation concern and does not require nlmixr2;
 nlmixr2 enters when population estimation semantics are requested.
 
 Experiment constructors establish the structural validity of experiments and
