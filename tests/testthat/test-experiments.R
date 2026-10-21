@@ -189,8 +189,10 @@ test_that("collection printing summarizes while single printing shows details", 
     x <- experiments(treatment = e, empty = experiment(start = 0 [h]))
     summary <- capture.output(result <- print(x))
     expect_identical(result, x)
-    expect_length(summary, 3)
-    expect_match(summary[2], "treatment.*0.*h.*1 parameter.*1 dosing event.*2 observations scheduled")
+    expect_length(summary, 4)
+    expect_match(summary[2], "shared: start = 0.*h")
+    expect_match(summary[3], "treatment.*1 parameter.*1 dosing event.*2 observations scheduled")
+    expect_identical(summary[4], "  (2) empty")
     expect_output(print(experiments()), "Experiments: \\(none\\)")
     details <- capture.output(result <- print(x[[1]]))
     expect_identical(result, e)
@@ -200,6 +202,46 @@ test_that("collection printing summarizes while single printing shows details", 
     expect_true(any(grepl("C", details)))
     expect_output(print(experiment()), "Observations: \\(none\\)")
 })
+
+test_that("collection printing lifts shared components and omits empty ones", {
+    shared <- experiment(
+        dosing = dosing(time = 0, amount = 10),
+        observations = observation_schedule(c(1, 2), "C")
+    )
+    unnamed <- experiments(shared, shared)
+    output <- capture.output(print(unnamed))
+    expect_identical(output[1], " Experiments: 2 unnamed")
+    expect_match(output[2], "shared: start = 0; 1 dosing event; 2 observations scheduled")
+    expect_length(output, 2L)
+
+    named <- experiments(control = shared, treatment = shared)
+    output <- capture.output(print(named))
+    expect_length(output, 4L)
+    expect_identical(output[3:4], c("  (1) control", "  (2) treatment"))
+
+    singleton <- capture.output(print(experiments(experiment())))
+    expect_identical(singleton, c(" Experiments:", "  (1) start = 0"))
+})
+
+test_that("collection printing distinguishes shared schemas from shared values", {
+    dose <- dosing(time = 0, amount = 10)
+    x <- experiments(
+        experiment(
+            parameters = parameters(CL = 1), dosing = dose,
+            observations = observation_data(c(1, 2), "C", c(8, 5))
+        ),
+        experiment(
+            parameters = parameters(CL = 2), dosing = dose,
+            observations = observation_data(c(1, 2), "C", c(7, 4))
+        )
+    )
+    output <- capture.output(print(x))
+    expect_match(output[2], "parameter schema \\(1 parameter\\)")
+    expect_match(output[2], "observation plan \\(2 rows\\)")
+    expect_match(output[3], "parameter values vary; observations with data")
+    expect_match(output[4], "parameter values vary; observations with data")
+})
+
 test_that("collection time units are consistent even without observations", {
     a <- experiment(start = 0 [h], observations = observation_schedule(60 [min], "C"))
     b <- experiment(start = 0 [s])

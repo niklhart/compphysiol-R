@@ -329,22 +329,96 @@ print.compphysiol_experiments <- function(x, ...) {
         cat(" Experiments: (none)\n")
         return(invisible(x))
     }
-    cat(" Experiments:\n")
+    homogeneity <- .experiments_component_homogeneity(x)
     labels <- names(x)
+    if (is.null(labels)) labels <- rep("", length(x))
+    named <- !is.na(labels) & nzchar(labels)
+    all_shared <- length(x) > 1L && all(homogeneity[c(
+        "start", "parameters", "dosing", "observations"
+    )])
+    collapsed <- all_shared && !any(named)
+    cat(
+        " Experiments:",
+        if (collapsed) paste0(" ", length(x), " unnamed") else "",
+        "\n", sep = ""
+    )
+
+    if (length(x) > 1L) {
+        shared <- .experiments_print_shared(x[[1]], homogeneity)
+        if (length(shared)) cat("  shared: ", paste(shared, collapse = "; "), "\n", sep = "")
+        if (collapsed) return(invisible(x))
+    }
+
     for (i in seq_along(x)) {
         e <- x[[i]]
-        label <- if (!is.null(labels) && !is.na(labels[i]) && nzchar(labels[i])) {
-            paste0(labels[i], ": ")
-        } else ""
-        cat(sprintf(
-            "  (%s) %sstart = %s; %s parameters; %s dosing events; %s observations%s\n",
-            i, label, format(e$start), length(e$parameters), length(e$dosing),
-            nrow(e$observations), if (inherits(e$observations, "compphysiol_observation_data")) {
-                " with data"
-            } else {
-                " scheduled"
-            }
-        ))
+        label <- if (named[[i]]) labels[[i]] else ""
+        details <- .experiments_print_individual(
+            e, if (length(x) > 1L) homogeneity else NULL
+        )
+        text <- c(label, details)
+        text <- text[nzchar(text)]
+        cat("  (", i, ")", if (length(text)) paste0(" ", paste(text, collapse = "; ")) else "",
+            "\n", sep = "")
     }
     invisible(x)
+}
+
+.experiments_print_shared <- function(experiment, homogeneity) {
+    out <- character()
+    if (homogeneity[["start"]]) {
+        out <- c(out, paste0("start = ", format(experiment$start)))
+    }
+    if (homogeneity[["parameters"]] && length(experiment$parameters)) {
+        out <- c(out, .experiments_print_count(length(experiment$parameters), "parameter"))
+    } else if (homogeneity[["parameter_schema"]] && length(experiment$parameters)) {
+        out <- c(out, paste0(
+            "parameter schema (",
+            .experiments_print_count(length(experiment$parameters), "parameter"), ")"
+        ))
+    }
+    if (homogeneity[["dosing"]] && length(experiment$dosing)) {
+        out <- c(out, .experiments_print_count(length(experiment$dosing), "dosing event"))
+    }
+    observations <- nrow(experiment$observations)
+    if (homogeneity[["observations"]] && observations) {
+        out <- c(out, .experiments_print_observations(experiment$observations, count = TRUE))
+    } else if (homogeneity[["observation_plan"]] && observations) {
+        out <- c(out, paste0(
+            "observation plan (", .experiments_print_count(observations, "row"), ")"
+        ))
+    }
+    out
+}
+
+.experiments_print_individual <- function(experiment, homogeneity = NULL) {
+    shared <- function(component) !is.null(homogeneity) && homogeneity[[component]]
+    out <- character()
+    if (!shared("start")) out <- c(out, paste0("start = ", format(experiment$start)))
+    if (!shared("parameters") && length(experiment$parameters)) {
+        out <- c(out, if (shared("parameter_schema")) {
+            "parameter values vary"
+        } else .experiments_print_count(length(experiment$parameters), "parameter"))
+    }
+    if (!shared("dosing") && length(experiment$dosing)) {
+        out <- c(out, .experiments_print_count(length(experiment$dosing), "dosing event"))
+    }
+    if (!shared("observations") && nrow(experiment$observations)) {
+        out <- c(out, .experiments_print_observations(
+            experiment$observations, count = !shared("observation_plan")
+        ))
+    }
+    out
+}
+
+.experiments_print_count <- function(n, label) {
+    paste(n, paste0(label, if (n == 1L) "" else "s"))
+}
+
+.experiments_print_observations <- function(x, count) {
+    kind <- if (inherits(x, "compphysiol_observation_data")) "with data" else "scheduled"
+    if (count) {
+        paste(.experiments_print_count(nrow(x), "observation"), kind)
+    } else {
+        paste("observations", kind)
+    }
 }
