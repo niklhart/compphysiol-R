@@ -24,6 +24,7 @@
 #' x
 #' x["control"]
 #' x[["treatment"]]
+#' c(control = experiment(), treatment = experiment())
 #' c(x, experiments(repeat_run = experiment()))
 #' @export
 experiments <- function(...) {
@@ -218,46 +219,50 @@ experiments <- function(...) {
     .new_experiments(x, .experiments_compute_component_homogeneity(x))
 }
 
-#' Combine collections of experiments
-#' @param ... `compphysiol_experiments` objects to combine.
+#' Combine experiments
+#'
+#' Individual `compphysiol_experiment` objects and existing
+#' `compphysiol_experiments` collections can be combined. The result is checked
+#' as a new collection, preserving element order and names.
+#'
+#' @param ... `compphysiol_experiment` or `compphysiol_experiments` objects.
+#' @param recursive Unused.
 #' @returns A `compphysiol_experiments` object, preserving order and names.
+#' @name combine_experiments
+NULL
+
+#' @rdname combine_experiments
 #' @export
-c.compphysiol_experiments <- function(...) {
-    objects <- list(...)
-    if (!all(vapply(objects, inherits, logical(1), "compphysiol_experiments"))) {
-        stop("All arguments must be experiments objects.", call. = FALSE)
-    }
-    combined <- do.call(c, unname(lapply(objects, .experiments_elements)))
-    combined <- combined %||% list()
-    .check_optional_unique_names(combined, "experiment")
-    .collection_identifiers(combined, "Experiment")
-    .experiments_check_units(combined)
-    .new_experiments(combined, .experiments_combine_component_homogeneity(objects))
+c.compphysiol_experiment <- function(..., recursive = FALSE) {
+    .combine_experiments(list(...))
 }
 
-.experiments_combine_component_homogeneity <- function(objects) {
-    nonempty <- objects[lengths(objects) > 0L]
-    categories <- .experiments_component_names()
-    out <- stats::setNames(rep(TRUE, length(categories)), categories)
-    if (length(nonempty) < 1L) return(out)
+#' @rdname combine_experiments
+#' @export
+c.compphysiol_experiments <- function(..., recursive = FALSE) {
+    objects <- list(...)
+    .combine_experiments(objects)
+}
 
-    metadata <- lapply(nonempty, .experiments_component_homogeneity)
-    reference <- nonempty[[1]][[1]]
-    for (category in categories) {
-        if (!all(vapply(metadata, `[[`, logical(1), category))) {
-            out[[category]] <- FALSE
-            next
+.combine_experiments <- function(objects) {
+    object_names <- names(objects)
+    if (is.null(object_names)) object_names <- rep("", length(objects))
+    parts <- lapply(seq_along(objects), function(i) {
+        object <- objects[[i]]
+        if (inherits(object, "compphysiol_experiment")) {
+            return(setNames(list(object), object_names[[i]]))
         }
-        if (length(nonempty) > 1L) {
-            for (i in seq.int(2L, length(nonempty))) {
-                if (!.experiments_components_identical(reference, nonempty[[i]][[1]], category)) {
-                    out[[category]] <- FALSE
-                    break
-                }
-            }
+        if (inherits(object, "compphysiol_experiments")) {
+            return(.experiments_elements(object))
         }
-    }
-    out
+        stop(
+            "c() can only combine experiment and experiments objects.",
+            call. = FALSE
+        )
+    })
+    combined <- do.call(c, unname(parts))
+    if (is.null(combined)) combined <- list()
+    .experiments_validate_result(combined)
 }
 
 #' Collect observations from experiments

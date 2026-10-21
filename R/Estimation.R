@@ -116,17 +116,53 @@ print.compphysiol_parameter_spec <- function(x, ...) {
     as.numeric(bound)
 }
 
-#' Combine parameter-estimation specifications
+#' Construct parameter-estimation specifications
 #'
-#' Named [parameter_spec()] objects and existing `compphysiol_parameter_specs`
-#' collections can be combined with `c()`. Names identify the model or
-#' observation-model parameters being estimated.
+#' `parameter_specs()` creates a named collection from raw initial values or
+#' complete [parameter_spec()] objects. Raw values use the shared `transform`;
+#' explicit specifications retain their own transform and bounds. Existing
+#' specifications and collections can also be combined with `c()`.
 #'
-#' @param ... Named `compphysiol_parameter_spec` or `compphysiol_parameter_specs` objects.
+#' @param ... For `parameter_specs()`, named initial values or explicit
+#'   [parameter_spec()] objects. For `c()`, named `compphysiol_parameter_spec`
+#'   or `compphysiol_parameter_specs` objects.
+#' @param transform Shared transform for raw initial values: `"identity"`,
+#'   `"log"`, or `"logit"`. Explicit specifications override this value.
 #' @param recursive Unused.
 #' @returns A `compphysiol_parameter_specs` collection.
 #' @name parameter_specs
-NULL
+#' @examples
+#' parameter_specs(CL = 1 [L/h], V = 10 [L], transform = "log")
+#' parameter_specs(
+#'     CL = 1 [L/h],
+#'     fraction = parameter_spec(0.5, transform = "logit"),
+#'     transform = "log"
+#' )
+#' @export
+parameter_specs <- function(..., transform = c("identity", "log", "logit")) {
+    expressions <- as.list(substitute(list(...)))[-1L]
+    labels <- names(expressions)
+    if (length(expressions) &&
+        (is.null(labels) || anyNA(labels) || any(!nzchar(labels)))) {
+        stop("Every parameter specification must be named.", call. = FALSE)
+    }
+    .check_unique_names(labels, "parameter specification")
+    transform <- tryCatch(
+        match.arg(transform),
+        error = function(e) stop(
+            "Unknown parameter transform; use identity, log, or logit.",
+            call. = FALSE
+        )
+    )
+    envir <- parent.frame()
+    out <- lapply(expressions, function(expr) {
+        value <- .process_nse_arg(expr, envir = envir)
+        if (inherits(value, "compphysiol_parameter_spec")) return(value)
+        parameter_spec(initial = value, transform = transform)
+    })
+    names(out) <- labels
+    .new_parameter_specs(out)
+}
 
 #' @rdname parameter_specs
 #' @export

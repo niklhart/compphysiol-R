@@ -4,14 +4,21 @@
 \alias{parameter_specs}
 \alias{c.compphysiol_parameter_spec}
 \alias{c.compphysiol_parameter_specs}
-\title{Combine parameter-estimation specifications}
+\title{Construct parameter-estimation specifications}
 \usage{
+parameter_specs(..., transform = c("identity", "log", "logit"))
+
 \method{c}{compphysiol_parameter_spec}(..., recursive = FALSE)
 
 \method{c}{compphysiol_parameter_specs}(..., recursive = FALSE)
 }
 \arguments{
-\item{...}{Named \code{compphysiol_parameter_spec} or \code{compphysiol_parameter_specs} objects.}
+\item{...}{For \code{parameter_specs()}, named initial values or explicit
+\code{\link[=parameter_spec]{parameter_spec()}} objects. For \code{c()}, named \code{compphysiol_parameter_spec}
+or \code{compphysiol_parameter_specs} objects.}
+
+\item{transform}{Shared transform for raw initial values: \code{"identity"},
+\code{"log"}, or \code{"logit"}. Explicit specifications override this value.}
 
 \item{recursive}{Unused.}
 }
@@ -19,7 +26,16 @@
 A \code{compphysiol_parameter_specs} collection.
 }
 \description{
-Named \code{\link[=parameter_spec]{parameter_spec()}} objects and existing \code{compphysiol_parameter_specs}
-collections can be combined with \code{c()}. Names identify the model or
-observation-model parameters being estimated.
+\code{parameter_specs()} creates a named collection from raw initial values or
+complete \code{\link[=parameter_spec]{parameter_spec()}} objects. Raw values use the shared \code{transform};
+explicit specifications retain their own transform and bounds. Existing
+specifications and collections can also be combined with \code{c()}.
+}
+\examples{
+parameter_specs(CL = 1 [L/h], V = 10 [L], transform = "log")
+parameter_specs(
+    CL = 1 [L/h],
+    fraction = parameter_spec(0.5, transform = "logit"),
+    transform = "log"
+)
 }

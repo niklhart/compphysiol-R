@@ -182,10 +182,11 @@ optimizer without changing the scale on which estimates are reported.
 ```{r}
 #| label: estimation
 #| eval: !expr has_nlmixr2
-specs <- c(
-    CL_pop = parameter_spec(0.8 [L/h], transform = "log"),
-    omega_CL = parameter_spec(0.2, transform = "log"),
-    sigma = parameter_spec(0.2 [mg/L], transform = "log")
+specs <- parameter_specs(
+    CL_pop = 0.8 [L/h],
+    omega_CL = 0.2,
+    sigma = 0.2 [mg/L],
+    transform = "log"
 )
 
 problem <- estimation_problem(

@@ -506,7 +506,7 @@ order. Experiments containing observation data can be used for estimation.
 
 Implementation anchor: one experiment uses `compphysiol_experiment`, created
 with `experiment()`; collections use `compphysiol_experiments`, created with
-`experiments()`.
+`experiments()` or by combining individual experiments with `c()`.
 
 An experiment collection holds several
 independent individual units. The element name is the individual identifier;
@@ -657,8 +657,9 @@ Residuals are not currently normalized across engines because their definitions
 depend on both the prediction level and the backend-specific residual type.
 
 Implementation anchor: `estimation_problem()` creates
-`compphysiol_estimation_problem`; `parameter_spec()` creates
-`compphysiol_parameter_spec`; `c()` combines them into
+`compphysiol_estimation_problem`; `parameter_spec()` creates one
+`compphysiol_parameter_spec`; `parameter_specs()` creates a collection with an
+optional shared transform, and `c()` combines existing specifications into
 `compphysiol_parameter_specs`; `optim_engine()` configures the optimizer and
 its `deSolve_engine()`; `nlmixr2_engine()` creates
 `compphysiol_nlmixr2_engine`; and `estimate()` returns

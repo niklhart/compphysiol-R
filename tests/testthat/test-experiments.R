@@ -176,7 +176,24 @@ test_that("Experiments concatenation retains names, units, and empty collections
     expect_identical(c(a, b), experiments(a = a[[1]], b = b[[1]]))
     expect_identical(c(experiments(), a, experiments()), a)
     expect_identical(c(experiments(), experiments()), experiments())
-    expect_error(c(a, experiment()), "experiments")
+    expect_identical(
+        c(a, experiment(start = 1 [h])),
+        experiments(a = a[[1]], experiment(start = 1 [h]))
+    )
+})
+
+test_that("individual experiments combine directly with c", {
+    a <- experiment(start = 0 [h])
+    b <- experiment(start = -1 [h])
+
+    direct <- c(control = a, treatment = b)
+    expect_s3_class(direct, "compphysiol_experiments")
+    expect_identical(direct, experiments(control = a, treatment = b))
+    expect_identical(c(a, experiments(treatment = b)), experiments(a, treatment = b))
+    expect_identical(c(experiments(control = a), b), experiments(control = a, b))
+    expect_error(c(a, 1), "experiment and experiments")
+    expect_error(c(`2` = a, b), "positive whole numbers.*reserved")
+    expect_error(c(a, experiment()), "time.*units")
 })
 
 test_that("collection printing summarizes while single printing shows details", {

@@ -59,6 +59,45 @@ test_that("parameter specifications combine into a named collection", {
     expect_identical(spec[["k"]]$transform, "log")
 })
 
+test_that("parameter_specs applies a shared transform with explicit overrides", {
+    specs <- parameter_specs(
+        CL = 0.8 [L/h],
+        omega = 0.2,
+        fraction = parameter_spec(
+            0.5, lower = 0, upper = 1, transform = "logit"
+        ),
+        identity = parameter_spec(2),
+        transform = "log"
+    )
+
+    expect_s3_class(specs, "compphysiol_parameter_specs")
+    expect_named(specs, c("CL", "omega", "fraction", "identity"))
+    expect_equal(specs$CL$initial, with_units(0.8 [L/h]))
+    expect_identical(specs$CL$transform, "log")
+    expect_identical(specs$omega$transform, "log")
+    expect_identical(specs$fraction$transform, "logit")
+    expect_equal(specs$fraction$lower, 0)
+    expect_equal(specs$fraction$upper, 1)
+    expect_identical(specs$identity$transform, "identity")
+
+    initial <- with_units(3 [mg/L])
+    from_variable <- parameter_specs(sigma = initial, transform = "log")
+    expect_equal(from_variable$sigma$initial, initial)
+    expect_identical(from_variable$sigma$transform, "log")
+    expect_identical(parameter_specs(), .new_parameter_specs())
+})
+
+test_that("parameter_specs validates collection inputs", {
+    expect_error(parameter_specs(1, transform = "log"), "named")
+    expect_error(parameter_specs(x = 1, x = 2), "unique|duplicated")
+    expect_error(parameter_specs(x = 1, transform = "unknown"), "transform")
+    expect_error(parameter_specs(x = -1, transform = "log"), "positive")
+    expect_error(
+        parameter_specs(x = c(a = parameter_spec(1))),
+        "numeric scalar|parameter"
+    )
+})
+
 test_that("ParameterSpecs compose, subset, and print by row", {
     rates <- c(
         k = parameter_spec(

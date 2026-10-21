@@ -36,5 +36,6 @@ x <- experiments(control = experiment(), treatment = experiment())
 x
 x["control"]
 x[["treatment"]]
+c(control = experiment(), treatment = experiment())
 c(x, experiments(repeat_run = experiment()))
 }
