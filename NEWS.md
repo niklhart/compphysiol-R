@@ -6,6 +6,7 @@
   calculated via the observed Fisher information + multivariate Delta method.
 * Redesigned storage of simulation results for multiple experiments from list- 
   to data frame-like 
+* Breaking change of the `compphysiol_experiments` class, simplifying responsibilities
 
 # compphysiol 0.4.4
 
