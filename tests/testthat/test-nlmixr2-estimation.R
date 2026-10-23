@@ -7,7 +7,7 @@ nlmixr2_test_problem <- function() {
             rate = "CL * c[drug, Central]"
         ) |>
         add_observable(C = c[drug, Central])
-    studies <- experiments(
+    studies <- c(
         first = experiment(observations = observation_data(
             time = c(1, 2, 4), observable = "C", value = c(82, 67, 45)
         )),

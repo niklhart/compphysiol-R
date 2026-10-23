@@ -1,15 +1,8 @@
 .simulate_experiments <- function(object, experiment, dimensions = NULL, engine = NULL, ...) {
-    multiple <- inherits(experiment, "compphysiol_experiments")
-    homogeneity <- if (multiple) {
-        .experiments_component_homogeneity(experiment)
-    } else {
-        stats::setNames(rep(TRUE, length(.experiments_component_names())),
-                        .experiments_component_names())
-    }
-    experiments <- if (multiple) .experiments_elements(experiment) else {
-        .check_class(experiment, "compphysiol_experiment")
-        list(experiment)
-    }
+    .check_class(experiment, "compphysiol_experiments")
+    multiple <- length(experiment) > 1L
+    homogeneity <- .experiments_component_homogeneity(experiment)
+    experiments <- .experiments_elements(experiment)
     validation_indices <- if (!length(experiments)) {
         integer()
     } else if (homogeneity[["observation_plan"]]) {
@@ -34,7 +27,7 @@
         })
         prepared_doses <- lapply(prepared, function(m) make_depot(m)$doses)
         template <- prepared[[1]]
-        template$doses <- do.call(c, lapply(prepared, `[[`, "doses"))
+        template$doses <- do.call(c, c(list(dosing()), lapply(prepared, `[[`, "doses")))
         object <- make_depot(template)
     }
     if (multiple && inherits(engine, "compphysiol_rxode2_engine")) {

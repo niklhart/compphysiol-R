@@ -192,7 +192,7 @@ test_that("ParameterSpec prints its unit once", {
 
 test_that("estimation_problem is the engine-neutral estimation specification", {
     model <- estimation_test_model()
-    study <- experiments(individual_1 = estimation_test_experiment())
+    study <- c(individual_1 = estimation_test_experiment())
     spec <- c(
         k = parameter_spec(0.1 [1/h], lower = 0 [1/h], transform = "log"),
         sigma = parameter_spec(1 [mg/L], lower = 0 [mg/L], transform = "log")
@@ -209,7 +209,8 @@ test_that("estimation_problem is the engine-neutral estimation specification", {
     expect_s3_class(problem, "compphysiol_estimation_problem")
     expect_identical(problem$model, model)
     expect_identical(problem$experiments, study)
-    expect_s3_class(problem$experiments[[1]]$observations, "compphysiol_observation_data")
+    expect_s3_class(.experiment_entry(problem$experiments)$observations,
+                    "compphysiol_observation_data")
     expect_identical(problem$parameters, spec)
     expect_s3_class(problem$statistics, "compphysiol_statistical_model")
     expect_identical(problem$statistics$C$level, "observation")
@@ -370,7 +371,9 @@ test_that("fixed observation scales need no parameter specification", {
 
 test_that("known experiment parameters cannot also be estimated", {
     study <- estimation_test_experiment()
-    study$parameters <- parameters(k = 0.3 [1/h])
+    entry <- .experiment_entry(study)
+    entry$parameters <- parameters(k = 0.3 [1/h])
+    study <- .new_experiments(list(entry), .experiments_compute_component_homogeneity(list(entry)))
 
     expect_error(
         estimation_problem(
@@ -607,7 +610,7 @@ test_that("estimate consumes an EstimationProblem and returns a stable result", 
 })
 
 test_that("optim parameter overlays preserve fixed experiments and metadata", {
-    studies <- experiments(
+    studies <- c(
         first = experiment(parameters = parameters(BW = 70, group = "A")),
         second = experiment(parameters = parameters(BW = 80))
     )
@@ -622,23 +625,23 @@ test_that("optim parameter overlays preserve fixed experiments and metadata", {
     )
 
     expect_identical(names(first), c("first", "second"))
-    expect_s3_class(first[[1]]$parameters, "compphysiol_parameters")
-    expect_named(first[[1]]$parameters, c("BW", "group", "k", "V"))
-    expect_named(first[[2]]$parameters, c("BW", "k", "V"))
-    expect_identical(first[[1]]$parameters$k, 0.1)
-    expect_identical(first[[2]]$parameters$V, 3)
-    expect_identical(second[[1]]$parameters$k, 0.2)
-    expect_identical(second[[2]]$parameters$V, 4)
+    expect_s3_class(.experiment_entry(first, 1)$parameters, "compphysiol_parameters")
+    expect_named(.experiment_entry(first, 1)$parameters, c("BW", "group", "k", "V"))
+    expect_named(.experiment_entry(first, 2)$parameters, c("BW", "k", "V"))
+    expect_identical(.experiment_entry(first, 1)$parameters$k, 0.1)
+    expect_identical(.experiment_entry(first, 2)$parameters$V, 3)
+    expect_identical(.experiment_entry(second, 1)$parameters$k, 0.2)
+    expect_identical(.experiment_entry(second, 2)$parameters$V, 4)
     expect_identical(.experiments_component_homogeneity(first), homogeneity)
     expect_identical(.experiments_component_homogeneity(second), homogeneity)
     expect_false(homogeneity[["parameter_schema"]])
     expect_false(homogeneity[["parameters"]])
-    expect_named(studies[[1]]$parameters, c("BW", "group"))
-    expect_named(studies[[2]]$parameters, "BW")
+    expect_named(.experiment_entry(studies, 1)$parameters, c("BW", "group"))
+    expect_named(.experiment_entry(studies, 2)$parameters, "BW")
 })
 
 test_that("optim parameter overlays preserve homogeneous parameter schemas", {
-    studies <- experiments(
+    studies <- c(
         first = experiment(parameters = parameters(BW = 70)),
         second = experiment(parameters = parameters(BW = 80))
     )
@@ -654,7 +657,7 @@ test_that("optim parameter overlays preserve homogeneous parameter schemas", {
 })
 
 test_that("optim skips parameter overlays without estimated model parameters", {
-    studies <- experiments(first = experiment(), second = experiment())
+    studies <- c(first = experiment(), second = experiment())
     plan <- .optim_parameter_overlay_plan(studies, character())
 
     expect_identical(
@@ -665,7 +668,9 @@ test_that("optim skips parameter overlays without estimated model parameters", {
 
 test_that("estimation predictions retain rows with missing observations", {
     study <- estimation_test_experiment()
-    study$observations$value[[2]] <- NA_real_ * study$observations$value[[2]]
+    entry <- .experiment_entry(study)
+    entry$observations$value[[2]] <- NA_real_ * entry$observations$value[[2]]
+    study <- .new_experiments(list(entry), .experiments_compute_component_homogeneity(list(entry)))
     problem <- estimation_problem(
         estimation_test_model(),
         study,
@@ -678,8 +683,8 @@ test_that("estimation predictions retain rows with missing observations", {
 
     fit <- estimate(problem, engine = optim_engine(control = list(maxit = 50)))
 
-    expect_equal(nrow(fitted(fit)), nrow(study$observations))
-    expect_equal(nrow(fit$engine_result$residuals), nrow(study$observations))
+    expect_equal(nrow(fitted(fit)), nrow(.experiment_entry(study)$observations))
+    expect_equal(nrow(fit$engine_result$residuals), nrow(.experiment_entry(study)$observations))
     expect_false(is.na(fitted(fit)$value[[2]]))
     expect_true(is.na(fit$engine_result$residuals$value[[2]]))
 })

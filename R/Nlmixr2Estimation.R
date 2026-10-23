@@ -437,8 +437,9 @@
     make <- function(column) {
         rows <- list()
         k <- 0L
+        elements <- .experiments_elements(problem$experiments)
         for (i in seq_along(problem$experiments)) {
-            observed <- problem$experiments[[i]]$observations
+            observed <- elements[[i]]$observations
             label <- experiment_names[[i]]
             for (j in seq_len(nrow(observed))) {
                 k <- k + 1L

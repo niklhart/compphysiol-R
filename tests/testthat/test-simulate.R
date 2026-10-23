@@ -563,7 +563,7 @@ test_that("prepared compiled experiment designs preserve heterogeneous simulatio
         add_transport("Central", NULL, molec = "drug", const = "k") |>
         add_observable(C = c[drug, Central]) |>
         add_parameter(k = 0.2 [1/h])
-    studies <- experiments(
+    studies <- c(
         first = experiment(
             observations = observation_schedule(c(0, 1) [h], c("C", "C")),
             start = 0 [h]
@@ -600,7 +600,7 @@ test_that("prepared rxode2 experiment designs preserve heterogeneous simulations
         add_transport("Central", NULL, molec = "drug", const = "k") |>
         add_observable(C = c[drug, Central]) |>
         add_parameter(k = 0.2 [1/h])
-    studies <- experiments(
+    studies <- c(
         first = experiment(
             observations = observation_schedule(c(0, 1) [h], c("C", "C")),
             start = 0 [h]

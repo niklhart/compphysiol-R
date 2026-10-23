@@ -1,41 +1,3 @@
-#' Collect experiments
-#'
-#' Creates a list-like collection of independent individual simulation or
-#' estimation units. Element names are individual identifiers; unnamed inputs
-#' remain supported, while nonempty names must be unique. Positive whole-number
-#' names are reserved for transient identifiers of unnamed experiments. Order is preserved.
-#' Each element
-#' retains its own parameters and units. Use `[` to obtain a collection and
-#' `[[` to extract a single experiment.
-#'
-#' All experiments must use the same time unit mode (unit-free or unit-bearing).
-#' compphysiol_parameters with the same name and dose amounts for the same molecule and
-#' compartment must have compatible units, or all be unit-free. Convertible
-#' units are accepted without changing the stored values. Infusions are compared
-#' through their total amounts. Omitted dosing targets match other identically
-#' omitted targets; resolving them against explicit targets requires a model
-#' and is deferred to model preparation.
-#'
-#' @param ... `compphysiol_experiment` objects, optionally named with their individual
-#'   identifiers. For a list of experiments, use `do.call(experiments, x)`.
-#' @returns A `compphysiol_experiments` object.
-#' @examples
-#' x <- experiments(control = experiment(), treatment = experiment())
-#' x
-#' x["control"]
-#' x[["treatment"]]
-#' c(control = experiment(), treatment = experiment())
-#' c(x, experiments(repeat_run = experiment()))
-#' @export
-experiments <- function(...) {
-    x <- list(...)
-    .experiments_check_elements(x)
-    .check_optional_unique_names(x, "experiment")
-    .collection_identifiers(x, "Experiment")
-    .experiments_check_units(x)
-    .new_experiments(x, .experiments_compute_component_homogeneity(x))
-}
-
 .new_experiments <- function(x, component_homogeneity = NULL) {
     structure(
         x,
@@ -48,6 +10,10 @@ experiments <- function(...) {
     out <- unclass(x)
     attr(out, "component_homogeneity") <- NULL
     out
+}
+
+.experiment_entry <- function(x, i = 1L) {
+    .experiments_elements(x)[[i]]
 }
 
 .experiments_component_names <- function() {
@@ -98,7 +64,14 @@ experiments <- function(...) {
 }
 
 .experiments_check_elements <- function(x) {
-    if (!all(vapply(x, inherits, logical(1), "compphysiol_experiment"))) {
+    valid <- vapply(x, function(entry) {
+        is.list(entry) && identical(
+            names(entry), c("parameters", "dosing", "observations", "start")
+        ) && inherits(entry$parameters, "compphysiol_parameters") &&
+            inherits(entry$dosing, "compphysiol_dosing") &&
+            inherits(entry$observations, "compphysiol_observation_schedule")
+    }, logical(1))
+    if (!all(valid)) {
         stop("All elements must be experiment objects.", call. = FALSE)
     }
     invisible(NULL)
@@ -172,16 +145,16 @@ experiments <- function(...) {
     .new_experiments(out, .experiments_compute_component_homogeneity(out))
 }
 
-#' Extract an experiment
+#' Direct experiment extraction is not supported
 #' @param x A `compphysiol_experiments` object.
 #' @param i Index or name of a single experiment.
 #' @param ... Unused.
 #' @param exact Whether character indices must match exactly, as for lists.
-#' @returns A `compphysiol_experiment` object; unknown names return `NULL`, as for lists.
+#' @returns This method always errors. Use `[` to retain the public collection class.
 #' @export
 `[[.compphysiol_experiments` <- function(x, i, ..., exact = TRUE) {
-    if (length(i) != 1L) stop("Select a single experiment with [[.", call. = FALSE)
-    .experiments_elements(x)[[i, exact = exact]]
+    stop("Experiment extraction with [[ is not supported; use [ to retain the experiments collection.",
+         call. = FALSE)
 }
 
 #' Replace experiments in a collection
@@ -191,15 +164,12 @@ experiments <- function(...) {
 #' @param x A `compphysiol_experiments` collection.
 #' @param i Replacement index.
 #' @param ... Unused.
-#' @param value For `[[<-`, a `compphysiol_experiment` or `NULL`; for `[<-`, a
-#'   `compphysiol_experiments` collection.
+#' @param value For `[<-`, a `compphysiol_experiments` collection.
 #' @returns The modified `compphysiol_experiments` collection.
 #' @export
 `[[<-.compphysiol_experiments` <- function(x, i, ..., value) {
-    if (!is.null(value)) .check_class(value, "compphysiol_experiment")
-    out <- .experiments_elements(x)
-    out[[i]] <- value
-    .experiments_validate_result(out)
+    stop("Experiment replacement with [[<- is not supported; use [<- with an experiments collection.",
+         call. = FALSE)
 }
 
 #' @rdname sub-subset-.compphysiol_experiments
@@ -219,25 +189,9 @@ experiments <- function(...) {
     .new_experiments(x, .experiments_compute_component_homogeneity(x))
 }
 
-#' Combine experiments
-#'
-#' Individual `compphysiol_experiment` objects and existing
-#' `compphysiol_experiments` collections can be combined. The result is checked
-#' as a new collection, preserving element order and names.
-#'
-#' @param ... `compphysiol_experiment` or `compphysiol_experiments` objects.
+#' @param ... For `c()`, `compphysiol_experiments` objects to combine.
 #' @param recursive Unused.
-#' @returns A `compphysiol_experiments` object, preserving order and names.
-#' @name combine_experiments
-NULL
-
-#' @rdname combine_experiments
-#' @export
-c.compphysiol_experiment <- function(..., recursive = FALSE) {
-    .combine_experiments(list(...))
-}
-
-#' @rdname combine_experiments
+#' @rdname experiment
 #' @export
 c.compphysiol_experiments <- function(..., recursive = FALSE) {
     objects <- list(...)
@@ -245,24 +199,31 @@ c.compphysiol_experiments <- function(..., recursive = FALSE) {
 }
 
 .combine_experiments <- function(objects) {
+    .experiments_validate_result(.combine_experiment_inputs(objects))
+}
+
+.combine_experiment_inputs <- function(objects) {
     object_names <- names(objects)
     if (is.null(object_names)) object_names <- rep("", length(objects))
+    object_names[is.na(object_names)] <- ""
     parts <- lapply(seq_along(objects), function(i) {
         object <- objects[[i]]
-        if (inherits(object, "compphysiol_experiment")) {
-            return(setNames(list(object), object_names[[i]]))
-        }
         if (inherits(object, "compphysiol_experiments")) {
-            return(.experiments_elements(object))
+            entries <- .experiments_elements(object)
+            if (nzchar(object_names[[i]])) {
+                if (length(entries) != 1L) {
+                    stop("A name supplied around an experiment collection requires one entry.",
+                         call. = FALSE)
+                }
+                names(entries) <- object_names[[i]]
+            }
+            return(entries)
         }
-        stop(
-            "c() can only combine experiment and experiments objects.",
-            call. = FALSE
-        )
+        stop("All elements must be experiment collections.", call. = FALSE)
     })
     combined <- do.call(c, unname(parts))
     if (is.null(combined)) combined <- list()
-    .experiments_validate_result(combined)
+    combined
 }
 
 #' Collect observations from experiments
@@ -281,7 +242,7 @@ c.compphysiol_experiments <- function(..., recursive = FALSE) {
 #' @returns A `compphysiol_observation_data` or
 #'   `compphysiol_observation_schedule` object with an `experiment` column.
 #' @examples
-#' studies <- experiments(
+#' studies <- c(
 #'     treated = experiment(observations = observation_data(1, "C", 2)),
 #'     experiment(observations = observation_data(1, "C", 3))
 #' )
@@ -296,7 +257,7 @@ observations <- function(x) {
         return(.new_observation_schedule(out))
     }
 
-    tables <- lapply(x, `[[`, "observations")
+    tables <- lapply(.experiments_elements(x), `[[`, "observations")
     data <- vapply(tables, inherits, logical(1), "compphysiol_observation_data")
     if (!all(data) && any(data)) {
         stop(
@@ -334,6 +295,10 @@ print.compphysiol_experiments <- function(x, ...) {
         cat(" Experiments: (none)\n")
         return(invisible(x))
     }
+    if (length(x) == 1L) {
+        .print_experiment_entry(.experiment_entry(x), names(x))
+        return(invisible(x))
+    }
     homogeneity <- .experiments_component_homogeneity(x)
     labels <- names(x)
     if (is.null(labels)) labels <- rep("", length(x))
@@ -349,13 +314,13 @@ print.compphysiol_experiments <- function(x, ...) {
     )
 
     if (length(x) > 1L) {
-        shared <- .experiments_print_shared(x[[1]], homogeneity)
+        shared <- .experiments_print_shared(.experiment_entry(x), homogeneity)
         if (length(shared)) cat("  shared: ", paste(shared, collapse = "; "), "\n", sep = "")
         if (collapsed) return(invisible(x))
     }
 
     for (i in seq_along(x)) {
-        e <- x[[i]]
+        e <- .experiment_entry(x, i)
         label <- if (named[[i]]) labels[[i]] else ""
         details <- .experiments_print_individual(
             e, if (length(x) > 1L) homogeneity else NULL

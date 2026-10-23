@@ -99,7 +99,7 @@ is_ode_dosing <- function(x) .inherits_compphysiol(x, "ode_dosing")
 
 #' @rdname class_predicates
 #' @export
-is_experiment <- function(x) .inherits_compphysiol(x, "experiment")
+is_experiment <- function(x) is_experiments(x) && length(x) == 1L
 
 #' @rdname class_predicates
 #' @export

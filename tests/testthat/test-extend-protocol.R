@@ -15,26 +15,26 @@ test_that("extend_protocol creates one experiment per individual", {
     expect_s3_class(result, "compphysiol_experiments")
     expect_length(result, 2)
     expect_named(result, c("alice", "bob"))
-    expect_identical(result[[1]]$parameters, parameters(
+    expect_identical(.experiment_entry(result, 1)$parameters, parameters(
         route = "oral", BW = 65 [kg], sex = "female"
     ))
-    expect_identical(result[[2]]$parameters, parameters(
+    expect_identical(.experiment_entry(result, 2)$parameters, parameters(
         route = "oral", BW = 82 [kg], sex = "male"
     ))
     for (individual in result) {
-        expect_s3_class(individual, "compphysiol_experiment")
-        expect_identical(individual$dosing, protocol$dosing)
-        expect_identical(individual$observations, protocol$observations)
-        expect_identical(individual$start, protocol$start)
+        expect_type(individual, "list")
+        expect_identical(individual$dosing, .experiment_entry(protocol)$dosing)
+        expect_identical(individual$observations, .experiment_entry(protocol)$observations)
+        expect_identical(individual$start, .experiment_entry(protocol)$start)
     }
-    expect_identical(protocol$parameters, parameters(route = "oral"))
+    expect_identical(.experiment_entry(protocol)$parameters, parameters(route = "oral"))
     expect_identical(population[[1]], parameters(BW = 65 [kg], sex = "female"))
     homogeneity <- .experiments_component_homogeneity(result)
     expect_true(all(homogeneity[c("start", "parameter_schema", "dosing", "observation_plan", "observations")]))
     expect_false(homogeneity[["parameters"]])
     expect_identical(
         homogeneity,
-        .experiments_compute_component_homogeneity(lapply(result, identity))
+        .experiments_compute_component_homogeneity(.experiments_elements(result))
     )
 })
 
@@ -63,7 +63,7 @@ test_that("extend_protocol preserves named and unnamed individuals", {
         parameter_sets(`2` = parameters(id = 1)),
         "positive whole numbers.*reserved"
     )
-    expect_identical(extend_protocol(protocol, parameter_sets()), experiments())
+    expect_identical(extend_protocol(protocol, parameter_sets()), experiment()[integer()])
 })
 
 test_that("extend_protocol lets individual parameters override protocol values", {
@@ -72,7 +72,7 @@ test_that("extend_protocol lets individual parameters override protocol values",
 
     result <- extend_protocol(protocol, population)
     expect_identical(
-        result[["person"]]$parameters,
+        .experiment_entry(result, "person")$parameters,
         parameters(BW = 65 [kg], route = "oral", sex = "female")
     )
 })

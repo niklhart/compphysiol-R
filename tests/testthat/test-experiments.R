@@ -1,26 +1,24 @@
 test_that("Experiments hold named and unnamed experiments without altering them", {
     a <- experiment(start = 0 [h], parameters = parameters(BW = 70 [kg]))
     b <- experiment(start = 0 [min])
-    x <- experiments(first = a, second = b)
+    x <- c(first = a, second = b)
     expect_s3_class(x, "compphysiol_experiments")
     expect_length(x, 2)
     expect_named(x, c("first", "second"))
-    expect_identical(x[[1]], a)
-    expect_identical(x[["second"]], b)
-    expect_null(x[["missing"]])
-    expect_error(x[[3]], "out of bounds")
-    expect_error(x[[c(1, 1)]], "single experiment")
-    expect_identical(experiments(a)[[1]], a)
-    expect_length(experiments(), 0)
-    expect_error(experiments(a, 1), "experiment")
+    expect_identical(x[1], c(first = a))
+    expect_identical(x["second"], c(second = b))
+    expect_error(x[[1]], "not supported")
+    expect_error(x[["missing"]], "not supported")
+    expect_length(experiment()[integer()], 0)
+    expect_error(c(a, 1), "experiment")
 })
 
 test_that("Experiments subsetting preserves the collection and requested order", {
-    x <- experiments(a = experiment(), b = experiment(start = -1))
+    x <- c(a = experiment(), b = experiment(start = -1))
     expect_identical(x[], x)
-    expect_identical(x[c("b", "a")], experiments(b = x[[2]], a = x[[1]]))
-    expect_identical(x[-1], experiments(b = x[[2]]))
-    expect_identical(x[c(TRUE, FALSE)], experiments(a = x[[1]]))
+    expect_identical(x[c("b", "a")], c(b = x[2], a = x[1]))
+    expect_identical(x[-1], c(b = x[2]))
+    expect_identical(x[c(TRUE, FALSE)], c(a = x[1]))
     expect_error(x[c(1, 1)], "unique")
     expect_s3_class(x[integer()], "compphysiol_experiments")
     expect_length(x[integer()], 0)
@@ -38,7 +36,7 @@ test_that("experiment collections track component homogeneity", {
         parameters = parameters(CL = 2), dosing = dose,
         observations = observation_data(c(1, 2), "C", c(7, 4)), start = 0
     )
-    x <- experiments(a = a, b = b)
+    x <- c(a = a, b = b)
 
     expect_identical(
         .experiments_component_homogeneity(x),
@@ -49,7 +47,7 @@ test_that("experiment collections track component homogeneity", {
     )
     expect_true(all(.experiments_component_homogeneity(x[1])))
 
-    different_units <- experiments(
+    different_units <- c(
         experiment(parameters = parameters(BW = 70 [kg])),
         experiment(parameters = parameters(BW = 70000 [g]))
     )
@@ -59,50 +57,52 @@ test_that("experiment collections track component homogeneity", {
 test_that("collection combination and replacement maintain homogeneity", {
     a <- experiment(parameters = parameters(CL = 1))
     b <- experiment(parameters = parameters(CL = 2))
-    homogeneous <- experiments(a = a, b = a)
-    heterogeneous <- experiments(c = a, d = b)
+    homogeneous <- c(a = a, b = a)
+    heterogeneous <- c(c = a, d = b)
 
     expect_true(all(.experiments_component_homogeneity(homogeneous)))
     combined <- c(homogeneous, heterogeneous)
     expect_false(.experiments_component_homogeneity(combined)[["parameters"]])
     expect_true(.experiments_component_homogeneity(combined)[["parameter_schema"]])
 
-    heterogeneous[[2]] <- a
+    expect_error(heterogeneous[[2]] <- a, "not supported")
+    heterogeneous[2] <- a
     expect_true(all(.experiments_component_homogeneity(heterogeneous)))
-    heterogeneous[[2]]$parameters <- parameters(CL = 3)
+    heterogeneous[2] <- experiment(parameters = parameters(CL = 3))
     expect_false(.experiments_component_homogeneity(heterogeneous)[["parameters"]])
 
-    heterogeneous[2] <- experiments(replacement = a)
+    heterogeneous[2] <- c(replacement = a)
     expect_true(all(.experiments_component_homogeneity(heterogeneous)))
     expect_named(heterogeneous, c("c", "d"))
 
-    expect_error(
-        heterogeneous[["2"]] <- experiment(),
-        "positive whole numbers.*reserved"
-    )
+    expect_error(heterogeneous[["2"]] <- experiment(), "not supported")
 })
 
 test_that("Experiment names are optional but nonempty names are unique", {
     expect_error(
-        experiments(a = experiment(), a = experiment()),
+        c(a = experiment(), a = experiment()),
         "Experiment names must be unique"
     )
     expect_error(
-        c(experiments(a = experiment()), experiments(a = experiment())),
+        c(c(a = experiment()), c(a = experiment())),
         "Experiment names must be unique"
     )
 
-    unnamed <- experiments(experiment(), experiment())
+    unnamed <- c(experiment(), experiment())
     expect_error(unnamed[c(1, 1)], "unique")
-    expect_length(c(unnamed, experiments(experiment())), 3L)
+    expect_length(c(unnamed, c(experiment())), 3L)
     expect_error(
-        experiments(`2` = experiment()),
+        c(`2` = experiment()),
         "positive whole numbers.*reserved"
+    )
+    expect_error(
+        c(experiment(name = "same"), experiment(name = "same")),
+        "Experiment names must be unique"
     )
 })
 
 test_that("observations collects data with stable experiment identifiers", {
-    x <- experiments(
+    x <- c(
         treated = experiment(observations = observation_data(
             c(1, 2) [h], "C", c(8, 5) [mg/L], replicate = c("a", "b")
         )),
@@ -123,7 +123,7 @@ test_that("observations collects data with stable experiment identifiers", {
 })
 
 test_that("observations preserves schedules and rejects ambiguous collections", {
-    schedules <- experiments(
+    schedules <- c(
         experiment(observations = observation_schedule(1, "C")),
         experiment(observations = observation_schedule(2, "C"))
     )
@@ -132,23 +132,23 @@ test_that("observations preserves schedules and rejects ambiguous collections", 
     expect_false(inherits(out, "compphysiol_observation_data"))
     expect_identical(levels(out$experiment), c("1", "2"))
 
-    empty <- observations(experiments())
+    empty <- observations(experiment()[integer()])
     expect_s3_class(empty, "compphysiol_observation_schedule")
     expect_named(empty, c("time", "observable", "experiment"))
 
-    mixed <- experiments(
+    mixed <- c(
         experiment(observations = observation_schedule(1, "C")),
         experiment(observations = observation_data(1, "C", 2))
     )
     expect_error(observations(mixed), "mixture")
 
-    columns <- experiments(
+    columns <- c(
         experiment(observations = observation_schedule(1, "C", note = "a")),
         experiment(observations = observation_schedule(1, "C"))
     )
     expect_error(observations(columns), "identical columns")
 
-    reserved <- experiments(experiment(
+    reserved <- c(experiment(
         observations = observation_schedule(1, "C", experiment = "source")
     ))
     expect_error(observations(reserved), "reserved")
@@ -156,13 +156,15 @@ test_that("observations preserves schedules and rejects ambiguous collections", 
 })
 
 test_that("Experiments subsetting trusts the collection contract", {
-    x <- experiments(a = experiment(observations = observation_schedule(1, "A")))
-    x[[1]]$observations$observable <- ""
+    x <- c(a = experiment(observations = observation_schedule(1, "A")))
+    elements <- .experiments_elements(x)
+    elements[[1]]$observations$observable <- ""
+    x <- .new_experiments(elements, .experiments_component_homogeneity(x))
 
     subset <- x[1]
 
     expect_s3_class(subset, "compphysiol_experiments")
-    expect_identical(subset[[1]], x[[1]])
+    expect_identical(.experiment_entry(subset), .experiment_entry(x))
 })
 
 test_that("experiment collection low-level construction trusts canonical input", {
@@ -171,14 +173,15 @@ test_that("experiment collection low-level construction trusts canonical input",
 })
 
 test_that("Experiments concatenation retains names, units, and empty collections", {
-    a <- experiments(a = experiment(start = 0 [h]))
-    b <- experiments(b = experiment(start = -1 [h]))
-    expect_identical(c(a, b), experiments(a = a[[1]], b = b[[1]]))
-    expect_identical(c(experiments(), a, experiments()), a)
-    expect_identical(c(experiments(), experiments()), experiments())
+    a <- c(a = experiment(start = 0 [h]))
+    b <- c(b = experiment(start = -1 [h]))
+    expect_identical(c(a, b), c(a = a, b = b))
+    empty <- experiment()[integer()]
+    expect_identical(c(empty, a, empty), a)
+    expect_identical(c(empty, empty), empty)
     expect_identical(
         c(a, experiment(start = 1 [h])),
-        experiments(a = a[[1]], experiment(start = 1 [h]))
+        c(a = a, experiment(start = 1 [h]))
     )
 })
 
@@ -188,12 +191,16 @@ test_that("individual experiments combine directly with c", {
 
     direct <- c(control = a, treatment = b)
     expect_s3_class(direct, "compphysiol_experiments")
-    expect_identical(direct, experiments(control = a, treatment = b))
-    expect_identical(c(a, experiments(treatment = b)), experiments(a, treatment = b))
-    expect_identical(c(experiments(control = a), b), experiments(control = a, b))
-    expect_error(c(a, 1), "experiment and experiments")
+    expect_identical(direct, c(control = a, treatment = b))
+    expect_identical(c(a, c(treatment = b)), c(a, treatment = b))
+    expect_identical(c(c(control = a), b), c(control = a, b))
+    expect_error(c(a, 1), "experiment collections")
     expect_error(c(`2` = a, b), "positive whole numbers.*reserved")
     expect_error(c(a, experiment()), "time.*units")
+
+    original <- experiment(name = "original")
+    expect_named(c(original), "original")
+    expect_named(c(replacement = original), "replacement")
 })
 
 test_that("collection printing summarizes while single printing shows details", {
@@ -203,21 +210,25 @@ test_that("collection printing summarizes while single printing shows details", 
         observations = observation_schedule(c(1, 2) [h], "C"),
         start = 0 [h]
     )
-    x <- experiments(treatment = e, empty = experiment(start = 0 [h]))
+    x <- c(treatment = e, empty = experiment(start = 0 [h]))
     summary <- capture.output(result <- print(x))
     expect_identical(result, x)
     expect_length(summary, 4)
     expect_match(summary[2], "shared: start = 0.*h")
     expect_match(summary[3], "treatment.*BW = 70.*kg.*1 dosing event.*C\\(t = 1.*h.*\\).*[.][.][.] 1 more observation")
     expect_identical(summary[4], "  (2) empty")
-    expect_output(print(experiments()), "Experiments: \\(none\\)")
-    details <- capture.output(result <- print(x[[1]]))
-    expect_identical(result, e)
+    expect_output(print(experiment()[integer()]), "Experiments: \\(none\\)")
+    details <- capture.output(result <- print(x[1]))
+    expect_identical(result, x[1])
     expect_true(any(grepl("BW.*70.*kg", details)))
     expect_true(any(grepl("Bolus:.*100.*mg", details)))
     expect_true(any(grepl("observable", details)))
     expect_true(any(grepl("C", details)))
     expect_output(print(experiment()), "Observations: \\(none\\)")
+    expect_identical(
+        capture.output(print(experiment(name = "treatment")))[1],
+        "Experiment: treatment"
+    )
 })
 
 test_that("collection printing lifts shared components and omits empty ones", {
@@ -225,24 +236,31 @@ test_that("collection printing lifts shared components and omits empty ones", {
         dosing = dosing(time = 0, amount = 10),
         observations = observation_schedule(c(1, 2), "C")
     )
-    unnamed <- experiments(shared, shared)
+    unnamed <- c(shared, shared)
     output <- capture.output(print(unnamed))
     expect_identical(output[1], " Experiments: 2 unnamed")
     expect_match(output[2], "shared: start = 0; 1 dosing event; 2 observations scheduled")
     expect_length(output, 2L)
 
-    named <- experiments(control = shared, treatment = shared)
+    named <- c(control = shared, treatment = shared)
     output <- capture.output(print(named))
     expect_length(output, 4L)
     expect_identical(output[3:4], c("  (1) control", "  (2) treatment"))
 
-    singleton <- capture.output(print(experiments(experiment())))
-    expect_identical(singleton, c(" Experiments:", "  (1) start = 0"))
+    singleton <- capture.output(print(c(experiment())))
+    expect_identical(singleton, c(
+        "Experiment:", " Start: 0", " Parameters: (none)",
+        " Dosing: (none)", " Observations: (none)"
+    ))
+    expect_identical(
+        capture.output(print(c(renamed = experiment(name = "original"))))[1],
+        "Experiment: renamed"
+    )
 })
 
 test_that("collection printing distinguishes shared schemas from shared values", {
     dose <- dosing(time = 0, amount = 10)
-    x <- experiments(
+    x <- c(
         experiment(
             parameters = parameters(CL = 1), dosing = dose,
             observations = observation_data(c(1, 2), "C", c(8, 5))
@@ -264,7 +282,7 @@ test_that("collection printing bounds varying parameter and observation previews
         parameters = parameters(a = offset, b = offset + 1, c = offset + 2),
         observations = observation_data(c(1, 2, 3), "C", offset + c(1, 2, 3))
     )
-    output <- capture.output(print(experiments(make(0), make(10))))
+    output <- capture.output(print(c(make(0), make(10))))
     expect_match(output[3], "a = 0, b = 1, [.][.][.] 1 more parameter")
     expect_match(output[3], "C\\(t = 1\\) = 1, [.][.][.] 2 more observations")
     expect_match(output[3], "more parameter; C\\(t = 1\\)")
@@ -274,22 +292,22 @@ test_that("collection printing bounds varying parameter and observation previews
 test_that("collection time units are consistent even without observations", {
     a <- experiment(start = 0 [h], observations = observation_schedule(60 [min], "C"))
     b <- experiment(start = 0 [s])
-    expect_no_error(experiments(a, b))
-    expect_error(experiments(a, experiment()), "time.*units")
-    expect_error(c(experiments(a), experiments(experiment())), "time.*units")
+    expect_no_error(c(a, b))
+    expect_error(c(a, experiment()), "time.*units")
+    expect_error(c(c(a), c(experiment())), "time.*units")
 })
 
 test_that("overlapping experiment parameters require compatible units", {
     a <- experiment(parameters = parameters(BW = 70 [kg], group = "adult"))
     b <- experiment(parameters = parameters(BW = 60000 [g], group = "child"))
-    expect_no_error(experiments(a, b))
-    expect_no_error(experiments(a, experiment(parameters = parameters(age = 20 [h]))))
+    expect_no_error(c(a, b))
+    expect_no_error(c(a, experiment(parameters = parameters(age = 20 [h]))))
     for (p in list(parameters(BW = 70), parameters(BW = 70 [h]))) {
         bad <- experiment(parameters = p)
-        expect_error(experiments(a, bad), "parameter 'BW'.*units")
-        expect_error(c(experiments(a), experiments(bad)), "parameter 'BW'.*units")
+        expect_error(c(a, bad), "parameter 'BW'.*units")
+        expect_error(c(c(a), c(bad)), "parameter 'BW'.*units")
     }
-    expect_error(experiments(experiment(), a, experiment(parameters = parameters(BW = 1 [L]))), "BW")
+    expect_error(c(experiment(), a, experiment(parameters = parameters(BW = 1 [L]))), "BW")
 })
 
 test_that("matching dosing targets require compatible amount units", {
@@ -299,17 +317,17 @@ test_that("matching dosing targets require compatible amount units", {
     }
     a <- make(with_units(100 [mg]))
     b <- make(with_units(0.1 [g]))
-    expect_no_error(experiments(a, b))
+    expect_no_error(c(a, b))
     for (amount in list(100, with_units(1 [mol]))) {
         bad <- make(amount)
-        expect_error(experiments(a, bad), "dosing target.*drug.*Central.*units")
-        expect_error(c(experiments(a), experiments(bad)), "dosing target")
-        expect_no_error(experiments(a, make(amount, molec = "other")))
-        expect_no_error(experiments(a, make(amount, cmt = "Other")))
+        expect_error(c(a, bad), "dosing target.*drug.*Central.*units")
+        expect_error(c(c(a), c(bad)), "dosing target")
+        expect_no_error(c(a, make(amount, molec = "other")))
+        expect_no_error(c(a, make(amount, cmt = "Other")))
     }
-    expect_error(experiments(make(1, NULL, NULL), make(with_units(1 [mg]), NULL, NULL)), "dosing target")
+    expect_error(c(make(1, NULL, NULL), make(with_units(1 [mg]), NULL, NULL)), "dosing target")
     infusion <- experiment(start = 0 [h], dosing = dosing(time = 0 [min],
         rate = 1 [g/h], duration = 60 [min], molec = "drug", cmt = "Central"))
-    expect_no_error(experiments(a, infusion))
-    expect_identical(experiments(a, b)[[2]], b)
+    expect_no_error(c(a, infusion))
+    expect_identical(c(a, b)[2], b)
 })

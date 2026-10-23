@@ -7,7 +7,7 @@
 extend_protocol(protocol, population)
 }
 \arguments{
-\item{protocol}{An \link[=experiment]{compphysiol_experiment} defining shared dosing,
+\item{protocol}{A length-one \code{compphysiol_experiments} object defining shared dosing,
 observations, start, and optional parameters.}
 
 \item{population}{A \link[=parameter_sets]{compphysiol_parameter_sets} collection containing
@@ -17,9 +17,9 @@ realized individual parameters.}
 A \code{compphysiol_experiments} collection with one experiment per parameter set.
 }
 \description{
-Combines one protocol \link[=experiment]{compphysiol_experiment} with each individual in a
+Combines one length-one protocol created by \code{\link[=experiment]{experiment()}} with each individual in a
 \link[=parameter_sets]{compphysiol_parameter_sets} collection. The result contains one
-\code{compphysiol_experiment} per individual. compphysiol_dosing, observations, and start are copied from
+experiment entry per individual. Dosing, observations, and start are copied from
 the protocol, while protocol and individual parameters are combined.
 }
 \details{

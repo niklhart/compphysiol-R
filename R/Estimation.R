@@ -335,8 +335,8 @@ nlmixr2_engine <- function(method = "focei", control = list(), table = list()) {
 #'
 #' @param model A `compphysiol_compartment_model`, `compphysiol_process_model`, `compphysiol_ode_model`, or
 #'   `compphysiol_desolve_compiled_model`.
-#' @param experiments An [compphysiol_experiment][experiment()] or
-#'   [compphysiol_experiments][experiments()] collection containing `compphysiol_observation_data`.
+#' @param experiments A `compphysiol_experiments` collection created by
+#'   [experiment()] or `c()` and containing `compphysiol_observation_data`.
 #'   Each experiment is one independent individual estimation unit, and
 #'   collection names are individual identifiers.
 #' @param parameters Named [parameter_spec()] objects combined with `c()`
@@ -360,12 +360,6 @@ estimation_problem <- function(model, experiments, parameters, statistics) {
     }
     .check_class(parameters, "compphysiol_parameter_specs")
     .check_class(statistics, "compphysiol_statistical_model")
-    if (inherits(experiments, "compphysiol_experiment")) {
-        elements <- list(experiments)
-        experiments <- .new_experiments(
-            elements, .experiments_compute_component_homogeneity(elements)
-        )
-    }
     .check_class(experiments, "compphysiol_experiments")
     if (!length(experiments)) stop("Estimation requires at least one experiment.", call. = FALSE)
 
@@ -373,7 +367,7 @@ estimation_problem <- function(model, experiments, parameters, statistics) {
     estimated_names <- names(parameters)
     observed_names <- character()
     for (i in seq_along(experiments)) {
-        e <- experiments[[i]]
+        e <- .experiment_entry(experiments, i)
         if (!inherits(e$observations, "compphysiol_observation_data")) {
             stop("Estimation requires observation data in every experiment.", call. = FALSE)
         }
@@ -940,7 +934,7 @@ print.compphysiol_estimation_result <- function(x, ...) {
     residual_rows <- list()
     experiment_names <- .collection_identifiers(experiments, "Experiment")
     for (i in seq_along(experiments)) {
-        observed <- experiments[[i]]$observations
+        observed <- .experiment_entry(experiments, i)$observations
         predicted <- simulated$observables
         if ("experiment" %in% names(predicted)) {
             predicted <- predicted[predicted$experiment == experiment_names[[i]], ]

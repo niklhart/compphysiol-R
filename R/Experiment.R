@@ -8,6 +8,11 @@
 #' not store a model or an observation error model. Repeated occasions and state
 #' resets are outside the current contract.
 #'
+#' Experiments are collections at every length. Use `c()` to combine them.
+#' Existing names are preserved unless an input is given an outer argument name
+#' in `c()`; that outer name replaces the name stored on the length-one input.
+#' Positive whole-number names are reserved for transient positional identifiers.
+#'
 #' Pass an experiment to [simulate()] through the `experiment` argument for ODE
 #' simulation, or include observation data when using it for estimation.
 #'
@@ -31,7 +36,11 @@
 #'   the units of the first nonempty schedule (dosing, then observations), or
 #'   unit-free zero if both schedules are empty. It does not mean the earliest
 #'   scheduled time. Incompatible schedules still produce an error.
-#' @returns A `compphysiol_experiment` object.
+#' @param name Optional experiment identifier. It must be a nonempty character
+#'   scalar and cannot be a positive whole number, which is reserved for
+#'   transient positional identifiers.
+#' @returns `experiment()` returns a length-one `compphysiol_experiments`
+#'   object. `c()` returns the combined `compphysiol_experiments` collection.
 #' @examples
 #' e <- experiment(
 #'     parameters = parameters(BW = 70 [kg]),
@@ -39,12 +48,14 @@
 #'     observations = observation_schedule(c(1, 2, 4) [h], "C")
 #' )
 #' e
+#' c(control = e, treatment = experiment())
 #' @export
 experiment <- function(
     parameters = NULL,
     dosing = NULL,
     observations = NULL,
-    start = NULL
+    start = NULL,
+    name = NULL
 ) {
     start <- .process_nse_arg(substitute(start), envir = parent.frame())
     if (is.null(parameters)) parameters <- parameters()
@@ -66,13 +77,22 @@ experiment <- function(
             stop("Experiment infusion duration must be positive.", call. = FALSE)
         }
     }
-    .new_experiment(list(
+    entry <- .new_experiment(list(
         parameters = parameters, dosing = dosing, observations = observations, start = start
     ))
+    entries <- if (is.null(name)) list(entry) else {
+        if (!is.character(name) || length(name) != 1L || is.na(name) || !nzchar(name)) {
+            stop("Experiment name must be NULL or one nonempty character value.", call. = FALSE)
+        }
+        stats::setNames(list(entry), name)
+    }
+    .check_optional_unique_names(entries, "experiment")
+    .collection_identifiers(entries, "Experiment")
+    .new_experiments(entries, .experiments_compute_component_homogeneity(entries))
 }
 
 .new_experiment <- function(x) {
-    structure(x, class = .compphysiol_class("compphysiol_experiment"))
+    x
 }
 
 .experiment_default_start <- function(dosing, observations) {
@@ -107,13 +127,9 @@ experiment <- function(
     invisible(NULL)
 }
 
-#' Print an experiment
-#' @param x A `compphysiol_experiment` object.
-#' @param ... Unused.
-#' @returns `x`, invisibly.
-#' @export
-print.compphysiol_experiment <- function(x, ...) {
-    cat("Experiment:\n")
+.print_experiment_entry <- function(x, name = NULL) {
+    named <- !is.null(name) && length(name) == 1L && !is.na(name) && nzchar(name)
+    cat("Experiment:", if (named) paste0(" ", name), "\n", sep = "")
     cat(" Start: ", format(x$start), "\n", sep = "")
     print(x$parameters)
     print(x$dosing)
@@ -127,5 +143,5 @@ print.compphysiol_experiment <- function(x, ...) {
     } else {
         cat(" Observations: (none)\n")
     }
-    invisible(x)
+    invisible(NULL)
 }

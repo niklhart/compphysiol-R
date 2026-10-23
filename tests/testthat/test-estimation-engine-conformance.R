@@ -7,7 +7,7 @@ fixed_effects_conformance_problem <- function() {
             rate = "CL * c[drug, Central]"
         ) |>
         add_observable(C = c[drug, Central])
-    studies <- experiments(
+    studies <- c(
         first = experiment(observations = observation_data(
             time = c(1, 2, 4, 6), observable = "C",
             value = c(82.1, 67.0, 44.8, 30.2)
@@ -47,7 +47,7 @@ unit_aware_fixed_effects_conformance_problem <- function() {
     )
     observation_times <- with_units(c(1, 2, 4, 6) [h])
     concentration_unit <- units::set_units(1, "mg/L", mode = "standard")
-    studies <- experiments(
+    studies <- c(
         first = experiment(
             dosing = dose,
             observations = observation_data(

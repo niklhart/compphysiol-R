@@ -89,8 +89,7 @@ test_that("domain and statistical objects have prefixed primary classes", {
         observables = observables(),
         parameters = parameters(),
         dosing = dosing(),
-        experiment = experiment(),
-        experiments = experiments(),
+        experiments = experiment()[integer()],
         parameter_sets = parameter_sets(),
         observation_schedule = observation_schedule(),
         observation_data = observation_data(),
@@ -158,8 +157,7 @@ test_that("public predicates mirror prefixed class names", {
         parameters = parameters(),
         parameter_sets = parameter_sets(),
         dosing = dosing(),
-        experiment = experiment(),
-        experiments = experiments(),
+        experiments = experiment()[integer()],
         observation_schedule = observation_schedule(),
         observation_data = observation_data(),
         parameter_spec = parameter_spec(1),
@@ -185,6 +183,8 @@ test_that("public predicates mirror prefixed class names", {
         expect_true(predicate(objects[[suffix]]), info = suffix)
         expect_false(predicate(NULL), info = suffix)
     }
+    expect_true(is_experiment(experiment()))
+    expect_false(is_experiment(experiment()[integer()]))
 })
 
 test_that("model predicates follow concrete and abstract inheritance", {

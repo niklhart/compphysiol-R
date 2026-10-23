@@ -72,11 +72,10 @@ observed <- observation_data(
     value = c(82, 68, 45) [mg/L]
 )
 
-study <- experiments(
-    individual_1 = experiment(
-        observations = observed,
-        start = 0 [h]
-    )
+study <- experiment(
+    observations = observed,
+    start = 0 [h],
+    name = "individual_1"
 )
 
 study

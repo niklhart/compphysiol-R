@@ -4,7 +4,7 @@
 #' for stochastic replicates and `experiment` for experiment-collection
 #' simulation. Values are numeric for unit-free output, a `units` vector when
 #' all output units are identical, and `mixed_units` otherwise.
-#' compphysiol_experiment schedule order and duplicate observation rows are retained.
+#' Experiment schedule order and duplicate observation rows are retained.
 #' Both helpers accept an observable table directly, allowing filtering before
 #' reshaping without modifying the simulation result.
 #' @param x A `compphysiol_simulation_result`, `compphysiol_observation_data`, or a long-format observable

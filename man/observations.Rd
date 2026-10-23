@@ -26,7 +26,7 @@ observation data or all observation schedules. Observation tables must have
 identical columns, and \code{experiment} is reserved for the added identifier.
 }
 \examples{
-studies <- experiments(
+studies <- c(
     treated = experiment(observations = observation_data(1, "C", 2)),
     experiment(observations = observation_data(1, "C", 3))
 )

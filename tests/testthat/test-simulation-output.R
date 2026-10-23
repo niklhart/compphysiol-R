@@ -30,12 +30,13 @@ test_that("experiments preserve sparse schedule order and parameter overrides", 
     e <- experiment(parameters = parameters(k = 0.1 [1/h]), observations = observation_schedule(
         time = c(120, 60, 120) [min], observable = c("C", "A", "C")))
     out <- simulate(output_test_model(), experiment = e)
-    expect_identical(out$observables$time, e$observations$time)
-    expect_identical(out$observables$observable, e$observations$observable)
+    expect_identical(out$observables$time, .experiment_entry(e)$observations$time)
+    expect_identical(out$observables$observable, .experiment_entry(e)$observations$observable)
     expect_equal(as.numeric(out$observables$value[[1]]), 10 * exp(-0.2), tolerance = 1e-6)
     expect_equal(as.numeric(out$states$time), c(0, 60, 120))
     expect_error(as_observables_wide(out), "duplicate")
-    e$observations <- e$observations[1:2, ]
+    e <- experiment(parameters = parameters(k = 0.1 [1/h]),
+                    observations = .experiment_entry(e)$observations[1:2, ])
     wide <- as_observables_wide(simulate(output_test_model(), experiment = e))
     expect_true(is.na(wide$A[1]))
     expect_true(is.na(wide$C[2]))
@@ -50,7 +51,7 @@ test_that("simulation predictions plug into another experiment as observation da
 
     expect_s3_class(predictions, "compphysiol_observation_data")
     expect_s3_class(predictions, "compphysiol_observation_schedule")
-    expect_identical(calibration$observations, predictions)
+    expect_identical(.experiment_entry(calibration)$observations, predictions)
     expect_equal(
         simulate(output_test_model(), experiment = calibration)$observables,
         predictions
@@ -62,7 +63,7 @@ test_that("experiment collections bind results with identifiers", {
     schedule <- observation_schedule(c(0, 1) [h], "A")
     a <- experiment(observations = schedule)
     b <- experiment(observations = schedule, dosing = dosing(time = 0 [h], amount = 10 [mg]))
-    out <- simulate(m, experiment = experiments(control = a, treated = b))
+    out <- simulate(m, experiment = c(control = a, treated = b))
     expect_s3_class(out, "compphysiol_simulation_result")
     expect_named(out, c("states", "observables"))
     expect_named(out$states, c("experiment", "time", "a_drug_Central"))
@@ -77,7 +78,9 @@ test_that("experiment collections bind results with identifiers", {
     expect_error(simulate(m, experiment = a, time = 0:1), "cannot.*time")
     expect_error(simulate(m, experiment = a, parameters = list()), "cannot.*parameters")
     expect_error(simulate(m, experiment = experiment()), "observations")
-    a$observations$observable <- "unknown"
+    a <- experiment(observations = observation_schedule(
+        .experiment_entry(a)$observations$time, "unknown"
+    ))
     expect_error(simulate(m, experiment = a), "Unknown observable")
 })
 
@@ -89,8 +92,11 @@ test_that("ODE and compiled experiment simulation reuse the sparse contract", {
     for (obj in list(to_ode_model(m), to_compiled_ode_model(m))) {
         actual <- simulate(obj, experiment = e)
         expect_equal(actual$observables, expected$observables, tolerance = 1e-6)
-        e2 <- e
-        e2$dosing <- dosing()
+        entry <- .experiment_entry(e)
+        e2 <- experiment(
+            parameters = entry$parameters, dosing = dosing(),
+            observations = entry$observations, start = entry$start
+        )
         expect_equal(as.numeric(simulate(obj, experiment = e2)$observables$value[1]), 100)
     }
 })
@@ -112,7 +118,7 @@ test_that("empty observable extraction retains collection identifiers", {
     m <- output_test_model()
     m$observables <- observables()
     individual <- simulate(m, time = c(0, 1) [h])
-    designs <- experiments(first = experiment(), second = experiment())
+    designs <- c(first = experiment(), second = experiment())
     out <- .simulation_bind_experiment_results(
         list(individual, individual), designs
     )
@@ -128,7 +134,7 @@ test_that("experiment collections prepare inactive infusion structures", {
     a <- experiment(observations = schedule,
         dosing = dosing(time = 0 [h], amount = 10 [mg], duration = 1 [h], cmt = "Central"))
     b <- experiment(observations = schedule)
-    out <- simulate(m, experiment = experiments(infusion = a, control = b))
+    out <- simulate(m, experiment = c(infusion = a, control = b))
     expect_true(any(grepl("Depot", names(out$states))))
     infusion <- out$observables[out$observables$experiment == "infusion", ]
     control <- out$observables[out$observables$experiment == "control", ]
@@ -137,8 +143,8 @@ test_that("experiment collections prepare inactive infusion structures", {
     rownames(control) <- NULL
     expect_equal(.new_observation_data(control), simulate(m, experiment = b)$observables)
     expect_gt(as.numeric(infusion$value[2]), as.numeric(control$value[2]))
-    compiled <- to_compiled_ode_model(m |> add_dosing(dose = a$dosing))
-    actual <- simulate(compiled, experiment = experiments(infusion = a, control = b))
+    compiled <- to_compiled_ode_model(m |> add_dosing(dose = .experiment_entry(a)$dosing))
+    actual <- simulate(compiled, experiment = c(infusion = a, control = b))
     expect_equal(actual$observables, out$observables, tolerance = 1e-6)
     expect_error(simulate(to_compiled_ode_model(m), experiment = a), "absent")
 })
@@ -148,7 +154,7 @@ test_that("collection simulation uses transient identifiers and reserves experim
     schedule <- observation_schedule(c(0, 1) [h], "A")
     out <- simulate(
         m,
-        experiment = experiments(named = experiment(observations = schedule),
+        experiment = c(named = experiment(observations = schedule),
                                  experiment(observations = schedule))
     )
     expect_identical(levels(out$states$experiment), c("named", "2"))
@@ -158,7 +164,7 @@ test_that("collection simulation uses transient identifiers and reserves experim
         observations = observation_schedule(0 [h], "A", experiment = "source")
     )
     expect_error(
-        simulate(m, experiment = experiments(conflicting, conflicting)),
+        simulate(m, experiment = c(conflicting, conflicting)),
         "experiment.*reserved|reserved.*experiment"
     )
 })
@@ -167,7 +173,7 @@ test_that("compiled homogeneous preparation agrees with the fallback path", {
     m <- output_test_model()
     schedule <- observation_schedule(c(0, 1, 2) [h], c("A", "C", "A"))
     dose <- dosing(time = 0.5 [h], amount = 10 [mg])
-    designs <- experiments(
+    designs <- c(
         first = experiment(parameters = parameters(k = 0.2 [1/h]),
                            dosing = dose, observations = schedule),
         second = experiment(parameters = parameters(k = 0.1 [1/h]),
@@ -176,7 +182,7 @@ test_that("compiled homogeneous preparation agrees with the fallback path", {
     fallback <- designs
     attr(fallback, "component_homogeneity")[] <- FALSE
     compiled <- to_compiled_ode_model(m |> add_dosing(dose = dose))
-    simulate(compiled, experiment = designs[[1]])
+    simulate(compiled, experiment = designs[1])
 
     optimized <- simulate(compiled, experiment = designs)
     unoptimized <- simulate(compiled, experiment = fallback)
@@ -187,7 +193,7 @@ test_that("compiled homogeneous preparation agrees with the fallback path", {
 test_that("simulation trusts constructed experiment objects", {
     m <- output_test_model()
     e <- experiment(observations = observation_schedule(c(0, 1) [h], "A"))
-    x <- experiments(subject = e)
+    x <- c(subject = e)
 
     expect_no_error(simulate(m, experiment = e))
     expect_no_error(simulate(m, experiment = x))
@@ -204,7 +210,7 @@ test_that("only scheduled observable-time pairs are evaluated", {
         original(t, y, params)
     }
     info$obsFuncs$C <- function(...) stop("Unrequested observable was evaluated")
-    attr(m, "observation_schedule") <- e$observations
+    attr(m, "observation_schedule") <- .experiment_entry(e)$observations
     out <- .simulation_solve_ode_model(m, info, with_units(c(0, 1) [h]),
         dimensions = list(time = "h", mass = "mg"), parameters = m$parameters)
     expect_equal(calls, 1L)
@@ -240,8 +246,10 @@ test_that("single initial-time observations and intermediate dosing work", {
     m <- output_test_model()
     e <- experiment(observations = observation_schedule(0 [h], "A"))
     expect_equal(as.numeric(simulate(m, experiment = e)$observables$value), 100)
-    e$observations$time <- with_units(2 [h])
-    e$dosing <- dosing(time = 1 [h], amount = 10 [mg])
+    e <- experiment(
+        observations = observation_schedule(2 [h], "A"),
+        dosing = dosing(time = 1 [h], amount = 10 [mg])
+    )
     out <- simulate(m, experiment = e)
     expect_equal(as.numeric(out$observables$value), 100 * exp(-0.4) + 10 * exp(-0.2), tolerance = 1e-6)
 })
@@ -267,7 +275,10 @@ test_that("compiled experiments retain defaults and do not modify direct dosing"
     expect_equal(simulate(compiled, experiment = e)$observables, first$observables)
     direct <- simulate(compiled, time = c(0, 1) [h])
     expect_equal(as.numeric(subset(direct$observables, observable == "A")$value[[1]]), 120)
-    e$dosing <- dosing(time = 0 [h], amount = 1 [L])
+    e <- experiment(
+        observations = .experiment_entry(e)$observations,
+        dosing = dosing(time = 0 [h], amount = 1 [L])
+    )
     expect_error(simulate(compiled, experiment = e), "unit")
 })
 

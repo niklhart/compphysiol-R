@@ -49,7 +49,7 @@ test_that("rxode2 handles bolus, infusion, experiments, and cache reuse", {
         observations = schedule,
         dosing = dosing(time = 1 [h], amount = 20 [mg], duration = 1 [h])
     )
-    executable <- to_rxode2_model(model |> add_dosing(dose = design$dosing))
+    executable <- to_rxode2_model(model |> add_dosing(dose = .experiment_entry(design)$dosing))
 
     expected <- simulate(model, experiment = design)
     first <- simulate(executable, experiment = design)
@@ -112,7 +112,7 @@ test_that("rxode2 batches experiment collections by individual", {
         add_observable(A = a[drug, Central], C = c[drug, Central])
     schedule_a <- observation_schedule(c(0, 1, 2) [h], c("A", "C", "A"))
     schedule_b <- observation_schedule(c(0, 30, 120) [min], c("C", "A", "C"))
-    designs <- experiments(
+    designs <- c(
         control = experiment(
             parameters = parameters(A0 = 100 [mg], k = 0.2 [1/h]),
             observations = schedule_a,
@@ -134,14 +134,14 @@ test_that("rxode2 batches experiment collections by individual", {
     expect_equal(actual, expected, tolerance = 1e-5)
 })
 
-test_that("rxode2 handles a one-experiment collection without an id column", {
+test_that("rxode2 uses length-one output shape for a one-experiment collection", {
     skip_if_not_installed("rxode2")
     model <- compartment_model() |>
         add_compartment("Central", volume = 10 [L]) |>
         add_molecule("drug", initial = "A0", type = "amount") |>
         add_transport("Central", "", const = "k") |>
         add_observable(C = c[drug, Central])
-    designs <- experiments(only = experiment(
+    designs <- c(only = experiment(
         parameters = parameters(A0 = 100 [mg], k = 0.2 [1/h]),
         observations = observation_schedule(c(0, 1, 2) [h], "C"),
         start = 0 [h]
@@ -150,8 +150,8 @@ test_that("rxode2 handles a one-experiment collection without an id column", {
     expected <- simulate(model, experiment = designs)
     actual <- simulate(model, experiment = designs, engine = rxode2_engine())
 
-    expect_identical(levels(actual$states$experiment), "only")
-    expect_identical(levels(actual$observables$experiment), "only")
+    expect_false("experiment" %in% names(actual$states))
+    expect_false("experiment" %in% names(actual$observables))
     expect_equal(actual, expected, tolerance = 1e-5)
 })
 
@@ -164,7 +164,7 @@ test_that("rxode2 homogeneous preparation agrees with the fallback path", {
         add_observable(A = a[drug, Central], C = c[drug, Central])
     schedule <- observation_schedule(c(0, 1, 2) [h], c("A", "C", "A"))
     dose <- dosing(time = 0.5 [h], amount = 20 [mg])
-    designs <- experiments(
+    designs <- c(
         first = experiment(parameters = parameters(A0 = 100 [mg], k = 0.2 [1/h]),
                            dosing = dose, observations = schedule),
         second = experiment(parameters = parameters(A0 = 50 [mg], k = 0.1 [1/h]),

@@ -2,7 +2,7 @@
 % Please edit documentation in R/Experiments.R
 \name{[[.compphysiol_experiments}
 \alias{[[.compphysiol_experiments}
-\title{Extract an experiment}
+\title{Direct experiment extraction is not supported}
 \usage{
 \method{[[}{compphysiol_experiments}(x, i, ..., exact = TRUE)
 }
@@ -16,8 +16,8 @@
 \item{exact}{Whether character indices must match exactly, as for lists.}
 }
 \value{
-A \code{compphysiol_experiment} object; unknown names return \code{NULL}, as for lists.
+This method always errors. Use \code{[} to retain the public collection class.
 }
 \description{
-Extract an experiment
+Direct experiment extraction is not supported
 }

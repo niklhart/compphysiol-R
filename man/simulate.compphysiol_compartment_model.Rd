@@ -62,7 +62,7 @@ realization. The default \code{Inf} imposes no limit.}
 
 \item{...}{Additional arguments passed to \code{\link[deSolve:ode]{deSolve::ode()}}.}
 
-\item{experiment}{A \code{compphysiol_experiment} or \code{compphysiol_experiments} collection, as an alternative
+\item{experiment}{A \code{compphysiol_experiments} collection, as an alternative
 to \code{time}, \code{unit}, and \code{parameters}. Currently supported for the ODE route
 and \code{compphysiol_ode_model}/\code{compphysiol_desolve_compiled_model} inputs. Known parameters override model
 defaults; experiment dosing replaces model dosing, including when empty.

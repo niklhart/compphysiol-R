@@ -1,3 +1,5 @@
+experiment_record <- function(x) .experiment_entry(x)
+
 test_that("observation schedules validate and preserve rows", {
     schedule <- observation_schedule(
         time = with_units(c(120, 60, 60) [min]),
@@ -59,21 +61,37 @@ test_that("experiments store schedules and data polymorphically as observations"
     d <- dosing(time = 0 [min], amount = 100 [mg])
     schedule <- observation_schedule(c(120, 60, 60) [min], c("C", "A", "A"))
     x <- experiment(parameters = p, dosing = d, observations = schedule, start = 0 [h])
-    expect_s3_class(x, "compphysiol_experiment")
-    expect_identical(x$parameters, p)
-    expect_identical(x$dosing, d)
-    expect_identical(x$observations, schedule)
-    expect_equal(x$start, with_units(0 [h]))
+    expect_s3_class(x, "compphysiol_experiments")
+    expect_length(x, 1L)
+    record <- experiment_record(x)
+    expect_identical(record$parameters, p)
+    expect_identical(record$dosing, d)
+    expect_identical(record$observations, schedule)
+    expect_equal(record$start, with_units(0 [h]))
 
     observed <- observation_data(c(1, 2) [h], "C", c(8, 5) [mg/L])
     y <- experiment(observations = observed)
+    y <- experiment_record(y)
     expect_identical(y$observations, observed)
     expect_s3_class(y$observations, "compphysiol_observation_data")
     expect_s3_class(y$observations, "compphysiol_observation_schedule")
 })
 
+test_that("experiment constructs optional collection names", {
+    named <- experiment(name = "individual_1")
+    expect_named(named, "individual_1")
+    expect_identical(named, c(individual_1 = experiment()))
+
+    expect_null(names(experiment()))
+    for (name in list("", NA_character_, c("a", "b"), 1)) {
+        expect_error(experiment(name = name), "name")
+    }
+    expect_error(experiment(name = "2"), "positive whole numbers.*reserved")
+})
+
 test_that("empty and unit-free experiments are supported", {
     x <- experiment()
+    x <- experiment_record(x)
     expect_s3_class(x$parameters, "compphysiol_parameters")
     expect_s3_class(x$dosing, "compphysiol_dosing")
     expect_s3_class(x$observations, "compphysiol_observation_schedule")
@@ -109,19 +127,19 @@ test_that("experiment schedules require compatible time dimensions", {
 
 test_that("NULL start infers zero from nonempty schedules, not the first time", {
     schedule <- observation_schedule(c(2, 4) [h], "C")
-    expect_equal(experiment(observations = schedule)$start, with_units(0 [h]))
-    expect_equal(experiment(observations = schedule, start = NULL)$start, with_units(0 [h]))
+    expect_equal(experiment_record(experiment(observations = schedule))$start, with_units(0 [h]))
+    expect_equal(experiment_record(experiment(observations = schedule, start = NULL))$start, with_units(0 [h]))
     dose <- dosing(time = 30 [min], amount = 10 [mg])
-    expect_equal(experiment(dosing = dose)$start, with_units(0 [min]))
-    x <- experiment(dosing = dose, observations = schedule)
+    expect_equal(experiment_record(experiment(dosing = dose))$start, with_units(0 [min]))
+    x <- experiment_record(experiment(dosing = dose, observations = schedule))
     expect_identical(x$start, with_units(0 [min]))
     expect_identical(x$observations, schedule)
     expect_identical(x$dosing, dose)
-    expect_identical(experiment(start = NULL)$start, 0)
-    expect_identical(experiment(observations = observation_schedule(2, "C"))$start, 0)
+    expect_identical(experiment_record(experiment(start = NULL))$start, 0)
+    expect_identical(experiment_record(experiment(observations = observation_schedule(2, "C")))$start, 0)
     empty <- observation_schedule(with_units(numeric(0) [h]), character())
-    expect_identical(experiment(observations = empty)$start, 0)
-    expect_equal(experiment(observations = schedule, start = 1 [h])$start, with_units(1 [h]))
+    expect_identical(experiment_record(experiment(observations = empty))$start, 0)
+    expect_equal(experiment_record(experiment(observations = schedule, start = 1 [h]))$start, with_units(1 [h]))
 })
 
 test_that("inferred starts do not hide incompatible or negative schedule times", {
@@ -145,7 +163,7 @@ test_that("model compatibility is checked by simulation", {
         add_molecule("drug") |> add_observable(C = c[drug, Central])
     x <- experiment(observations = observation_schedule(1, "C"))
     expect_no_error(simulate(model, experiment = x))
-    x$observations$observable <- "a[drug,Central]"
+    x <- experiment(observations = observation_schedule(1, "a[drug,Central]"))
     expect_error(simulate(model, experiment = x), "Unknown observable")
 })
 
@@ -156,5 +174,6 @@ test_that("experiment low-level construction trusts canonical input", {
         observations = observation_schedule(),
         start = c(0, 1)
     ))
-    expect_s3_class(x, "compphysiol_experiment")
+    expect_type(x, "list")
+    expect_identical(class(x), "list")
 })

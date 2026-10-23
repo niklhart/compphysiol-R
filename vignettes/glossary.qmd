@@ -461,14 +461,27 @@ contract. Predictions in a simulation result are extracted explicitly with
 
 ## Experiment
 
-One experiment represents one independent individual simulation or estimation
-unit. It specifies known parameters, a fixed dosing schedule, and either an
-observation schedule or observation data for a model. It is separate from the
-biological model. Several experiments can describe different individuals,
+An experiment entry represents one independent individual simulation or
+estimation unit. It specifies known parameters, a fixed dosing schedule, and
+either an observation schedule or observation data for a model. It is separate
+from the biological model. Several entries can describe different individuals,
 administrations, or experimental settings for the same system.
 
-Covariates such as body weight and sex are ordinary values in
-`experiment$parameters`; there is no separate subject-metadata component.
+Experiments are always represented as collections, including when there is
+only one entry. Cardinality is therefore a property of the object rather than
+part of its class. `experiment()` constructs a length-one collection, and
+`c()` combines collections. Subsetting with `[` always retains the collection;
+direct `[[` extraction is blocked so that an internal entry cannot become a
+second public representation.
+
+An optional name supplied to `experiment()` identifies its single entry.
+Names can also be supplied while combining entries with `c()`. Unnamed entries
+remain unnamed in storage. When a named argument to `c()` wraps a length-one
+experiment that already has a name, the outer argument name replaces the stored
+name. This makes the call site authoritative when assembling a collection.
+
+Covariates such as body weight and sex are ordinary values in an experiment
+entry's parameters; there is no separate subject-metadata component.
 Relationships derived from covariates belong in model `Equation`s, which may
 depend on both experiment parameters and shared model parameters.
 
@@ -501,13 +514,14 @@ An experiment supplies the complete dosing schedule, replacing model-attached
 dosing even when the experiment schedule is empty. Its known parameters override
 model defaults. Simulation starts at the initial time and evaluates only the
 scheduled observable-time pairs. Stored observation values do not affect
-simulation. Collection simulation returns one simulation result whose tables
-carry an experiment identifier. Experiments containing observation data can be
-used for estimation.
+simulation. Collection simulation returns one simulation result. For multiple
+entries, its tables carry an experiment identifier; length-one output omits
+that redundant column. Experiments containing observation data can be used for
+estimation.
 
-Implementation anchor: one experiment uses `compphysiol_experiment`, created
-with `experiment()`; collections use `compphysiol_experiments`, created with
-`experiments()` or by combining individual experiments with `c()`.
+Implementation anchor: experiments use `compphysiol_experiments` at every
+length. A length-one collection is created with `experiment()` and collections
+are assembled with `c()`.
 
 An experiment collection holds several
 independent individual units. The element name is the individual identifier;
@@ -517,10 +531,10 @@ unnamed. Names are preserved when supplied but are not generated when a
 protocol is extended across unnamed parameter sets. Positive whole-number names
 are reserved for transient positional identifiers and cannot be supplied
 explicitly.
-Subsetting with `[` retains a collection; `[[` extracts an individual
-experiment. Collections can be combined with `c()`. Printing a collection
-shows one summary per experiment, while printing an individual experiment shows
-its parameters, dosing, and observations.
+Subsetting with `[` retains a collection and `[[` is blocked. Collections can
+be combined with `c()`. Printing chooses its presentation by length: a
+length-one collection shows the full experiment details, while a longer
+collection shows shared and per-entry summaries.
 
 Collections require a common time unit mode across experiments, including their
 initial times: all unit-free or all in compatible time units. Parameters shared

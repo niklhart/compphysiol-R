@@ -10,24 +10,24 @@ test_that("object-valued updates require an explicit mode", {
 test_that("parameter replacement and updating have explicit uniform semantics", {
     study <- experiment(parameters = parameters(BW = 70, V = 5))
     replaced <- update(study, parameters = parameters(BW = 65), mode = "replace")
-    expect_identical(replaced$parameters, parameters(BW = 65))
+    expect_identical(.experiment_entry(replaced)$parameters, parameters(BW = 65))
     updated <- update(study, parameters = parameters(BW = 65, sex = "female"),
                       mode = "update")
-    expect_identical(updated$parameters, parameters(BW = 65, V = 5, sex = "female"))
+    expect_identical(.experiment_entry(updated)$parameters, parameters(BW = 65, V = 5, sex = "female"))
 })
 
 test_that("callbacks transform components without a mode", {
-    studies <- experiments(
+    studies <- c(
         experiment(parameters = parameters(BW = 65, V = 5)),
         experiment(parameters = parameters(BW = 80, V = 6))
     )
     out <- update(studies, parameters = function(p) p[setdiff(names(p), "V")])
-    expect_identical(out[[1]]$parameters, parameters(BW = 65))
-    expect_identical(out[[2]]$parameters, parameters(BW = 80))
+    expect_identical(.experiment_entry(out, 1)$parameters, parameters(BW = 65))
+    expect_identical(.experiment_entry(out, 2)$parameters, parameters(BW = 80))
     mixed <- update(studies, parameters = function(p) p["BW"],
                     dosing = dosing(), mode = "replace")
-    expect_identical(mixed[[1]]$parameters, parameters(BW = 65))
-    expect_identical(mixed[[1]]$dosing, dosing())
+    expect_identical(.experiment_entry(mixed, 1)$parameters, parameters(BW = 65))
+    expect_identical(.experiment_entry(mixed, 1)$dosing, dosing())
 })
 
 test_that("parameter sets broadcast an experiment and align with collections", {
@@ -38,19 +38,19 @@ test_that("parameter sets broadcast an experiment and align with collections", {
     expanded <- update(protocol, parameters = population, mode = "update")
     expect_s3_class(expanded, "compphysiol_experiments")
     expect_named(expanded, c("alice", "bob"))
-    expect_identical(expanded[[1]]$parameters, parameters(route = "oral", BW = 65))
+    expect_identical(.experiment_entry(expanded, 1)$parameters, parameters(route = "oral", BW = 65))
 
     reversed <- parameter_sets(
         bob = parameters(BW = 81), alice = parameters(BW = 66)
     )
     aligned <- update(expanded, parameters = reversed, mode = "replace")
     expect_named(aligned, c("alice", "bob"))
-    expect_identical(aligned[[1]]$parameters, parameters(BW = 66))
-    expect_identical(aligned[[2]]$parameters, parameters(BW = 81))
+    expect_identical(.experiment_entry(aligned, 1)$parameters, parameters(BW = 66))
+    expect_identical(.experiment_entry(aligned, 2)$parameters, parameters(BW = 81))
 })
 
 test_that("collection inputs require compatible cardinality and identifiers", {
-    studies <- experiments(first = experiment(), second = experiment())
+    studies <- c(first = experiment(), second = experiment())
     expect_error(
         update(studies, parameters = parameter_sets(parameters(x = 1)),
                mode = "replace"),
@@ -66,7 +66,7 @@ test_that("collection inputs require compatible cardinality and identifiers", {
 
 test_that("component-specific modes update dosing and replace observations", {
     schedule <- observation_schedule(1 [h], "C")
-    studies <- experiments(
+    studies <- c(
         first = experiment(dosing = dosing(time = 0 [h], amount = 10 [mg]),
                            observations = schedule),
         second = experiment(dosing = dosing(time = 0 [h], amount = 20 [mg]),
@@ -83,15 +83,15 @@ test_that("component-specific modes update dosing and replace observations", {
         observations = sampled,
         mode = c(dosing = "update", observations = "replace")
     )
-    expect_equal(length(out[[1]]$dosing), 2L)
-    expect_equal(length(out[[2]]$dosing), 2L)
-    expect_identical(out[[1]]$observations$time, with_units(2 [h]))
-    expect_equal(as.numeric(out[[2]]$observations$value), 7)
-    expect_false("experiment" %in% names(out[[1]]$observations))
+    expect_equal(length(.experiment_entry(out, 1)$dosing), 2L)
+    expect_equal(length(.experiment_entry(out, 2)$dosing), 2L)
+    expect_identical(.experiment_entry(out, 1)$observations$time, with_units(2 [h]))
+    expect_equal(as.numeric(.experiment_entry(out, 2)$observations$value), 7)
+    expect_false("experiment" %in% names(.experiment_entry(out, 1)$observations))
 })
 
 test_that("bound observations align with unnamed experiments positionally", {
-    studies <- experiments(
+    studies <- c(
         experiment(parameters = parameters(V = 5),
                    observations = observation_schedule(1 [h], "C")),
         experiment(parameters = parameters(V = 6),
@@ -109,9 +109,9 @@ test_that("bound observations align with unnamed experiments positionally", {
     )
 
     expect_null(names(out))
-    expect_length(out[[1]]$parameters, 0L)
-    expect_equal(as.numeric(out[[1]]$observations$value), 4)
-    expect_equal(as.numeric(out[[2]]$observations$value), 7)
+    expect_length(.experiment_entry(out, 1)$parameters, 0L)
+    expect_equal(as.numeric(.experiment_entry(out, 1)$observations$value), 4)
+    expect_equal(as.numeric(.experiment_entry(out, 2)$observations$value), 7)
 })
 
 test_that("starts replace atomically and both modes are equivalent", {

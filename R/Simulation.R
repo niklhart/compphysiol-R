@@ -101,7 +101,7 @@ rxode2_engine <- function(...) {
 #'   reactions with propensities below this threshold are stochastic.
 #' @param include_event_times Include stochastic event times in stochastic
 #'   simulation output in addition to the requested `time` points.
-#' @param experiment A `compphysiol_experiment` or `compphysiol_experiments` collection, as an alternative
+#' @param experiment A `compphysiol_experiments` collection, as an alternative
 #'   to `time`, `unit`, and `parameters`. Currently supported for the ODE route
 #'   and `compphysiol_ode_model`/`compphysiol_desolve_compiled_model` inputs. Known parameters override model
 #'   defaults; experiment dosing replaces model dosing, including when empty.

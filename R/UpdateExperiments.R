@@ -14,8 +14,8 @@
 #' covered. The default `NULL` is accepted only when all supplied components are
 #' callbacks (or no components are supplied).
 #'
-#' @param object A [compphysiol_experiment][experiment()] or
-#'   [compphysiol_experiments][experiments()] object.
+#' @param object A `compphysiol_experiments` object created by [experiment()]
+#'   or by combining experiments with `c()`.
 #' @param parameters A [compphysiol_parameters][parameters()] object,
 #'   [compphysiol_parameter_sets][parameter_sets()] collection, `NULL`, or a
 #'   callback receiving the current parameters.
@@ -39,28 +39,12 @@
 #' )
 #' update(protocol, parameters = population, mode = "update")
 #'
-#' studies <- experiments(
+#' studies <- c(
 #'     experiment(parameters = parameters(BW = 65 [kg], V = 5 [L])),
 #'     experiment(parameters = parameters(BW = 80 [kg], V = 6 [L]))
 #' )
 #' update(studies, parameters = function(p) p[setdiff(names(p), "V")])
-#' @method update compphysiol_experiment
-#' @export
-update.compphysiol_experiment <- function(
-    object, parameters, dosing, observations, start, ..., mode = NULL
-) {
-    .update_experiments(
-        object,
-        parameters = if (missing(parameters)) quote(expr = ) else substitute(parameters),
-        dosing = if (missing(dosing)) quote(expr = ) else substitute(dosing),
-        observations = if (missing(observations)) quote(expr = ) else substitute(observations),
-        start = if (missing(start)) quote(expr = ) else substitute(start),
-        mode = mode,
-        envir = parent.frame()
-    )
-}
-
-#' @rdname update.compphysiol_experiment
+#' @rdname update.compphysiol_experiments
 #' @method update compphysiol_experiments
 #' @export
 update.compphysiol_experiments <- function(
@@ -80,7 +64,7 @@ update.compphysiol_experiments <- function(
 .update_experiments <- function(
     object, parameters, dosing, observations, start, mode, envir
 ) {
-    .check_class(object, c("compphysiol_experiment", "compphysiol_experiments"))
+    .check_class(object, "compphysiol_experiments")
     expressions <- list(
         parameters = parameters, dosing = dosing,
         observations = observations, start = start
@@ -106,17 +90,12 @@ update.compphysiol_experiments <- function(
     object_components <- setdiff(names(inputs), callbacks)
     modes <- .update_experiments_check_mode(mode, object_components, callbacks)
 
-    object_is_collection <- inherits(object, "compphysiol_experiments")
-    base <- if (object_is_collection) .experiments_elements(object) else list(object)
-    output_names <- if (object_is_collection) names(base) else NULL
-    target_ids <- if (object_is_collection) {
-        .collection_identifiers(base, "Experiment")
-    } else {
-        NULL
-    }
+    base <- .experiments_elements(object)
+    output_names <- names(base)
+    target_ids <- .collection_identifiers(base, "Experiment")
 
     collection_inputs <- inputs[vapply(inputs, `[[`, logical(1), "collection")]
-    if (!object_is_collection && length(collection_inputs)) {
+    if (length(base) == 1L && length(collection_inputs)) {
         driver <- collection_inputs[[1L]]
         target_ids <- driver$identifiers
         output_names <- driver$names
@@ -163,15 +142,14 @@ update.compphysiol_experiments <- function(
                 )
             }
         }
-        out[[i]] <- experiment(
+        out[[i]] <- .experiment_entry(experiment(
             parameters = values$parameters,
             dosing = values$dosing,
             observations = values$observations,
             start = values$start
-        )
+        ))
     }
 
-    if (!object_is_collection && !length(collection_inputs)) return(out[[1L]])
     names(out) <- output_names
     .experiments_validate_result(out)
 }

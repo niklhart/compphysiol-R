@@ -16,8 +16,7 @@
 
 \item{...}{Unused.}
 
-\item{value}{For \verb{[[<-}, a \code{compphysiol_experiment} or \code{NULL}; for \verb{[<-}, a
-\code{compphysiol_experiments} collection.}
+\item{value}{For \verb{[<-}, a \code{compphysiol_experiments} collection.}
 }
 \value{
 The modified \code{compphysiol_experiments} collection.

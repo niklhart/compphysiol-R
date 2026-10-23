@@ -19,7 +19,7 @@ Observable output has \code{time}, \code{observable}, and \code{value} columns, 
 for stochastic replicates and \code{experiment} for experiment-collection
 simulation. Values are numeric for unit-free output, a \code{units} vector when
 all output units are identical, and \code{mixed_units} otherwise.
-compphysiol_experiment schedule order and duplicate observation rows are retained.
+Experiment schedule order and duplicate observation rows are retained.
 Both helpers accept an observable table directly, allowing filtering before
 reshaping without modifying the simulation result.
 }

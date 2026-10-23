@@ -10,8 +10,8 @@ estimation_problem(model, experiments, parameters, statistics)
 \item{model}{A \code{compphysiol_compartment_model}, \code{compphysiol_process_model}, \code{compphysiol_ode_model}, or
 \code{compphysiol_desolve_compiled_model}.}
 
-\item{experiments}{An \link[=experiment]{compphysiol_experiment} or
-\link[=experiments]{compphysiol_experiments} collection containing \code{compphysiol_observation_data}.
+\item{experiments}{A \code{compphysiol_experiments} collection created by
+\code{\link[=experiment]{experiment()}} or \code{c()} and containing \code{compphysiol_observation_data}.
 Each experiment is one independent individual estimation unit, and
 collection names are individual identifiers.}
 
