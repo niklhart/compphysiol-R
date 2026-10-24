@@ -21,7 +21,7 @@
       print(r1)
     Output
        Reactions:
-        (1) A[cyt]+B[cyt] → C[cyt], rate = k * c[A, cyt] * c[B, cyt]
+        (1) A[cyt]+B[cyt] → C[cyt], concentration rate = k * c[A, cyt] * c[B, cyt]
 
 ---
 
@@ -29,7 +29,7 @@
       print(r2)
     Output
        Reactions:
-        (1) A → B (<all cmt>), rate = kAB * c[A]
+        (1) A → B (<all cmt>), concentration rate = kAB * c[A]
 
 ---
 
@@ -37,7 +37,7 @@
       print(r3)
     Output
        Reactions:
-        (1) A[plasma] → B[membrane], rate = kAB * c[A, plasma]
+        (1) A[plasma] → B[membrane], amount rate = kAB * a[A, plasma]
 
 ---
 
@@ -45,5 +45,5 @@
       print(r4)
     Output
        Reactions:
-        (1) L[plasma]+R[membrane] → LR[membrane], scale = membrane, rate = kon * c[L, plasma] * c[R, membrane]
+        (1) L[plasma]+R[membrane] → LR[membrane], scale = membrane, amount rate = kon * c[L, plasma] * a[R, membrane]
 

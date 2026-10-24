@@ -13,6 +13,7 @@ add_reaction(
   output = character(0),
   cmt = NA_character_,
   scale_cmt = NA_character_,
+  rate_type = NULL,
   formula = NULL,
   rate = NULL,
   const = NULL
@@ -26,6 +27,7 @@ add_reaction(
   output = character(0),
   cmt = NA_character_,
   scale_cmt = NA_character_,
+  rate_type = NULL,
   formula = NULL,
   rate = NULL,
   const = NULL
@@ -48,15 +50,21 @@ For degradation reactions, use an empty character vector or \code{NULL}.}
 
 \item{cmt}{Character vector of compartment names where the reaction(s) occur (optional, default: all compartments)}
 
-\item{scale_cmt}{Compartment whose size scales concentration-change reaction rates to amount-change rates.
-Inferred for same-compartment reactions and elementary reactions with a single input compartment.
-Required for other cross-compartment reactions.}
+\item{scale_cmt}{Reaction scaling compartment. Its size converts a
+concentration-change rate to an amount-change rate. For amount-rate
+mass-action reactions, it selects the first reactant in this compartment
+to represent as an amount. Inferred where possible.}
+
+\item{rate_type}{Representation of the reaction rate: \code{"concentration"} or
+\code{"amount"}. Required with \code{rate}; optional with \code{const}, where it defaults
+to concentration for one involved compartment and amount for several.}
 
 \item{formula}{Character scalar or vector with reaction formulas such as \code{"A + B -> C"} or
 \code{"L[plasma] + R[membrane] -> LR[membrane]"}. If \code{output} is missing and \code{input}
 contains \verb{->}, \code{input} is interpreted as \code{formula}.}
 
-\item{rate}{Character string representing the concentration-change reaction rate (for nonlinear reactions).
+\item{rate}{Character string representing an explicit reaction rate. Its
+representation is declared by \code{rate_type}.
 Use \code{c[A]} to refer to the concentration of molecule A, and \code{a[A]} to refer to its amount.}
 
 \item{const}{Reaction constant for mass-action reactions (character string,
@@ -74,10 +82,10 @@ However, each reaction needs to be defined separately, i.e., vectorized definiti
 as they can be for transports and molecules -- vector arguments are instead used for defining multiple reacting species within a single reaction.
 }
 \details{
-Reaction rates are concentration-change rates. For ODE export, reaction rates are multiplied by the reaction
-compartment volume to obtain amount-change rates for the ODE states. This follows the usual mass-action
-convention: zero-order reaction constants have units amount/volume/time, first-order constants have units
-1/time, and second-order constants have units volume/amount/time.
+Reaction rates may be represented as concentration-change or amount-change
+rates. For mass-action reactions specified with \code{const}, \code{rate_type} selects
+how the generated rate expression is represented; it does not change the
+interpretation of the mass-action constant.
 
 The special expression \code{{cmt}} can be used in \code{rate} or \code{const} to automatically substitute the compartment name,
 e.g., \verb{k_\{cmt\}} will become \code{k_cytoplasm} for reactions in the cytoplasm and \code{k_nucleus} for reactions in the nucleus.
@@ -94,17 +102,20 @@ otherwise the participant keeps the same wildcard compartment meaning as the
 separate \code{input} and \code{output} character shorthand.
 
 Cross-compartment reactions are reactions whose participants are localized
-in more than one compartment. Reaction rates are always interpreted as
-concentration-change rates with respect to one reaction scaling compartment.
-During ODE export, the rate is multiplied by the size of \code{scale_cmt} to
-obtain amount-change rates. For ordinary same-compartment reactions,
-\code{scale_cmt} is inferred as the shared compartment. For elementary
-cross-compartment reactions with a single input compartment, it is inferred
-as that input compartment. Other cross-compartment reactions require an
-explicit \code{scale_cmt}, which must name one of the compartments involved in the
-reaction. In membrane binding models, for example, choosing the membrane as
-\code{scale_cmt} means that the reaction rate has membrane concentration units
-such as amount per area per time.
+in more than one compartment. With an explicit \code{rate}, \code{rate_type} declares
+whether that expression has concentration/time or amount/time units.
+Cross-compartment concentration rates require \code{scale_cmt}; explicit amount
+rates must not supply it.
+
+With \code{const}, \code{rate_type} instead selects the representation generated from
+the mass-action law. Concentration rates use concentration factors for every
+reactant. Amount rates replace one concentration factor with an amount
+factor. \code{scale_cmt} selects the first reactant in that compartment for this
+replacement. It is inferred only when all reactants occur in one compartment;
+otherwise it is required regardless of \code{rate_type}. Cross-compartment \code{const}
+reactions default to amount rates, while same-compartment reactions default
+to concentration rates. Amount-rate reactions require all participant states
+to be convertible to amounts during ODE export.
 }
 \seealso{
 \code{\link[=reactions]{reactions()}} for construction and \link{modify_compartment_model} for

@@ -190,6 +190,7 @@ test_that("complex reaction rates have concentration/time units", {
             input = "A",
             output = "B",
             cmt = "cyt",
+            rate_type = "concentration",
             rate = "vmax * c[A, cyt] / (Km + c[A, cyt])"
         ) |>
         add_parameter(vmax = 1 [mol/L/h], Km = 1 [mol/L])
@@ -202,6 +203,7 @@ test_that("complex reaction rates have concentration/time units", {
             input = "A",
             output = "B",
             cmt = "cyt",
+            rate_type = "concentration",
             rate = "vmax * c[A, cyt] / (Km + c[A, cyt])"
         ) |>
         add_parameter(vmax = 1 [mol/h], Km = 1 [mol/L])

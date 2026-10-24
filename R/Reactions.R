@@ -164,6 +164,32 @@ print.compphysiol_states <- function(x, ...) {
     )
 }
 
+.participants_to_amount_rate_terms <- function(participants, scale_cmt = NA_character_) {
+    input <- participants[participants$role == "input", , drop = FALSE]
+    if (nrow(input) == 0) return(list())
+
+    scale_idx <- if (is.na(scale_cmt)) {
+        1L
+    } else {
+        which(!is.na(input$cmt) & input$cmt == scale_cmt)[[1]]
+    }
+
+    unlist(
+        lapply(seq_len(nrow(input)), function(i) {
+            lapply(seq_len(input$stoich[[i]]), function(j) {
+                prefix <- if (i == scale_idx && j == 1L) "a" else "c"
+                term <- if (is.na(input$cmt[[i]])) {
+                    paste0(prefix, "[", input$molec[[i]], "]")
+                } else {
+                    paste0(prefix, "[", input$molec[[i]], ",", input$cmt[[i]], "]")
+                }
+                .as_call(term)
+            })
+        }),
+        recursive = FALSE
+    )
+}
+
 .is_syntactic_model_name <- function(x) {
     is.character(x) &&
         length(x) == 1 &&
@@ -289,10 +315,10 @@ print.compphysiol_states <- function(x, ...) {
 #' However, each reaction needs to be defined separately, i.e., vectorized definitions are not supported for reactions 
 #' as they can be for transports and molecules -- vector arguments are instead used for defining multiple reacting species within a single reaction.
 #'
-#' Reaction rates are concentration-change rates. For ODE export, reaction rates are multiplied by the reaction
-#' compartment volume to obtain amount-change rates for the ODE states. This follows the usual mass-action
-#' convention: zero-order reaction constants have units amount/volume/time, first-order constants have units
-#' 1/time, and second-order constants have units volume/amount/time.
+#' Reaction rates may be represented as concentration-change or amount-change
+#' rates. For mass-action reactions specified with `const`, `rate_type` selects
+#' how the generated rate expression is represented; it does not change the
+#' interpretation of the mass-action constant.
 #' 
 #' The special expression `{cmt}` can be used in `rate` or `const` to automatically substitute the compartment name, 
 #' e.g., `k_{cmt}` will become `k_cytoplasm` for reactions in the cytoplasm and `k_nucleus` for reactions in the nucleus.
@@ -305,14 +331,19 @@ print.compphysiol_states <- function(x, ...) {
 #'   for a reaction where one molecule of `C` is produced. 
 #'   For degradation reactions, use an empty character vector or `NULL`.
 #' @param cmt Character vector of compartment names where the reaction(s) occur (optional, default: all compartments)
-#' @param scale_cmt Compartment whose size scales concentration-change reaction rates to amount-change rates.
-#'   Inferred for same-compartment reactions and elementary reactions with a single input compartment.
-#'   Required for other cross-compartment reactions.
+#' @param scale_cmt Reaction scaling compartment. Its size converts a
+#'   concentration-change rate to an amount-change rate. For amount-rate
+#'   mass-action reactions, it selects the first reactant in this compartment
+#'   to represent as an amount. Inferred where possible.
+#' @param rate_type Representation of the reaction rate: `"concentration"` or
+#'   `"amount"`. Required with `rate`; optional with `const`, where it defaults
+#'   to concentration for one involved compartment and amount for several.
 #' @param formula Character scalar or vector with reaction formulas such as `"A + B -> C"` or
 #'   `"L[plasma] + R[membrane] -> LR[membrane]"`. If `output` is missing and `input`
 #'   contains `->`, `input` is interpreted as `formula`.
 #' @param ... Errors if used, enforces `rate` and `const` to be specified as named arguments only, not positional.
-#' @param rate Character string representing the concentration-change reaction rate (for nonlinear reactions).
+#' @param rate Character string representing an explicit reaction rate. Its
+#'   representation is declared by `rate_type`.
 #'   Use `c[A]` to refer to the concentration of molecule A, and `a[A]` to refer to its amount.
 #' @param const Reaction constant for mass-action reactions (character string,
 #'   call, numeric, or unit-bearing value).
@@ -331,17 +362,20 @@ print.compphysiol_states <- function(x, ...) {
 #' separate `input` and `output` character shorthand.
 #'
 #' Cross-compartment reactions are reactions whose participants are localized
-#' in more than one compartment. Reaction rates are always interpreted as
-#' concentration-change rates with respect to one reaction scaling compartment.
-#' During ODE export, the rate is multiplied by the size of `scale_cmt` to
-#' obtain amount-change rates. For ordinary same-compartment reactions,
-#' `scale_cmt` is inferred as the shared compartment. For elementary
-#' cross-compartment reactions with a single input compartment, it is inferred
-#' as that input compartment. Other cross-compartment reactions require an
-#' explicit `scale_cmt`, which must name one of the compartments involved in the
-#' reaction. In membrane binding models, for example, choosing the membrane as
-#' `scale_cmt` means that the reaction rate has membrane concentration units
-#' such as amount per area per time.
+#' in more than one compartment. With an explicit `rate`, `rate_type` declares
+#' whether that expression has concentration/time or amount/time units.
+#' Cross-compartment concentration rates require `scale_cmt`; explicit amount
+#' rates must not supply it.
+#'
+#' With `const`, `rate_type` instead selects the representation generated from
+#' the mass-action law. Concentration rates use concentration factors for every
+#' reactant. Amount rates replace one concentration factor with an amount
+#' factor. `scale_cmt` selects the first reactant in that compartment for this
+#' replacement. It is inferred only when all reactants occur in one compartment;
+#' otherwise it is required regardless of `rate_type`. Cross-compartment `const`
+#' reactions default to amount rates, while same-compartment reactions default
+#' to concentration rates. Amount-rate reactions require all participant states
+#' to be convertible to amounts during ODE export.
 #' @return A `compphysiol_reactions` object containing the reaction information.
 #' @examples
 #' # empty `compphysiol_reactions` object
@@ -351,7 +385,8 @@ print.compphysiol_states <- function(x, ...) {
 #' # synthesis reaction (zero-order)
 #' reactions(input = "", output = "A", const = "k2")
 #' # Michelis-Menten reaction (saturable, non-elementary)
-#' reactions(input = "A", output = "B", rate = "Vmax * c[A] / (Km + c[A])")
+#' reactions(input = "A", output = "B", rate_type = "concentration",
+#'     rate = "Vmax * c[A] / (Km + c[A])")
 #' # compphysiol_reactions in several compartments (same rate constants)
 #' reactions(input = "A", output = "B", cmt = c("cytoplasm", "nucleus"), const = "kAB")
 #' # compphysiol_reactions in several compartments (different rate constants)
@@ -376,6 +411,7 @@ reactions <- function(
     output = character(0),
     cmt = NA_character_,
     scale_cmt = NA_character_,
+    rate_type = NULL,
     formula = NULL,
     ...,
     rate = NULL,
@@ -423,9 +459,9 @@ reactions <- function(
 
         if (length(formula) > 1) {
             nFormula <- length(formula)
-            lengths <- c(length(cmt), length(scale_cmt), length(rate), length(const))
+            lengths <- c(length(cmt), length(scale_cmt), length(rate_type), length(rate), length(const))
             if (!all(lengths %in% c(0, 1, nFormula))) {
-                stop("Formula, cmt, scale_cmt, rate, and const must be scalar or have the same length.", call. = FALSE)
+                stop("Formula, cmt, scale_cmt, rate_type, rate, and const must be scalar or have the same length.", call. = FALSE)
             }
 
             out <- lapply(seq_len(nFormula), function(i) {
@@ -433,6 +469,7 @@ reactions <- function(
                     formula = formula[[i]],
                     cmt = .reaction_formula_arg(cmt, i),
                     scale_cmt = .reaction_formula_arg(scale_cmt, i),
+                    rate_type = .reaction_formula_arg(rate_type, i),
                     rate = .reaction_formula_arg(rate, i),
                     const = .reaction_formula_arg(const, i)
                 )
@@ -446,6 +483,7 @@ reactions <- function(
             output = parsed$output,
             cmt = parsed$cmt,
             scale_cmt = scale_cmt,
+            rate_type = rate_type,
             rate = rate,
             const = const
         ))
@@ -459,6 +497,8 @@ reactions <- function(
                     const = I(list()),
                     type = character(),
                     scale_cmt = character(),
+                    rate_type = character(),
+                    rate_type_auto = logical(),
                     participants = I(list()),
                     stringsAsFactors = FALSE
                 )
@@ -481,7 +521,7 @@ reactions <- function(
     nReact <- if (uses_states) 1 else length(cmt)
 
     # Check that all inputs are either NULL, scalar or vector of the same length
-    if (!all(c(nRate, nConst, length(scale_cmt)) %in% c(0, 1, nReact))) {
+    if (!all(c(nRate, nConst, length(scale_cmt), length(rate_type)) %in% c(0, 1, nReact))) {
         stop("All inputs must be either NULL, scalar, or vector of the same length.")
     }
 
@@ -497,6 +537,15 @@ reactions <- function(
     type <- if (is.null(rate)) "elementary" else "complex"
     order <- sum(input_participants$stoich)
 
+    rate_type_auto <- is.null(rate_type)
+    if (!rate_type_auto) {
+        if (!is.character(rate_type) || any(!rate_type %in% c("concentration", "amount"))) {
+            stop("Argument 'rate_type' must be 'concentration' or 'amount'.", call. = FALSE)
+        }
+    } else if (!is.null(rate)) {
+        stop("Argument 'rate_type' is required when 'rate' is supplied.", call. = FALSE)
+    }
+
     # If rate/const is scalar and cmt is provided, apply special substitution rule
     replace_pattern <- function(x) {
         lapply(cmt, function(y) if (is.na(y)) x else gsub(pattern = "{cmt}", replacement = y, x = x, fixed = TRUE))
@@ -511,28 +560,66 @@ reactions <- function(
     })
 
     involved_cmt <- lapply(reaction_participants, function(p) unique(p$cmt[!is.na(p$cmt)]))
+    has_unresolved_cmt <- vapply(reaction_participants, function(p) any(is.na(p$cmt)), logical(1))
+    if (rate_type_auto) {
+        rate_type <- vapply(seq_len(nReact), function(i) {
+            if (has_unresolved_cmt[[i]]) "concentration"
+            else if (length(involved_cmt[[i]]) <= 1) "concentration"
+            else "amount"
+        }, character(1))
+    } else if (length(rate_type) == 1) {
+        rate_type <- rep(rate_type, nReact)
+    }
     if (length(scale_cmt) == 0) scale_cmt <- NA_character_
     if (length(scale_cmt) == 1) scale_cmt <- rep(scale_cmt, nReact)
     infer_scale <- is.na(scale_cmt)
     for (i in seq_len(nReact)) {
-        input_cmt <- unique(reaction_participants[[i]]$cmt[
-            reaction_participants[[i]]$role == "input" &
-                !is.na(reaction_participants[[i]]$cmt)
-        ])
-        if (infer_scale[[i]] && length(involved_cmt[[i]]) == 1) {
-            scale_cmt[[i]] <- involved_cmt[[i]]
+        p <- reaction_participants[[i]]
+        input_cmt_all <- p$cmt[p$role == "input"]
+        input_cmt <- unique(input_cmt_all[!is.na(input_cmt_all)])
+        effective_type <- rate_type[[i]]
+
+        # Wildcard localization can change the default representation and scale;
+        # finalize both when wire() reconstructs the resolved reaction.
+        if (rate_type_auto && has_unresolved_cmt[[i]]) next
+
+        if (identical(type, "complex") && identical(effective_type, "amount") && !is.na(scale_cmt[[i]])) {
+            stop("Argument 'scale_cmt' cannot be used with an explicit amount rate.", call. = FALSE)
         }
-        if (infer_scale[[i]] &&
-            identical(type, "elementary") &&
-            length(involved_cmt[[i]]) > 1 &&
-            length(input_cmt) == 1) {
-            scale_cmt[[i]] <- input_cmt
-        }
-        if (length(involved_cmt[[i]]) > 1 && is.na(scale_cmt[[i]])) {
-            stop("Argument 'scale_cmt' is required for cross-compartment reactions with no unique input compartment.", call. = FALSE)
-        }
-        if (!is.na(scale_cmt[[i]]) && !(scale_cmt[[i]] %in% involved_cmt[[i]])) {
-            stop("Argument 'scale_cmt' must name a compartment involved in the reaction.", call. = FALSE)
+
+        if (identical(effective_type, "concentration")) {
+            if (infer_scale[[i]] && identical(type, "elementary") && length(input_cmt) == 1) {
+                scale_cmt[[i]] <- input_cmt
+            } else if (infer_scale[[i]] && length(involved_cmt[[i]]) == 1) {
+                scale_cmt[[i]] <- involved_cmt[[i]]
+            }
+            if (identical(type, "elementary") && length(input_cmt) > 1 && is.na(scale_cmt[[i]])) {
+                stop(
+                    "Argument 'scale_cmt' is required when reactants occur in multiple compartments.",
+                    call. = FALSE
+                )
+            }
+            if (length(involved_cmt[[i]]) > 1 && is.na(scale_cmt[[i]]) && !has_unresolved_cmt[[i]]) {
+                stop("Argument 'scale_cmt' is required for cross-compartment concentration rates.", call. = FALSE)
+            }
+            if (!is.na(scale_cmt[[i]]) && !(scale_cmt[[i]] %in% involved_cmt[[i]])) {
+                stop("Argument 'scale_cmt' must name a compartment involved in the reaction.", call. = FALSE)
+            }
+        } else if (identical(type, "elementary")) {
+            if (length(input_cmt_all) == 0) {
+                if (!is.na(scale_cmt[[i]])) stop("Argument 'scale_cmt' is not applicable to an amount-rate synthesis reaction.", call. = FALSE)
+            } else {
+                if (infer_scale[[i]] && length(input_cmt) == 1) scale_cmt[[i]] <- input_cmt
+                if (is.na(scale_cmt[[i]]) && !has_unresolved_cmt[[i]]) {
+                    stop(
+                        "Argument 'scale_cmt' is required when reactants occur in multiple compartments.",
+                        call. = FALSE
+                    )
+                }
+                if (!is.na(scale_cmt[[i]]) && !(scale_cmt[[i]] %in% input_cmt)) {
+                    stop("For an amount-rate reaction, 'scale_cmt' must name an involved reactant compartment.", call. = FALSE)
+                }
+            }
         }
     }
 
@@ -568,11 +655,14 @@ reactions <- function(
                 )
             }
 
-            rate <- Map(
-                function(k, p) Reduce(.mul, c(list(k), .participants_to_rate_terms(p))),
-                const,
-                reaction_participants
-            )
+            rate <- Map(function(k, p, rt, sc) {
+                terms <- if (identical(rt, "amount")) {
+                    .participants_to_amount_rate_terms(p, sc)
+                } else {
+                    .participants_to_rate_terms(p)
+                }
+                Reduce(.mul, c(list(k), terms))
+            }, const, reaction_participants, rate_type, scale_cmt)
 
         }
 
@@ -585,6 +675,8 @@ reactions <- function(
                 const = I(const),
                 type = type,
                 scale_cmt = scale_cmt,
+                rate_type = rate_type,
+                rate_type_auto = rep(rate_type_auto, nReact),
                 participants = I(reaction_participants),
                 stringsAsFactors = FALSE
             )
@@ -613,6 +705,7 @@ add_reaction <- function(
     output = character(0),
     cmt = NA_character_,
     scale_cmt = NA_character_,
+    rate_type = NULL,
     formula = NULL,
     rate = NULL,
     const = NULL
@@ -630,6 +723,7 @@ add_reaction.compphysiol_compartment_model <- function(
     output = character(0),
     cmt = NA_character_,
     scale_cmt = NA_character_,
+    rate_type = NULL,
     formula = NULL,
     rate = NULL,
     const = NULL
@@ -751,12 +845,13 @@ print.compphysiol_reactions = function(x, ...) {
         cat(" Reactions:\n")
         cat(
             sprintf(
-                "  (%i) %s \u2192 %s%s%s, rate = %s\n",
+                "  (%i) %s \u2192 %s%s%s, %s rate = %s\n",
                 seq_along(x),
                 in_str,
                 out_str,
                 location_str,
                 scale_str,
+                x$rate_type,
                 rate_str
             ),
             sep = ""

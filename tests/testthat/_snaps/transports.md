@@ -4,8 +4,8 @@
       print(t1)
     Output
        Transports:
-        (1) <all molec>: cen → per, rate = k1 * a[cen]
-        (2) <all molec>: per → cen, rate = k2 * a[per]
+        (1) <all molec>: cen → per, amount rate = k1 * a[cen]
+        (2) <all molec>: per → cen, amount rate = k2 * a[per]
 
 ---
 
@@ -13,5 +13,5 @@
       print(t2)
     Output
        Transports:
-        (1) drug: cen → ∅, rate = k1 * a[cen]/(a[cen] + K)
+        (1) drug: cen → ∅, amount rate = k1 * a[cen]/(a[cen] + K)
 

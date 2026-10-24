@@ -15,7 +15,8 @@ transports(from, to, molec = NA_character_, ..., rate = NULL, const = NULL)
 
 \item{...}{Unused, enforces \code{rate} and \code{const} to be specified as named arguments only, not positional}
 
-\item{rate}{The transport rate (character or call, optional, mutually exclusive with \code{const})}
+\item{rate}{The amount-change transport rate (character or call, optional,
+mutually exclusive with \code{const})}
 
 \item{const}{Rate constant for first-order transports (character, call, numeric,
 or unit-bearing value, optional, mutually exclusive with \code{rate})}
@@ -27,6 +28,7 @@ A \code{compphysiol_transports} object
 compphysiol_transports represent mass/amount-preserving transports of molecules between two compartments in a compartment model.
 }
 \details{
+Transport rates are always represented as amount-change rates.
 compphysiol_transports can be linear (first-order) or nonlinear, depending on whether the transport rate is defined by a constant
 (argument \code{const}) or a general expression (argument \code{rate}).
 The special syntax \code{{from}}, \code{{to}} and \code{{molec}} can be used in \code{rate} or \code{const} to automatically substitute

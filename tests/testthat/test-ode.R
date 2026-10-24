@@ -216,6 +216,7 @@ test_that("ODE generation includes complex reaction rates", {
             input = c("A", "B"),
             output = "C",
             cmt = "cyt",
+            rate_type = "concentration",
             rate = "vmax * c[A, cyt] * c[B, cyt] / (Km + c[A, cyt])"
         ) |>
         add_parameter(vmax = 2, Km = 10)

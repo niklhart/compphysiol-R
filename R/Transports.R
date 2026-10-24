@@ -2,6 +2,7 @@
 #'
 #' compphysiol_transports represent mass/amount-preserving transports of molecules between two compartments in a compartment model.
 #' 
+#' Transport rates are always represented as amount-change rates.
 #' compphysiol_transports can be linear (first-order) or nonlinear, depending on whether the transport rate is defined by a constant 
 #' (argument `const`) or a general expression (argument `rate`). 
 #' The special syntax `{from}`, `{to}` and `{molec}` can be used in `rate` or `const` to automatically substitute 
@@ -13,7 +14,8 @@
 #' @param to The name of the destination compartment(s) (character vector or NULL for sink compartments)
 #' @param molec The name of the molecule(s) being transferred (character vector, optional, default: all molecules)
 #' @param ... Unused, enforces `rate` and `const` to be specified as named arguments only, not positional
-#' @param rate The transport rate (character or call, optional, mutually exclusive with `const`)
+#' @param rate The amount-change transport rate (character or call, optional,
+#'   mutually exclusive with `const`)
 #' @param const Rate constant for first-order transports (character, call, numeric,
 #'   or unit-bearing value, optional, mutually exclusive with `rate`)
 #' @return A `compphysiol_transports` object
@@ -256,7 +258,7 @@ print.compphysiol_transports = function(x, ...) {
         cat(" Transports:\n")
         cat(
             sprintf(
-                "  (%i) %s: %s \u2192 %s, rate = %s\n",
+                "  (%i) %s: %s \u2192 %s, amount rate = %s\n",
                 seq_along(x),
 #                paste0("a[", molec, "]"),
                 molec,
@@ -379,7 +381,7 @@ print.compphysiol_transport <- function(x, ...) {
     rate <- deparse1(x$rate)
 
     cat(sprintf(
-        " Transport: %s \u2192 %s, molec = %s, rate = %s\n",
+        " Transport: %s \u2192 %s, molec = %s, amount rate = %s\n",
         from,
         to,
         molec,

@@ -68,7 +68,8 @@ to_process_model.compphysiol_compartment_model <- function(model) {
     volume_by_cmt <- setNames(model$compartments$volume, names(model$compartments))
     for (j in seq_along(model$reactions)) {
         scale_cmt <- model$reactions$scale_cmt[[j]]
-        vol <- volume_by_cmt[[scale_cmt]]
+        vol <- if (is.na(scale_cmt)) NA_real_ else volume_by_cmt[[scale_cmt]]
+        rate_type <- model$reactions$rate_type[[j]]
         rate_expr <- model$reactions$rate[[j]]
         participants <- as.data.frame(model$reactions$participants[[j]])
 
@@ -82,11 +83,14 @@ to_process_model.compphysiol_compartment_model <- function(model) {
             )
         })
         target_types <- unique(vapply(targets, `[[`, character(1), "type"))
-        if (length(target_types) > 1L) {
+        if (identical(rate_type, "amount") && !identical(target_types, "amount")) {
             stop(
-                "Cannot create a process model for a reaction with mixed amount and concentration states.",
+                "Cannot export an amount-rate reaction unless all participant states can be represented as amounts.",
                 call. = FALSE
             )
+        }
+        if (length(target_types) > 1L) {
+            stop("Cannot create a process model for a reaction with mixed amount and concentration states.", call. = FALSE)
         }
 
         for (i in seq_len(nrow(participants))) {
@@ -100,7 +104,9 @@ to_process_model.compphysiol_compartment_model <- function(model) {
         input_states <- vapply(input_targets, `[[`, integer(1), "idx")
         input_stoich <- input_participants$stoich
 
-        if (identical(target_types, "amount")) {
+        if (identical(rate_type, "amount")) {
+            process_rate <- lower(rate_expr)
+        } else if (identical(target_types, "amount")) {
             if (.is_missing_volume(vol)) {
                 stop(
                     "Cannot export reaction in compartment '",

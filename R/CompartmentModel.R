@@ -218,18 +218,21 @@ wire <- function(model, what = c("molec", "cmt")) {
                             repeat_stoich = TRUE
                         )
                         if (identical(m$type, "elementary")) {
-                            return(reactions(
+                            args <- list(
                                 input = input,
                                 output = output,
                                 cmt = values,
                                 const = list(m$const[[1]])
-                            ))
+                            )
+                            if (!isTRUE(m$rate_type_auto)) args$rate_type <- m$rate_type
+                            return(do.call(reactions, args))
                         }
 
                         return(reactions(
                             input = input,
                             output = output,
                             cmt = values,
+                            rate_type = m$rate_type,
                             rate = list(m$rate[[1]])
                         ))
                     }
@@ -250,18 +253,21 @@ wire <- function(model, what = c("molec", "cmt")) {
                         )
 
                         if (identical(m$type, "elementary")) {
-                            return(reactions(
+                            args <- list(
                                 input = input,
                                 output = output,
                                 scale_cmt = m$scale_cmt[[1]],
                                 const = list(m$const[[1]])
-                            ))
+                            )
+                            if (!isTRUE(m$rate_type_auto)) args$rate_type <- m$rate_type
+                            return(do.call(reactions, args))
                         }
 
                         reactions(
                             input = input,
                             output = output,
                             scale_cmt = m$scale_cmt[[1]],
+                            rate_type = m$rate_type,
                             rate = list(m$rate[[1]])
                         )
                     })
@@ -965,7 +971,7 @@ make_depot <- function(model) {
         }
     }
 
-    # Check reaction rates against the public concentration-change rate convention.
+    # Check reaction rates against their declared representation.
     for (i in seq_along(model$reactions)) {
         react <- model$reactions[i]
         rate <- react$rate[[1]]
@@ -980,26 +986,27 @@ make_depot <- function(model) {
         }
 
         participants <- as.data.frame(react$participants[[1]])
-        conc_names <- .dsl_make_state(participants$molec, participants$cmt, prefix = "c")
-        missing_conc <- conc_names[!vapply(
-            conc_names,
+        state_prefix <- if (identical(react$rate_type[[1]], "amount")) "a" else "c"
+        state_names <- .dsl_make_state(participants$molec, participants$cmt, prefix = state_prefix)
+        missing_states <- state_names[!vapply(
+            state_names,
             exists,
             logical(1),
             envir = varenv,
             inherits = FALSE
         )]
-        if (length(missing_conc) > 0) {
+        if (length(missing_states) > 0) {
             warning(
                 "Cannot check units for reaction (",
                 i,
-                "): concentration state(s) ",
-                paste(missing_conc, collapse = ", "),
+                "): ", state_prefix, " state(s) ",
+                paste(missing_states, collapse = ", "),
                 " are not defined in the model."
             )
             next
         }
 
-        conc_vals <- lapply(conc_names, get, envir = varenv, inherits = FALSE)
+        state_vals <- lapply(state_names, get, envir = varenv, inherits = FALSE)
 
         rate_val <- tryCatch(
             .dsl_eval(rate, envir = varenv),
@@ -1015,22 +1022,22 @@ make_depot <- function(model) {
             next
         }
 
-        scale_cmt <- react$scale_cmt[[1]]
-        scale_idx <- match(scale_cmt, participants$cmt)
-        if (is.na(scale_idx)) scale_idx <- 1
-        expected_conc <- conc_vals[[scale_idx]]
-        if (!inherits(expected_conc, "units")) {
+        scale_idx <- match(react$scale_cmt[[1]], participants$cmt)
+        if (is.na(scale_idx)) scale_idx <- 1L
+        expected_state <- state_vals[[scale_idx]]
+        if (!inherits(expected_state, "units")) {
             next
         }
 
         one_h <- units::set_units(1, "h")
-        expected <- expected_conc / one_h
+        expected <- expected_state / one_h
         units::ud_are_convertible(units(rate_val), units(expected)) ||
             stop(
                 sprintf(
-                    "In reaction (%d), unit of reaction rate (%s) must be compatible with concentration/time (%s).",
+                    "In reaction (%d), unit of reaction rate (%s) must be compatible with %s/time (%s).",
                     i,
                     units(rate_val),
+                    react$rate_type[[1]],
                     units(expected)
                 )
             )

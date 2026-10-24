@@ -49,7 +49,7 @@ test_that("Reactions are created correctly", {
     expect_equal(r1$type, "elementary")
 
     # Complex reaction
-    r2 <- reactions(input = "A", output = "B", rate = "k1 * c[A]*c[B]/(c[B]+K)")
+    r2 <- reactions(input = "A", output = "B", rate_type = "concentration", rate = "k1 * c[A]*c[B]/(c[B]+K)")
     expect_equal(length(r2), 1)
     expect_reaction_participants(r2, "input", "A", NA_character_)
     expect_reaction_participants(r2, "output", "B", NA_character_)
@@ -109,7 +109,7 @@ test_that("Programmatic cross-compartment reactions store localized participants
     expect_reaction_participants(r, "output", "LR", "membrane")
     expect_equal(r$scale_cmt, "membrane")
     expect_equal(r$const[[1]], quote(kon))
-    expect_equal(r$rate[[1]], quote(kon * c[R, membrane] * c[L, plasma]))
+    expect_equal(r$rate[[1]], quote(kon * a[R, membrane] * c[L, plasma]))
     expect_equal(r$type, "elementary")
 })
 
@@ -128,18 +128,27 @@ test_that("Programmatic reactions normalize repeated participants", {
     expect_equal(r$scale_cmt, "cyt")
 })
 
-test_that("Cross-compartment reactions require an explicit involved scale compartment", {
-    expect_error(
-        reactions(
-            input = state(
-                molec = c("R", "L"),
-                cmt = c("membrane", "plasma")
-            ),
-            output = state(molec = "LR", cmt = "membrane"),
-            const = "kon"
+test_that("Cross-compartment const reactions require an unambiguous scale", {
+    expect_error(reactions(
+        input = state(
+            molec = c("R", "L"),
+            cmt = c("membrane", "plasma")
         ),
-        "scale_cmt"
+        output = state(molec = "LR", cmt = "membrane"),
+        const = "kon"
+    ), "scale_cmt")
+
+    r <- reactions(
+        input = state(
+            molec = c("R", "L"),
+            cmt = c("membrane", "plasma")
+        ),
+        output = state(molec = "LR", cmt = "membrane"),
+        scale_cmt = "membrane",
+        const = "kon"
     )
+    expect_equal(r$rate_type, "amount")
+    expect_equal(r$scale_cmt, "membrane")
 
     expect_error(
         reactions(
@@ -151,7 +160,20 @@ test_that("Cross-compartment reactions require an explicit involved scale compar
             scale_cmt = "interstitium",
             const = "kon"
         ),
-        "scale_cmt.*involved|involved.*scale_cmt"
+        "scale_cmt.*reactant|reactant.*scale_cmt"
+    )
+})
+
+test_that("rate_type does not resolve an ambiguous mass-action scale", {
+    formula <- "R[mem] + L[pla] -> NULL"
+
+    expect_error(
+        reactions(formula = formula, const = "k", rate_type = "amount"),
+        "scale_cmt.*reactants occur in multiple compartments"
+    )
+    expect_error(
+        reactions(formula = formula, const = "k", rate_type = "concentration"),
+        "scale_cmt.*reactants occur in multiple compartments"
     )
 })
 
@@ -163,7 +185,7 @@ test_that("First-order cross-compartment reactions infer scale from unique input
     )
 
     expect_equal(r$scale_cmt, "plasma")
-    expect_equal(r$rate[[1]], quote(kAB * c[A, plasma]))
+    expect_equal(r$rate[[1]], quote(kAB * a[A, plasma]))
 })
 
 test_that("Complex cross-compartment reactions require explicit scale compartment", {
@@ -171,6 +193,7 @@ test_that("Complex cross-compartment reactions require explicit scale compartmen
         reactions(
             input = state(molec = "A", cmt = "plasma"),
             output = state(molec = "B", cmt = "membrane"),
+            rate_type = "concentration",
             rate = "kAB * c[A, plasma]"
         ),
         "scale_cmt"
@@ -186,6 +209,55 @@ test_that("Same-compartment state reactions infer scale compartment", {
 
     expect_equal(r$scale_cmt, "cyt")
     expect_equal(r$rate[[1]], quote(kAB * c[A, cyt]))
+})
+
+test_that("rate_type controls reaction rate representation", {
+    concentration <- reactions("A + B -> C", cmt = "cyt", const = "k")
+    amount <- reactions(
+        "A + B -> C", cmt = "cyt", rate_type = "amount", const = "k"
+    )
+
+    expect_equal(concentration$rate_type, "concentration")
+    expect_equal(concentration$rate[[1]], quote(k * c[A, cyt] * c[B, cyt]))
+    expect_equal(amount$rate_type, "amount")
+    expect_equal(amount$scale_cmt, "cyt")
+    expect_equal(amount$rate[[1]], quote(k * a[A, cyt] * c[B, cyt]))
+})
+
+test_that("scale_cmt selects the first amount-represented reactant in that compartment", {
+    r <- reactions(
+        "A[plasma] + B[membrane] + C[membrane] -> D[membrane]",
+        rate_type = "amount",
+        scale_cmt = "membrane",
+        const = "k"
+    )
+
+    expect_equal(
+        r$rate[[1]],
+        quote(k * c[A, plasma] * a[B, membrane] * c[C, membrane])
+    )
+})
+
+test_that("explicit rates require consistent rate metadata", {
+    expect_error(
+        reactions("A -> B", cmt = "cyt", rate = "k * c[A, cyt]"),
+        "rate_type"
+    )
+    expect_error(
+        reactions(
+            "A -> B", cmt = "cyt", rate_type = "amount",
+            scale_cmt = "cyt", rate = "k * a[A, cyt]"
+        ),
+        "scale_cmt"
+    )
+})
+
+test_that("cross-compartment synthesis defaults to an amount rate", {
+    r <- reactions("NULL -> A[plasma] + B[membrane]", const = "ksyn")
+
+    expect_equal(r$rate_type, "amount")
+    expect_true(is.na(r$scale_cmt))
+    expect_equal(r$rate[[1]], quote(ksyn))
 })
 
 test_that("Character reactions remain same-compartment shorthand", {
@@ -210,7 +282,7 @@ test_that("Reaction const rejects state references", {
     )
 
     expect_no_error(
-        reactions(input = "A", output = "B", rate = "k * c[A]")
+        reactions(input = "A", output = "B", rate_type = "concentration", rate = "k * c[A]")
     )
 })
 
@@ -261,7 +333,7 @@ test_that("Character reaction formulas support localized cross-compartment parti
     )
     expect_reaction_participants(r, "output", "LR", "membrane")
     expect_equal(r$scale_cmt, "membrane")
-    expect_equal(r$rate[[1]], quote(kon * c[L, plasma] * c[R, membrane]))
+    expect_equal(r$rate[[1]], quote(kon * c[L, plasma] * a[R, membrane]))
 })
 
 test_that("Character reaction formulas fill unlocalized participants from cmt", {
@@ -270,7 +342,7 @@ test_that("Character reaction formulas fill unlocalized participants from cmt", 
     expect_reaction_participants(r, "input", c("A", "B"), c("cyt", "membrane"))
     expect_reaction_participants(r, "output", "C", "cyt")
     expect_equal(r$scale_cmt, "cyt")
-    expect_equal(r$rate[[1]], quote(k * c[A, cyt] * c[B, membrane]))
+    expect_equal(r$rate[[1]], quote(k * a[A, cyt] * c[B, membrane]))
 })
 
 test_that("Character reaction formulas can be vectorized over formulas", {
@@ -445,7 +517,7 @@ test_that("Empty reactions are handled correctly", {
 
 test_that("Multiple reactions can be combined and subsetted", {
     r1 <- reactions(input = "A", output = "B", const = "kAB")
-    r2 <- reactions(input = "B", output = "A", rate = "kBA*c[B]")
+    r2 <- reactions(input = "B", output = "A", rate_type = "concentration", rate = "kBA*c[B]")
 
     r12 <- c(r1, r2)
     r1s <- r12[1]
@@ -475,7 +547,7 @@ test_that("Vectorized reaction creation with compartment substitution works corr
     expect_equal(r1$rate[[2]], quote(kb * c[A, b]))
 
     # Complex reaction with substitution
-    r2 <- reactions(input = "A", output = "B", cmt = c("a","b"), rate = "k{cmt}*c[A]")
+    r2 <- reactions(input = "A", output = "B", cmt = c("a","b"), rate_type = "concentration", rate = "k{cmt}*c[A]")
 
     expect_equal(length(r2), 2)
     expect_reaction_participants(r2[1], "input", "A", "a")
@@ -520,7 +592,7 @@ test_that("Reaction printing works correctly", {
 test_that("Reactions can be added to compartment models", {
     model <- compartment_model() |>
         add_reaction(input = "A", output = "B", const = "k1") |>
-        add_reaction(input = "B", output = "C", rate = "k2 * c[B]") |>
+        add_reaction(input = "B", output = "C", rate_type = "concentration", rate = "k2 * c[B]") |>
         add_reaction(formula = "C -> D", const = "k3")
 
     expect_equal(length(model$reactions), 3)

@@ -168,6 +168,7 @@ test_that("to_stochastic_model rejects explicit-rate processes in the current ve
             input = "A",
             output = "B",
             cmt = "cyt",
+            rate_type = "amount",
             rate = "vmax * a[A, cyt] / (Km + a[A, cyt])"
         ) |>
         add_parameter(V = 1)

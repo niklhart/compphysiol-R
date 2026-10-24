@@ -94,6 +94,21 @@ test_that("ProcessModel amount-state reactions use amount-change process rates",
     )
 })
 
+test_that("amount-rate reactions require amount-convertible participant states", {
+    model <- compartment_model() |>
+        add_compartment(name = "cyt", volume = NA_real_) |>
+        add_molecule(
+            name = c("A", "B"), cmt = "cyt", initial = c(10, 0),
+            type = "concentration"
+        ) |>
+        add_reaction(
+            input = "A", output = "B", cmt = "cyt",
+            rate_type = "amount", const = "k"
+        )
+
+    expect_error(to_process_model(model), "amount-rate.*amounts")
+})
+
 test_that("ProcessModel simplifies elementary cross-compartment amount reaction rates", {
     model <- compartment_model() |>
         add_reaction(
@@ -124,6 +139,7 @@ test_that("ProcessModel represents an explicit-rate reaction by rate and stoichi
             input = "A",
             output = "B",
             cmt = "cyt",
+            rate_type = "concentration",
             rate = "vmax * c[A, cyt] / (Km + c[A, cyt])"
         )
 

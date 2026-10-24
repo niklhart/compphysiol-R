@@ -39,6 +39,7 @@ test_that("wire treats NA compartments in states like old compartment shorthand"
         add_reaction(
             input = state(molec = "A", cmt = NA_character_),
             output = state(molec = "B", cmt = NA_character_),
+            rate_type = "concentration",
             rate = "k * c[A]"
         ) |>
         wire()
@@ -86,7 +87,7 @@ test_that("wire expands partial NA state compartments in cross-compartment react
     expect_equal(
         vapply(model$reactions$rate, deparse1, character(1)),
         c(
-            "kon * c[L, plasma] * c[R, membrane]",
+            "kon * c[L, plasma] * a[R, membrane]",
             "kon * c[L, membrane] * c[R, membrane]"
         )
     )

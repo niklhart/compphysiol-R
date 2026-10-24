@@ -19,7 +19,9 @@ test_that("component low-level constructors trust canonical input", {
     expect_s3_class(
         .new_reactions(data.frame(
             rate = I(list(quote(k * A))), const = I(list(quote(k))),
-            type = "elementary", scale_cmt = "A", participants = I(list(data.frame()))
+            type = "elementary", scale_cmt = "A", rate_type = "concentration",
+            rate_type_auto = FALSE,
+            participants = I(list(data.frame()))
         )),
         "compphysiol_reactions"
     )

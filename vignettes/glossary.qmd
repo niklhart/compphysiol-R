@@ -228,18 +228,24 @@ participant structure, for example `A + B -> C` or
 formula have the same wildcard or `cmt`-filled meaning as separate `input` and
 `output` character arguments.
 
-Reaction rates are expressed as concentration-change rates with respect to a
-reaction scaling compartment. During ODE export, these rates are multiplied by
-the size represented by that compartment to obtain amount-change rates for the
-affected ODE states. For same-compartment reactions, the scaling compartment is
-the shared participant compartment. For cross-compartment reactions, the scaling
-compartment can be inferred for elementary reactions with a single input
-compartment. In other cross-compartment reactions it must be specified
-explicitly, for example with `scale_cmt`, and must be one of the compartments
-involved in the reaction. This keeps the public reaction syntax close to
-mass-action conventions while making interface reactions, such as membrane
-receptor binding, explicit about the compartment whose concentration scale
-defines the reaction rate.
+Reaction rates can be represented as concentration-change rates or amount-change
+rates. Explicit `rate` expressions declare this with `rate_type`. For elementary
+reactions specified with `const`, the constant always has its usual mass-action
+meaning; when the reaction scale is provided or unambiguous, `rate_type`
+controls how the generated rate expression is presented. A concentration
+representation uses concentration factors for all reactants. An amount
+representation replaces one reactant concentration factor with its amount,
+giving an algebraically equivalent amount/time expression.
+`scale_cmt` selects the compartment supplying that amount factor, or the
+compartment size used to convert a concentration rate to an amount rate.
+
+For `const` reactions, a single-compartment reaction defaults to a concentration
+rate and a cross-compartment reaction defaults to an amount rate. `scale_cmt`
+is inferred when all reactants occur in one compartment. When reactants occur
+in multiple compartments it must be supplied regardless of `rate_type`.
+Amount-rate reactions require every participant state to be convertible to an
+amount state. This makes a shared cross-compartment reaction flux explicit and
+mass-conserving. Transports likewise always use amount/time rates.
 
 The `c[]` and `a[]` state-reference forms keep their usual meaning in reaction
 rates. The unit of `c[molecule, compartment]` depends on the size assigned to
