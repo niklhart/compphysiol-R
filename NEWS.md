@@ -1,5 +1,7 @@
 # compphysiol (development version)
 
+* Introduced "rate type" concept for reactions and transports for improved clarity
+
 # compphysiol 0.5.0
 
 * Implemented mixed-effect model estimation via `nlmixr2`; currently only 
