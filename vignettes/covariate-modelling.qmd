@@ -166,6 +166,48 @@ used as well. Character or factor values may be retained in the source data,
 but quantities entering numerical model equations should be encoded
 numerically.
 
+One possible future abstraction would keep contrast construction at this
+data-to-experiments boundary. A reusable specification could declare the full
+set and order of levels, the reference level, and the coding scheme, and then
+add stable solver-facing parameters while retaining the original categorical
+value:
+
+```r
+sex_contrast <- categorical_contrast(
+    parameter = "sex",
+    levels = c("male", "female"),
+    reference = "male",
+    coding = "treatment"
+)
+
+studies <- encode_covariates(studies, sex_contrast)
+```
+
+The levels should be declared rather than inferred from the current data so
+that fitting subsets and future prediction data use the same parameter schema.
+The model equation would continue to refer explicitly to the generated
+contrast parameter, such as `sex_female`.
+
+A more extensive alternative would make the categorical effect part of the
+model expression itself:
+
+```r
+equations(
+    CL = CLref *
+        (BW / BWref)^theta_BW *
+        categorical_effect(
+            sex,
+            reference = "male",
+            female = exp(beta_female)
+        )
+)
+```
+
+Such an abstraction would coordinate model semantics and backend encoding, but
+would require categorical covariate metadata to become a persistent part of
+the model. Both interfaces above are design suggestions and are not currently
+implemented.
+
 ## Nonlinear regression
 
 In nonlinear regression, the covariate equation accounts for all systematic
