@@ -1,0 +1,382 @@
+---
+title: "Covariate modelling"
+format:
+  html:
+    toc: true
+    number-sections: false
+    embed-resources: true
+vignette: >
+  %\VignetteIndexEntry{Covariate modelling}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+---
+
+This vignette demonstrates two ways to use covariates in `compphysiol`:
+
+- nonlinear regression, where covariates explain differences between
+  individuals and no unexplained individual variability is estimated;
+- nonlinear mixed-effects modelling, where covariate effects and unexplained
+  individual variability are estimated together.
+
+The examples use body weight as a continuous covariate and sex as a categorical
+covariate. The same dynamic model is used in both analyses.
+
+```{r}
+#| label: setup
+library(compphysiol)
+library(units)
+library(ggplot2)
+
+has_nlmixr2 <- requireNamespace("nlmixr2est", quietly = TRUE)
+```
+
+## Where covariates belong
+
+Covariate modelling uses existing model components rather than a separate
+covariate object:
+
+- an experiment's `parameters` contain the observed covariate values for one
+  individual;
+- model `equations` define how covariates affect structural parameters;
+- `parameter_specs` identify the shared coefficients to estimate;
+- a `statistical_model` adds unexplained individual variability and observation
+  error when required.
+
+Experiment parameters are known values. They cannot simultaneously be shared
+estimated parameters. In particular, the individual body weights and sex
+indicators below are inputs, whereas the body-weight exponent and sex effect
+are estimated coefficients.
+
+## Dynamic and covariate model
+
+Consider a one-compartment intravenous model. Clearance depends on body weight
+and sex, whereas volume is shared across individuals:
+
+\[
+CL_i = CL_{ref}
+       \left(\frac{BW_i}{BW_{ref}}\right)^{\theta_{BW}}
+       \exp(\beta_{female} female_i).
+\]
+
+Here, `female` is zero for the reference category and one for the female
+category. Consequently, `exp(beta_female)` is the female-to-reference clearance
+ratio at the same body weight.
+
+```{r}
+#| label: dynamic-model
+model <- compartment_model() |>
+    add_compartment(name = "Central", volume = "V") |>
+    add_molecule(
+        name = "drug",
+        cmt = "Central",
+        initial = 0 [mg],
+        type = "amount"
+    ) |>
+    add_transport(
+        from = "Central",
+        to = NULL,
+        molec = "drug",
+        rate = "CL * c[drug, Central]"
+    ) |>
+    add_equation(
+        CL = CLref * (BW / BWref)^theta_BW *
+            exp(beta_female * female)
+    ) |>
+    add_observable(C = c[drug, Central]) |>
+    add_parameter(BWref = 70 [kg])
+
+model
+```
+
+`BWref` fixes the interpretation of `CLref`: it is clearance for an individual
+in the reference sex category at 70 kg. It is usually preferable to choose and
+fix this reference value rather than estimate it together with `CLref`.
+
+## From tabular data to experiments
+
+The example data are stored as an ordinary CSV file installed with the package.
+It has one row per observation and contains identifiers, observation times,
+concentrations, body weights, and categorical sex labels. CSV files cannot
+retain physical units, so units are attached immediately after import.
+
+```{r}
+#| label: import-data
+data_file <- system.file(
+    "extdata", "covariate-pk.csv",
+    package = "compphysiol"
+)
+covariate_data <- read.csv(data_file, stringsAsFactors = FALSE)
+
+covariate_data$time <- set_units(covariate_data$time, "h", mode = "standard")
+covariate_data$concentration <- set_units(
+    covariate_data$concentration, "mg/L", mode = "standard"
+)
+covariate_data$bw <- set_units(covariate_data$bw, "kg", mode = "standard")
+
+head(covariate_data)
+```
+
+The original categorical labels remain useful for inspection and plotting. The
+numerical model receives an explicit contrast encoding instead: `female` is one
+for female individuals and zero for the male reference category. Making this
+step visible avoids an implicit choice of reference level or contrast
+convention.
+
+Each individual becomes one experiment. Covariates that are constant within an
+individual are stored as known experiment parameters, while the observation
+rows become `observation_data`. The common dose is part of every experiment.
+
+```{r}
+#| label: construct-experiments
+subject_rows <- split(covariate_data, covariate_data$id)
+
+study_list <- lapply(subject_rows, function(rows) {
+    experiment(
+        parameters = parameters(
+            BW = rows$bw[[1]],
+            female = as.numeric(rows$sex[[1]] == "female")
+        ),
+        dosing = dosing(
+            time = 0 [h],
+            amount = 100 [mg],
+            molec = "drug",
+            cmt = "Central"
+        ),
+        observations = observation_data(
+            time = rows$time,
+            observable = "C",
+            value = rows$concentration
+        ),
+        start = 0 [h],
+        name = rows$id[[1]]
+    )
+})
+
+studies <- do.call(c, unname(study_list))
+studies[1]
+```
+
+This conversion is intentionally explicit: it shows which tabular columns have
+model semantics. It also exposes a possible future convenience abstraction—a
+data-to-experiments helper—without requiring one for the core representation.
+
+More than two categories can be represented by several indicator parameters,
+using one category as the reference. Other explicit contrast systems can be
+used as well. Character or factor values may be retained in the source data,
+but quantities entering numerical model equations should be encoded
+numerically.
+
+## Nonlinear regression
+
+In nonlinear regression, the covariate equation accounts for all systematic
+between-individual differences in clearance. Individuals share `CLref`, `V`,
+`theta_BW`, and `beta_female`; only their known covariates differ.
+
+The statistical model adds observation error around the model-predicted
+concentration.
+
+```{r}
+#| label: regression-statistical-model
+regression_statistics <- statistical_model(
+    C = normal(sd = "sigma")
+)
+```
+
+### Estimate covariate effects
+
+```{r}
+#| label: regression-estimation
+regression_specs <- c(
+    parameter_specs(
+        CLref = 1 [L/h],
+        V = 10 [L],
+        sigma = 0.1 [mg/L],
+        transform = "log"
+    ),
+    parameter_specs(
+        theta_BW = 0.7,
+        beta_female = 0,
+        transform = "identity"
+    )
+)
+
+regression_problem <- estimation_problem(
+    model = model,
+    experiments = studies,
+    parameters = regression_specs,
+    statistics = regression_statistics
+)
+
+regression_fit <- estimate(
+    regression_problem,
+    engine = optim_engine(
+        method = "L-BFGS-B",
+        control = list(maxit = 150),
+        simulation = deSolve_engine(compiled = TRUE)
+    )
+)
+
+coef(regression_fit)
+```
+
+The positive structural and error-scale quantities use a log transformation.
+`theta_BW` and `beta_female` are left on the identity scale because meaningful
+estimates can lie on either side of zero.
+
+The fitted covariate relationship can be inspected independently of the ODE:
+
+```{r}
+#| label: regression-covariate-plot
+regression_coef <- coef(regression_fit)
+
+covariate_curve <- expand.grid(
+    BW = seq(
+        min(as.numeric(covariate_data$bw)),
+        max(as.numeric(covariate_data$bw)),
+        length.out = 100
+    ),
+    female = c(0, 1)
+)
+covariate_curve$sex <- ifelse(covariate_curve$female == 1, "female", "male")
+covariate_curve$CL <-
+    as.numeric(regression_coef$CLref) *
+    (covariate_curve$BW / 70)^as.numeric(regression_coef$theta_BW) *
+    exp(as.numeric(regression_coef$beta_female) * covariate_curve$female)
+
+ggplot(covariate_curve, aes(x = BW, y = CL, colour = sex)) +
+    geom_line(linewidth = 0.8) +
+    labs(
+        x = "Body weight (kg)",
+        y = "Typical clearance (L/h)",
+        title = "Estimated clearance covariate relationship"
+    ) +
+    theme_minimal()
+```
+
+## Nonlinear mixed-effects modelling
+
+A covariate model rarely explains all differences between individuals. A
+mixed-effects model can retain the same deterministic covariate relationship
+while allowing each individual to have a different reference clearance:
+
+\[
+CL_{ref,i} = TVCL\exp(\eta_{CL,i}),
+\qquad \eta_{CL,i} \sim N(0, \omega_{CL}^2).
+\]
+
+Substitution into the earlier equation gives
+
+\[
+CL_i = TVCL
+       \left(\frac{BW_i}{BW_{ref}}\right)^{\theta_{BW}}
+       \exp(\beta_{female} female_i)
+       \exp(\eta_{CL,i}).
+\]
+
+The random distribution is assigned to the unresolved structural parameter
+`CLref`. The final `CL` remains an equation-derived quantity. This keeps the
+deterministic covariate model separate from the stochastic population model.
+
+```{r}
+#| label: mixed-statistical-model
+mixed_statistics <- statistical_model(
+    CLref = lognormal(
+        median = "TVCL",
+        sdlog = "omega_CL"
+    ),
+    C = normal(sd = "sigma")
+)
+```
+
+No realized `CLref` values occur in `studies`. During estimation they are
+unknown individual random effects, whereas `BW` and `female` remain known
+experiment parameters.
+
+### Estimate fixed and random effects
+
+The estimated quantities are the typical clearance, covariate coefficients,
+volume, between-individual standard deviation, and residual standard deviation.
+
+```{r}
+#| label: mixed-estimation
+#| eval: !expr has_nlmixr2
+mixed_specs <- c(
+    parameter_specs(
+        TVCL = 1 [L/h],
+        V = 10 [L],
+        omega_CL = 0.2,
+        sigma = 0.1 [mg/L],
+        transform = "log"
+    ),
+    parameter_specs(
+        theta_BW = 0.7,
+        beta_female = 0,
+        transform = "identity"
+    )
+)
+
+mixed_problem <- estimation_problem(
+    model = model,
+    experiments = studies,
+    parameters = mixed_specs,
+    statistics = mixed_statistics
+)
+
+mixed_fit <- estimate(
+    mixed_problem,
+    engine = nlmixr2_engine(
+        control = list(print = 0L, maxOuterIterations = 100L)
+    )
+)
+
+coef(mixed_fit)
+standard_errors(mixed_fit)
+```
+
+The mixed-effects result distinguishes population predictions from predictions
+conditional on each individual's fitted random effect:
+
+```{r}
+#| label: mixed-predictions
+#| eval: !expr has_nlmixr2
+pred <- fitted(mixed_fit, "PRED")
+ipred <- fitted(mixed_fit, "IPRED")
+
+prediction_comparison <- data.frame(
+    experiment = ipred$experiment,
+    time = ipred$time,
+    observed = observations(studies)$value,
+    PRED = pred$value,
+    IPRED = ipred$value
+)
+
+ggplot(prediction_comparison, aes(x = time, group = experiment)) +
+    geom_line(aes(y = PRED, linetype = "PRED"), colour = "#3366AA") +
+    geom_line(aes(y = IPRED, linetype = "IPRED"), colour = "#3366AA") +
+    geom_point(aes(y = observed), colour = "#AA5533", size = 1.2) +
+    facet_wrap(~ experiment) +
+    scale_linetype_manual(values = c(PRED = "dashed", IPRED = "solid")) +
+    labs(x = "Time", y = "Concentration", linetype = NULL) +
+    theme_minimal()
+```
+
+## Interpretation and current boundaries
+
+The two workflows differ only in the statistical assumption about `CLref`.
+The experiment representation and covariate equation are unchanged:
+
+| Concern | Nonlinear regression | Mixed-effects modelling |
+|---|---|---|
+| Observed covariates | Experiment parameters | Experiment parameters |
+| Deterministic covariate effects | Model equations | Model equations |
+| Shared coefficients | Parameter specifications | Parameter specifications |
+| Unexplained individual variability | None | Individual-level statistical distribution |
+| Observation variability | Observation-level statistical distribution | Observation-level statistical distribution |
+
+The current experiment contract treats covariates as scalar and constant over
+an experiment. Time-varying covariates, covariate measurement error,
+between-occasion variability, and automatic categorical contrast construction
+would require additional behaviour. For the common case of fixed observed
+covariates, keeping them as experiment parameters makes the values explicit and
+allows the same dynamic model to be used for simulation, nonlinear regression,
+and nonlinear mixed-effects estimation.
