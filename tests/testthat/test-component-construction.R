@@ -137,8 +137,9 @@ test_that("model component modifiers share the component-first S3 interface", {
         add_equation = "eq"
     )
     for (generic in names(expected)) {
-        expect_true(isS3stdGeneric(generic), info = generic)
-        expect_identical(names(formals(get(generic)))[1:3],
+        generic_fn <- get(generic, mode = "function")
+        expect_true(isS3stdGeneric(generic_fn), info = generic)
+        expect_identical(names(formals(generic_fn))[1:3],
                          c("model", expected[[generic]], "..."), info = generic)
         expect_true(!is.null(getS3method(generic, "compphysiol_compartment_model")),
                     info = generic)
