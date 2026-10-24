@@ -1,8 +1,8 @@
 estimation_test_model <- function() {
     compartment_model() |>
-        add_compartment("Central", volume = 1 [L]) |>
-        add_molecule("drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
-        add_transport("Central", NULL, molec = "drug", const = "k") |>
+        add_compartment(name = "Central", volume = 1 [L]) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+        add_transport(from = "Central", to = NULL, molec = "drug", const = "k") |>
         add_observable(C = c[drug, Central]) |>
         add_parameter(k = 0.2 [1/h])
 }
@@ -335,9 +335,9 @@ test_that("estimation problems require observation data and validate it against 
 
 test_that("estimation problems resolve individual entries but optim rejects them", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = 1 [L]) |>
-        add_molecule("drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
-        add_transport("Central", NULL, molec = "drug", const = "k") |>
+        add_compartment(name = "Central", volume = 1 [L]) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+        add_transport(from = "Central", to = NULL, molec = "drug", const = "k") |>
         add_observable(C = c[drug, Central])
     specs <- c(
         k_pop = parameter_spec(0.2 [1/h]),

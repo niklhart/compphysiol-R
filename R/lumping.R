@@ -94,7 +94,7 @@ lump_model <- function(M, partitioning = list(), normalize = list()) {
 
     # --- build new model ------------------------------------------------------
     L <- compartment_model() |>
-        add_compartment(new_names) |>
+        add_compartment(name = new_names) |>
         add_molecule(
             name = X0_molec,
             cmt = X0_cmt,

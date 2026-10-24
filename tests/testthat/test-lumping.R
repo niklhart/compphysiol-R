@@ -28,11 +28,11 @@ test_that("lumping is exact in a 3-CMT model with identical peripherals", {
 test_that("lumping works for 2-CMT blood/tissue model with CL", {
 
     M <- compartment_model() |>
-        add_compartment(c("blo","tis")) |>
+        add_compartment(name = c("blo","tis")) |>
         add_molecule(name = "drug", cmt = c("blo","tis"), initial = c(10,0), type = "amount") |>
-        add_transport("blo", "tis", const = "Q/Vblo") |>
-        add_transport("tis", "blo", const = "Q/(Vtis*Ktis)") |>
-        add_transport("tis", "", const = "CL/(Vtis*Ktis)") |>
+        add_transport(from = "blo", to = "tis", const = "Q/Vblo") |>
+        add_transport(from = "tis", to = "blo", const = "Q/(Vtis*Ktis)") |>
+        add_transport(from = "tis", to = "", const = "CL/(Vtis*Ktis)") |>
         add_parameter(Q = 1, Vblo = 1, Vtis = 3, Ktis = 10, CL = 2)
 
     L <- lump_model(M,
@@ -43,16 +43,14 @@ test_that("lumping works for 2-CMT blood/tissue model with CL", {
                     ))
 
     Lref <- compartment_model() |>
-        add_compartment("blo_tis", 10) |>
+        add_compartment(name = "blo_tis", volume = 10) |>
         add_molecule(
             name = "drug",
             cmt = "blo_tis",
             initial = 10,
             type = "amount"
         ) |>
-        add_transport(
-            "blo_tis",
-            "",
+        add_transport(from = "blo_tis", to = "",
             const = "CL*Q/(Vblo*(Q+CL)+Vtis*Ktis*Q)"
         ) |>
         add_parameter(Q = 1, Vblo = 1, Vtis = 3, Ktis = 10, CL = 2)
@@ -74,11 +72,11 @@ test_that("lumping handles first-pass effect correctly", {
     skip("Illustration of first-pass effect issue")
 
     M <- compartment_model() |>
-        add_compartment(c("gut","liv","blo"), c(10, 0, 0)) |>
-        add_transport("gut", "liv", const = "ka") |>
-        add_transport("liv", "blo", const = "Q/(Vliv*Kliv)") |>
-        add_transport("blo", "liv", const = "Q/Vblo") |>
-        add_transport("liv", "", const = "CL/(Vliv*Kliv)") |>
+        add_compartment(name = c("gut","liv","blo"), volume = c(10, 0, 0)) |>
+        add_transport(from = "gut", to = "liv", const = "ka") |>
+        add_transport(from = "liv", to = "blo", const = "Q/(Vliv*Kliv)") |>
+        add_transport(from = "blo", to = "liv", const = "Q/Vblo") |>
+        add_transport(from = "liv", to = "", const = "CL/(Vliv*Kliv)") |>
         add_parameter(ka = 1, Q = 1, Vliv = 1, Kliv = 10, Vblo = 10, CL = 10)
 
     L <- lump_model(M,

@@ -2,12 +2,17 @@
 % Please edit documentation in R/equations.R
 \name{add_equation}
 \alias{add_equation}
+\alias{add_equation.compphysiol_compartment_model}
 \title{Add one or several equations to a \code{compphysiol_compartment_model} object.}
 \usage{
-add_equation(model, ..., name = character(0), expr = character(0), eq)
+add_equation(model, eq, ..., name = character(0), expr = character(0))
+
+\method{add_equation}{compphysiol_compartment_model}(model, eq, ..., name = character(0), expr = character(0))
 }
 \arguments{
 \item{model}{A \code{compphysiol_compartment_model} object.}
+
+\item{eq}{A \code{compphysiol_equations} object. Constructed from the other inputs if not provided.}
 
 \item{...}{Name-expression pairs defining the equations. The expressions can be provided as character strings or as R calls.}
 
@@ -15,8 +20,6 @@ add_equation(model, ..., name = character(0), expr = character(0), eq)
 
 \item{expr}{Expression(s) for the equation(s), as character scalar/vector or as R call / lists of R calls.
 Expressions may contain parameters that are added to the model's parameters list, as well as compartment states (not compartment names!)}
-
-\item{eq}{A \code{compphysiol_equations} object. Constructed from the other inputs if not provided.}
 }
 \value{
 The modified \code{compphysiol_compartment_model} object.
@@ -44,5 +47,5 @@ compartment_model() |>
 ## Programmatic path with compphysiol_equations object
 eq <- equations(name = "co", expr = "Qadi + Qbon + Qhea + Qkid + Qliv + Qmus + Qski")
 compartment_model() |>
-    add_equation(eq = eq)
+    add_equation(eq)
 }

@@ -1,8 +1,8 @@
 statistical_test_model <- function(fixed_cl = FALSE, observable_cl = FALSE) {
     model <- compartment_model() |>
-        add_compartment("Central", volume = 1 [L]) |>
-        add_molecule("drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
-        add_transport("Central", NULL, molec = "drug", rate = "CL * c[drug, Central]") |>
+        add_compartment(name = "Central", volume = 1 [L]) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+        add_transport(from = "Central", to = NULL, molec = "drug", rate = "CL * c[drug, Central]") |>
         add_observable(C = c[drug, Central])
     if (fixed_cl) model <- add_parameter(model, CL = 1 [L/h])
     if (observable_cl) model <- add_observable(model, CL = c[drug, Central])

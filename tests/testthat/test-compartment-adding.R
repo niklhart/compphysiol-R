@@ -3,8 +3,8 @@
 
 test_that("Adding compartments works", {
     M <- compartment_model() |>
-        add_compartment("Central", volume = 10) |>
-        add_compartment("Peripheral", volume = 0)
+        add_compartment(name = "Central", volume = 10) |>
+        add_compartment(name = "Peripheral", volume = 0)
 
     compnames <- names(M$compartments)
     expect_equal(compnames, c("Central", "Peripheral"))
@@ -13,9 +13,9 @@ test_that("Adding compartments works", {
 
 test_that("Adding transports works", {
     M <- compartment_model() |>
-        add_compartment("Central", 10) |>
-        add_compartment("Peripheral", 0) |>
-        add_transport("Central", "Peripheral", const = "k12")
+        add_compartment(name = "Central", volume = 10) |>
+        add_compartment(name = "Peripheral", volume = 0) |>
+        add_transport(from = "Central", to = "Peripheral", const = "k12")
 
     expect_equal(length(M$transports), 1)
     expect_equal(M$transports$from[[1]], "Central")
@@ -25,7 +25,7 @@ test_that("Adding transports works", {
 
 test_that("Bolus dosing is handled correctly", {
     M <- compartment_model() |>
-        add_compartment("Central") |>
+        add_compartment(name = "Central") |>
         add_dosing(cmt = "Central", amount = 100, time = 2)
 
     compnames <- names(M$compartments)
@@ -41,7 +41,7 @@ test_that("Bolus dosing is handled correctly", {
 
 test_that("Infusion dosing creates bag and rate compartments only if requested", {
     M1 <- compartment_model() |>
-        add_compartment("cen") |>
+        add_compartment(name = "cen") |>
         add_dosing(time = 8, rate = 5, duration = 4, cmt = "cen", molec = "drug")
     M2 <- make_depot(M1)
 

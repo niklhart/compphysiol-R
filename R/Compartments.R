@@ -92,21 +92,35 @@ compartments <- function(name = character(0), volume = "V{name}", unit = NULL) {
 #' @examples
 #' # Several compartments added in a single call
 #' compartment_model() |>
-#'     add_compartment(c("A","B"))
+#'     add_compartment(name = c("A","B"))
 #'
 #' # Different ways of adding compartments
 #' M1 <- compartment_model() |>
-#'     add_compartment("A", volume = 10 [L])
+#'     add_compartment(name = "A", volume = 10 [L])
 #' M2 <- compartment_model() |>
-#'     add_compartment("A", volume = 10, unit = "L")
+#'     add_compartment(name = "A", volume = 10, unit = "L")
 #' identical(M1, M2)
 #' @export
 add_compartment <- function(
     model,
+    comp,
+    ...,
     name = character(0),
     volume = "V{name}",
-    unit = NULL,
-    comp
+    unit = NULL
+) {
+    UseMethod("add_compartment")
+}
+
+#' @rdname add_compartment
+#' @export
+add_compartment.compphysiol_compartment_model <- function(
+    model,
+    comp,
+    ...,
+    name = character(0),
+    volume = "V{name}",
+    unit = NULL
 ) {
     .check_class(model, "compphysiol_compartment_model")
 

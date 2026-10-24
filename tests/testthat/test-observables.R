@@ -60,8 +60,8 @@ test_that("add_observable works in programmatic and interactive paths", {
     # Programmatic path 1
     obs <- observables(name = "Cblo", expr = "c[blo]")
     M1 <- compartment_model() |>
-        add_compartment("blo") |>
-        add_observable(obs = obs)
+        add_compartment(name = "blo") |>
+        add_observable(obs)
 
     expect_equal(length(M1$observables), 1)
     expect_equal(names(M1$observables), "Cblo")
@@ -69,7 +69,7 @@ test_that("add_observable works in programmatic and interactive paths", {
 
     # Programmatic path 2
     M2 <- compartment_model() |>
-        add_compartment("blo") |>
+        add_compartment(name = "blo") |>
         add_observable(name = "Cblo", expr = "c[blo]")
 
     expect_equal(length(M2$observables), 1)
@@ -78,7 +78,7 @@ test_that("add_observable works in programmatic and interactive paths", {
 
     # Interactive path
     M3 <- compartment_model() |>
-        add_compartment("blo") |>
+        add_compartment(name = "blo") |>
         add_observable(Cblo = c[blo])
 
     expect_equal(length(M3$observables), 1)

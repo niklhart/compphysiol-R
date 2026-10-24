@@ -2,23 +2,41 @@
 % Please edit documentation in R/Reactions.R
 \name{add_reaction}
 \alias{add_reaction}
+\alias{add_reaction.compphysiol_compartment_model}
 \title{Add one or several reactions to a \code{compphysiol_compartment_model} object.}
 \usage{
 add_reaction(
   model,
+  react,
+  ...,
   input = character(0),
   output = character(0),
   cmt = NA_character_,
   scale_cmt = NA_character_,
   formula = NULL,
-  ...,
   rate = NULL,
-  const = NULL,
-  react = NULL
+  const = NULL
+)
+
+\method{add_reaction}{compphysiol_compartment_model}(
+  model,
+  react,
+  ...,
+  input = character(0),
+  output = character(0),
+  cmt = NA_character_,
+  scale_cmt = NA_character_,
+  formula = NULL,
+  rate = NULL,
+  const = NULL
 )
 }
 \arguments{
 \item{model}{A \code{compphysiol_compartment_model} object.}
+
+\item{react}{A \code{compphysiol_reactions} object. Constructed from the other inputs if not provided.}
+
+\item{...}{Errors if used, enforces \code{rate} and \code{const} to be specified as named arguments only, not positional.}
 
 \item{input}{Character vector or \code{compphysiol_states} object representing the input of the reaction, e.g. \code{c("A", "B")}
 for a reaction where one molecule of \code{A} and one molecule of \code{B} are consumed.
@@ -38,8 +56,6 @@ Required for other cross-compartment reactions.}
 \code{"L[plasma] + R[membrane] -> LR[membrane]"}. If \code{output} is missing and \code{input}
 contains \verb{->}, \code{input} is interpreted as \code{formula}.}
 
-\item{...}{Errors if used, enforces \code{rate} and \code{const} to be specified as named arguments only, not positional.}
-
 \item{rate}{Character string representing the concentration-change reaction rate (for nonlinear reactions).
 Use \code{c[A]} to refer to the concentration of molecule A, and \code{a[A]} to refer to its amount.}
 
@@ -48,8 +64,6 @@ call, numeric, or unit-bearing value).
 Formally, this corresponds to \code{rate = const * c[input[1]] * c[input[2]] * ...}.
 In addition, the information that the reaction is elementary is encoded in the \code{type}
 column of the resulting \code{compphysiol_reactions} object.}
-
-\item{react}{A \code{compphysiol_reactions} object. Constructed from the other inputs if not provided.}
 }
 \value{
 The modified \code{compphysiol_compartment_model} object.

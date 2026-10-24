@@ -2,20 +2,35 @@
 % Please edit documentation in R/Molecules.R
 \name{add_molecule}
 \alias{add_molecule}
+\alias{add_molecule.compphysiol_compartment_model}
 \title{Add one or several molecules to a \code{compphysiol_compartment_model} object.}
 \usage{
 add_molecule(
   model,
+  molec,
+  ...,
   name = character(0),
   cmt = NULL,
   initial = 0,
   unit = NULL,
-  type = c("concentration", "amount"),
-  molec = NULL
+  type = c("concentration", "amount")
+)
+
+\method{add_molecule}{compphysiol_compartment_model}(
+  model,
+  molec,
+  ...,
+  name = character(0),
+  cmt = NULL,
+  initial = 0,
+  unit = NULL,
+  type = c("concentration", "amount")
 )
 }
 \arguments{
 \item{model}{A \code{compphysiol_compartment_model} object.}
+
+\item{molec}{A \code{compphysiol_molecules} object. Constructed from the other inputs if not provided.}
 
 \item{name}{Molecule name(s), character scalar or vector}
 
@@ -33,8 +48,6 @@ and \code{unit}.}
 \item{unit}{Unit for the initial conditions (character scalar or \code{NULL}, the default), to be used if units are not specified via \code{initial}.}
 
 \item{type}{Type of initial condition, either \code{"concentration"} (the default) or \code{"amount"}.}
-
-\item{molec}{A \code{compphysiol_molecules} object. Constructed from the other inputs if not provided.}
 }
 \value{
 The modified \code{compphysiol_compartment_model} object.

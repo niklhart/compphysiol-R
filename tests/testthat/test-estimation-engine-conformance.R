@@ -1,9 +1,8 @@
 fixed_effects_conformance_problem <- function() {
     model <- compartment_model() |>
-        add_compartment("Central", volume = 1) |>
-        add_molecule("drug", cmt = "Central", initial = 100, type = "amount") |>
-        add_transport(
-            "Central", NULL, molec = "drug",
+        add_compartment(name = "Central", volume = 1) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100, type = "amount") |>
+        add_transport(from = "Central", to = NULL, molec = "drug",
             rate = "CL * c[drug, Central]"
         ) |>
         add_observable(C = c[drug, Central])
@@ -33,12 +32,10 @@ fixed_effects_conformance_problem <- function() {
 
 unit_aware_fixed_effects_conformance_problem <- function() {
     model <- compartment_model() |>
-        add_compartment("Central", volume = 2 [L]) |>
-        add_molecule(
-            "drug", cmt = "Central", initial = 0 [mg], type = "amount"
+        add_compartment(name = "Central", volume = 2 [L]) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 0 [mg], type = "amount"
         ) |>
-        add_transport(
-            "Central", NULL, molec = "drug",
+        add_transport(from = "Central", to = NULL, molec = "drug",
             rate = "CL * c[drug, Central]"
         ) |>
         add_observable(C = c[drug, Central])

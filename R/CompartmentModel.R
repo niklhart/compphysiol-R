@@ -562,8 +562,8 @@ make_depot <- function(model) {
 
     # Return the updated model
     model |>
-        add_compartment(new_bag_cmt_names, volume = NA_real_) |>
-        add_compartment(new_rate_cmt_names, volume = NA_real_) |>
+        add_compartment(name = new_bag_cmt_names, volume = NA_real_) |>
+        add_compartment(name = new_rate_cmt_names, volume = NA_real_) |>
         add_molecule(
             name = rep(infus$molec[!duplicates], times = 2),
             cmt = c(bag_names[!duplicates], rate_names[!duplicates]),

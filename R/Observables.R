@@ -117,26 +117,40 @@ observables <- function(..., name = character(0), expr = character(0), cmt = NUL
 #' @examples
 #' ## Interactive path with name-expression pairs
 #' compartment_model() |>
-#'     add_compartment("blo") |>
+#'     add_compartment(name = "blo") |>
 #'     add_observable(Cblo = Ablo / Vblo)
 #' ## Programmatic path with name and expression vectors
 #' compartment_model() |>
-#'     add_compartment("blo") |>
+#'     add_compartment(name = "blo") |>
 #'     add_observable(name = "Cblo", expr = "Ablo/Vblo")
 #' ## Programmatic path with compphysiol_observables object
 #' obs <- observables(name = "Cblo", expr = "Ablo/Vblo")
 #' compartment_model() |>
-#'     add_compartment("blo") |>
-#'     add_observable(obs = obs)
+#'     add_compartment(name = "blo") |>
+#'     add_observable(obs)
 #' @export
 add_observable <- function(
     model,
+    obs,
     ...,
     name = character(0),
     expr = character(0),
     cmt = NULL,
-    molec = NULL,
-    obs
+    molec = NULL
+) {
+    UseMethod("add_observable")
+}
+
+#' @rdname add_observable
+#' @export
+add_observable.compphysiol_compartment_model <- function(
+    model,
+    obs,
+    ...,
+    name = character(0),
+    expr = character(0),
+    cmt = NULL,
+    molec = NULL
 ) {
     .check_class(model, "compphysiol_compartment_model")
 

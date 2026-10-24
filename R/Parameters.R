@@ -121,14 +121,22 @@ parameters <- function(..., name = NULL, value = NULL, unit = NULL) {
 #' @returns The modified `compphysiol_compartment_model` object.
 #' @export
 add_parameter <- function(
-    model,
+    object,
+    param,
     ...,
     name = NULL,
     value = NULL,
-    unit = NULL,
-    param
+    unit = NULL
 ) {
-    .check_class(model, "compphysiol_compartment_model")
+    UseMethod("add_parameter")
+}
+
+#' @rdname add_parameter
+#' @export
+add_parameter.compphysiol_compartment_model <- function(
+    object, param, ..., name = NULL, value = NULL, unit = NULL
+) {
+    model <- object
 
     call <- match.call()
 
@@ -139,10 +147,69 @@ add_parameter <- function(
         parent_env = parent.frame()
     )
 
+    if (is.function(param)) param <- param(model$parameters)
     .check_class(param, "compphysiol_parameters")
 
     model$parameters <- c(model$parameters, param)
     return(model)
+}
+
+#' Overlay or replace parameters
+#'
+#' `overlay_parameter()` replaces parameters with matching names and adds new
+#' names. `replace_parameters()` replaces the complete parameter component;
+#' use `parameters()` to clear it. For experiment collections, a parameters
+#' object is broadcast, while parameter sets expand a length-one collection or
+#' align with a collection by experiment identifier (positionally when both
+#' collections are wholly unnamed). A callback receives the current parameters.
+#'
+#' @inheritParams add_parameter
+#' @returns The modified object.
+#' @export
+overlay_parameter <- function(object, param, ..., name = NULL, value = NULL, unit = NULL) {
+    UseMethod("overlay_parameter")
+}
+
+#' @rdname overlay_parameter
+#' @export
+overlay_parameter.compphysiol_compartment_model <- function(
+    object, param, ..., name = NULL, value = NULL, unit = NULL
+) {
+    param <- .parameter_input(match.call(), parent.frame())
+    if (is.function(param)) param <- param(object$parameters)
+    .check_class(param, "compphysiol_parameters")
+    object$parameters <- .parameters_overlay(object$parameters, param)
+    object
+}
+
+#' @rdname overlay_parameter
+#' @export
+replace_parameters <- function(object, param, ..., name = NULL, value = NULL, unit = NULL) {
+    UseMethod("replace_parameters")
+}
+
+#' @rdname overlay_parameter
+#' @export
+replace_parameters.compphysiol_compartment_model <- function(
+    object, param, ..., name = NULL, value = NULL, unit = NULL
+) {
+    param <- .parameter_input(match.call(), parent.frame())
+    if (is.function(param)) param <- param(object$parameters)
+    .check_class(param, "compphysiol_parameters")
+    object$parameters <- param
+    object
+}
+
+.parameter_input <- function(call, envir) {
+    .forward_or_use("param", "parameters", call, envir)
+}
+
+.parameters_overlay <- function(current, incoming) {
+    .check_class(incoming, "compphysiol_parameters")
+    out <- unclass(current)
+    for (nm in names(incoming)) out[[nm]] <- incoming[[nm]]
+    .check_parameter_names(names(out))
+    .new_parameters(out)
 }
 
 

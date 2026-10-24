@@ -127,13 +127,29 @@ molecules <- function(name = character(0), cmt = NULL, initial = 0, unit = NULL,
 #' @export
 #' @seealso [molecules()]
 add_molecule <- function(
-    model, 
-    name = character(0), 
-    cmt = NULL, 
-    initial = 0, 
-    unit = NULL, 
-    type = c("concentration","amount"), 
-    molec = NULL
+    model,
+    molec,
+    ...,
+    name = character(0),
+    cmt = NULL,
+    initial = 0,
+    unit = NULL,
+    type = c("concentration", "amount")
+) {
+    UseMethod("add_molecule")
+}
+
+#' @rdname add_molecule
+#' @export
+add_molecule.compphysiol_compartment_model <- function(
+    model,
+    molec,
+    ...,
+    name = character(0),
+    cmt = NULL,
+    initial = 0,
+    unit = NULL,
+    type = c("concentration", "amount")
 ) {
     .check_class(model, "compphysiol_compartment_model")
 

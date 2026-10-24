@@ -1,8 +1,8 @@
 test_that("to_ode_model returns a solver-neutral OdeModel", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = "V") |>
-        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = "V") |>
+        add_molecule(name = "drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_observable(C = c[drug, Central]) |>
         add_parameter(V = 10)
 
@@ -35,10 +35,10 @@ test_that("to_ode_model returns a solver-neutral OdeModel", {
 
 test_that("to_compiled_ode_model returns a compiled-backend representation", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = "V") |>
-        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_compartment(name = "Central", volume = "V") |>
+        add_molecule(name = "drug", cmt = "Central", initial = "A0", type = "amount") |>
         add_equation(ke = CL / V) |>
-        add_transport("Central", "", rate = "ke * a[drug, Central]") |>
+        add_transport(from = "Central", to = "", rate = "ke * a[drug, Central]") |>
         add_observable(C = c[drug, Central]) |>
         add_parameter(V = 10)
 
@@ -67,10 +67,10 @@ test_that("to_compiled_ode_model returns a compiled-backend representation", {
 
 test_that("to_compiled_ode_model accepts CompartmentModel and ProcessModel inputs", {
     model <- compartment_model() |>
-        add_compartment(c("Central", "Peripheral"), volume = NA_real_) |>
-        add_molecule("drug", cmt = c("Central", "Peripheral"), initial = c("A0", 0), type = "amount") |>
-        add_transport("Central", "Peripheral", const = "k12") |>
-        add_transport("Peripheral", "Central", const = "k21")
+        add_compartment(name = c("Central", "Peripheral"), volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = c("Central", "Peripheral"), initial = c("A0", 0), type = "amount") |>
+        add_transport(from = "Central", to = "Peripheral", const = "k12") |>
+        add_transport(from = "Peripheral", to = "Central", const = "k21")
     process_model <- to_process_model(model)
     ode_model <- to_ode_model(model)
 
@@ -85,9 +85,9 @@ test_that("to_compiled_ode_model accepts CompartmentModel and ProcessModel input
 
 test_that("CompiledOdeModel print method shows compact compiled status", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = "V") |>
-        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = "V") |>
+        add_molecule(name = "drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_observable(C = c[drug, Central]) |>
         add_parameter(V = 1 [L])
     compiled_model <- to_compiled_ode_model(model)
@@ -106,8 +106,8 @@ test_that("CompiledOdeModel print method shows compact compiled status", {
 
 test_that("OdeModel stores shortened output names without placeholder attributes", {
     model <- compartment_model() |>
-        add_compartment(c("Central", "Peripheral"), volume = 0) |>
-        add_transport("Central", "Peripheral", const = "k12")
+        add_compartment(name = c("Central", "Peripheral"), volume = 0) |>
+        add_transport(from = "Central", to = "Peripheral", const = "k12")
 
     ode_model <- to_ode_model(model)
 
@@ -119,9 +119,9 @@ test_that("OdeModel stores shortened output names without placeholder attributes
 
 test_that("OdeModel sink terms from constants avoid redundant product parentheses", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 100, type = "amount") |>
-        add_transport("Central", "", const = "ke")
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke")
 
     ode_model <- to_ode_model(model)
 
@@ -130,9 +130,9 @@ test_that("OdeModel sink terms from constants avoid redundant product parenthese
 
 test_that("OdeModel nonlinear sink terms keep expression parentheses", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 100, type = "amount") |>
-        add_transport("Central", "", rate = "vmax * a[drug, Central] / (Km + a[drug, Central])")
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100, type = "amount") |>
+        add_transport(from = "Central", to = "", rate = "vmax * a[drug, Central] / (Km + a[drug, Central])")
 
     ode_model <- to_ode_model(model)
 
@@ -141,11 +141,11 @@ test_that("OdeModel nonlinear sink terms keep expression parentheses", {
 
 test_that("OdeModel pushes negation through reaction-rate products", {
     model <- compartment_model() |>
-        add_compartment(c("cmt1", "cmt2"), volume = c(1, 2) [L]) |>
-        add_molecule("A", cmt = "cmt1", type = "amount") |>
-        add_molecule("B", cmt = "cmt2", type = "amount") |>
+        add_compartment(name = c("cmt1", "cmt2"), volume = c(1, 2) [L]) |>
+        add_molecule(name = "A", cmt = "cmt1", type = "amount") |>
+        add_molecule(name = "B", cmt = "cmt2", type = "amount") |>
         add_reaction(
-            "A[cmt1] + B[cmt2] -> A[cmt1]",
+            formula = "A[cmt1] + B[cmt2] -> A[cmt1]",
             const = "k",
             scale_cmt = "cmt1"
         )
@@ -161,11 +161,11 @@ test_that("OdeModel pushes negation through reaction-rate products", {
 
 test_that("OdeModel renders negative terms in sums as subtraction", {
     model <- compartment_model() |>
-        add_compartment(c("mem", "int"), volume = 1) |>
-        add_molecule("R", cmt = c("mem", "int"), type = "amount") |>
-        add_transport("mem", "int", molec = "R", const = "kdegR") |>
-        add_transport("int", "mem", molec = "R", const = "krecyRi") |>
-        add_transport("int", NULL, molec = "R", const = "kdegRi")
+        add_compartment(name = c("mem", "int"), volume = 1) |>
+        add_molecule(name = "R", cmt = c("mem", "int"), type = "amount") |>
+        add_transport(from = "mem", to = "int", molec = "R", const = "kdegR") |>
+        add_transport(from = "int", to = "mem", molec = "R", const = "krecyRi") |>
+        add_transport(from = "int", to = NULL, molec = "R", const = "kdegRi")
 
     ode_model <- to_ode_model(model)
 
@@ -177,9 +177,9 @@ test_that("OdeModel renders negative terms in sums as subtraction", {
 
 test_that("OdeModel print method uses DSL state names", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = "V") |>
-        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = "V") |>
+        add_molecule(name = "drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_equation(C = c[drug, Central]) |>
         add_observable(Cobs = c[drug, Central]) |>
         add_parameter(V = 10) |>
@@ -193,8 +193,8 @@ test_that("OdeModel print method uses DSL state names", {
 
 test_that("OdeModel print method formats unit values inside expressions", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = 1 [L]) |>
-        add_molecule("drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+        add_compartment(name = "Central", volume = 1 [L]) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
         add_observable(C = c[drug, Central])
 
     ode_model <- to_ode_model(model)
@@ -206,8 +206,8 @@ test_that("OdeModel print method formats unit values inside expressions", {
 
 test_that("OdeModel observables lower DSL states to indexed state references", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = "V") |>
-        add_molecule("drug", cmt = "Central", initial = 100, type = "amount") |>
+        add_compartment(name = "Central", volume = "V") |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100, type = "amount") |>
         add_observable(C = c[drug, Central]) |>
         add_parameter(V = 10)
 
@@ -223,8 +223,8 @@ test_that("OdeModel observables lower DSL states to indexed state references", {
 
 test_that("OdeModel keeps literal unit-bearing initial values as values", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 100 [mg], type = "amount")
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100 [mg], type = "amount")
 
     ode_model <- to_ode_model(model)
 
@@ -237,10 +237,10 @@ test_that("OdeModel keeps literal unit-bearing initial values as values", {
 
 test_that("OdeModel equations can contain lowered state references", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = "V") |>
-        add_molecule("drug", cmt = "Central", initial = 100, type = "amount") |>
+        add_compartment(name = "Central", volume = "V") |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100, type = "amount") |>
         add_equation(C = c[drug, Central]) |>
-        add_transport("Central", "", rate = "CL * C") |>
+        add_transport(from = "Central", to = "", rate = "CL * C") |>
         add_parameter(V = 10)
 
     ode_model <- to_ode_model(model)
@@ -256,9 +256,9 @@ test_that("OdeModel equations can contain lowered state references", {
 
 test_that("to_ode_model expands infusion depots before creating ODE states", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 0, type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 0, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_dosing(time = 0, rate = 10, duration = 2, cmt = "Central", molec = "drug")
 
     ode_model <- to_ode_model(model)
@@ -272,10 +272,10 @@ test_that("to_ode_model expands infusion depots before creating ODE states", {
 
 test_that("legacy to_ode output matches OdeModel deSolve export", {
     model <- compartment_model() |>
-        add_compartment(c("Central", "Peripheral"), volume = c(10, 5)) |>
-        add_molecule("drug", cmt = c("Central", "Peripheral"), initial = c(10, 0), type = "amount") |>
-        add_transport("Central", "Peripheral", const = "k12") |>
-        add_transport("Peripheral", "Central", const = "k21") |>
+        add_compartment(name = c("Central", "Peripheral"), volume = c(10, 5)) |>
+        add_molecule(name = "drug", cmt = c("Central", "Peripheral"), initial = c(10, 0), type = "amount") |>
+        add_transport(from = "Central", to = "Peripheral", const = "k12") |>
+        add_transport(from = "Peripheral", to = "Central", const = "k21") |>
         add_observable(C = c[drug, Central]) |>
         add_parameter(k12 = 0.2, k21 = 0.1)
 

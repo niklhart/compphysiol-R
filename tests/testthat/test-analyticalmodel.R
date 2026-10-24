@@ -18,9 +18,9 @@ eval_expr_vector <- function(x, env = list()) {
 
 test_that("to_analytical_model returns a solver-neutral AnalyticalModel", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
-        add_transport("Central", "", const = "ke")
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke")
 
     analytical_model <- to_analytical_model(model)
 
@@ -51,10 +51,10 @@ test_that("to_analytical_model returns a solver-neutral AnalyticalModel", {
 
 test_that("to_analytical_model accepts a ProcessModel", {
     model <- compartment_model() |>
-        add_compartment(c("Central", "Peripheral"), volume = NA_real_) |>
-        add_molecule("drug", cmt = c("Central", "Peripheral"), initial = c(10, 0), type = "amount") |>
-        add_transport("Central", "Peripheral", const = "k12") |>
-        add_transport("Peripheral", "Central", const = "k21")
+        add_compartment(name = c("Central", "Peripheral"), volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = c("Central", "Peripheral"), initial = c(10, 0), type = "amount") |>
+        add_transport(from = "Central", to = "Peripheral", const = "k12") |>
+        add_transport(from = "Peripheral", to = "Central", const = "k21")
     process_model <- to_process_model(model)
 
     from_compartment_model <- to_analytical_model(model)
@@ -65,11 +65,11 @@ test_that("to_analytical_model accepts a ProcessModel", {
 
 test_that("AnalyticalModel represents linear transport systems as A x plus zero b", {
     model <- compartment_model() |>
-        add_compartment(c("Central", "Peripheral"), volume = NA_real_) |>
-        add_molecule("drug", cmt = c("Central", "Peripheral"), initial = c(10, 0), type = "amount") |>
-        add_transport("Central", "", const = "k10") |>
-        add_transport("Central", "Peripheral", const = "k12") |>
-        add_transport("Peripheral", "Central", const = "k21")
+        add_compartment(name = c("Central", "Peripheral"), volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = c("Central", "Peripheral"), initial = c(10, 0), type = "amount") |>
+        add_transport(from = "Central", to = "", const = "k10") |>
+        add_transport(from = "Central", to = "Peripheral", const = "k12") |>
+        add_transport(from = "Peripheral", to = "Central", const = "k21")
 
     analytical_model <- to_analytical_model(model)
     values <- list(k10 = 1, k12 = 2, k21 = 3)
@@ -87,9 +87,9 @@ test_that("AnalyticalModel represents linear transport systems as A x plus zero 
 
 test_that("AnalyticalModel keeps equations and observables in lowered state form", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = "V") |>
-        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = "V") |>
+        add_molecule(name = "drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_equation(ke = base_ke * scale) |>
         add_observable(C = c[drug, Central] / F) |>
         add_parameter(V = 10)
@@ -108,9 +108,9 @@ test_that("AnalyticalModel keeps equations and observables in lowered state form
 
 test_that("to_analytical_model rejects nonzero source terms in the current version", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 0, type = "amount") |>
-        add_transport("", "Central", rate = "kin")
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 0, type = "amount") |>
+        add_transport(from = "", to = "Central", rate = "kin")
 
     expect_error(
         to_analytical_model(model),
@@ -121,11 +121,9 @@ test_that("to_analytical_model rejects nonzero source terms in the current versi
 
 test_that("to_analytical_model rejects explicit nonlinear process rates", {
     model <- compartment_model() |>
-        add_compartment(c("Central", "Peripheral"), volume = NA_real_) |>
-        add_molecule("drug", cmt = c("Central", "Peripheral"), initial = c(10, 0), type = "amount") |>
-        add_transport(
-            "Central",
-            "Peripheral",
+        add_compartment(name = c("Central", "Peripheral"), volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = c("Central", "Peripheral"), initial = c(10, 0), type = "amount") |>
+        add_transport(from = "Central", to = "Peripheral",
             rate = "vmax * a[drug, Central] / (Km + a[drug, Central])"
         )
 
@@ -138,9 +136,9 @@ test_that("to_analytical_model rejects explicit nonlinear process rates", {
 
 test_that("to_analytical_model rejects dosing in the current version", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 0, type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 0, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_dosing(time = 0, amount = 10, cmt = "Central", molec = "drug")
 
     expect_error(
@@ -152,11 +150,11 @@ test_that("to_analytical_model rejects dosing in the current version", {
 
 test_that("AnalyticalModel print method renders symbolic A matrix", {
     model <- compartment_model() |>
-        add_compartment(c("Central", "Peripheral"), volume = NA_real_) |>
-        add_molecule("drug", cmt = c("Central", "Peripheral"), initial = c("A0", 0), type = "amount") |>
-        add_transport("Central", "", const = "k10") |>
-        add_transport("Central", "Peripheral", const = "k12") |>
-        add_transport("Peripheral", "Central", const = "k21") |>
+        add_compartment(name = c("Central", "Peripheral"), volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = c("Central", "Peripheral"), initial = c("A0", 0), type = "amount") |>
+        add_transport(from = "Central", to = "", const = "k10") |>
+        add_transport(from = "Central", to = "Peripheral", const = "k12") |>
+        add_transport(from = "Peripheral", to = "Central", const = "k21") |>
         add_observable(Acentral = a[drug, Central])
 
     analytical_model <- to_analytical_model(model)

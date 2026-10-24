@@ -10,7 +10,7 @@ test_that("Empty model returns zero-length ODE", {
 
 test_that("Simulation fails if target compartment missing", {
     M <- compartment_model() |>
-        add_compartment("Central", 10)
+        add_compartment(name = "Central", volume = 10)
 
     # Dose references a compartment that will not exist
     M <- add_dosing(M, cmt = "Peripheral", amount = 10, time = 0)
@@ -21,9 +21,9 @@ test_that("Simulation fails if target compartment missing", {
 
 test_that("Missing parameters are listed as free", {
     M <- compartment_model() |>
-         add_compartment("Central", 10) |>
-         add_compartment("Peripheral", 0) |>
-         add_transport("Central", "Peripheral", const = "k12")
+         add_compartment(name = "Central", volume = 10) |>
+         add_compartment(name = "Peripheral", volume = 0) |>
+         add_transport(from = "Central", to = "Peripheral", const = "k12")
 
     # Do not provide k12
     odeinfo <- .to_ode(M)
@@ -32,7 +32,7 @@ test_that("Missing parameters are listed as free", {
 
 test_that("Overlapping infusion events handled correctly", {
     M <- compartment_model() |>
-        add_compartment("Central", 0) |>
+        add_compartment(name = "Central", volume = 0) |>
         add_dosing(
             cmt = "Central",
             time = c(0, 2),

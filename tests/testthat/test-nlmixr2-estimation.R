@@ -1,9 +1,8 @@
 nlmixr2_test_problem <- function() {
     model <- compartment_model() |>
-        add_compartment("Central", volume = 1) |>
-        add_molecule("drug", cmt = "Central", initial = 100, type = "amount") |>
-        add_transport(
-            "Central", NULL, molec = "drug",
+        add_compartment(name = "Central", volume = 1) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100, type = "amount") |>
+        add_transport(from = "Central", to = NULL, molec = "drug",
             rate = "CL * c[drug, Central]"
         ) |>
         add_observable(C = c[drug, Central])

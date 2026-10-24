@@ -222,13 +222,20 @@ with_units <- function(expr) {
     parent_env
 ) {
     if (!is.null(call[[object_arg_name]])) {
-        # object explicitly supplied
+        if (length(call) > 3L) {
+            stop(
+                "Cannot supply both '", object_arg_name,
+                "' and component constructor arguments.",
+                call. = FALSE
+            )
+        }
         return(eval(call[[object_arg_name]], parent_env))
     }
 
     # Rewrite call to constructor
     call[[1]] <- as.name(constructor_name)
     call$model <- NULL
+    call$object <- NULL
 
     eval(call, parent_env)
 }

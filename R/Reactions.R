@@ -604,15 +604,32 @@ reactions <- function(
 #' @seealso [reactions()]
 add_reaction <- function(
     model,
+    react,
+    ...,
     input = character(0),
     output = character(0),
     cmt = NA_character_,
     scale_cmt = NA_character_,
     formula = NULL,
-    ...,
     rate = NULL,
-    const = NULL,
-    react = NULL
+    const = NULL
+) {
+    UseMethod("add_reaction")
+}
+
+#' @rdname add_reaction
+#' @export
+add_reaction.compphysiol_compartment_model <- function(
+    model,
+    react,
+    ...,
+    input = character(0),
+    output = character(0),
+    cmt = NA_character_,
+    scale_cmt = NA_character_,
+    formula = NULL,
+    rate = NULL,
+    const = NULL
 ) {
     .check_class(model, "compphysiol_compartment_model")
 

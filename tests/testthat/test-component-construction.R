@@ -110,9 +110,9 @@ test_that("molecule-compartment states stay unique", {
     expect_error(x[c(1, 1)], "unique")
 
     model <- compartment_model() |>
-        add_compartment(c("cyt", "nuc"), volume = 1) |>
-        add_molecule("A") |>
-        add_molecule("A", cmt = "cyt")
+        add_compartment(name = c("cyt", "nuc"), volume = 1) |>
+        add_molecule(name = "A") |>
+        add_molecule(name = "A", cmt = "cyt")
     expect_error(wire(model, "cmt"), "Molecule-compartment states must be unique")
 })
 
@@ -124,5 +124,56 @@ test_that("model add functions check explicitly supplied component classes", {
     expect_error(
         add_reaction(compartment_model(), react = transports()),
         "Reactions"
+    )
+})
+
+test_that("model component modifiers share the component-first S3 interface", {
+    expected <- list(
+        add_compartment = "comp",
+        add_molecule = "molec",
+        add_transport = "trans",
+        add_reaction = "react",
+        add_observable = "obs",
+        add_equation = "eq"
+    )
+    for (generic in names(expected)) {
+        expect_true(isS3stdGeneric(generic), info = generic)
+        expect_identical(names(formals(get(generic)))[1:3],
+                         c("model", expected[[generic]], "..."), info = generic)
+        expect_true(!is.null(getS3method(generic, "compphysiol_compartment_model")),
+                    info = generic)
+    }
+})
+
+test_that("constructed model components occupy the second argument", {
+    model <- compartment_model() |>
+        add_compartment(compartments(name = "cyt", volume = 1)) |>
+        add_molecule(molecules(name = c("A", "B"), cmt = "cyt")) |>
+        add_transport(transports(from = "cyt", to = "", molec = "A", const = "kout")) |>
+        add_reaction(reactions(input = "A", output = "B", cmt = "cyt", const = "k")) |>
+        add_observable(observables(A = a[A, cyt])) |>
+        add_equation(equations(scale = 2))
+
+    expect_named(model$compartments, "cyt")
+    expect_equal(length(model$molecules), 2L)
+    expect_equal(length(model$transports), 1L)
+    expect_equal(length(model$reactions), 1L)
+    expect_named(model$observables, "A")
+    expect_named(model$equations, "scale")
+})
+
+test_that("component modifiers separate constructed and interactive routes", {
+    expect_error(
+        compartment_model() |>
+            add_compartment(compartments("A"), name = "B"),
+        "both 'comp'.*constructor"
+    )
+    expect_error(
+        compartment_model() |> add_compartment("A"),
+        "Compartments"
+    )
+    expect_error(
+        compartment_model() |> add_transport("A", "B"),
+        "both 'trans'.*constructor"
     )
 })

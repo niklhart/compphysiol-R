@@ -228,7 +228,7 @@ sMD_PBPK_12CMT_permbased <- function() {
 
     compartment_model() |>
         add_compartment(
-            c(
+            name = c(
                 "ven",
                 "art",
                 "adi_exc",
@@ -255,176 +255,114 @@ sMD_PBPK_12CMT_permbased <- function() {
         ) |>
         add_molecule(name = "drug", type = "amount") |>
         # organs with arterial inflow
-        add_transport("art", "adi_exc", const = "Qadi / Vart") |>
-        add_transport("art", "bon_exc", const = "Qbon / Vart") |>
-        add_transport("art", "gut_exc", const = "Qgut / Vart") |>
-        add_transport("art", "hea_exc", const = "Qhea / Vart") |>
-        add_transport("art", "mus_exc", const = "Qmus / Vart") |>
-        add_transport("art", "kid_exc", const = "Qkid / Vart") |>
-        add_transport("art", "ski_exc", const = "Qski / Vart") |>
-        add_transport("art", "spl_exc", const = "Qspl / Vart") |>
+        add_transport(from = "art", to = "adi_exc", const = "Qadi / Vart") |>
+        add_transport(from = "art", to = "bon_exc", const = "Qbon / Vart") |>
+        add_transport(from = "art", to = "gut_exc", const = "Qgut / Vart") |>
+        add_transport(from = "art", to = "hea_exc", const = "Qhea / Vart") |>
+        add_transport(from = "art", to = "mus_exc", const = "Qmus / Vart") |>
+        add_transport(from = "art", to = "kid_exc", const = "Qkid / Vart") |>
+        add_transport(from = "art", to = "ski_exc", const = "Qski / Vart") |>
+        add_transport(from = "art", to = "spl_exc", const = "Qspl / Vart") |>
         # handle organ topology w.r.t. liver
-        add_transport("art", "liv_exc", const = "(Qliv-Qgut-Qspl) / Vart") |>
-        add_transport(
-            "gut_exc",
-            "liv_exc",
+        add_transport(from = "art", to = "liv_exc", const = "(Qliv-Qgut-Qspl) / Vart") |>
+        add_transport(from = "gut_exc", to = "liv_exc",
             const = "Qgut * BP * fuEgut / (Vgut_exc * fuP)"
         ) |>
-        add_transport(
-            "spl_exc",
-            "liv_exc",
+        add_transport(from = "spl_exc", to = "liv_exc",
             const = "Qspl * BP * fuEspl / (Vspl_exc * fuP)"
         ) |>
         # organs with venous outflow
-        add_transport(
-            "adi_exc",
-            "ven",
+        add_transport(from = "adi_exc", to = "ven",
             const = "Qadi * BP * fuEadi / (Vadi_exc * fuP)"
         ) |>
-        add_transport(
-            "bon_exc",
-            "ven",
+        add_transport(from = "bon_exc", to = "ven",
             const = "Qbon * BP * fuEbon / (Vbon_exc * fuP)"
         ) |>
-        add_transport(
-            "hea_exc",
-            "ven",
+        add_transport(from = "hea_exc", to = "ven",
             const = "Qhea * BP * fuEhea / (Vhea_exc * fuP)"
         ) |>
-        add_transport(
-            "liv_exc",
-            "ven",
+        add_transport(from = "liv_exc", to = "ven",
             const = "Qliv * BP * fuEliv / (Vliv_exc * fuP)"
         ) |>
-        add_transport(
-            "mus_exc",
-            "ven",
+        add_transport(from = "mus_exc", to = "ven",
             const = "Qmus * BP * fuEmus / (Vmus_exc * fuP)"
         ) |>
-        add_transport(
-            "kid_exc",
-            "ven",
+        add_transport(from = "kid_exc", to = "ven",
             const = "Qkid * BP * fuEkid / (Vkid_exc * fuP)"
         ) |>
-        add_transport(
-            "ski_exc",
-            "ven",
+        add_transport(from = "ski_exc", to = "ven",
             const = "Qski * BP * fuEski / (Vski_exc * fuP)"
         ) |>
         # Redistribution within tissues
-        add_transport(
-            "adi_exc",
-            "adi_cel",
+        add_transport(from = "adi_exc", to = "adi_cel",
             const = "P * SAadi * fuEadi / Vadi_exc"
         ) |>
-        add_transport(
-            "adi_cel",
-            "adi_exc",
+        add_transport(from = "adi_cel", to = "adi_exc",
             const = "P * SAadi * fuCadi / Vadi_cel"
         ) |>
-        add_transport(
-            "bon_exc",
-            "bon_cel",
+        add_transport(from = "bon_exc", to = "bon_cel",
             const = "P * SAbon * fuEbon / Vbon_exc"
         ) |>
-        add_transport(
-            "bon_cel",
-            "bon_exc",
+        add_transport(from = "bon_cel", to = "bon_exc",
             const = "P * SAbon * fuCbon / Vbon_cel"
         ) |>
-        add_transport(
-            "gut_exc",
-            "gut_cel",
+        add_transport(from = "gut_exc", to = "gut_cel",
             const = "P * SAgut * fuEgut / Vgut_exc"
         ) |>
-        add_transport(
-            "gut_cel",
-            "gut_exc",
+        add_transport(from = "gut_cel", to = "gut_exc",
             const = "P * SAgut * fuCgut / Vgut_cel"
         ) |>
-        add_transport(
-            "hea_exc",
-            "hea_cel",
+        add_transport(from = "hea_exc", to = "hea_cel",
             const = "P * SAhea * fuEhea / Vhea_exc"
         ) |>
-        add_transport(
-            "hea_cel",
-            "hea_exc",
+        add_transport(from = "hea_cel", to = "hea_exc",
             const = "P * SAhea * fuChea / Vhea_cel"
         ) |>
-        add_transport(
-            "kid_exc",
-            "kid_cel",
+        add_transport(from = "kid_exc", to = "kid_cel",
             const = "P * SAkid * fuEkid / Vkid_exc"
         ) |>
-        add_transport(
-            "kid_cel",
-            "kid_exc",
+        add_transport(from = "kid_cel", to = "kid_exc",
             const = "P * SAkid * fuCkid / Vkid_cel"
         ) |>
-        add_transport(
-            "liv_exc",
-            "liv_cel",
+        add_transport(from = "liv_exc", to = "liv_cel",
             const = "P * SAliv * fuEliv / Vliv_exc"
         ) |>
-        add_transport(
-            "liv_cel",
-            "liv_exc",
+        add_transport(from = "liv_cel", to = "liv_exc",
             const = "P * SAliv * fuCliv / Vliv_cel"
         ) |>
-        add_transport(
-            "lun_exc",
-            "lun_cel",
+        add_transport(from = "lun_exc", to = "lun_cel",
             const = "P * SAlun * fuElun / Vlun_exc"
         ) |>
-        add_transport(
-            "lun_cel",
-            "lun_exc",
+        add_transport(from = "lun_cel", to = "lun_exc",
             const = "P * SAlun * fuClun / Vlun_cel"
         ) |>
-        add_transport(
-            "mus_exc",
-            "mus_cel",
+        add_transport(from = "mus_exc", to = "mus_cel",
             const = "P * SAmus * fuEmus / Vmus_exc"
         ) |>
-        add_transport(
-            "mus_cel",
-            "mus_exc",
+        add_transport(from = "mus_cel", to = "mus_exc",
             const = "P * SAmus * fuCmus / Vmus_cel"
         ) |>
-        add_transport(
-            "ski_exc",
-            "ski_cel",
+        add_transport(from = "ski_exc", to = "ski_cel",
             const = "P * SAadi * fuEski / Vski_exc"
         ) |>
-        add_transport(
-            "ski_cel",
-            "ski_exc",
+        add_transport(from = "ski_cel", to = "ski_exc",
             const = "P * SAadi * fuCski / Vski_cel"
         ) |>
-        add_transport(
-            "spl_exc",
-            "spl_cel",
+        add_transport(from = "spl_exc", to = "spl_cel",
             const = "P * SAspl * fuEspl / Vspl_exc"
         ) |>
-        add_transport(
-            "spl_cel",
-            "spl_exc",
+        add_transport(from = "spl_cel", to = "spl_exc",
             const = "P * SAspl * fuCspl / Vspl_cel"
         ) |>
         # lung (co hardcoded currently)
-        add_transport(
-            "ven",
-            "lun_exc",
+        add_transport(from = "ven", to = "lun_exc",
             const = "(Qadi+Qbon+Qhea+Qliv+Qmus+Qkid+Qski) / Vven"
         ) |>
-        add_transport(
-            "lun_exc",
-            "art",
+        add_transport(from = "lun_exc", to = "art",
             const = "(Qadi+Qbon+Qhea+Qliv+Qmus+Qkid+Qski) * BP * fuElun / (Vlun_exc * fuP)"
         ) |>
         # liver metabolism
-        add_transport("liv_cel", "", const = "CL * fuCliv / Vliv_cel") |>
+        add_transport(from = "liv_cel", to = "", const = "CL * fuCliv / Vliv_cel") |>
         add_equation(
             name = "co",
             expr = "Qadi+Qbon+Qhea+Qliv+Qmus+Qkid+Qski"
@@ -464,11 +402,11 @@ multiCompModel <- function(ncomp = 1, type = c("micro", "macro"), unit = NULL) {
 
     # Model construction
     compartment_model() |>
-        add_compartment(compNames) |>
-        add_molecule("drug", unit = unit, type = "amount") |>
-        add_transport("cen", "", const = k10, molec = "drug") |>
-        add_transport("cen", compNames[-1], const = k1i, molec = "drug") |>
-        add_transport(compNames[-1], "cen", const = ki1, molec = "drug") |>
+        add_compartment(name = compNames) |>
+        add_molecule(name = "drug", unit = unit, type = "amount") |>
+        add_transport(from = "cen", to = "", const = k10, molec = "drug") |>
+        add_transport(from = "cen", to = compNames[-1], const = k1i, molec = "drug") |>
+        add_transport(from = compNames[-1], to = "cen", const = ki1, molec = "drug") |>
         add_observable(name = "Ccen", expr = "c[cen]")
 }
 

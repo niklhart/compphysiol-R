@@ -1,9 +1,9 @@
 
 test_that("1-CMT analytical solution handles fixed and free parameters", {
     M <- compartment_model() |>
-        add_compartment("cen", volume = NA_real_) |>
-        add_molecule("drug", cmt = "cen", initial = 10, type = "amount") |>
-        add_transport("cen", "", const = "kc0", molec = "drug")
+        add_compartment(name = "cen", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "cen", initial = 10, type = "amount") |>
+        add_transport(from = "cen", to = "", const = "kc0", molec = "drug")
 
     params <- list(kc0 = 1)
     times <- 0:3
@@ -26,16 +26,15 @@ test_that("2-CMT analytical solution matches numerical ODE solution", {
     times <- 0:3
 
     M <- compartment_model() |>
-        add_compartment(c("cen", "per"), volume = NA_real_) |>
-        add_molecule(
-            "drug",
+        add_compartment(name = c("cen", "per"), volume = NA_real_) |>
+        add_molecule(name = "drug",
             cmt = c("cen", "per"),
             initial = c(10, 0),
             type = "amount"
         ) |>
-        add_transport("cen", "", const = "kc0", molec = "drug") |>
-        add_transport("cen", "per", const = "kcp", molec = "drug") |>
-        add_transport("per", "cen", const = "kpc", molec = "drug") |>
+        add_transport(from = "cen", to = "", const = "kc0", molec = "drug") |>
+        add_transport(from = "cen", to = "per", const = "kcp", molec = "drug") |>
+        add_transport(from = "per", to = "cen", const = "kpc", molec = "drug") |>
         add_parameter(param = do.call(parameters, paramValues))
 
     sol_aly <- .to_analytical(M)
@@ -55,9 +54,9 @@ test_that("2-CMT analytical solution matches numerical ODE solution", {
 
 test_that("analytical export accepts AnalyticalModel inputs", {
     M <- compartment_model() |>
-        add_compartment("cen", volume = NA_real_) |>
-        add_molecule("drug", cmt = "cen", initial = 10, type = "amount") |>
-        add_transport("cen", "", const = "kc0", molec = "drug")
+        add_compartment(name = "cen", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "cen", initial = 10, type = "amount") |>
+        add_transport(from = "cen", to = "", const = "kc0", molec = "drug")
     analytical_model <- to_analytical_model(M)
     times <- 0:3
     params <- list(kc0 = 0.2)
@@ -71,9 +70,9 @@ test_that("analytical export accepts AnalyticalModel inputs", {
 
 test_that("analytical state function does not require observable-only parameters", {
     M <- compartment_model() |>
-        add_compartment("cen", volume = NA_real_) |>
-        add_molecule("drug", cmt = "cen", initial = 10, type = "amount") |>
-        add_transport("cen", "", const = "kc0", molec = "drug") |>
+        add_compartment(name = "cen", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "cen", initial = 10, type = "amount") |>
+        add_transport(from = "cen", to = "", const = "kc0", molec = "drug") |>
         add_observable(C = a[drug, cen] / F)
     sol <- .to_analytical(M)
     times <- 0:3
@@ -92,8 +91,8 @@ test_that("analytical state function does not require observable-only parameters
 
 test_that("analytical export supports first-order reaction systems", {
     M <- compartment_model() |>
-        add_compartment("cyt", volume = 1) |>
-        add_molecule(c("A", "B"), cmt = "cyt", initial = c(10, 0), type = "amount") |>
+        add_compartment(name = "cyt", volume = 1) |>
+        add_molecule(name = c("A", "B"), cmt = "cyt", initial = c(10, 0), type = "amount") |>
         add_reaction(input = "A", output = "B", cmt = "cyt", const = "kAB")
     times <- 0:3
     kAB <- 0.2
@@ -110,9 +109,9 @@ test_that("1-CMT analytical observables follow ODE observable contract", {
     times <- 0:3
 
     M <- compartment_model() |>
-        add_compartment("cen", volume = "Vcen") |>
-        add_molecule("drug", cmt = "cen", initial = 10, type = "amount") |>
-        add_transport("cen", "", const = "kc0", molec = "drug") |>
+        add_compartment(name = "cen", volume = "Vcen") |>
+        add_molecule(name = "drug", cmt = "cen", initial = 10, type = "amount") |>
+        add_transport(from = "cen", to = "", const = "kc0", molec = "drug") |>
         add_observable(Ccen = c[drug, cen]) |>
         add_parameter(param = do.call(parameters, params))
 

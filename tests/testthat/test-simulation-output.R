@@ -1,8 +1,8 @@
 output_test_model <- function() {
     compartment_model() |>
-        add_compartment("Central", volume = 10 [L]) |>
-        add_molecule("drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
-        add_transport("Central", "", const = "k") |>
+        add_compartment(name = "Central", volume = 10 [L]) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+        add_transport(from = "Central", to = "", const = "k") |>
         add_parameter(k = 0.2 [1/h]) |>
         add_observable(A = a[drug, Central], C = c[drug, Central])
 }
@@ -102,8 +102,8 @@ test_that("ODE and compiled experiment simulation reuse the sparse contract", {
 })
 
 test_that("wide helpers handle unit-free outputs and no observables", {
-    m <- compartment_model() |> add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", initial = 1, type = "amount") |> add_observable(A = a[drug, Central])
+    m <- compartment_model() |> add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", initial = 1, type = "amount") |> add_observable(A = a[drug, Central])
     out <- simulate(m, time = 0:1)
     expect_type(out$observables$value, "double")
     expect_equal(subset(out$observables, observable == "A")$value, c(1, 1))

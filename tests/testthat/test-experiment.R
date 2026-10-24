@@ -159,8 +159,8 @@ test_that("observations and doses cannot precede the experiment start", {
 })
 
 test_that("model compatibility is checked by simulation", {
-    model <- compartment_model() |> add_compartment("Central", volume = 1) |>
-        add_molecule("drug") |> add_observable(C = c[drug, Central])
+    model <- compartment_model() |> add_compartment(name = "Central", volume = 1) |>
+        add_molecule(name = "drug") |> add_observable(C = c[drug, Central])
     x <- experiment(observations = observation_schedule(1, "C"))
     expect_no_error(simulate(model, experiment = x))
     x <- experiment(observations = observation_schedule(1, "a[drug,Central]"))

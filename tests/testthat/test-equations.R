@@ -63,7 +63,7 @@ test_that("add_equation works in programmatic and interactive paths", {
     # Programmatic path 1
     eq <- equations(name = "co", expr = "Qadi+Qbon+Qhea+Qkid+Qliv+Qmus+Qski")
     M1 <- compartment_model() |>
-        add_equation(eq = eq)
+        add_equation(eq)
 
     expect_equal(length(M1$equations), 1)
     expect_equal(names(M1$equations), "co")

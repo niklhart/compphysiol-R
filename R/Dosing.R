@@ -186,19 +186,28 @@ dosing <- function(
 #'     add_dosing(time = 0, amount = 100, duration = 5, cmt = "cen")
 #' @export
 add_dosing <- function(
-    model,
+    object,
+    dose,
+    ...,
     time = numeric(0),
     amount = NULL,
     time_unit = NULL,
     amount_unit = NULL,
     molec = NULL,
     cmt = NULL,
-    ...,
     rate = NULL,
-    duration = NULL,
-    dose
+    duration = NULL
 ) {
-    .check_class(model, "compphysiol_compartment_model")
+    UseMethod("add_dosing")
+}
+
+#' @rdname add_dosing
+#' @export
+add_dosing.compphysiol_compartment_model <- function(
+    object, dose, ..., time = numeric(0), amount = NULL, time_unit = NULL,
+    amount_unit = NULL, molec = NULL, cmt = NULL, rate = NULL, duration = NULL
+) {
+    model <- object
 
     call <- match.call()
 
@@ -209,6 +218,7 @@ add_dosing <- function(
         parent_env = parent.frame()
     )
 
+    if (is.function(dose)) dose <- dose(model$doses)
     .check_class(dose, "compphysiol_dosing")
 
     model$doses <- c(model$doses, dose)

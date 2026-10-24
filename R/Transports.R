@@ -180,22 +180,37 @@ transports <- function(from, to, molec = NA_character_, ..., rate = NULL, const 
 #'     add_transport(from = "A", to = "B", rate = "k2 * c[A] / (c[A] + Km)")
 #' # Vectorized calls using naming abbreviation
 #' compartment_model() |>
-#'     add_transport("A", c("B", "C"), const = "k{to}")
+#'     add_transport(from = "A", to = c("B", "C"), const = "k{to}")
 #' compartment_model() |>
-#'     add_transport(c("A", "B"), c("B", "C"), const = "k_{from}_{to}")
+#'     add_transport(from = c("A", "B"), to = c("B", "C"), const = "k_{from}_{to}")
 #' # compphysiol_transports with specific molecules
 #' compartment_model() |>
 #'     add_transport(from = "cen", to = "per", molec = c("DrugA","DrugB"), const = "k_{molec}")
 #' @export
 add_transport <- function(
     model,
+    trans,
+    ...,
     from,
     to,
     molec = NA_character_,
-    ...,
     rate = NULL,
-    const = NULL,
-    trans
+    const = NULL
+) {
+    UseMethod("add_transport")
+}
+
+#' @rdname add_transport
+#' @export
+add_transport.compphysiol_compartment_model <- function(
+    model,
+    trans,
+    ...,
+    from,
+    to,
+    molec = NA_character_,
+    rate = NULL,
+    const = NULL
 ) {
     .check_class(model, "compphysiol_compartment_model")
 

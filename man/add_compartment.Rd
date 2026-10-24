@@ -2,18 +2,31 @@
 % Please edit documentation in R/Compartments.R
 \name{add_compartment}
 \alias{add_compartment}
+\alias{add_compartment.compphysiol_compartment_model}
 \title{Add one or several compartments to a \code{compphysiol_compartment_model} object.}
 \usage{
 add_compartment(
   model,
+  comp,
+  ...,
   name = character(0),
   volume = "V{name}",
-  unit = NULL,
-  comp
+  unit = NULL
+)
+
+\method{add_compartment}{compphysiol_compartment_model}(
+  model,
+  comp,
+  ...,
+  name = character(0),
+  volume = "V{name}",
+  unit = NULL
 )
 }
 \arguments{
 \item{model}{A \code{compphysiol_compartment_model} object.}
+
+\item{comp}{A \code{compphysiol_compartments} object. Constructed from the other inputs if not provided.}
 
 \item{name}{Compartment name(s), character scalar or vector}
 
@@ -26,8 +39,6 @@ Can be a single value (applied to all compartments) or a vector of values corres
 \item{unit}{Unit for the compartment volume(s) (optional, default: \code{NULL}). If specified,
 it can be a single unit (applied to all volumes) or a vector of units corresponding to each volume.
 The \code{unit} argument is ignored (with a warning) if the \code{volume} argument is not numeric.}
-
-\item{comp}{A \code{compphysiol_compartments} object. Constructed from the other inputs if not provided.}
 }
 \value{
 The modified \code{compphysiol_compartment_model} object.
@@ -38,12 +49,12 @@ compphysiol_compartments represent model compartments with names and fixed or pa
 \examples{
 # Several compartments added in a single call
 compartment_model() |>
-    add_compartment(c("A","B"))
+    add_compartment(name = c("A","B"))
 
 # Different ways of adding compartments
 M1 <- compartment_model() |>
-    add_compartment("A", volume = 10 [L])
+    add_compartment(name = "A", volume = 10 [L])
 M2 <- compartment_model() |>
-    add_compartment("A", volume = 10, unit = "L")
+    add_compartment(name = "A", volume = 10, unit = "L")
 identical(M1, M2)
 }

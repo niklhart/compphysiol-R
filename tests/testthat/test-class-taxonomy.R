@@ -1,7 +1,7 @@
 test_that("model representations use the compphysiol hierarchy", {
     model <- compartment_model() |>
-        add_compartment("central", volume = 1) |>
-        add_molecule("drug", cmt = "central", initial = 0, type = "amount")
+        add_compartment(name = "central", volume = 1) |>
+        add_molecule(name = "drug", cmt = "central", initial = 0, type = "amount")
     process <- to_process_model(model)
     ode <- to_ode_model(process)
     compiled <- to_compiled_ode_model(ode)
@@ -126,8 +126,8 @@ test_that("class-preserving operations retain prefixed primary classes", {
     )
 
     model <- compartment_model() |>
-        add_compartment(c("a", "b"), volume = 1) |>
-        add_molecule("drug", initial = 1) |>
+        add_compartment(name = c("a", "b"), volume = 1) |>
+        add_molecule(name = "drug", initial = 1) |>
         add_transport(from = "a", to = "b", const = 1) |>
         wire()
     expect_identical(class(model$molecules)[[1]], "compphysiol_molecules")
@@ -136,8 +136,8 @@ test_that("class-preserving operations retain prefixed primary classes", {
 
 test_that("simulation results use the prefixed result class", {
     model <- compartment_model() |>
-        add_compartment("central", volume = 1) |>
-        add_molecule("drug", cmt = "central", initial = 1, type = "amount")
+        add_compartment(name = "central", volume = 1) |>
+        add_molecule(name = "drug", cmt = "central", initial = 1, type = "amount")
 
     result <- simulate(model, time = 0)
     expect_identical(class(result)[[1]], "compphysiol_simulation_result")
@@ -189,8 +189,8 @@ test_that("public predicates mirror prefixed class names", {
 
 test_that("model predicates follow concrete and abstract inheritance", {
     model <- compartment_model() |>
-        add_compartment("central", volume = 1) |>
-        add_molecule("drug", cmt = "central", initial = 0, type = "amount")
+        add_compartment(name = "central", volume = 1) |>
+        add_molecule(name = "drug", cmt = "central", initial = 0, type = "amount")
     process <- to_process_model(model)
     ode <- to_ode_model(process)
     compiled <- to_compiled_ode_model(ode)

@@ -3,8 +3,8 @@
 test_that("initials retrieves initial concentrations/amounts if volumes are specified", {
     # Initial conditions specified as amounts, volumes provided
     model <- compartment_model() |>
-        add_compartment(c("cyt", "nuc"), volume = 1[L]) |>
-        add_molecule(c("A", "B"), unit = "g", type = "amount") |>
+        add_compartment(name = c("cyt", "nuc"), volume = 1[L]) |>
+        add_molecule(name = c("A", "B"), unit = "g", type = "amount") |>
         wire()
 
     A0 <- initials(model, type = "a[] only")
@@ -18,8 +18,8 @@ test_that("initials retrieves initial concentrations/amounts if volumes are spec
 
     # Initial conditions specified as concentrations, volumes provided
     model2 <- compartment_model() |>
-        add_compartment(c("cyt", "nuc"), volume = 1[L]) |>
-        add_molecule(c("A", "B"), unit = "g/L", type = "concentration") |>
+        add_compartment(name = c("cyt", "nuc"), volume = 1[L]) |>
+        add_molecule(name = c("A", "B"), unit = "g/L", type = "concentration") |>
         wire()
 
     A02 <- initials(model2, type = "a[] only")
@@ -36,8 +36,8 @@ test_that("initials may fail if some volumes unspecified", {
 
     # Initial conditions specified as amounts, no volumes provided
     model <- compartment_model() |>
-        add_compartment(c("cyt", "nuc"), volume = NA_real_) |>
-        add_molecule(c("A", "B"), unit = "g", type = "amount") |>
+        add_compartment(name = c("cyt", "nuc"), volume = NA_real_) |>
+        add_molecule(name = c("A", "B"), unit = "g", type = "amount") |>
         wire()
 
     A0 <- initials(model, type = "a[] only")
@@ -51,8 +51,8 @@ test_that("initials may fail if some volumes unspecified", {
 
 test_that("initials retrieves parametrized amount initials", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount")
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = "A0", type = "amount")
 
     A0 <- initials(model, type = "a[] only")
 
@@ -62,8 +62,8 @@ test_that("initials retrieves parametrized amount initials", {
 
 test_that("initials converts parametrized concentration initials using parametrized volumes", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = "V") |>
-        add_molecule("drug", cmt = "Central", initial = "C0", type = "concentration")
+        add_compartment(name = "Central", volume = "V") |>
+        add_molecule(name = "drug", cmt = "Central", initial = "C0", type = "concentration")
 
     A0 <- initials(model, type = "a[] only")
     C0 <- initials(model, type = "c[] only")
@@ -76,8 +76,8 @@ test_that("initials converts parametrized concentration initials using parametri
 
 test_that("initials converts parametrized amount initials using fixed volumes", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = 2) |>
-        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount")
+        add_compartment(name = "Central", volume = 2) |>
+        add_molecule(name = "drug", cmt = "Central", initial = "A0", type = "amount")
 
     C0 <- initials(model, type = "c[] only")
 
@@ -87,8 +87,8 @@ test_that("initials converts parametrized amount initials using fixed volumes", 
 
 test_that("initials resolves conversions through model parameters", {
     model <- compartment_model() |>
-        add_compartment("cmt", volume = "V") |>
-        add_molecule("molec", unit = "g", type = "amount") |>
+        add_compartment(name = "cmt", volume = "V") |>
+        add_molecule(name = "molec", unit = "g", type = "amount") |>
         add_parameter(V = 1 [L]) |>
         wire()
 

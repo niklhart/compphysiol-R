@@ -3,15 +3,15 @@ test_that("ODE generation handles first-order reaction with bolus dosing", {
 
     # PK example with first-order reactions only
     M <- compartment_model() |>
-        add_compartment("Central", volume = 10) |>
-        add_compartment("Peripheral", volume = 5) |>
+        add_compartment(name = "Central", volume = 10) |>
+        add_compartment(name = "Peripheral", volume = 5) |>
         add_molecule(
             name = c("drug", "drug"),
             cmt = c("Central", "Peripheral"),
             initial = c(10, 0),
             type = "amount"
         ) |>
-        add_transport("Central", "Peripheral", const = "k12") |>
+        add_transport(from = "Central", to = "Peripheral", const = "k12") |>
         add_parameter(k12 = 0.1)
 
     odeinfo <- .to_ode(M)
@@ -41,8 +41,8 @@ test_that("legacy ODE and analytical exporters are internal", {
 test_that("ODE generation handles output dimensions", {
     # PK example with first-order reactions only
     M <- compartment_model() |>
-        add_compartment("Central") |>
-        add_molecule("drug", cmt = "Central", initial = 10[mg], type = "amount") |>
+        add_compartment(name = "Central") |>
+        add_molecule(name = "drug", cmt = "Central", initial = 10[mg], type = "amount") |>
         add_transport(from = "Central", to = "", const = "ke") |>
         add_parameter(ke = 6 [1/h]) |>
         add_dosing(cmt = "Central", amount = 100[mg], time = 1[h])
@@ -57,8 +57,8 @@ test_that("ODE generation handles output dimensions", {
 
 test_that("ODE generation shortens auto-placeholder state names", {
     M <- compartment_model() |>
-        add_compartment(c("Central", "Peripheral"), volume = 0) |>
-        add_transport("Central", "Peripheral", const = "k12") |>
+        add_compartment(name = c("Central", "Peripheral"), volume = 0) |>
+        add_transport(from = "Central", to = "Peripheral", const = "k12") |>
         add_parameter(k12 = 0.1)
 
     odeinfo <- .to_ode(M)
@@ -67,7 +67,7 @@ test_that("ODE generation shortens auto-placeholder state names", {
     expect_equal(odeinfo$dslStateNames, c("a[molec, Central]", "a[molec, Peripheral]"))
 
     M <- compartment_model() |>
-        add_molecule("drug", initial = 1, type = "amount")
+        add_molecule(name = "drug", initial = 1, type = "amount")
 
     odeinfo <- .to_ode(M)
 
@@ -77,8 +77,8 @@ test_that("ODE generation shortens auto-placeholder state names", {
 
 test_that("ODE observables convert between amount and concentration states", {
     M_amount <- compartment_model() |>
-        add_compartment("Central", volume = 10) |>
-        add_molecule("drug", cmt = "Central", initial = 100, type = "amount") |>
+        add_compartment(name = "Central", volume = 10) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100, type = "amount") |>
         add_observable(C = c[drug, Central])
 
     odeinfo <- .to_ode(M_amount)
@@ -86,8 +86,8 @@ test_that("ODE observables convert between amount and concentration states", {
     expect_equal(odeinfo$obsFuncs$C(0, y, list()), 10)
 
     M_conc <- compartment_model() |>
-        add_compartment("Central", volume = "V") |>
-        add_molecule("drug", cmt = "Central", initial = 10, type = "concentration") |>
+        add_compartment(name = "Central", volume = "V") |>
+        add_molecule(name = "drug", cmt = "Central", initial = 10, type = "concentration") |>
         add_observable(A = a[drug, Central]) |>
         add_parameter(V = 10)
 
@@ -98,8 +98,8 @@ test_that("ODE observables convert between amount and concentration states", {
 
 test_that("ODE observable functions are unit-free after export", {
     M <- compartment_model() |>
-        add_compartment("Central", volume = 10 [L]) |>
-        add_molecule("drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+        add_compartment(name = "Central", volume = 10 [L]) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
         add_observable(C = c[drug, Central])
 
     odeinfo <- .to_ode(M, dimensions = list(mass = "mg", length = "m"))
@@ -112,9 +112,9 @@ test_that("ODE observable functions are unit-free after export", {
 
 test_that("ODE generation evaluates parametrized initial values", {
     M <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_parameter(A0 = 100, ke = 0.2)
 
     odeinfo <- .to_ode(M)
@@ -125,9 +125,9 @@ test_that("ODE generation evaluates parametrized initial values", {
 
 test_that("ODE generation evaluates parametrized initials with unit dimensions", {
     M <- compartment_model() |>
-        add_compartment("Central", volume = "V") |>
-        add_molecule("drug", cmt = "Central", initial = "C0", type = "concentration") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = "V") |>
+        add_molecule(name = "drug", cmt = "Central", initial = "C0", type = "concentration") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_parameter(C0 = 10 [mg/L], V = 2 [L], ke = 0.2 [1/h])
 
     odeinfo <- .to_ode(M, dimensions = list(mass = "mg", length = "dm", time = "h"))
@@ -138,9 +138,9 @@ test_that("ODE generation evaluates parametrized initials with unit dimensions",
 
 test_that("ODE generation reports unresolved parametrized initial values", {
     M <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_parameter(ke = 0.2)
 
     expect_error(
@@ -153,8 +153,8 @@ test_that("ODE generation reports unresolved parametrized initial values", {
 test_that("ODE generation processes equations correctly", {
     # 1-CMT model with redefined elimination rate constant
     M <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 1, type = "amount") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 1, type = "amount") |>
         add_transport(from = "Central", to = "", const = "ke_eq") |>
         add_parameter(ke_par = 1) |>
         add_equation(ke_eq = ke_par)
@@ -168,8 +168,8 @@ test_that("ODE generation processes equations correctly", {
 
 test_that("ODE generation includes elementary reactions", {
     M <- compartment_model() |>
-        add_compartment("cyt", volume = 2) |>
-        add_molecule(c("A", "B"), cmt = "cyt", initial = c(10, 0), type = "amount") |>
+        add_compartment(name = "cyt", volume = 2) |>
+        add_molecule(name = c("A", "B"), cmt = "cyt", initial = c(10, 0), type = "amount") |>
         add_reaction(input = "A", output = "B", cmt = "cyt", const = "kAB") |>
         add_parameter(kAB = 2)
 
@@ -184,9 +184,8 @@ test_that("ODE generation includes elementary reactions", {
 
 test_that("ODE generation supports concentration states for reaction-only models", {
     M <- compartment_model() |>
-        add_compartment("cyt", volume = NA_real_) |>
-        add_molecule(
-            c("A", "B"),
+        add_compartment(name = "cyt", volume = NA_real_) |>
+        add_molecule(name = c("A", "B"),
             cmt = "cyt",
             initial = c(10, 0),
             type = "concentration"
@@ -207,9 +206,8 @@ test_that("ODE generation supports concentration states for reaction-only models
 
 test_that("ODE generation includes complex reaction rates", {
     M <- compartment_model() |>
-        add_compartment("cyt", volume = 1) |>
-        add_molecule(
-            c("A", "B", "C"),
+        add_compartment(name = "cyt", volume = 1) |>
+        add_molecule(name = c("A", "B", "C"),
             cmt = "cyt",
             initial = c(10, 5, 0),
             type = "amount"
@@ -233,8 +231,8 @@ test_that("ODE generation includes complex reaction rates", {
 
 test_that("ODE generation includes reaction synthesis and degradation", {
     M <- compartment_model() |>
-        add_compartment("cyt", volume = 1) |>
-        add_molecule("A", cmt = "cyt", initial = 10, type = "amount") |>
+        add_compartment(name = "cyt", volume = 1) |>
+        add_molecule(name = "A", cmt = "cyt", initial = 10, type = "amount") |>
         add_reaction(input = NULL, output = "A", cmt = "cyt", const = "ksyn") |>
         add_reaction(input = "A", output = NULL, cmt = "cyt", const = "kdeg") |>
         add_parameter(ksyn = 3, kdeg = 0.5)
@@ -247,8 +245,8 @@ test_that("ODE generation includes reaction synthesis and degradation", {
 
 test_that("reaction rates can use equations in ODE export", {
     M <- compartment_model() |>
-        add_compartment("cyt", volume = 1) |>
-        add_molecule(c("A", "B"), cmt = "cyt", initial = c(10, 0), type = "amount") |>
+        add_compartment(name = "cyt", volume = 1) |>
+        add_molecule(name = c("A", "B"), cmt = "cyt", initial = c(10, 0), type = "amount") |>
         add_reaction(input = "A", output = "B", cmt = "cyt", const = "k_eq") |>
         add_equation(k_eq = k1 + k2) |>
         add_parameter(k1 = 1, k2 = 2)
@@ -267,9 +265,9 @@ test_that("reaction ODEs conserve mass for reversible reactions", {
     times <- seq(0, 10, by = 1)
 
     M1 <- compartment_model() |>
-        add_compartment(c("cyt", "nuc"), volume = 1) |>
-        add_molecule("A", cmt = c("cyt", "nuc"), initial = c(10, 5), type = "amount") |>
-        add_molecule("B", cmt = c("cyt", "nuc"), initial = c(0, 2), type = "amount") |>
+        add_compartment(name = c("cyt", "nuc"), volume = 1) |>
+        add_molecule(name = "A", cmt = c("cyt", "nuc"), initial = c(10, 5), type = "amount") |>
+        add_molecule(name = "B", cmt = c("cyt", "nuc"), initial = c(0, 2), type = "amount") |>
         add_reaction(input = "A", output = "B", cmt = c("cyt", "nuc"), const = "kAB") |>
         add_reaction(input = "B", output = "A", cmt = c("cyt", "nuc"), const = "kBA") |>
         add_parameter(kAB = 0.2, kBA = 0.1)
@@ -281,9 +279,9 @@ test_that("reaction ODEs conserve mass for reversible reactions", {
     expect_equal(total1, rep(total1[[1]], length(total1)), tolerance = 1e-8)
 
     M2 <- compartment_model() |>
-        add_compartment(c("cyt", "nuc"), volume = 1) |>
-        add_molecule("A", cmt = c("cyt", "nuc"), initial = c(10, 5), type = "amount") |>
-        add_molecule("B", cmt = c("cyt", "nuc"), initial = c(0, 2), type = "amount") |>
+        add_compartment(name = c("cyt", "nuc"), volume = 1) |>
+        add_molecule(name = "A", cmt = c("cyt", "nuc"), initial = c(10, 5), type = "amount") |>
+        add_molecule(name = "B", cmt = c("cyt", "nuc"), initial = c(0, 2), type = "amount") |>
         add_reaction(input = c("A", "A"), output = "B", cmt = c("cyt", "nuc"), const = "kAB") |>
         add_reaction(input = "B", output = c("A", "A"), cmt = c("cyt", "nuc"), const = "kBA") |>
         add_parameter(kAB = 0.02, kBA = 0.1)
@@ -299,10 +297,10 @@ test_that("reaction ODEs conserve mass for reversible reactions", {
 
 test_that("ODE generation supports cross-compartment reaction participants", {
     M <- compartment_model() |>
-        add_compartment(c("plasma", "membrane"), volume = c(10, 2)) |>
-        add_molecule("L", cmt = "plasma", initial = 100, type = "amount") |>
-        add_molecule("R", cmt = "membrane", initial = 20, type = "amount") |>
-        add_molecule("LR", cmt = "membrane", initial = 0, type = "amount") |>
+        add_compartment(name = c("plasma", "membrane"), volume = c(10, 2)) |>
+        add_molecule(name = "L", cmt = "plasma", initial = 100, type = "amount") |>
+        add_molecule(name = "R", cmt = "membrane", initial = 20, type = "amount") |>
+        add_molecule(name = "LR", cmt = "membrane", initial = 0, type = "amount") |>
         add_reaction(
             input = state(
                 molec = c("L", "R"),
@@ -326,8 +324,8 @@ test_that("ODE generation supports cross-compartment reaction participants", {
 
 test_that("ODE export rejects concentration-only transports without a volume", {
     M <- compartment_model() |>
-        add_compartment("cyt", volume = NA_real_) |>
-        add_molecule("A", cmt = "cyt", initial = 10, type = "concentration") |>
+        add_compartment(name = "cyt", volume = NA_real_) |>
+        add_molecule(name = "A", cmt = "cyt", initial = 10, type = "concentration") |>
         add_transport(from = "cyt", to = "", molec = "A", const = "k") |>
         add_parameter(k = 1)
 
@@ -339,8 +337,8 @@ test_that("ODE export rejects concentration-only transports without a volume", {
 
 test_that("ODE observables reject amount conversion from concentration states without a volume", {
     M <- compartment_model() |>
-        add_compartment("cyt", volume = NA_real_) |>
-        add_molecule("A", cmt = "cyt", initial = 10, type = "concentration") |>
+        add_compartment(name = "cyt", volume = NA_real_) |>
+        add_molecule(name = "A", cmt = "cyt", initial = 10, type = "concentration") |>
         add_observable(A_amount = a[A, cyt])
 
     expect_error(

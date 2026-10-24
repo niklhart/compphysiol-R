@@ -545,14 +545,15 @@ Omitted dosing targets match identically omitted targets; matching them to
 explicit targets requires later model-based resolution. These checks also apply
 when combining collections with `c()`.
 
-Experiments can be updated component-wise with `update()`. Scalar components
-are applied to one experiment or broadcast across a collection. Component
-collections align pairwise; applying one to a single experiment broadcasts that
-experiment and produces a collection. Object-valued changes require an explicit
-`replace` or `update` mode. A callback instead transforms the existing
-component directly and needs no mode. All supplied components are resolved
-before each result is reconstructed, so coordinated changes are validated as
-one final experiment rather than through intermediate states.
+Experiment components are modified with domain-specific verbs. Parameters can
+be added with conflict checking, overlaid by name, or replaced completely;
+dosing can be appended or replaced; observations and start times can be
+replaced; and values can be attached to observation schedules. Scalar
+components broadcast across a collection. Parameter sets expand a length-one
+collection and otherwise align by effective experiment identifier, or
+positionally when both collections are wholly unnamed. Callbacks receive the
+current component of each experiment and return the incoming component to
+which the chosen verb is then applied.
 
 An experiment collection records whether its starts, parameter schemas,
 complete parameter values, dosing schedules, observation plans, and complete
@@ -564,13 +565,17 @@ their ordinary per-experiment behavior. A false homogeneity flag means only
 that not all values are identical; it does not imply that every value differs.
 
 A shared experimental protocol can be extended across a realized population
-with `extend_protocol()`. The protocol supplies dosing, observations, start,
-and shared parameters; each element of a realized population supplies
+with `overlay_parameter(protocol, population)`. The protocol supplies dosing,
+observations, start, and shared parameters; each realized parameter set supplies
 the individual parameters for one resulting experiment. Individual values
-override protocol parameters with the same name. This is the parameter-update
-specialization of broadcasting a scalar experiment. The explicit transformation
+override protocol parameters with the same name. The explicit transformation
 produces an experiment collection before simulation rather than adding a
 population concept to `simulate()`.
+
+`attach_observation_values()` transforms an observation schedule and
+corresponding values into observation data. It preserves row order, duplicate
+rows, units, and metadata. Bound data align by experiment identifier and must
+agree rowwise on all schedule columns they share.
 
 Simulating an experiment collection returns one simulation result. Its state
 and observable tables contain an `experiment` factor whose levels follow
@@ -762,6 +767,15 @@ and internal unit relationships. User-facing constructors accept convenient
 input and report domain-specific errors; internal low-level constructors attach
 the canonical representation and S3 classes to values that have already been
 normalized.
+
+Model-component modifiers have two construction routes. In interactive use,
+named constructor arguments are forwarded to the corresponding component
+constructor, for example `add_compartment(name = "central")`. In programmatic
+use, an already constructed component occupies the second argument, for
+example `add_compartment(compartments(name = "central"))`. The same convention
+applies to compartments, molecules, transports, reactions, observables, and
+equations. Supplying a constructed component together with constructor
+arguments is ambiguous and rejected.
 
 Code that receives a package S3 object trusts this intrinsic class contract.
 For example, printing, subsetting, and simulation do not need to repeat every

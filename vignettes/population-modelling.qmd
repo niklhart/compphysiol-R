@@ -39,9 +39,8 @@ and the observable concentration in milligrams per litre.
 ```{r}
 #| label: dynamic-model
 model <- compartment_model() |>
-    add_compartment("Central", volume = 10 [L]) |>
-    add_molecule(
-        "drug",
+    add_compartment(name = "Central", volume = 10 [L]) |>
+    add_molecule(name = "drug",
         cmt = "Central",
         initial = 0 [mg],
         type = "amount"
@@ -83,7 +82,7 @@ truth <- parameters(
 
 `sample_population()` realizes individual clearances with units. A common
 unit-aware protocol supplies the dose and observation times;
-`extend_protocol()` combines that protocol with every realized individual.
+`overlay_parameter()` combines that protocol with every realized individual.
 
 ```{r}
 #| label: population
@@ -110,7 +109,7 @@ protocol <- experiment(
     start = 0 [h]
 )
 
-simulation_studies <- extend_protocol(protocol, population)
+simulation_studies <- overlay_parameter(protocol, population)
 ```
 
 The full collection is simulated in one call through rxode2. The resulting
@@ -131,14 +130,11 @@ sampled <- simulated |>
     as_observables_long() |>
     sample_observations(statistics, truth)
 
-estimation_studies <- update(
-    simulation_studies,
-    parameters = parameters(),
-    observations = sampled,
-    mode = "replace"
-)
+estimation_studies <- simulation_studies |>
+    replace_parameters(parameters()) |>
+    attach_observation_values(sampled)
 
-estimation_studies[[1]]
+estimation_studies[1]
 ```
 
 The individual clearances are used to generate the simulated predictions but

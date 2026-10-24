@@ -4,8 +4,8 @@ test_that("make_depot correctly creates depot/rate compartments and adds them to
     
     # Create a simple model with compartments and molecules
     model <- compartment_model() |>
-        add_compartment(c("cyt", "nuc")) |>
-        add_molecule(c("A", "B")) |>
+        add_compartment(name = c("cyt", "nuc")) |>
+        add_molecule(name = c("A", "B")) |>
         add_dosing(time  = 0, amount = 100, duration = 2, cmt = "cyt", molec = "A") |>
         wire() |>
         make_depot()

@@ -1,8 +1,8 @@
 test_that("to_stochastic_model returns a StochasticModel", {
     model <- compartment_model() |>
-        add_compartment(c("Central", "Peripheral"), volume = NA_real_) |>
-        add_molecule("drug", cmt = c("Central", "Peripheral"), initial = c(10, 0), type = "amount") |>
-        add_transport("Central", "Peripheral", const = "k12")
+        add_compartment(name = c("Central", "Peripheral"), volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = c("Central", "Peripheral"), initial = c(10, 0), type = "amount") |>
+        add_transport(from = "Central", to = "Peripheral", const = "k12")
 
     stochastic_model <- to_stochastic_model(model)
 
@@ -23,9 +23,9 @@ test_that("to_stochastic_model returns a StochasticModel", {
 
 test_that("to_stochastic_model accepts a ProcessModel", {
     model <- compartment_model() |>
-        add_compartment(c("Central", "Peripheral"), volume = NA_real_) |>
-        add_molecule("drug", cmt = c("Central", "Peripheral"), initial = c(10, 0), type = "amount") |>
-        add_transport("Central", "Peripheral", const = "k12")
+        add_compartment(name = c("Central", "Peripheral"), volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = c("Central", "Peripheral"), initial = c(10, 0), type = "amount") |>
+        add_transport(from = "Central", to = "Peripheral", const = "k12")
     process_model <- to_process_model(model)
 
     stochastic_model <- to_stochastic_model(process_model)
@@ -37,9 +37,9 @@ test_that("to_stochastic_model accepts a ProcessModel", {
 
 test_that("to_stochastic_model derives first-order transport propensities", {
     model <- compartment_model() |>
-        add_compartment(c("Central", "Peripheral"), volume = NA_real_) |>
-        add_molecule("drug", cmt = c("Central", "Peripheral"), initial = c(10, 0), type = "amount") |>
-        add_transport("Central", "Peripheral", const = "k12")
+        add_compartment(name = c("Central", "Peripheral"), volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = c("Central", "Peripheral"), initial = c(10, 0), type = "amount") |>
+        add_transport(from = "Central", to = "Peripheral", const = "k12")
 
     stochastic_model <- to_stochastic_model(model)
 
@@ -49,8 +49,8 @@ test_that("to_stochastic_model derives first-order transport propensities", {
 
 test_that("to_stochastic_model derives elementary reaction propensities", {
     model <- compartment_model() |>
-        add_compartment("cyt", volume = "V") |>
-        add_molecule(c("A", "B"), cmt = "cyt", initial = c(10, 0), type = "amount") |>
+        add_compartment(name = "cyt", volume = "V") |>
+        add_molecule(name = c("A", "B"), cmt = "cyt", initial = c(10, 0), type = "amount") |>
         add_reaction(input = "A", output = "B", cmt = "cyt", const = "k") |>
         add_parameter(V = 1)
 
@@ -62,8 +62,8 @@ test_that("to_stochastic_model derives elementary reaction propensities", {
 
 test_that("to_stochastic_model keeps repeated-input metadata for propensity correction", {
     model <- compartment_model() |>
-        add_compartment("cyt", volume = "V") |>
-        add_molecule(c("A", "B"), cmt = "cyt", initial = c(10, 0), type = "amount") |>
+        add_compartment(name = "cyt", volume = "V") |>
+        add_molecule(name = c("A", "B"), cmt = "cyt", initial = c(10, 0), type = "amount") |>
         add_reaction(input = c("A", "A"), output = "B", cmt = "cyt", const = "k") |>
         add_parameter(V = 1)
 
@@ -76,9 +76,9 @@ test_that("to_stochastic_model keeps repeated-input metadata for propensity corr
 
 test_that("to_stochastic_model allows inverse-time units in process parameters", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 10, type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 10, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_parameter(ke = 0.2 [1/h])
 
     expect_no_error(to_stochastic_model(model))
@@ -86,9 +86,9 @@ test_that("to_stochastic_model allows inverse-time units in process parameters",
 
 test_that("stochastic propensity functions compile equations before propensities", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 10, type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 10, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_equation(ke = base_ke * scale) |>
         add_parameter(base_ke = 0.2, scale = 2)
 
@@ -106,9 +106,9 @@ test_that("stochastic propensity functions compile equations before propensities
 
 test_that("to_stochastic_model rejects dosing in the current version", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 10, type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 10, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_dosing(time = 0, amount = 10, cmt = "Central", molec = "drug")
 
     expect_error(to_stochastic_model(model), "dosing|not implemented", ignore.case = TRUE)
@@ -116,25 +116,25 @@ test_that("to_stochastic_model rejects dosing in the current version", {
 
 test_that("to_stochastic_model rejects concentration states", {
     model <- compartment_model() |>
-        add_compartment("cyt", volume = NA_real_) |>
-        add_molecule("A", cmt = "cyt", initial = 10, type = "concentration")
+        add_compartment(name = "cyt", volume = NA_real_) |>
+        add_molecule(name = "A", cmt = "cyt", initial = 10, type = "concentration")
 
     expect_error(to_stochastic_model(model), "concentration|amount|count", ignore.case = TRUE)
 })
 
 test_that("to_stochastic_model rejects unit-bearing state initials", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 10 [mg], type = "amount")
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 10 [mg], type = "amount")
 
     expect_error(to_stochastic_model(model), "dimensionless|count|unit", ignore.case = TRUE)
 })
 
 test_that("to_stochastic_model accepts dimensionless unit state initials", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 10 [1], type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 10 [1], type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_parameter(ke = 0.2)
 
     stochastic_model <- to_stochastic_model(model)
@@ -144,11 +144,11 @@ test_that("to_stochastic_model accepts dimensionless unit state initials", {
 
 test_that("to_stochastic_model rejects non-count state initials", {
     fractional <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 1.5, type = "amount")
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 1.5, type = "amount")
     negative <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = -1, type = "amount")
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = -1, type = "amount")
 
     expect_error(to_stochastic_model(fractional), "integer|count", ignore.case = TRUE)
     expect_error(to_stochastic_model(negative), "non-negative|count", ignore.case = TRUE)
@@ -156,16 +156,14 @@ test_that("to_stochastic_model rejects non-count state initials", {
 
 test_that("to_stochastic_model rejects explicit-rate processes in the current version", {
     transport <- compartment_model() |>
-        add_compartment(c("Central", "Peripheral"), volume = NA_real_) |>
-        add_molecule("drug", cmt = c("Central", "Peripheral"), initial = c(10, 0), type = "amount") |>
-        add_transport(
-            "Central",
-            "Peripheral",
+        add_compartment(name = c("Central", "Peripheral"), volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = c("Central", "Peripheral"), initial = c(10, 0), type = "amount") |>
+        add_transport(from = "Central", to = "Peripheral",
             rate = "vmax * a[drug, Central] / (Km + a[drug, Central])"
     )
     reaction <- compartment_model() |>
-        add_compartment("cyt", volume = "V") |>
-        add_molecule(c("A", "B"), cmt = "cyt", initial = c(10, 0), type = "amount") |>
+        add_compartment(name = "cyt", volume = "V") |>
+        add_molecule(name = c("A", "B"), cmt = "cyt", initial = c(10, 0), type = "amount") |>
         add_reaction(
             input = "A",
             output = "B",

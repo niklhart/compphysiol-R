@@ -1,7 +1,7 @@
 ssa_death_model <- compartment_model() |>
-    add_compartment("Central", volume = NA_real_) |>
-    add_molecule("drug", cmt = "Central", initial = 20, type = "amount") |>
-    add_transport("Central", "", const = "ke") |>
+    add_compartment(name = "Central", volume = NA_real_) |>
+    add_molecule(name = "drug", cmt = "Central", initial = 20, type = "amount") |>
+    add_transport(from = "Central", to = "", const = "ke") |>
     add_parameter(ke = 0.2)
 
 test_that("simulate with SSA returns a SimulationResult at requested times", {
@@ -38,9 +38,9 @@ test_that("SSA output states are non-negative integer counts", {
 
 test_that("SSA normalizes dimensionless unit initials to numeric counts", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 20 [1], type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 20 [1], type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_parameter(ke = 0.2)
 
     out <- simulate(model, time = 0:1, simulation_type = "ssa", seed = 1)
@@ -51,9 +51,9 @@ test_that("SSA normalizes dimensionless unit initials to numeric counts", {
 
 test_that("SSA rejects initial counts above the integer limit", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = .Machine$integer.max + 1, type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = .Machine$integer.max + 1, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_parameter(ke = 0.2)
 
     expect_error(
@@ -65,9 +65,9 @@ test_that("SSA rejects initial counts above the integer limit", {
 
 test_that("SSA rejects negative propensities", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 10, type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 10, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_parameter(ke = -0.2)
 
     expect_error(
@@ -118,8 +118,8 @@ test_that("SSA simulation can limit stochastic events", {
 
 test_that("SSA source and linear sink reactions approach Poisson counts", {
     model <- compartment_model() |>
-        add_compartment("cyt", volume = 1) |>
-        add_molecule("A", cmt = "cyt", initial = 0, type = "amount") |>
+        add_compartment(name = "cyt", volume = 1) |>
+        add_molecule(name = "A", cmt = "cyt", initial = 0, type = "amount") |>
         add_reaction(input = NULL, output = "A", cmt = "cyt", const = "ksyn") |>
         add_reaction(input = "A", output = NULL, cmt = "cyt", const = "kdeg") |>
         add_parameter(ksyn = 2, kdeg = 1)
@@ -147,9 +147,9 @@ test_that("SSA source and linear sink reactions approach Poisson counts", {
 
 test_that("SSA simulation supports multiple realizations in long format", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 5, type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 5, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_observable(Aobs = a[drug, Central]) |>
         add_parameter(ke = 0.2)
     time <- 0:2
@@ -170,8 +170,8 @@ test_that("SSA simulation supports multiple realizations in long format", {
 
 test_that("SSA simulation rejects invalid nsim values", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 5, type = "amount")
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 5, type = "amount")
 
     expect_error(
         simulate(model, time = 0:2, simulation_type = "ssa", nsim = 1.5),
@@ -194,9 +194,9 @@ test_that("SSA simulation evaluates observables at requested output times", {
 
 test_that("SSA simulation supports unit-aware time and inverse-time rate constants", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 20, type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 20, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_parameter(ke = 0.2 [1/h])
     time <- units::set_units(seq(0, 10, by = 1), "h", mode = "standard")
 
@@ -210,9 +210,9 @@ test_that("SSA simulation supports unit-aware time and inverse-time rate constan
 
 test_that("SSA simulation rejects time-unit mismatches", {
     unit_model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 20, type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 20, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_parameter(ke = 0.2 [1/h])
     expect_error(
         simulate(unit_model, time = seq(0, 10, by = 1), simulation_type = "ssa"),
@@ -226,8 +226,8 @@ test_that("SSA simulation rejects time-unit mismatches", {
 
 test_that("SSA repeated-input propensities are zero below required counts", {
     model <- compartment_model() |>
-        add_compartment("cyt", volume = "V") |>
-        add_molecule(c("A", "B"), cmt = "cyt", initial = c(1, 0), type = "amount") |>
+        add_compartment(name = "cyt", volume = "V") |>
+        add_molecule(name = c("A", "B"), cmt = "cyt", initial = c(1, 0), type = "amount") |>
         add_reaction(input = c("A", "A"), output = "B", cmt = "cyt", const = "k") |>
         add_parameter(V = 1, k = 1e9)
 
@@ -239,8 +239,8 @@ test_that("SSA repeated-input propensities are zero below required counts", {
 
 test_that("SSA stops cleanly when all propensities are zero", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 5, type = "amount")
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 5, type = "amount")
     time <- 0:3
 
     out <- simulate(model, time = time, simulation_type = "ssa", seed = 1)

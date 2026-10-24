@@ -23,12 +23,12 @@ are the same state.
 }
 \examples{
 abs <- compartment_model() |>
-    add_compartment(c("Gut", "Central")) |>
-    add_molecule("drug", cmt = c("Gut", "Central"), initial = c(100, 0), type = "amount") |>
-    add_transport("Gut", "Central", const = "ka", molec = "drug")
+    add_compartment(name = c("Gut", "Central")) |>
+    add_molecule(name = "drug", cmt = c("Gut", "Central"), initial = c(100, 0), type = "amount") |>
+    add_transport(from = "Gut", to = "Central", const = "ka", molec = "drug")
 pk <- compartment_model() |>
-    add_compartment(c("Central", "Peripheral")) |>
-    add_molecule("drug", cmt = c("Central", "Peripheral"), type = "amount") |>
-    add_transport("Central", "Peripheral", const = "k12", molec = "drug")
+    add_compartment(name = c("Central", "Peripheral")) |>
+    add_molecule(name = "drug", cmt = c("Central", "Peripheral"), type = "amount") |>
+    add_transport(from = "Central", to = "Peripheral", const = "k12", molec = "drug")
 mergeModels(abs, pk, mode = "overlay")
 }

@@ -4,8 +4,8 @@ test_that("wire correctly adds compartments to molecules/reactions and molecules
 
     # Create a simple model with compartments and molecules
     model <- compartment_model() |>
-        add_compartment(c("cyt", "nuc")) |>
-        add_molecule(c("A", "B")) |>
+        add_compartment(name = c("cyt", "nuc")) |>
+        add_molecule(name = c("A", "B")) |>
         add_transport(from = "cyt", to = "nuc", const = "k") |>
         add_reaction(input = "A", output = "B", const = "k2") |>
         wire()
@@ -19,8 +19,8 @@ test_that("wire correctly adds compartments to molecules/reactions and molecules
 test_that("wire treats NA compartments in states like old compartment shorthand", {
 
     model <- compartment_model() |>
-        add_compartment(c("cyt", "nuc")) |>
-        add_molecule(c("A", "B")) |>
+        add_compartment(name = c("cyt", "nuc")) |>
+        add_molecule(name = c("A", "B")) |>
         add_reaction(
             input = state(molec = "A", cmt = NA_character_),
             output = state(molec = "B", cmt = NA_character_),
@@ -34,8 +34,8 @@ test_that("wire treats NA compartments in states like old compartment shorthand"
     )
 
     model <- compartment_model() |>
-        add_compartment(c("cyt", "nuc")) |>
-        add_molecule(c("A", "B")) |>
+        add_compartment(name = c("cyt", "nuc")) |>
+        add_molecule(name = c("A", "B")) |>
         add_reaction(
             input = state(molec = "A", cmt = NA_character_),
             output = state(molec = "B", cmt = NA_character_),
@@ -52,9 +52,9 @@ test_that("wire treats NA compartments in states like old compartment shorthand"
 test_that("wire preserves compound reaction constant expressions", {
 
     model <- compartment_model() |>
-        add_compartment("body", volume = 1) |>
-        add_molecule("TU", type = "amount", initial = "TU0") |>
-        add_reaction("TU -> NULL", const = "1 - eta_RTI") |>
+        add_compartment(name = "body", volume = 1) |>
+        add_molecule(name = "TU", type = "amount", initial = "TU0") |>
+        add_reaction(formula = "TU -> NULL", const = "1 - eta_RTI") |>
         wire()
 
     expect_equal(model$reactions$const[[1]], quote(1 - eta_RTI))
@@ -67,9 +67,9 @@ test_that("wire preserves compound reaction constant expressions", {
 test_that("wire expands partial NA state compartments in cross-compartment reactions", {
 
     model <- compartment_model() |>
-        add_compartment(c("plasma", "membrane")) |>
-        add_molecule("L") |>
-        add_molecule(c("R", "LR"), cmt = "membrane") |>
+        add_compartment(name = c("plasma", "membrane")) |>
+        add_molecule(name = "L") |>
+        add_molecule(name = c("R", "LR"), cmt = "membrane") |>
         add_reaction(
             input = c(
                 state(molec = "L", cmt = NA_character_),
@@ -119,8 +119,8 @@ test_that("wire expands partial NA state compartments in cross-compartment react
 test_that("wire resolves scalar wildcard dosing targets", {
 
     model <- compartment_model() |>
-        add_compartment("cyt") |>
-        add_molecule("A", cmt = "cyt") |>
+        add_compartment(name = "cyt") |>
+        add_molecule(name = "A", cmt = "cyt") |>
         add_dosing(time = 0, amount = 100) |>
         wire()
 
@@ -132,8 +132,8 @@ test_that("wire resolves scalar wildcard dosing targets", {
 test_that("wire errors for ambiguous wildcard dosing targets", {
 
     model_molec <- compartment_model() |>
-        add_compartment("cyt") |>
-        add_molecule(c("A", "B"), cmt = "cyt") |>
+        add_compartment(name = "cyt") |>
+        add_molecule(name = c("A", "B"), cmt = "cyt") |>
         add_dosing(time = 0, amount = 100, cmt = "cyt")
 
     expect_error(
@@ -142,8 +142,8 @@ test_that("wire errors for ambiguous wildcard dosing targets", {
     )
 
     model_cmt <- compartment_model() |>
-        add_compartment(c("cyt", "nuc")) |>
-        add_molecule("A") |>
+        add_compartment(name = c("cyt", "nuc")) |>
+        add_molecule(name = "A") |>
         add_dosing(time = 0, amount = 100, molec = "A")
 
     expect_error(
@@ -155,8 +155,8 @@ test_that("wire errors for ambiguous wildcard dosing targets", {
 test_that("wire leaves explicit dosing targets intact", {
 
     model <- compartment_model() |>
-        add_compartment(c("cyt", "nuc")) |>
-        add_molecule(c("A", "B"), cmt = "cyt") |>
+        add_compartment(name = c("cyt", "nuc")) |>
+        add_molecule(name = c("A", "B"), cmt = "cyt") |>
         add_dosing(time = 0, amount = 100, molec = "A", cmt = "cyt") |>
         wire()
 
@@ -168,15 +168,15 @@ test_that("wire leaves explicit dosing targets intact", {
 test_that("wire resolves scalar observable state shorthand", {
 
     model <- compartment_model() |>
-        add_compartment("Central") |>
-        add_molecule("drug", cmt = "Central") |>
+        add_compartment(name = "Central") |>
+        add_molecule(name = "drug", cmt = "Central") |>
         add_observable(C = a[Central] / V) |>
         wire()
 
     expect_equal(deparse1(model$observables$C), "a[drug, Central]/V")
 
     model <- compartment_model() |>
-        add_molecule("drug") |>
+        add_molecule(name = "drug") |>
         add_observable(A = a[drug]) |>
         wire()
 
@@ -186,8 +186,8 @@ test_that("wire resolves scalar observable state shorthand", {
 test_that("wire errors for ambiguous observable state shorthand", {
 
     model <- compartment_model() |>
-        add_compartment("Central") |>
-        add_molecule(c("parent", "metabolite"), cmt = "Central") |>
+        add_compartment(name = "Central") |>
+        add_molecule(name = c("parent", "metabolite"), cmt = "Central") |>
         add_observable(C = a[Central] / V)
 
     expect_error(

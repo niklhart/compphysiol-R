@@ -1,17 +1,17 @@
 test_that("mergeModels overlays two CompartmentModels with shared molecule-compartment states", {
     abs <- compartment_model() |>
-        add_compartment(c("Gut", "Central"), volume = NA_real_) |>
-        add_molecule("drug", cmt = c("Gut", "Central"), initial = c(100, 0), type = "amount") |>
-        add_transport("Gut", "Central", const = "ka", molec = "drug") |>
+        add_compartment(name = c("Gut", "Central"), volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = c("Gut", "Central"), initial = c(100, 0), type = "amount") |>
+        add_transport(from = "Gut", to = "Central", const = "ka", molec = "drug") |>
         add_observable(GutObs = a[drug, Gut]) |>
         add_dosing(cmt = "Gut", molec = "drug", amount = 100, time = 0)
 
     pk <- compartment_model() |>
-        add_compartment(c("Central", "Peripheral"), volume = NA_real_) |>
-        add_molecule("drug", cmt = c("Central", "Peripheral"), initial = c(0, 0), type = "amount") |>
-        add_transport("Central", "Peripheral", const = "k12", molec = "drug") |>
-        add_transport("Peripheral", "Central", const = "k21", molec = "drug") |>
-        add_transport("Central", "", const = "k10", molec = "drug") |>
+        add_compartment(name = c("Central", "Peripheral"), volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = c("Central", "Peripheral"), initial = c(0, 0), type = "amount") |>
+        add_transport(from = "Central", to = "Peripheral", const = "k12", molec = "drug") |>
+        add_transport(from = "Peripheral", to = "Central", const = "k21", molec = "drug") |>
+        add_transport(from = "Central", to = "", const = "k10", molec = "drug") |>
         add_observable(CentralObs = a[drug, Central])
 
     merged <- mergeModels(abs, pk, mode = "overlay")
@@ -40,11 +40,11 @@ test_that("mergeModels can merge two distinct drugs with suffixes", {
     skip("Renaming/copy semantics will be redesigned after overlay merge mode.")
 
     drugA <- compartment_model() |>
-        add_compartment(c("Central", "Peripheral"), volume = NA_real_) |>
-        add_molecule("drug", cmt = c("Central", "Peripheral"), initial = c(0, 0), type = "amount") |>
-        add_transport("Central", "Peripheral", const = "k12", molec = "drug") |>
-        add_transport("Peripheral", "Central", const = "k21", molec = "drug") |>
-        add_transport("Central", "", const = "k10", molec = "drug") |>
+        add_compartment(name = c("Central", "Peripheral"), volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = c("Central", "Peripheral"), initial = c(0, 0), type = "amount") |>
+        add_transport(from = "Central", to = "Peripheral", const = "k12", molec = "drug") |>
+        add_transport(from = "Peripheral", to = "Central", const = "k21", molec = "drug") |>
+        add_transport(from = "Central", to = "", const = "k10", molec = "drug") |>
         add_observable(CentralObs = a[drug, Central])
 
     drugB <- drugA
@@ -67,11 +67,11 @@ test_that("mergeModels auto-renames two distinct drugs correctly", {
     skip("Renaming/copy semantics will be redesigned after overlay merge mode.")
 
     drugA <- compartment_model() |>
-        add_compartment(c("Central", "Peripheral"), volume = NA_real_) |>
-        add_molecule("drug", cmt = c("Central", "Peripheral"), initial = c(0, 0), type = "amount") |>
-        add_transport("Central", "Peripheral", const = "k12", molec = "drug") |>
-        add_transport("Peripheral", "Central", const = "k21", molec = "drug") |>
-        add_transport("Central", "", const = "k10", molec = "drug") |>
+        add_compartment(name = c("Central", "Peripheral"), volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = c("Central", "Peripheral"), initial = c(0, 0), type = "amount") |>
+        add_transport(from = "Central", to = "Peripheral", const = "k12", molec = "drug") |>
+        add_transport(from = "Peripheral", to = "Central", const = "k21", molec = "drug") |>
+        add_transport(from = "Central", to = "", const = "k10", molec = "drug") |>
         add_observable(CentralObs = a[drug, Central])
 
     drugB <- drugA
@@ -86,16 +86,12 @@ test_that("mergeModels respects shared parameters (skip suffixing)", {
     skip("Shared-symbol handling belongs to the later renaming/copy redesign.")
 
     drugA <- compartment_model() |>
-        add_compartment(c("Central", "Liver"), volume = NA_real_) |>
-        add_molecule("drug", cmt = c("Central", "Liver"), initial = c(0, 0), type = "amount") |>
-        add_transport(
-            "Central",
-            "Liver",
+        add_compartment(name = c("Central", "Liver"), volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = c("Central", "Liver"), initial = c(0, 0), type = "amount") |>
+        add_transport(from = "Central", to = "Liver",
             rate = "Q_hepatic / V_liver * (a[drug, Central] - a[drug, Liver] / K_liver)"
         ) |>
-        add_transport(
-            "Liver",
-            "Central",
+        add_transport(from = "Liver", to = "Central",
             rate = "Q_hepatic / V_liver * (a[drug, Liver] / K_liver - a[drug, Central])"
         ) |>
         add_observable(CentralObs = a[drug, Central])

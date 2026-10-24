@@ -93,7 +93,7 @@ test_that("Transport const supports explicit unit values", {
     )
 
     model <- compartment_model() |>
-        add_transport("A", "B", const = 2 [1/h])
+        add_transport(from = "A", to = "B", const = 2 [1/h])
 
     expect_equal(units::set_units(model$transports$const[[1]], "1/h", mode = "standard"), units::set_units(2, "1/h", mode = "standard"))
 })

@@ -521,7 +521,7 @@ test_that("Reactions can be added to compartment models", {
     model <- compartment_model() |>
         add_reaction(input = "A", output = "B", const = "k1") |>
         add_reaction(input = "B", output = "C", rate = "k2 * c[B]") |>
-        add_reaction("C -> D", const = "k3")
+        add_reaction(formula = "C -> D", const = "k3")
 
     expect_equal(length(model$reactions), 3)
     expect_reaction_participants(model$reactions[1], "input", "A", NA_character_)

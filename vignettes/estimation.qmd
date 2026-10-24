@@ -39,9 +39,8 @@ provides the optimizer's initial estimate separately.
 ```{r}
 #| label: model
 model <- compartment_model() |>
-    add_compartment("Central", volume = 1 [L]) |>
-    add_molecule(
-        "drug",
+    add_compartment(name = "Central", volume = 1 [L]) |>
+    add_molecule(name = "drug",
         cmt = "Central",
         initial = 100 [mg],
         type = "amount"

@@ -2,8 +2,8 @@ library(deSolve)
 
 test_that("Full simulation with bolus dosing works", {
     M <- compartment_model() |>
-         add_compartment(c("Central","Peripheral"), 0) |>
-         add_transport("Central", "Peripheral", const = "k12") |>
+         add_compartment(name = c("Central","Peripheral"), volume = 0) |>
+         add_transport(from = "Central", to = "Peripheral", const = "k12") |>
          add_dosing(cmt = "Central", amount = 100, time = 0) |>
          add_parameter(k12 = 0.1)
 
@@ -25,8 +25,8 @@ test_that("Full simulation with bolus dosing works", {
 
 test_that("Full simulation with infusion dosing works", {
     M <- compartment_model() |>
-        add_compartment(c("Central", "Peripheral"), 0) |>
-        add_transport("Central", "Peripheral", const = "k12") |>
+        add_compartment(name = c("Central", "Peripheral"), volume = 0) |>
+        add_transport(from = "Central", to = "Peripheral", const = "k12") |>
         add_dosing(cmt = "Central", rate = 10, duration = 5, time = 0) |> 
         add_parameter(k12 = 0.1)
     
@@ -57,9 +57,9 @@ test_that("One-compartment model with first-order elimination matches analytical
 
     # Build model
     M <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = A0, type = "amount") |>
-        add_transport("Central", "", const = "k") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = A0, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "k") |>
         add_parameter(k = k)
 
     odeinfo <- .to_ode(M)
@@ -89,11 +89,11 @@ test_that("Two-compartment oral absorption model matches Bateman function", {
 
     # Build model
     M <- compartment_model() |>
-        add_compartment("Gut", volume = NA_real_) |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = c("Gut","Central"), initial = c(D, 0), type = "amount") |>
-        add_transport("Gut", "Central", const = "ka") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Gut", volume = NA_real_) |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = c("Gut","Central"), initial = c(D, 0), type = "amount") |>
+        add_transport(from = "Gut", to = "Central", const = "ka") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_parameter(ka = ka, ke = ke)
 
     odeinfo <- .to_ode(M)
@@ -122,9 +122,9 @@ test_that("One-compartment model with observed concentration matches analytic so
 
     # Build model
     M <- compartment_model() |>
-        add_compartment("Central", volume = "V") |>
-        add_molecule("drug", cmt = "Central", initial = A0, type = "amount") |>
-        add_transport("Central", "", const = "k") |>
+        add_compartment(name = "Central", volume = "V") |>
+        add_molecule(name = "drug", cmt = "Central", initial = A0, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "k") |>
         add_observable(C = a[Central] / V) |>
         add_parameter(k = k, V = V)
 
@@ -149,9 +149,9 @@ test_that("One-compartment model with observed concentration matches analytic so
 
 test_that("Observable functions respect requested time points", {
     M <- compartment_model() |>
-        add_compartment("Central", volume = "V") |>
-        add_molecule("drug", cmt = "Central", initial = 100, type = "amount") |>
-        add_transport("Central", "", const = "k") |>
+        add_compartment(name = "Central", volume = "V") |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "k") |>
         add_observable(C = a[Central] / V) |>
         add_parameter(k = 0.1, V = 10)
 
@@ -182,8 +182,8 @@ test_that("Observable functions respect requested time points", {
 test_that("to_ode flags transports pointing to unknown compartments", {
     # Simple one-compartment model with a transport to a non-existent compartment
     M <- compartment_model() |>
-        add_compartment("gut", 100) |>
-        add_transport("gut", "central", const = "ka") |>
+        add_compartment(name = "gut", volume = 100) |>
+        add_transport(from = "gut", to = "central", const = "ka") |>
         add_parameter(ka = 0.1)
     
     expect_error(

@@ -3,9 +3,9 @@
 test_that("reference state is preserved and downstream states are expressed w.r.t. it", {
     ## --- build model ---
     M <- compartment_model() |>
-        add_compartment(c("A", "B")) |>
-        add_transport("A", "B", const = "kAB") |>
-        add_transport("B", "", const = "kB0")
+        add_compartment(name = c("A", "B")) |>
+        add_transport(from = "A", to = "B", const = "kAB") |>
+        add_transport(from = "B", to = "", const = "kB0")
 
     refstate <- "A"
 
@@ -26,13 +26,13 @@ test_that("reference state is preserved and downstream states are expressed w.r.
 test_that("full symbolic assembly works for A->B->C->D->0", {
     # Model definition
     M <- compartment_model() |>
-        add_compartment(c("A", "B", "C", "D")) |>
+        add_compartment(name = c("A", "B", "C", "D")) |>
         add_transport(
             from = c("A", "B", "C"),
             to = c("B", "C", "D"),
             const = "k{from}{to}"
         ) |>
-        add_transport("D", "", const = "kD0")
+        add_transport(from = "D", to = "", const = "kD0")
 
     ## --- lumping ---
     res <- get_lumping_conditions(M, refstate = "A")

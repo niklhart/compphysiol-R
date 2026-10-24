@@ -40,8 +40,8 @@ test_that("A->B->C graph processing works", {
 
     # Model definition
     M <- compartment_model() |> 
-        add_compartment(c("A","B","C")) |>
-        add_transport(c("A","B"), c("B","C"), const = "k{from}{to}")
+        add_compartment(name = c("A","B","C")) |>
+        add_transport(from = c("A","B"), to = c("B","C"), const = "k{from}{to}")
 
     # Graph processing
     res <- process_graph(M, refstate = "A")
@@ -68,7 +68,7 @@ test_that("A->B<->C graph processing works", {
 
     # Model definition
     M <- compartment_model() |> 
-        add_compartment(c("A","B","C")) |>
+        add_compartment(name = c("A","B","C")) |>
         add_transport(
             from = c("A","B","C"), 
             to = c("B","C","B"), 
@@ -110,9 +110,9 @@ test_that(" A->B->0 graph processing ignores elimination", {
 
     # Model definition
     M <- compartment_model() |> 
-        add_compartment(c("A","B")) |>
-        add_transport("A","B", const = "kAB") |>
-        add_transport("B","", const = "kB0")
+        add_compartment(name = c("A","B")) |>
+        add_transport(from = "A", to = "B", const = "kAB") |>
+        add_transport(from = "B", to = "", const = "kB0")
 
     # Graph processing
     res <- process_graph(M, refstate = "A")

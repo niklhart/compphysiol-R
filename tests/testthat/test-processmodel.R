@@ -1,8 +1,8 @@
 test_that("to_process_model returns explicit states and process stoichiometry", {
     model <- compartment_model() |>
-        add_compartment(c("Central", "Peripheral"), volume = NA_real_) |>
-        add_molecule("drug", cmt = c("Central", "Peripheral"), initial = c(10, 0), type = "amount") |>
-        add_transport("Central", "Peripheral", const = "k12")
+        add_compartment(name = c("Central", "Peripheral"), volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = c("Central", "Peripheral"), initial = c(10, 0), type = "amount") |>
+        add_transport(from = "Central", to = "Peripheral", const = "k12")
 
     process_model <- to_process_model(model)
 
@@ -26,9 +26,9 @@ test_that("to_process_model returns explicit states and process stoichiometry", 
 
 test_that("ProcessModel represents a linear transport by rate and stoichiometry", {
     model <- compartment_model() |>
-        add_compartment(c("Central", "Peripheral"), volume = NA_real_) |>
-        add_molecule("drug", cmt = c("Central", "Peripheral"), initial = c(10, 0), type = "amount") |>
-        add_transport("Central", "Peripheral", const = "k12")
+        add_compartment(name = c("Central", "Peripheral"), volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = c("Central", "Peripheral"), initial = c(10, 0), type = "amount") |>
+        add_transport(from = "Central", to = "Peripheral", const = "k12")
 
     process_model <- to_process_model(model)
 
@@ -42,11 +42,9 @@ test_that("ProcessModel represents a linear transport by rate and stoichiometry"
 
 test_that("ProcessModel represents an explicit-rate transport by rate and stoichiometry", {
     model <- compartment_model() |>
-        add_compartment(c("Central", "Peripheral"), volume = NA_real_) |>
-        add_molecule("drug", cmt = c("Central", "Peripheral"), initial = c(10, 0), type = "amount") |>
-        add_transport(
-            "Central",
-            "Peripheral",
+        add_compartment(name = c("Central", "Peripheral"), volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = c("Central", "Peripheral"), initial = c(10, 0), type = "amount") |>
+        add_transport(from = "Central", to = "Peripheral",
             rate = "vmax * a[drug, Central] / (Km + a[drug, Central])"
         )
 
@@ -62,8 +60,8 @@ test_that("ProcessModel represents an explicit-rate transport by rate and stoich
 
 test_that("ProcessModel represents a concentration-state reaction by participant stoichiometry", {
     model <- compartment_model() |>
-        add_compartment("cyt", volume = NA_real_) |>
-        add_molecule(c("A", "B"), cmt = "cyt", initial = c(10, 0), type = "concentration") |>
+        add_compartment(name = "cyt", volume = NA_real_) |>
+        add_molecule(name = c("A", "B"), cmt = "cyt", initial = c(10, 0), type = "concentration") |>
         add_reaction(input = c("A", "A"), output = "B", cmt = "cyt", const = "kAA")
 
     process_model <- to_process_model(model)
@@ -80,8 +78,8 @@ test_that("ProcessModel represents a concentration-state reaction by participant
 
 test_that("ProcessModel amount-state reactions use amount-change process rates", {
     model <- compartment_model() |>
-        add_compartment("cyt", volume = "V") |>
-        add_molecule(c("A", "B"), cmt = "cyt", initial = c(10, 0), type = "amount") |>
+        add_compartment(name = "cyt", volume = "V") |>
+        add_molecule(name = c("A", "B"), cmt = "cyt", initial = c(10, 0), type = "amount") |>
         add_reaction(input = c("A", "A"), output = "B", cmt = "cyt", const = "kAA")
 
     process_model <- to_process_model(model)
@@ -99,13 +97,13 @@ test_that("ProcessModel amount-state reactions use amount-change process rates",
 test_that("ProcessModel simplifies elementary cross-compartment amount reaction rates", {
     model <- compartment_model() |>
         add_reaction(
-            "L[plasma] + R[membrane] -> LR[membrane]",
+            formula = "L[plasma] + R[membrane] -> LR[membrane]",
             scale_cmt = "membrane",
             const = "kon"
         ) |>
-        add_compartment(c("plasma", "membrane"), volume = c("Vp", "Vm")) |>
-        add_molecule("L", cmt = "plasma", initial = 10, type = "amount") |>
-        add_molecule(c("R", "LR"), cmt = "membrane", initial = c(20, 0), type = "amount")
+        add_compartment(name = c("plasma", "membrane"), volume = c("Vp", "Vm")) |>
+        add_molecule(name = "L", cmt = "plasma", initial = 10, type = "amount") |>
+        add_molecule(name = c("R", "LR"), cmt = "membrane", initial = c(20, 0), type = "amount")
 
     process_model <- to_process_model(model)
 
@@ -120,8 +118,8 @@ test_that("ProcessModel simplifies elementary cross-compartment amount reaction 
 
 test_that("ProcessModel represents an explicit-rate reaction by rate and stoichiometry", {
     model <- compartment_model() |>
-        add_compartment("cyt", volume = NA_real_) |>
-        add_molecule(c("A", "B"), cmt = "cyt", initial = c(10, 0), type = "concentration") |>
+        add_compartment(name = "cyt", volume = NA_real_) |>
+        add_molecule(name = c("A", "B"), cmt = "cyt", initial = c(10, 0), type = "concentration") |>
         add_reaction(
             input = "A",
             output = "B",
@@ -144,8 +142,8 @@ test_that("ProcessModel represents an explicit-rate reaction by rate and stoichi
 
 test_that("ProcessModel lowers concentration observables using amount states and volume scaling", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = "V") |>
-        add_molecule("drug", cmt = "Central", initial = 100, type = "amount") |>
+        add_compartment(name = "Central", volume = "V") |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100, type = "amount") |>
         add_observable(C = c[drug, Central]) |>
         add_parameter(V = 10)
 
@@ -160,9 +158,9 @@ test_that("ProcessModel lowers concentration observables using amount states and
 
 test_that("ProcessModel expands infusion depots and flattens dosing", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 0, type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 0, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_dosing(time = 0, rate = 10, duration = 2, cmt = "Central", molec = "drug")
 
     process_model <- to_process_model(model)
@@ -177,8 +175,8 @@ test_that("ProcessModel expands infusion depots and flattens dosing", {
 
 test_that("ProcessModel print method uses DSL state names", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = "V") |>
-        add_molecule(c("drug", "metabolite"), cmt = "Central", initial = c("A0", 0), type = "amount") |>
+        add_compartment(name = "Central", volume = "V") |>
+        add_molecule(name = c("drug", "metabolite"), cmt = "Central", initial = c("A0", 0), type = "amount") |>
         add_reaction(input = "drug", output = "metabolite", cmt = "Central", const = "kmet") |>
         add_observable(C = c[drug, Central]) |>
         add_parameter(V = 10) |>
@@ -192,10 +190,10 @@ test_that("ProcessModel print method uses DSL state names", {
 
 test_that("ProcessModel tracks free parameters before ODE rhs accumulation", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = "V") |>
-        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_compartment(name = "Central", volume = "V") |>
+        add_molecule(name = "drug", cmt = "Central", initial = "A0", type = "amount") |>
         add_equation(C = c[drug, Central]) |>
-        add_transport("Central", "", rate = "CL * C") |>
+        add_transport(from = "Central", to = "", rate = "CL * C") |>
         add_observable(Cobs = c[drug, Central] / F) |>
         add_parameter(V = 10)
 
@@ -206,10 +204,10 @@ test_that("ProcessModel tracks free parameters before ODE rhs accumulation", {
 
 test_that("OdeModel export from ProcessModel reconstructs transport ODEs", {
     model <- compartment_model() |>
-        add_compartment(c("Central", "Peripheral"), volume = c(10, 5)) |>
-        add_molecule("drug", cmt = c("Central", "Peripheral"), initial = c(10, 0), type = "amount") |>
-        add_transport("Central", "Peripheral", molec = "drug", const = "k12") |>
-        add_transport("Peripheral", "Central", molec = "drug", const = "k21") |>
+        add_compartment(name = c("Central", "Peripheral"), volume = c(10, 5)) |>
+        add_molecule(name = "drug", cmt = c("Central", "Peripheral"), initial = c(10, 0), type = "amount") |>
+        add_transport(from = "Central", to = "Peripheral", molec = "drug", const = "k12") |>
+        add_transport(from = "Peripheral", to = "Central", molec = "drug", const = "k21") |>
         add_observable(C = c[drug, Central]) |>
         add_parameter(k12 = 0.2, k21 = 0.1)
 
@@ -221,8 +219,8 @@ test_that("OdeModel export from ProcessModel reconstructs transport ODEs", {
 
 test_that("OdeModel export from ProcessModel uses process rates and stoichiometry", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = 10) |>
-        add_molecule(c("drug", "metabolite"), cmt = "Central", initial = c(10, 0), type = "amount") |>
+        add_compartment(name = "Central", volume = 10) |>
+        add_molecule(name = c("drug", "metabolite"), cmt = "Central", initial = c(10, 0), type = "amount") |>
         add_reaction(input = "drug", output = "metabolite", cmt = "Central", const = "kmet")
 
     ode_model <- to_ode_model(to_process_model(model))

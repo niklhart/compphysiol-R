@@ -1,8 +1,8 @@
 test_model_for_simulation <- function(amount_unit = NULL, time_unit = FALSE) {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 100, unit = amount_unit, type = "amount") |>
-        add_transport("Central", "", const = "ke")
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100, unit = amount_unit, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke")
 
     if (time_unit) {
         add_parameter(model, ke = 0.2 [1/h])
@@ -67,48 +67,48 @@ test_that("simulate returns a SimulationResult with ODE states", {
 
 test_that("compiled ODE backend matches R ODE backend for representative deterministic models", {
     one_compartment <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
-        add_transport("Central", "", const = "ke")
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke")
 
     two_compartment <- compartment_model() |>
-        add_compartment(c("Central", "Peripheral"), volume = "V") |>
-        add_molecule("drug", cmt = c("Central", "Peripheral"), initial = c("A0", 0), type = "amount") |>
-        add_transport("Central", "", const = "k10") |>
-        add_transport("Central", "Peripheral", const = "k12") |>
-        add_transport("Peripheral", "Central", const = "k21") |>
+        add_compartment(name = c("Central", "Peripheral"), volume = "V") |>
+        add_molecule(name = "drug", cmt = c("Central", "Peripheral"), initial = c("A0", 0), type = "amount") |>
+        add_transport(from = "Central", to = "", const = "k10") |>
+        add_transport(from = "Central", to = "Peripheral", const = "k12") |>
+        add_transport(from = "Peripheral", to = "Central", const = "k21") |>
         add_observable(C = c[drug, Central])
 
     equation_rate <- compartment_model() |>
-        add_compartment("Central", volume = "V") |>
-        add_molecule("drug", cmt = "Central", initial = "C0", type = "concentration") |>
+        add_compartment(name = "Central", volume = "V") |>
+        add_molecule(name = "drug", cmt = "Central", initial = "C0", type = "concentration") |>
         add_equation(ke = CL / V) |>
-        add_transport("Central", "", rate = "ke * a[drug, Central]") |>
+        add_transport(from = "Central", to = "", rate = "ke * a[drug, Central]") |>
         add_observable(C = c[drug, Central])
 
     bolus_dose <- compartment_model() |>
-        add_compartment("Central", volume = 10) |>
-        add_molecule("drug", cmt = "Central", initial = 0, type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = 10) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 0, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_observable(C = c[drug, Central]) |>
         add_dosing(time = 1, amount = 100, cmt = "Central", molec = "drug")
 
     infusion_dose <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 0, type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 0, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_dosing(time = 0, rate = 10, duration = 5, cmt = "Central", molec = "drug")
 
     unit_aware <- compartment_model() |>
-        add_compartment("Central", volume = 10 [L]) |>
-        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = 10 [L]) |>
+        add_molecule(name = "drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_observable(C = c[drug, Central])
 
     math_rate <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 100, type = "amount") |>
-        add_transport("Central", "", rate = "ke * sqrt(a[drug, Central])")
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100, type = "amount") |>
+        add_transport(from = "Central", to = "", rate = "ke * sqrt(a[drug, Central])")
 
     cases <- list(
         list(
@@ -160,9 +160,9 @@ test_that("compiled ODE backend matches R ODE backend for representative determi
 
 test_that("compiled ODE backend rejects unsupported RHS calls before solving", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 100, type = "amount") |>
-        add_transport("Central", "", rate = "ifelse(a[drug, Central] > 0, a[drug, Central], 0)")
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100, type = "amount") |>
+        add_transport(from = "Central", to = "", rate = "ifelse(a[drug, Central] > 0, a[drug, Central], 0)")
 
     expect_error(
         simulate(to_compiled_ode_model(model), time = seq(0, 1, by = 1)),
@@ -315,8 +315,8 @@ test_that("simulate errors when simulation time has units but model is unit-free
 
 test_that("simulate accepts time units for static models without processes", {
     model <- compartment_model() |>
-        add_compartment("ex", volume = 1 [L]) |>
-        add_molecule("D", cmt = "ex", type = "amount", initial = 0 [mol]) |>
+        add_compartment(name = "ex", volume = 1 [L]) |>
+        add_molecule(name = "D", cmt = "ex", type = "amount", initial = 0 [mol]) |>
         wire()
 
     out <- simulate(model, time = seq(0 [h], 1 [h], by = 1 [h]))
@@ -349,9 +349,9 @@ test_that("simulate rejects invalid time inputs with clear errors", {
 
 test_that("simulate can pass free parameters to the ODE solver", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 100, type = "amount") |>
-        add_transport("Central", "", const = "ke")
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke")
 
     out <- simulate(model, time = seq(0, 10, by = 1), parameters = list(ke = 0.2))
 
@@ -360,9 +360,9 @@ test_that("simulate can pass free parameters to the ODE solver", {
 
 test_that("simulate reports missing ODE parameters before solver evaluation", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 0, type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 0, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_dosing(time = 0, amount = 10, cmt = "Central", molec = "drug")
 
     expect_error(
@@ -373,9 +373,9 @@ test_that("simulate reports missing ODE parameters before solver evaluation", {
 
 test_that("simulate accepts a precompiled OdeModel with different parameter values", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
-        add_transport("Central", "", const = "ke")
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke")
     ode_model <- to_ode_model(model)
     time <- seq(0, 10, by = 1)
 
@@ -398,9 +398,9 @@ test_that("simulate accepts a precompiled OdeModel with different parameter valu
 
 test_that("simulate accepts a CompiledOdeModel with different parameter values", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
-        add_transport("Central", "", const = "ke")
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke")
     compiled_model <- to_compiled_ode_model(to_ode_model(model))
     time <- seq(0, 10, by = 1)
 
@@ -423,9 +423,9 @@ test_that("simulate accepts a CompiledOdeModel with different parameter values",
 
 test_that("CompiledOdeModel reuses compiled DLL across parameter changes", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
-        add_transport("Central", "", const = "ke")
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke")
     compiled_model <- to_compiled_ode_model(model)
     time <- seq(0, 2, by = 1)
 
@@ -443,9 +443,9 @@ test_that("CompiledOdeModel reuses compiled DLL across parameter changes", {
 
 test_that("CompiledOdeModel rejects runtime parameters outside the frozen interface", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
-        add_transport("Central", "", const = "ke")
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke")
     compiled_model <- to_compiled_ode_model(model)
 
     expect_error(
@@ -460,9 +460,9 @@ test_that("CompiledOdeModel rejects runtime parameters outside the frozen interf
 
 test_that("CompiledOdeModel checks cached parameter unit signatures", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
-        add_transport("Central", "", const = "ke")
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke")
     compiled_model <- to_compiled_ode_model(model)
     time <- units::set_units(seq(0, 2, by = 1), "h", mode = "standard")
     dimensions <- list(mass = "mg", time = "h")
@@ -558,9 +558,9 @@ test_that("compiled parameter transforms support scale and offset conversions", 
 
 test_that("prepared compiled experiment designs preserve heterogeneous simulations", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = 1 [L]) |>
-        add_molecule("drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
-        add_transport("Central", NULL, molec = "drug", const = "k") |>
+        add_compartment(name = "Central", volume = 1 [L]) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+        add_transport(from = "Central", to = NULL, molec = "drug", const = "k") |>
         add_observable(C = c[drug, Central]) |>
         add_parameter(k = 0.2 [1/h])
     studies <- c(
@@ -595,9 +595,9 @@ test_that("prepared compiled experiment designs preserve heterogeneous simulatio
 test_that("prepared rxode2 experiment designs preserve heterogeneous simulations", {
     skip_if_not_installed("rxode2")
     model <- compartment_model() |>
-        add_compartment("Central", volume = 1 [L]) |>
-        add_molecule("drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
-        add_transport("Central", NULL, molec = "drug", const = "k") |>
+        add_compartment(name = "Central", volume = 1 [L]) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+        add_transport(from = "Central", to = NULL, molec = "drug", const = "k") |>
         add_observable(C = c[drug, Central]) |>
         add_parameter(k = 0.2 [1/h])
     studies <- c(
@@ -628,9 +628,9 @@ test_that("prepared rxode2 experiment designs preserve heterogeneous simulations
 
 test_that("CompiledOdeModel uses fixed solver dimensions after compilation", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_parameter(ke = 0.2 [1/h])
     compiled_model <- to_compiled_ode_model(model)
 
@@ -652,9 +652,9 @@ test_that("CompiledOdeModel uses fixed solver dimensions after compilation", {
 
 test_that("CompiledOdeModel converts parameter values to solver dimensions before RHS evaluation", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
-        add_transport("Central", "", rate = "Q / V * a[drug, Central]") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+        add_transport(from = "Central", to = "", rate = "Q / V * a[drug, Central]") |>
         add_parameter(
             Q = 0.001 [m^3/h],
             V = 1 [L]
@@ -677,9 +677,9 @@ test_that("CompiledOdeModel converts parameter values to solver dimensions befor
 
 test_that("CompiledOdeModel converts observable values from solver to model units", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = 1 [L]) |>
-        add_molecule("drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = 1 [L]) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_observable(C = c[drug, Central]) |>
         add_parameter(ke = 0 [1/h])
     compiled_model <- to_compiled_ode_model(model)
@@ -699,11 +699,11 @@ test_that("CompiledOdeModel converts observable values from solver to model unit
 
 test_that("simulate reports all missing OdeModel parameters together", {
     model <- compartment_model() |>
-        add_compartment(c("Central", "Peripheral"), volume = NA_real_) |>
-        add_molecule("drug", cmt = c("Central", "Peripheral"), initial = c("A0", 0), type = "amount") |>
-        add_transport("Central", "", const = "k10") |>
-        add_transport("Central", "Peripheral", const = "k12") |>
-        add_transport("Peripheral", "Central", const = "k21") |>
+        add_compartment(name = c("Central", "Peripheral"), volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = c("Central", "Peripheral"), initial = c("A0", 0), type = "amount") |>
+        add_transport(from = "Central", to = "", const = "k10") |>
+        add_transport(from = "Central", to = "Peripheral", const = "k12") |>
+        add_transport(from = "Peripheral", to = "Central", const = "k21") |>
         add_observable(Acentral = a[drug, Central])
     ode_model <- to_ode_model(model)
 
@@ -715,9 +715,9 @@ test_that("simulate reports all missing OdeModel parameters together", {
 
 test_that("simulate on an OdeModel applies runtime parameter values to initials and observables", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = "V") |>
-        add_molecule("drug", cmt = "Central", initial = "C0", type = "concentration") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = "V") |>
+        add_molecule(name = "drug", cmt = "Central", initial = "C0", type = "concentration") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_observable(C = c[drug, Central])
     ode_model <- to_ode_model(model)
 
@@ -733,9 +733,9 @@ test_that("simulate on an OdeModel applies runtime parameter values to initials 
 
 test_that("simulate on a CompiledOdeModel applies runtime parameter values to initials and observables", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = "V") |>
-        add_molecule("drug", cmt = "Central", initial = "C0", type = "concentration") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = "V") |>
+        add_molecule(name = "drug", cmt = "Central", initial = "C0", type = "concentration") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_observable(C = c[drug, Central])
     compiled_model <- to_compiled_ode_model(model)
 
@@ -751,9 +751,9 @@ test_that("simulate on a CompiledOdeModel applies runtime parameter values to in
 
 test_that("cached CompiledOdeModel observables use current runtime parameters", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_observable(C = a[drug, Central] / V)
     compiled_model <- to_compiled_ode_model(model)
     time <- seq(0, 1, by = 1)
@@ -775,11 +775,11 @@ test_that("cached CompiledOdeModel observables use current runtime parameters", 
 
 test_that("simulate accepts a precompiled AnalyticalModel", {
     model <- compartment_model() |>
-        add_compartment(c("Central", "Peripheral"), volume = "V") |>
-        add_molecule("drug", cmt = c("Central", "Peripheral"), initial = c("A0", 0), type = "amount") |>
-        add_transport("Central", "", const = "k10") |>
-        add_transport("Central", "Peripheral", const = "k12") |>
-        add_transport("Peripheral", "Central", const = "k21") |>
+        add_compartment(name = c("Central", "Peripheral"), volume = "V") |>
+        add_molecule(name = "drug", cmt = c("Central", "Peripheral"), initial = c("A0", 0), type = "amount") |>
+        add_transport(from = "Central", to = "", const = "k10") |>
+        add_transport(from = "Central", to = "Peripheral", const = "k12") |>
+        add_transport(from = "Peripheral", to = "Central", const = "k21") |>
         add_observable(C = c[drug, Central])
     analytical_model <- to_analytical_model(model)
     ode_model <- to_ode_model(model)
@@ -796,9 +796,9 @@ test_that("simulate accepts a precompiled AnalyticalModel", {
 
 test_that("simulate on an AnalyticalModel is unit-aware", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
-        add_transport("Central", "", const = "ke")
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke")
     analytical_model <- to_analytical_model(model)
 
     out <- simulate(
@@ -817,9 +817,9 @@ test_that("simulate on an AnalyticalModel is unit-aware", {
 
 test_that("simulate validates AnalyticalModel coefficient units with runtime parameters", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
-        add_transport("Central", "", const = "ke")
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke")
     analytical_model <- to_analytical_model(model)
 
     expect_error(
@@ -834,9 +834,9 @@ test_that("simulate validates AnalyticalModel coefficient units with runtime par
 
 test_that("simulate validates OdeModel right-hand side units with runtime parameters", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
-        add_transport("Central", "", const = "ke")
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke")
     ode_model <- to_ode_model(model)
 
     expect_no_error(
@@ -858,9 +858,9 @@ test_that("simulate validates OdeModel right-hand side units with runtime parame
 
 test_that("simulate reports CompartmentModel unit errors in component terms", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
-        add_transport("Central", "", const = "ke")
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke")
 
     expect_error(
         simulate(
@@ -874,9 +874,9 @@ test_that("simulate reports CompartmentModel unit errors in component terms", {
 
 test_that("simulate can pass free parameters as a Parameters object", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 100, type = "amount") |>
-        add_transport("Central", "", const = "ke")
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke")
 
     out <- simulate(
         model,
@@ -889,9 +889,9 @@ test_that("simulate can pass free parameters as a Parameters object", {
 
 test_that("simulate can pass unit-aware free parameters as a Parameters object", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 100, unit = "mg", type = "amount") |>
-        add_transport("Central", "", const = "ke")
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100, unit = "mg", type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke")
 
     out <- simulate(
         model,
@@ -909,9 +909,9 @@ test_that("simulate can pass unit-aware free parameters as a Parameters object",
 
 test_that("simulate can pass parametrized initial conditions as parameters", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
-        add_transport("Central", "", const = "ke")
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke")
 
     out <- simulate(
         model,
@@ -924,9 +924,9 @@ test_that("simulate can pass parametrized initial conditions as parameters", {
 
 test_that("simulate preserves state units for parametrized initial conditions", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = "A0", type = "amount") |>
-        add_transport("Central", "", const = "ke")
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = "A0", type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke")
 
     out <- simulate(
         model,
@@ -944,9 +944,9 @@ test_that("simulate preserves state units for parametrized initial conditions", 
 
 test_that("simulate applies bolus dosing events", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 0, type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 0, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_dosing(time = 1, amount = 100, cmt = "Central", molec = "drug") |>
         add_parameter(ke = 0.2)
 
@@ -964,9 +964,9 @@ test_that("simulate applies bolus dosing events", {
 
 test_that("simulate preserves state units for bolus dosing", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 0, unit = "mg", type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 0, unit = "mg", type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_dosing(time = 1 [h], amount = 100 [mg], cmt = "Central", molec = "drug") |>
         add_parameter(ke = 0.2 [1/h])
 
@@ -983,9 +983,9 @@ test_that("simulate preserves state units for bolus dosing", {
 
 test_that("simulate observables use post-dose event states", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = 10) |>
-        add_molecule("drug", cmt = "Central", initial = 0, type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = 10) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 0, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_observable(C = c[drug, Central]) |>
         add_dosing(time = 1, amount = 100, cmt = "Central", molec = "drug") |>
         add_parameter(ke = 0.2)
@@ -999,9 +999,9 @@ test_that("simulate observables use post-dose event states", {
 
 test_that("simulate applies infusion dosing events", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 0, type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 0, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_dosing(time = 0, rate = 10, duration = 5, cmt = "Central", molec = "drug") |>
         add_parameter(ke = 0.2)
 
@@ -1014,9 +1014,9 @@ test_that("simulate applies infusion dosing events", {
 
 test_that("simulate preserves state units for infusion dosing", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 0, unit = "mg", type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 0, unit = "mg", type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_dosing(time = 0 [h], rate = 10 [mg/h], duration = 5 [h], cmt = "Central", molec = "drug") |>
         add_parameter(ke = 0.2 [1/h])
 
@@ -1034,9 +1034,9 @@ test_that("simulate preserves state units for infusion dosing", {
 
 test_that("simulate returns observable trajectories", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = "V") |>
-        add_molecule("drug", cmt = "Central", initial = 100, type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = "V") |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_observable(C = a[drug, Central] / V) |>
         add_parameter(ke = 0.2, V = 10)
 
@@ -1052,9 +1052,9 @@ test_that("simulate returns observable trajectories", {
 
 test_that("simulate reattaches units to observable trajectories", {
     model <- compartment_model() |>
-        add_compartment("Central", volume =  10 [L]) |>
-        add_molecule("drug", cmt = "Central", initial = 100, unit = "mg", type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume =  10 [L]) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100, unit = "mg", type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_observable(C = c[drug, Central]) |>
         add_parameter(ke = 0.2 [1/h])
 
@@ -1071,9 +1071,9 @@ test_that("simulate reattaches units to observable trajectories", {
 
 test_that("simulate uses unit-aware free parameters for observable units", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = "V") |>
-        add_molecule("drug", cmt = "Central", initial = 100, unit = "mg", type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = "V") |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100, unit = "mg", type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_observable(C = a[drug, Central] / V)
 
     out <- simulate(
@@ -1096,8 +1096,8 @@ test_that("simulate supports amount per custom base unit with volume per custom 
     install_model_unit("modelcell")
 
     model <- compartment_model() |>
-        add_compartment("ex", volume = "Vex") |>
-        add_molecule("D", cmt = "ex", type = "amount", initial = 1 [nmol/modelcell]) |>
+        add_compartment(name = "ex", volume = "Vex") |>
+        add_molecule(name = "D", cmt = "ex", type = "amount", initial = 1 [nmol/modelcell]) |>
         add_parameter(Vex = 1 [L/modelcell]) |>
         add_observable(Cex = c[D, ex]) |>
         wire()
@@ -1117,8 +1117,8 @@ test_that("simulate supports registered derived custom units in model inputs", {
     install_model_unit("modelcellperL", "modelcelltwo/L")
 
     model <- compartment_model() |>
-        add_compartment("ex", volume = 1 [L]) |>
-        add_molecule("N", cmt = "ex", type = "amount", initial = 1 [modelcellperL] * 1 [L]) |>
+        add_compartment(name = "ex", volume = 1 [L]) |>
+        add_molecule(name = "N", cmt = "ex", type = "amount", initial = 1 [modelcellperL] * 1 [L]) |>
         add_observable(Ndensity = a[N, ex] / Vex) |>
         add_parameter(Vex = 1 [L]) |>
         wire()
@@ -1140,8 +1140,8 @@ test_that("simulate errors informatively for unregistered derived custom units",
     units::install_unit("unregisteredcellperL", "unregisteredcell/L")
 
     model <- compartment_model() |>
-        add_compartment("ex", volume = 1 [L]) |>
-        add_molecule("N", cmt = "ex", type = "amount", initial = 1 [unregisteredcellperL] * 1 [L]) |>
+        add_compartment(name = "ex", volume = 1 [L]) |>
+        add_molecule(name = "N", cmt = "ex", type = "amount", initial = 1 [unregisteredcellperL] * 1 [L]) |>
         wire()
 
     expect_error(

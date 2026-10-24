@@ -1,6 +1,6 @@
 birth_death_model <- compartment_model() |>
-    add_compartment("cyt", volume = 1) |>
-    add_molecule("A", cmt = "cyt", initial = 20, type = "amount") |>
+    add_compartment(name = "cyt", volume = 1) |>
+    add_molecule(name = "A", cmt = "cyt", initial = 20, type = "amount") |>
     add_reaction(input = NULL, output = "A", cmt = "cyt", const = "ksyn") |>
     add_reaction(input = "A", output = NULL, cmt = "cyt", const = "kdeg") |>
     add_parameter(ksyn = 2, kdeg = 0.1)
@@ -41,9 +41,9 @@ test_that("hybrid simulation accepts a precompiled StochasticModel", {
 
 test_that("hybrid deterministic partition matches deterministic solution", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 100, type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_parameter(ke = 0.2)
     time <- seq(0, 5, by = 1)
 
@@ -55,9 +55,9 @@ test_that("hybrid deterministic partition matches deterministic solution", {
 
 test_that("hybrid normalizes dimensionless unit initials to numeric counts", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 100 [1], type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100 [1], type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_parameter(ke = 0.2)
 
     out <- simulate(model, time = 0:1, simulation_type = "hybrid", partition = FALSE)
@@ -69,9 +69,9 @@ test_that("hybrid normalizes dimensionless unit initials to numeric counts", {
 test_that("hybrid deterministic partition supports large initial counts", {
     initial_count <- .Machine$integer.max + 1000
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = initial_count, type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = initial_count, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_parameter(ke = 0.2)
     time <- c(0, 1)
 
@@ -84,9 +84,9 @@ test_that("hybrid deterministic partition supports large initial counts", {
 
 test_that("hybrid simulation clamps negative propensities to zero", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 10, type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 10, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_parameter(ke = -0.2)
 
     out <- simulate(model, time = 0:2, simulation_type = "hybrid", partition = FALSE)
@@ -132,9 +132,9 @@ test_that("hybrid simulation treats vanishing state values as zero", {
 
 test_that("hybrid adaptive partition and fixed all-stochastic partition are reproducible", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 20, type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 20, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_parameter(ke = 0.2)
     time <- 0:5
 
@@ -149,9 +149,9 @@ test_that("hybrid adaptive partition and fixed all-stochastic partition are repr
 
 test_that("hybrid simulation supports unit-aware time and fixed partitioning", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 100, type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_parameter(ke = 0.2 [1/h])
     time <- units::set_units(seq(0, 5, by = 1), "h", mode = "standard")
 
@@ -163,9 +163,9 @@ test_that("hybrid simulation supports unit-aware time and fixed partitioning", {
 
 test_that("hybrid adaptive partition accepts unit-aware inverse-time thresholds", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 20, type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 20, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_parameter(ke = 0.2 [1/h])
     time <- units::set_units(seq(0, 5, by = 1), "h", mode = "standard")
 
@@ -177,9 +177,9 @@ test_that("hybrid adaptive partition accepts unit-aware inverse-time thresholds"
 
 test_that("hybrid adaptive partition rejects incompatible threshold units", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 20, type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 20, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_parameter(ke = 0.2 [1/h])
     time <- units::set_units(seq(0, 5, by = 1), "h", mode = "standard")
 
@@ -231,9 +231,9 @@ test_that("hybrid simulation can limit stochastic events", {
 
 test_that("hybrid max_events does not count deterministic integration", {
     model <- compartment_model() |>
-        add_compartment("Central", volume = NA_real_) |>
-        add_molecule("drug", cmt = "Central", initial = 100, type = "amount") |>
-        add_transport("Central", "", const = "ke") |>
+        add_compartment(name = "Central", volume = NA_real_) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100, type = "amount") |>
+        add_transport(from = "Central", to = "", const = "ke") |>
         add_parameter(ke = 0.2)
 
     expect_no_error(

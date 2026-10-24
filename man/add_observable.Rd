@@ -2,20 +2,33 @@
 % Please edit documentation in R/Observables.R
 \name{add_observable}
 \alias{add_observable}
+\alias{add_observable.compphysiol_compartment_model}
 \title{Add one or several observables to a \code{compphysiol_compartment_model} object.}
 \usage{
 add_observable(
   model,
+  obs,
   ...,
   name = character(0),
   expr = character(0),
   cmt = NULL,
-  molec = NULL,
-  obs
+  molec = NULL
+)
+
+\method{add_observable}{compphysiol_compartment_model}(
+  model,
+  obs,
+  ...,
+  name = character(0),
+  expr = character(0),
+  cmt = NULL,
+  molec = NULL
 )
 }
 \arguments{
 \item{model}{A \code{compphysiol_compartment_model} object.}
+
+\item{obs}{A \code{compphysiol_observables} object. Constructed from the other inputs if not provided.}
 
 \item{...}{Name-expression pairs defining the observables. The expressions can be provided as character strings or as R calls.}
 
@@ -29,8 +42,6 @@ Used for automatic generation of common observables like concentrations and amou
 
 \item{molec}{Optional character vector specifying the molecule(s) associated with the observable(s).
 Used for automatic generation of common observables like concentrations and amounts.}
-
-\item{obs}{A \code{compphysiol_observables} object. Constructed from the other inputs if not provided.}
 }
 \value{
 The modified \code{compphysiol_compartment_model} object.
@@ -60,15 +71,15 @@ and \code{molec} are generated for the names and expressions of the observables.
 \examples{
 ## Interactive path with name-expression pairs
 compartment_model() |>
-    add_compartment("blo") |>
+    add_compartment(name = "blo") |>
     add_observable(Cblo = Ablo / Vblo)
 ## Programmatic path with name and expression vectors
 compartment_model() |>
-    add_compartment("blo") |>
+    add_compartment(name = "blo") |>
     add_observable(name = "Cblo", expr = "Ablo/Vblo")
 ## Programmatic path with compphysiol_observables object
 obs <- observables(name = "Cblo", expr = "Ablo/Vblo")
 compartment_model() |>
-    add_compartment("blo") |>
-    add_observable(obs = obs)
+    add_compartment(name = "blo") |>
+    add_observable(obs)
 }

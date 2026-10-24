@@ -65,9 +65,17 @@ equations <- function(..., name = character(0), expr = character(0)) {
 #' ## Programmatic path with compphysiol_equations object
 #' eq <- equations(name = "co", expr = "Qadi + Qbon + Qhea + Qkid + Qliv + Qmus + Qski")
 #' compartment_model() |>
-#'     add_equation(eq = eq)
+#'     add_equation(eq)
 #' @export
-add_equation <- function(model, ..., name = character(0), expr = character(0), eq) {
+add_equation <- function(model, eq, ..., name = character(0), expr = character(0)) {
+    UseMethod("add_equation")
+}
+
+#' @rdname add_equation
+#' @export
+add_equation.compphysiol_compartment_model <- function(
+    model, eq, ..., name = character(0), expr = character(0)
+) {
     .check_class(model, "compphysiol_compartment_model")
     
     call <- match.call()
