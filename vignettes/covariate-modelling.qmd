@@ -107,11 +107,11 @@ data_file <- system.file(
 )
 covariate_data <- read.csv(data_file, stringsAsFactors = FALSE)
 
-covariate_data$time <- set_units(covariate_data$time, "h", mode = "standard")
-covariate_data$concentration <- set_units(
-    covariate_data$concentration, "mg/L", mode = "standard"
-)
-covariate_data$bw <- set_units(covariate_data$bw, "kg", mode = "standard")
+covariate_data <- with_units(within(covariate_data, {
+    time <- time [h]
+    concentration <- concentration [mg/L]
+    bw <- bw [kg]
+}))
 
 head(covariate_data)
 ```
@@ -231,23 +231,21 @@ regression_coef <- coef(regression_fit)
 
 covariate_curve <- expand.grid(
     BW = seq(
-        min(as.numeric(covariate_data$bw)),
-        max(as.numeric(covariate_data$bw)),
+        min(covariate_data$bw),
+        max(covariate_data$bw),
         length.out = 100
     ),
     female = c(0, 1)
 )
 covariate_curve$sex <- ifelse(covariate_curve$female == 1, "female", "male")
-covariate_curve$CL <-
-    as.numeric(regression_coef$CLref) *
-    (covariate_curve$BW / 70)^as.numeric(regression_coef$theta_BW) *
-    exp(as.numeric(regression_coef$beta_female) * covariate_curve$female)
+covariate_curve$CL <- regression_coef$CLref * (covariate_curve$BW / model$parameters$BWref)^regression_coef$theta_BW *
+    exp(regression_coef$beta_female * covariate_curve$female)
 
 ggplot(covariate_curve, aes(x = BW, y = CL, colour = sex)) +
     geom_line(linewidth = 0.8) +
     labs(
-        x = "Body weight (kg)",
-        y = "Typical clearance (L/h)",
+        x = "Body weight",
+        y = "Typical clearance",
         title = "Estimated clearance covariate relationship"
     ) +
     theme_minimal()
