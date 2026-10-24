@@ -10,7 +10,11 @@ test_that("make_depot correctly creates depot/rate compartments and adds them to
         wire() |>
         make_depot()
     
-    expect_equal(model$compartments[3:4], compartments(c("Depot_A_cyt", "ReleaseRate_A_cyt"), volume = NA_real_))
+    expected_auxiliary_compartments <- .new_compartments(data.frame(
+        name = c("Depot_A_cyt", "ReleaseRate_A_cyt"),
+        volume = I(list(NA_real_, NA_real_))
+    ))
+    expect_equal(model$compartments[3:4], expected_auxiliary_compartments)
     expect_equal(
         model$molecules[5:6],
         molecules(

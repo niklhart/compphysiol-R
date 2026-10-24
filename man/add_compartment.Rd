@@ -3,7 +3,7 @@
 \name{add_compartment}
 \alias{add_compartment}
 \alias{add_compartment.compphysiol_compartment_model}
-\title{Add one or several compartments to a \code{compphysiol_compartment_model} object.}
+\title{Add one or several compartments to a \code{compphysiol_compartment_model} object}
 \usage{
 add_compartment(
   model,
@@ -28,7 +28,9 @@ add_compartment(
 
 \item{comp}{A \code{compphysiol_compartments} object. Constructed from the other inputs if not provided.}
 
-\item{name}{Compartment name(s), character scalar or vector}
+\item{name}{Compartment name(s), character scalar or vector. Names beginning
+with \code{Depot_} or \code{ReleaseRate_} are reserved for internal infusion
+auxiliaries.}
 
 \item{volume}{Volume(s) (numeric or character) for each compartment.
 The default \verb{V\{name\}} uses parametrized volumes, with \code{{name}} replaced by the compartment name(s).

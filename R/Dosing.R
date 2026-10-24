@@ -173,14 +173,16 @@ dosing <- function(
 #'
 #' `add_dosing()` adds bolus or infusion events to a compartment model or
 #' appends them to every experiment in a collection. `replace_dosing()` replaces
-#' the complete dosing schedule of every experiment. A dosing callback receives
-#' the current schedule and returns events to add or a complete replacement,
-#' according to the verb.
+#' the complete dosing schedule of a model or every experiment. A dosing
+#' callback receives the current schedule and returns events to add or a
+#' complete replacement, according to the verb.
 #'
-#' For compartment models, `add_dosing()` also handles the structural changes
-#' required for infusions. Complete replacement is intentionally not provided
-#' for models because removing existing infusion auxiliaries cannot generally be
-#' represented as a simple component replacement.
+#' Infusion dosing on compartment models requires structural changes during
+#' model preparation. If a model already contains infusion auxiliaries created
+#' from an earlier dosing schedule,
+#' `replace_dosing()` warns that it replaces the dosing component without
+#' removing or rebuilding those auxiliary compartments, molecules, or
+#' transports.
 #'
 #' @param object A `compphysiol_compartment_model` or
 #'   `compphysiol_experiments` object.
@@ -232,6 +234,37 @@ add_dosing.compphysiol_compartment_model <- function(
     .check_class(dose, "compphysiol_dosing")
 
     model$doses <- c(model$doses, dose)
+    model
+}
+
+#' @rdname modify_dosing
+#' @export
+replace_dosing.compphysiol_compartment_model <- function(
+    object, dose, ..., time = numeric(0), amount = NULL, time_unit = NULL,
+    amount_unit = NULL, molec = NULL, cmt = NULL, rate = NULL, duration = NULL
+) {
+    model <- object
+    dose <- .forward_or_use(
+        object_arg_name = "dose",
+        constructor_name = "dosing",
+        call = match.call(),
+        parent_env = parent.frame()
+    )
+    if (is.function(dose)) dose <- dose(model$doses)
+    .check_class(dose, "compphysiol_dosing")
+
+    compartment_names <- names(model$compartments)
+    has_depot <- any(startsWith(compartment_names, "Depot_"))
+    has_release_rate <- any(startsWith(compartment_names, "ReleaseRate_"))
+    if (has_depot && has_release_rate) {
+        warning(
+            "The model contains infusion auxiliary structures from its previous dosing schedule. ",
+            "The dosing component was replaced, but those auxiliary compartments, molecules, ",
+            "and transports were not removed or rebuilt.",
+            call. = FALSE
+        )
+    }
+    model$doses <- dose
     model
 }
 

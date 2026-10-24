@@ -4,6 +4,7 @@
 \alias{modify_dosing}
 \alias{add_dosing}
 \alias{add_dosing.compphysiol_compartment_model}
+\alias{replace_dosing.compphysiol_compartment_model}
 \alias{add_dosing.compphysiol_experiments}
 \alias{replace_dosing}
 \alias{replace_dosing.compphysiol_experiments}
@@ -24,6 +25,20 @@ add_dosing(
 )
 
 \method{add_dosing}{compphysiol_compartment_model}(
+  object,
+  dose,
+  ...,
+  time = numeric(0),
+  amount = NULL,
+  time_unit = NULL,
+  amount_unit = NULL,
+  molec = NULL,
+  cmt = NULL,
+  rate = NULL,
+  duration = NULL
+)
+
+\method{replace_dosing}{compphysiol_compartment_model}(
   object,
   dose,
   ...,
@@ -113,15 +128,17 @@ The modified object.
 \description{
 \code{add_dosing()} adds bolus or infusion events to a compartment model or
 appends them to every experiment in a collection. \code{replace_dosing()} replaces
-the complete dosing schedule of every experiment. A dosing callback receives
-the current schedule and returns events to add or a complete replacement,
-according to the verb.
+the complete dosing schedule of a model or every experiment. A dosing
+callback receives the current schedule and returns events to add or a
+complete replacement, according to the verb.
 }
 \details{
-For compartment models, \code{add_dosing()} also handles the structural changes
-required for infusions. Complete replacement is intentionally not provided
-for models because removing existing infusion auxiliaries cannot generally be
-represented as a simple component replacement.
+Infusion dosing on compartment models requires structural changes during
+model preparation. If a model already contains infusion auxiliaries created
+from an earlier dosing schedule,
+\code{replace_dosing()} warns that it replaces the dosing component without
+removing or rebuilding those auxiliary compartments, molecules, or
+transports.
 }
 \examples{
 model <- compartment_model() |>

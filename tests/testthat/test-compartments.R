@@ -32,6 +32,12 @@ test_that("Zero inputs to compartments() results in valid but empty object", {
     expect_equal(length(cmt), 0)
 })
 
+test_that("Infusion auxiliary compartment names are reserved", {
+    expect_error(compartments("Depot_drug_central"), "reserved")
+    expect_error(compartments("ReleaseRate_drug_central"), "reserved")
+    expect_no_error(compartments(c("Depot", "ReleaseRate")))
+})
+
 test_that("Compartments with units work correctly", {
 
     val <- units::set_units(1, 'mg')

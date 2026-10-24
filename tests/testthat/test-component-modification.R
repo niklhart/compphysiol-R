@@ -39,6 +39,36 @@ test_that("dosing and start verbs reconstruct valid experiments", {
     expect_equal(.experiment_entry(replace_start(unit_study, \(s) s - 1 [h]))$start, expected)
 })
 
+test_that("model dosing can be replaced without cleaning infusion auxiliaries", {
+    model <- compartment_model() |>
+        add_dosing(time = 0, amount = 1)
+    replaced <- expect_silent(replace_dosing(model, time = 2, amount = 3))
+    expect_equal(replaced$doses$time, 2)
+    expect_equal(replaced$doses$amount[[1]], 3)
+
+    callback <- replace_dosing(model, \(d) dosing(time = d$time + 1, amount = 4))
+    expect_equal(callback$doses$time, 1)
+
+    expanded <- compartment_model() |>
+        add_compartment(name = "Central", volume = 1) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 0, type = "amount") |>
+        add_dosing(
+            time = 0, rate = 1, duration = 2,
+            molec = "drug", cmt = "Central"
+        ) |>
+        make_depot()
+    compartments_before <- expanded$compartments
+    transports_before <- expanded$transports
+
+    expect_warning(
+        expanded_replaced <- replace_dosing(expanded, dosing(time = 0, amount = 5)),
+        "were not removed or rebuilt"
+    )
+    expect_identical(expanded_replaced$compartments, compartments_before)
+    expect_identical(expanded_replaced$transports, transports_before)
+    expect_equal(expanded_replaced$doses$amount[[1]], 5)
+})
+
 test_that("observation verbs preserve and validate correspondence", {
     schedule <- observation_schedule(c(1, 1), "C", replicate = c(1, 2))
     studies <- c(a = experiment(observations = schedule), b = experiment(observations = schedule))

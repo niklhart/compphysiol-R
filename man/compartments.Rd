@@ -7,7 +7,9 @@
 compartments(name = character(0), volume = "V{name}", unit = NULL)
 }
 \arguments{
-\item{name}{Compartment name(s), character scalar or vector}
+\item{name}{Compartment name(s), character scalar or vector. Names beginning
+with \code{Depot_} or \code{ReleaseRate_} are reserved for internal infusion
+auxiliaries.}
 
 \item{volume}{Volume(s) (numeric or character) for each compartment.
 The default \verb{V\{name\}} uses parametrized volumes, with \code{{name}} replaced by the compartment name(s).

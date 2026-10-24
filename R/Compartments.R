@@ -2,7 +2,9 @@
 #'
 #' compphysiol_compartments represent model compartments with names and fixed or parametrized volumes.
 #'
-#' @param name Compartment name(s), character scalar or vector
+#' @param name Compartment name(s), character scalar or vector. Names beginning
+#'   with `Depot_` or `ReleaseRate_` are reserved for internal infusion
+#'   auxiliaries.
 #' @param volume Volume(s) (numeric or character) for each compartment.
 #'   The default `V{name}` uses parametrized volumes, with `{name}` replaced by the compartment name(s).
 #'   Parametrized volumes have to be provided via the `parameters` argument of `compartment_model()`, e.g., `parameters(Vadi = 5 [L])`.
@@ -28,6 +30,17 @@ compartments <- function(name = character(0), volume = "V{name}", unit = NULL) {
     )
 
     if (anyDuplicated(name)) stop("Duplicate compartment names are not allowed.")
+    reserved <- vapply(.infusion_auxiliary_compartment_prefixes(), function(prefix) {
+        any(startsWith(name, prefix))
+    }, logical(1))
+    if (any(reserved)) {
+        stop(
+            "Compartment names beginning with ",
+            paste0("'", .infusion_auxiliary_compartment_prefixes()[reserved], "'", collapse = " or "),
+            " are reserved for internal infusion auxiliaries.",
+            call. = FALSE
+        )
+    }
     
 
     if (is.numeric(volume)) {
@@ -84,7 +97,11 @@ compartments <- function(name = character(0), volume = "V{name}", unit = NULL) {
     structure(x, class = .compphysiol_class("compphysiol_compartments"))
 }
 
-#' Add one or several compartments to a `compphysiol_compartment_model` object.
+.infusion_auxiliary_compartment_prefixes <- function() {
+    c("Depot_", "ReleaseRate_")
+}
+
+#' Add one or several compartments to a `compphysiol_compartment_model` object
 #'
 #' @inherit compartments description details
 #' @param model A `compphysiol_compartment_model` object.

@@ -53,6 +53,9 @@ a molecule and a compartment.
 
 Implementation anchor: compartments are represented by `compphysiol_compartments`
 objects created with `compartments()` or added with `add_compartment()`.
+The prefixes `Depot_` and `ReleaseRate_` are reserved for auxiliary
+compartments created internally when infusion dosing is expanded during model
+preparation.
 
 ## Molecule
 

@@ -28,8 +28,8 @@ for argument details, supported input forms, and examples.
 \item Parameters: construct with \code{\link[=parameters]{parameters()}}, then add, overlay, or replace
 them with \code{\link[=add_parameter]{add_parameter()}}, \code{\link[=overlay_parameter]{overlay_parameter()}}, or
 \code{\link[=replace_parameters]{replace_parameters()}}.
-\item Dosing: construct with \code{\link[=dosing]{dosing()}} and add with \code{\link[=add_dosing]{add_dosing()}}. Complete
-dosing replacement is intentionally available only for experiments.
+\item Dosing: construct with \code{\link[=dosing]{dosing()}}, add with \code{\link[=add_dosing]{add_dosing()}}, or replace the
+complete schedule with \code{\link[=replace_dosing]{replace_dosing()}}.
 }
 }
 

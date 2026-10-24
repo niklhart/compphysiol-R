@@ -18,8 +18,8 @@
 #' - Parameters: construct with [parameters()], then add, overlay, or replace
 #'   them with [add_parameter()], [overlay_parameter()], or
 #'   [replace_parameters()].
-#' - Dosing: construct with [dosing()] and add with [add_dosing()]. Complete
-#'   dosing replacement is intentionally available only for experiments.
+#' - Dosing: construct with [dosing()], add with [add_dosing()], or replace the
+#'   complete schedule with [replace_dosing()].
 #'
 #' @seealso [modify_experiments] for the corresponding experiment operations.
 #' @name modify_compartment_model

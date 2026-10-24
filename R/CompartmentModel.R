@@ -554,16 +554,20 @@ make_depot <- function(model) {
     new_rate_cmt_names <- setdiff(rate_names, comp_names)
 
     duplicates <- duplicated(bag_names)    # same for bag/rate names since they are generated from the same set of molecule/cmt names
-    unique_bag_names <- bag_names[!duplicates]
     bag_initial <- lapply(infus$amount[!duplicates], function(x) x * 0)
     rate_initial <- lapply(infus$rate[!duplicates], function(x) x * 0)
     bag_amount <- Map(`*`, infus$rate, as.list(infus$duration))
     rate_stop_amount <- lapply(infus$rate, `-`)
 
+    auxiliary_names <- c(new_bag_cmt_names, new_rate_cmt_names)
+    auxiliary_compartments <- .new_compartments(data.frame(
+        name = auxiliary_names,
+        volume = I(rep(list(NA_real_), length(auxiliary_names)))
+    ))
+    model$compartments <- c(model$compartments, auxiliary_compartments)
+
     # Return the updated model
-    model |>
-        add_compartment(name = new_bag_cmt_names, volume = NA_real_) |>
-        add_compartment(name = new_rate_cmt_names, volume = NA_real_) |>
+    model <- model |>
         add_molecule(
             name = rep(infus$molec[!duplicates], times = 2),
             cmt = c(bag_names[!duplicates], rate_names[!duplicates]),
@@ -597,7 +601,7 @@ make_depot <- function(model) {
             amount = rate_stop_amount,
             cmt = rate_names,
             molec = infus$molec
-        ) 
+        )
 }
 
 
