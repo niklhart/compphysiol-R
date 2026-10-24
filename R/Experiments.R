@@ -81,10 +81,16 @@
     parameter_values <- list()
     targets <- list()
     amounts <- list()
+    starts <- lapply(x, `[[`, "start")
+    start_reference <- which(!vapply(starts, is.null, logical(1)))[1]
     for (i in seq_along(x)) {
         e <- x[[i]]
         context <- paste0(" in experiment ", i)
-        .check_compatible_units(x[[1]]$start, e$start, paste0("time", context))
+        if (!is.na(start_reference) && !is.null(e$start)) {
+            .check_compatible_units(
+                starts[[start_reference]], e$start, paste0("time", context)
+            )
+        }
         for (nm in names(e$parameters)) {
             value <- e$parameters[[nm]]
             if (nm %in% names(parameter_values)) {
@@ -185,8 +191,26 @@
     .experiments_check_elements(x)
     .check_optional_unique_names(x, "experiment")
     .collection_identifiers(x, "Experiment")
+    x <- .experiments_resolve_starts(x)
     .experiments_check_units(x)
     .new_experiments(x, .experiments_compute_component_homogeneity(x))
+}
+
+.experiments_resolve_starts <- function(x) {
+    starts <- lapply(x, `[[`, "start")
+    reference <- which(!vapply(starts, is.null, logical(1)))[1]
+    if (is.na(reference)) return(x)
+    zero <- if (inherits(starts[[reference]], "units")) {
+        units::set_units(
+            0, units::deparse_unit(starts[[reference]]), mode = "standard"
+        )
+    } else {
+        0
+    }
+    for (i in which(vapply(starts, is.null, logical(1)))) {
+        x[[i]]$start <- zero
+    }
+    x
 }
 
 #' @param ... For `c()`, `compphysiol_experiments` objects to combine.
@@ -336,7 +360,9 @@ print.compphysiol_experiments <- function(x, ...) {
 .experiments_print_shared <- function(experiment, homogeneity) {
     out <- character()
     if (homogeneity[["start"]]) {
-        out <- c(out, paste0("start = ", format(experiment$start)))
+        out <- c(out, paste0(
+            "start = ", format(.experiment_effective_start(experiment$start))
+        ))
     }
     if (homogeneity[["parameters"]] && length(experiment$parameters)) {
         out <- c(out, .experiments_print_count(length(experiment$parameters), "parameter"))
@@ -363,7 +389,11 @@ print.compphysiol_experiments <- function(x, ...) {
 .experiments_print_individual <- function(experiment, homogeneity = NULL) {
     shared <- function(component) !is.null(homogeneity) && homogeneity[[component]]
     out <- character()
-    if (!shared("start")) out <- c(out, paste0("start = ", format(experiment$start)))
+    if (!shared("start")) {
+        out <- c(out, paste0(
+            "start = ", format(.experiment_effective_start(experiment$start))
+        ))
+    }
     if (!shared("parameters") && length(experiment$parameters)) {
         out <- c(out, .experiments_print_parameter_preview(experiment$parameters))
     }

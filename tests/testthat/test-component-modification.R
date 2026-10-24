@@ -37,6 +37,7 @@ test_that("dosing and start verbs reconstruct valid experiments", {
     expected <- units::set_units(-1, h)
     expect_equal(.experiment_entry(replace_start(unit_study, -1 [h]))$start, expected)
     expect_equal(.experiment_entry(replace_start(unit_study, \(s) s - 1 [h]))$start, expected)
+    expect_identical(.experiment_entry(replace_start(experiment(), \(s) s - 1))$start, -1)
 })
 
 test_that("model dosing can be replaced without cleaning infusion auxiliaries", {

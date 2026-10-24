@@ -32,6 +32,9 @@ add_molecule(
 
 \item{molec}{A \code{compphysiol_molecules} object. Constructed from the other inputs if not provided.}
 
+\item{...}{Unused. Its position requires the constructor arguments that
+follow it to be supplied by name rather than position.}
+
 \item{name}{Molecule name(s), character scalar or vector}
 
 \item{cmt}{Compartment name(s), character scalar or vector. If omitted,

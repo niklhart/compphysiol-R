@@ -20,7 +20,7 @@
 #' units. `compphysiol_observation_data` inherits from `compphysiol_observation_schedule`, so simulation
 #' can use either representation while estimation can require data values.
 #' Times need not be sorted. All nonempty observations must use the same unit
-#' mode as `start`: either unit-free,
+#' mode as the resolved `start`: either unit-free,
 #' or units convertible to time.
 #' Compatible units need not be identical. Doses and observations cannot precede
 #' `start`. Empty observations do not impose a time unit.
@@ -33,9 +33,11 @@
 #'   [compphysiol_observation_data][observation_data()]. `NULL` creates an empty schedule.
 #' @param start Initial time, a finite numeric scalar, optionally with units.
 #'   Supports unit shorthand such as `0 [h]`. The default `NULL` means zero in
-#'   the units of the first nonempty schedule (dosing, then observations), or
-#'   unit-free zero if both schedules are empty. It does not mean the earliest
-#'   scheduled time. Incompatible schedules still produce an error.
+#'   the units of the first nonempty schedule (dosing, then observations). If
+#'   both schedules are empty, the start remains automatic internally and is
+#'   displayed as zero until a schedule or collection context resolves its unit
+#'   mode. It does not mean the earliest scheduled time. Incompatible schedules
+#'   still produce an error.
 #' @param name Optional experiment identifier. It must be a nonempty character
 #'   scalar and cannot be a positive whole number, which is reserved for
 #'   transient positional identifiers.
@@ -67,8 +69,10 @@ experiment <- function(
     .check_class(dosing, "compphysiol_dosing")
     .check_class(observations, "compphysiol_observation_schedule")
     if (is.null(start)) start <- .experiment_default_start(dosing, observations)
-    if (length(start) != 1L) stop("Experiment start must be a scalar.", call. = FALSE)
-    .experiment_check_time(start, "start")
+    if (!is.null(start) && length(start) != 1L) {
+        stop("Experiment start must be a scalar.", call. = FALSE)
+    }
+    if (!is.null(start)) .experiment_check_time(start, "start")
     .experiment_check_time(observations$time, "observation time", start)
     .experiment_check_time(dosing$time, "dosing time", start)
     infusion <- is_infusion(dosing)
@@ -102,11 +106,15 @@ experiment <- function(
     if (!length(time)) {
         time <- observations$time
     }
-    if (!length(time)) return(0)
+    if (!length(time)) return(NULL)
     if (inherits(time, "units")) {
         return(units::set_units(0, units::deparse_unit(time), mode = "standard"))
     }
     0
+}
+
+.experiment_effective_start <- function(start) {
+    if (is.null(start)) 0 else start
 }
 
 .experiment_check_time <- function(value, label, start = NULL, check_start = TRUE) {
@@ -132,7 +140,7 @@ experiment <- function(
 .print_experiment_entry <- function(x, name = NULL) {
     named <- !is.null(name) && length(name) == 1L && !is.na(name) && nzchar(name)
     cat("Experiment:", if (named) paste0(" ", name), "\n", sep = "")
-    cat(" Start: ", format(x$start), "\n", sep = "")
+    cat(" Start: ", format(.experiment_effective_start(x$start)), "\n", sep = "")
     print(x$parameters)
     print(x$dosing)
     if (nrow(x$observations)) {

@@ -125,6 +125,8 @@ molecules <- function(name = character(0), cmt = NULL, initial = 0, unit = NULL,
 #' @param model A `compphysiol_compartment_model` object.
 #' @inheritParams molecules
 #' @param molec A `compphysiol_molecules` object. Constructed from the other inputs if not provided.
+#' @param ... Unused. Its position requires the constructor arguments that
+#'   follow it to be supplied by name rather than position.
 #' @returns The modified `compphysiol_compartment_model` object.
 #' @seealso [molecules()] for construction and [modify_compartment_model] for
 #'   other model components.

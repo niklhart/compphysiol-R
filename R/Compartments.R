@@ -107,6 +107,8 @@ compartments <- function(name = character(0), volume = "V{name}", unit = NULL) {
 #' @param model A `compphysiol_compartment_model` object.
 #' @inheritParams compartments
 #' @param comp A `compphysiol_compartments` object. Constructed from the other inputs if not provided.
+#' @param ... Unused. Its position requires the constructor arguments that
+#'   follow it to be supplied by name rather than position.
 #' @returns The modified `compphysiol_compartment_model` object.
 #' @examples
 #' # Several compartments added in a single call

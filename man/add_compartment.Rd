@@ -28,6 +28,9 @@ add_compartment(
 
 \item{comp}{A \code{compphysiol_compartments} object. Constructed from the other inputs if not provided.}
 
+\item{...}{Unused. Its position requires the constructor arguments that
+follow it to be supplied by name rather than position.}
+
 \item{name}{Compartment name(s), character scalar or vector. Names beginning
 with \code{Depot_} or \code{ReleaseRate_} are reserved for internal infusion
 auxiliaries.}

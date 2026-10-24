@@ -143,7 +143,7 @@
 }
 
 .simulation_experiment_time <- function(experiment) {
-    start <- experiment$start
+    start <- .experiment_effective_start(experiment$start)
     if (inherits(experiment$observations$time, "units")) {
         start <- units::set_units(
             start, units::deparse_unit(experiment$observations$time), mode = "standard"

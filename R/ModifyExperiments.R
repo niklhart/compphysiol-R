@@ -254,6 +254,10 @@ replace_start <- function(object, start) {
 replace_start.compphysiol_experiments <- function(object, start) {
     generic_call <- match.call(replace_start, call = sys.call(-1L))
     start <- .process_nse_arg(generic_call$start, parent.frame(2L))
+    if (is.function(start)) {
+        callback <- start
+        start <- function(current) callback(.experiment_effective_start(current))
+    }
     .modify_experiments_scalar(object, "start", start, function(current, incoming) {
         if (!is.numeric(incoming) || length(incoming) != 1L || !is.finite(incoming)) stop("start must be a finite numeric scalar.", call. = FALSE)
         incoming

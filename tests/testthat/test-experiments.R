@@ -196,7 +196,9 @@ test_that("individual experiments combine directly with c", {
     expect_identical(c(c(control = a), b), c(control = a, b))
     expect_error(c(a, 1), "experiment collections")
     expect_error(c(`2` = a, b), "positive whole numbers.*reserved")
-    expect_error(c(a, experiment()), "time.*units")
+    inferred <- c(a, experiment())
+    expect_equal(.experiment_entry(inferred, 2)$start, with_units(0 [h]))
+    expect_error(c(a, experiment(start = 0)), "time.*units")
 
     original <- experiment(name = "original")
     expect_named(c(original), "original")
@@ -293,8 +295,8 @@ test_that("collection time units are consistent even without observations", {
     a <- experiment(start = 0 [h], observations = observation_schedule(60 [min], "C"))
     b <- experiment(start = 0 [s])
     expect_no_error(c(a, b))
-    expect_error(c(a, experiment()), "time.*units")
-    expect_error(c(c(a), c(experiment())), "time.*units")
+    expect_equal(.experiment_entry(c(a, experiment()), 2)$start, with_units(0 [h]))
+    expect_equal(.experiment_entry(c(c(a), c(experiment())), 2)$start, with_units(0 [h]))
 })
 
 test_that("overlapping experiment parameters require compatible units", {

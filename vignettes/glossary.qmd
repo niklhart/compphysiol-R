@@ -500,10 +500,12 @@ values apply. This can precede the first dose or observation. Observation and
 dosing times cannot precede it. Times are either all unit-free or carry
 compatible time units; hours and minutes can coexist. By default, `start = NULL`
 resolves to zero in the units of the first nonempty schedule (dosing, then
-observations). If both are empty, it resolves to unit-free zero. It does not
-select the earliest scheduled time: adding a later first observation does not
-shift when initial values apply. Negative schedule times require an explicit
-earlier start. Incompatible schedule units remain an error.
+observations). If both are empty, it remains automatic internally while being
+displayed as zero. Its unit mode is resolved when a time-bearing component is
+added or when it is combined with resolved experiments. It does not select the
+earliest scheduled time: adding a later first observation does not shift when
+initial values apply. Negative schedule times require an explicit earlier start.
+Incompatible schedule units remain an error.
 
 Experiment parameters are known values, fixed during the experiment. Joint
 estimation keeps these separate from shared estimated parameters and rejects

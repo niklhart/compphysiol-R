@@ -27,9 +27,11 @@ an empty parameter collection.}
 
 \item{start}{Initial time, a finite numeric scalar, optionally with units.
 Supports unit shorthand such as \code{0 [h]}. The default \code{NULL} means zero in
-the units of the first nonempty schedule (dosing, then observations), or
-unit-free zero if both schedules are empty. It does not mean the earliest
-scheduled time. Incompatible schedules still produce an error.}
+the units of the first nonempty schedule (dosing, then observations). If
+both schedules are empty, the start remains automatic internally and is
+displayed as zero until a schedule or collection context resolves its unit
+mode. It does not mean the earliest scheduled time. Incompatible schedules
+still produce an error.}
 
 \item{name}{Optional experiment identifier. It must be a nonempty character
 scalar and cannot be a positive whole number, which is reserved for
@@ -65,7 +67,7 @@ Observation rows retain their order, duplicates, additional columns, and
 units. \code{compphysiol_observation_data} inherits from \code{compphysiol_observation_schedule}, so simulation
 can use either representation while estimation can require data values.
 Times need not be sorted. All nonempty observations must use the same unit
-mode as \code{start}: either unit-free,
+mode as the resolved \code{start}: either unit-free,
 or units convertible to time.
 Compatible units need not be identical. Doses and observations cannot precede
 \code{start}. Empty observations do not impose a time unit.
