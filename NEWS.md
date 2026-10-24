@@ -1,4 +1,4 @@
-# compphysiol (development version)
+# compphysiol 0.5.0
 
 * Implemented mixed-effect model estimation via `nlmixr2`; currently only 
   for uncorrelated random effects and FOCE with interaction.
@@ -7,6 +7,11 @@
 * Redesigned storage of simulation results for multiple experiments from list- 
   to data frame-like 
 * Breaking change of the `compphysiol_experiments` class, simplifying responsibilities
+* Introduced a unifying model/experiment modification vocabulary
+* Expanded `parameter_specs()` construction.
+* New `observations()` extractor and experiment naming/printing improvements.
+* Estimation-result API/layout changes, including `fitted()` behavior.
+* New population-modelling vignette.
 
 # compphysiol 0.4.4
 
