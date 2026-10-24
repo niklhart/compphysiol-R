@@ -223,7 +223,11 @@ The positive structural and error-scale quantities use a log transformation.
 `theta_BW` and `beta_female` are left on the identity scale because meaningful
 estimates can lie on either side of zero.
 
-The fitted covariate relationship can be inspected independently of the ODE:
+The fitted covariate relationship can be inspected independently of the ODE.
+The calculation below currently recodes the `CL` expression already stored in
+`model$equations`. A future abstraction should make model equations reusable
+for predictions outside simulation; its design may also require reconsidering
+the distinction between equations and observables.
 
 ```{r}
 #| label: regression-covariate-plot
