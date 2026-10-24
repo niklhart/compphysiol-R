@@ -6,9 +6,9 @@
 #' This function initializes an empty model that can then be built up by adding these components using the `add_*` functions.
 #' 
 #' @returns A new `compphysiol_compartment_model` object.
-#' @seealso [add_compartment()], [add_molecule()], [add_transport()], [add_reaction()], [add_equation()], 
-#'   [add_observable()], [add_parameter()], [add_dosing()] for building up a `compphysiol_compartment_model` object,
-#'   and [to_process_model()], [to_ode_model()], [to_analytical_model()] for lowered model representations.
+#' @seealso [modify_compartment_model] for a map of constructors and modifying
+#'   functions, and [to_process_model()], [to_ode_model()],
+#'   [to_analytical_model()] for lowered model representations.
 #' @export
 compartment_model <- function() {
 

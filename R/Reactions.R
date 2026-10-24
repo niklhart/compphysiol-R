@@ -368,6 +368,8 @@ print.compphysiol_states <- function(x, ...) {
 #' reactions("NULL -> A[cytoplasm]", const = "ksyn")
 #' reactions("A[cytoplasm] -> NULL", const = "kdeg")
 #' 
+#' @seealso [add_reaction()] for adding reactions to a model and
+#'   [modify_compartment_model] for the complete component map.
 #' @export
 reactions <- function(
     input = character(0),
@@ -600,8 +602,9 @@ reactions <- function(
 #' @inheritParams reactions
 #' @param react A `compphysiol_reactions` object. Constructed from the other inputs if not provided.
 #' @returns The modified `compphysiol_compartment_model` object.
+#' @seealso [reactions()] for construction and [modify_compartment_model] for
+#'   other model components.
 #' @export
-#' @seealso [reactions()]
 add_reaction <- function(
     model,
     react,

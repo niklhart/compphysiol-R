@@ -79,3 +79,7 @@ e <- experiment(
 e
 c(control = e, treatment = experiment())
 }
+\seealso{
+\link{modify_experiments} for modifying experiment components after
+construction.
+}

@@ -40,3 +40,7 @@ f1 <- transports(from = "A", to = "B", const = "k1")   # rate will be k1 * a[A]
 # Nonlinear transport
 f2 <- transports(from = "A", to = "B", rate = "k1 * A*B/(B+K)")
 }
+\seealso{
+\code{\link[=add_transport]{add_transport()}} for adding transports to a model and
+\link{modify_compartment_model} for the complete component map.
+}

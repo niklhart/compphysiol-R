@@ -40,3 +40,7 @@ population
 population["individual_1"]
 population[["individual_2"]]
 }
+\seealso{
+\code{\link[=parameters]{parameters()}} for constructing each set and \link{modify_parameters}
+for applying parameter sets to experiments.
+}

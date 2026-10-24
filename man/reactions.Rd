@@ -112,3 +112,7 @@ reactions("NULL -> A[cytoplasm]", const = "ksyn")
 reactions("A[cytoplasm] -> NULL", const = "kdeg")
 
 }
+\seealso{
+\code{\link[=add_reaction]{add_reaction()}} for adding reactions to a model and
+\link{modify_compartment_model} for the complete component map.
+}

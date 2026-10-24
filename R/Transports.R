@@ -22,6 +22,8 @@
 #' f1 <- transports(from = "A", to = "B", const = "k1")   # rate will be k1 * a[A]
 #' # Nonlinear transport
 #' f2 <- transports(from = "A", to = "B", rate = "k1 * A*B/(B+K)")
+#' @seealso [add_transport()] for adding transports to a model and
+#'   [modify_compartment_model] for the complete component map.
 #' @export
 transports <- function(from, to, molec = NA_character_, ..., rate = NULL, const = NULL) {
     const_expr <- substitute(const)
@@ -186,6 +188,8 @@ transports <- function(from, to, molec = NA_character_, ..., rate = NULL, const 
 #' # compphysiol_transports with specific molecules
 #' compartment_model() |>
 #'     add_transport(from = "cen", to = "per", molec = c("DrugA","DrugB"), const = "k_{molec}")
+#' @seealso [transports()] for construction and [modify_compartment_model] for
+#'   other model components.
 #' @export
 add_transport <- function(
     model,

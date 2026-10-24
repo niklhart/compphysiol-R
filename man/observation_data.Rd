@@ -39,3 +39,8 @@ observation_data(
     value = c(8, 6, 3) [mg/L]
 )
 }
+\seealso{
+\code{\link[=observation_schedule]{observation_schedule()}} for schedules without values and
+\link{modify_experiment_observations} for replacing observations or attaching
+values in experiments.
+}

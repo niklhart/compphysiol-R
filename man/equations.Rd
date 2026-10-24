@@ -36,3 +36,7 @@ equations(co = Qadi + Qbon + Qhea + Qkid + Qliv + Qmus + Qski)
 ## Programmatic path with name and expression vectors
 equations(name = "co", expr = "Qadi + Qbon + Qhea + Qkid + Qliv + Qmus + Qski")
 }
+\seealso{
+\code{\link[=add_equation]{add_equation()}} for adding equations to a model and
+\link{modify_compartment_model} for the complete component map.
+}

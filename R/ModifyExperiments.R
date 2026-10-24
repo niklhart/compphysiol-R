@@ -62,7 +62,7 @@
     .experiments_validate_result(out)
 }
 
-#' @rdname add_parameter
+#' @name modify_parameters
 #' @export
 add_parameter.compphysiol_experiments <- function(
     object, param, ..., name = NULL, value = NULL, unit = NULL
@@ -76,7 +76,7 @@ add_parameter.compphysiol_experiments <- function(
     })
 }
 
-#' @rdname overlay_parameter
+#' @rdname modify_parameters
 #' @export
 overlay_parameter.compphysiol_experiments <- function(
     object, param, ..., name = NULL, value = NULL, unit = NULL
@@ -85,7 +85,7 @@ overlay_parameter.compphysiol_experiments <- function(
     .modify_experiment_parameters(object, param, .parameters_overlay)
 }
 
-#' @rdname overlay_parameter
+#' @rdname modify_parameters
 #' @export
 replace_parameters.compphysiol_experiments <- function(
     object, param, ..., name = NULL, value = NULL, unit = NULL
@@ -101,7 +101,7 @@ replace_parameters.compphysiol_experiments <- function(
     .forward_or_use("dose", "dosing", call, envir)
 }
 
-#' @rdname add_dosing
+#' @rdname modify_dosing
 #' @export
 add_dosing.compphysiol_experiments <- function(
     object, dose, ..., time = numeric(0), amount = NULL, time_unit = NULL,
@@ -114,19 +114,14 @@ add_dosing.compphysiol_experiments <- function(
     })
 }
 
-#' Replace an experiment dosing schedule
-#'
-#' A dosing object is broadcast across experiments. A callback receives the
-#' current dosing schedule and returns its complete replacement.
-#' @inheritParams add_dosing
-#' @returns A `compphysiol_experiments` object.
+#' @rdname modify_dosing
 #' @export
 replace_dosing <- function(
     object, dose, ..., time = numeric(0), amount = NULL, time_unit = NULL,
     amount_unit = NULL, molec = NULL, cmt = NULL, rate = NULL, duration = NULL
 ) UseMethod("replace_dosing")
 
-#' @rdname replace_dosing
+#' @rdname modify_dosing
 #' @export
 replace_dosing.compphysiol_experiments <- function(
     object, dose, ..., time = numeric(0), amount = NULL, time_unit = NULL,
@@ -164,19 +159,32 @@ replace_dosing.compphysiol_experiments <- function(
     bound[positions]
 }
 
-#' Replace observations in experiments
+#' Modify experiment observations
 #'
-#' A schedule or observation-data object is broadcast across experiments. A
-#' bound object with an `experiment` column is split and aligned by identifier.
-#' A callback receives each experiment's current observations.
+#' `replace_observations()` replaces the complete observation component with a
+#' schedule or observation-data object. `attach_observation_values()` combines
+#' each experiment's existing schedule with corresponding values to produce
+#' observation data. Scalar objects broadcast across experiments; bound objects
+#' carrying an `experiment` column split and align by identifier.
+#'
+#' Observation callbacks receive each experiment's current observations.
+#' Attachment callbacks may return a value vector or corresponding observation
+#' data. Attachment preserves schedule rows, duplicates, units, and additional
+#' metadata, and validates rowwise correspondence.
+#'
 #' @param object A `compphysiol_experiments` object.
 #' @param observations A schedule, observation data, bound observation object,
 #'   or callback.
+#' @param values A value vector, corresponding observation data, or callback.
 #' @returns A `compphysiol_experiments` object.
+#' @seealso [observation_schedule()] and [observation_data()] for construction;
+#'   [observations()] for collecting observations; [modify_experiments] for
+#'   other modifiable experiment components.
+#' @name modify_experiment_observations
 #' @export
 replace_observations <- function(object, observations) UseMethod("replace_observations")
 
-#' @rdname replace_observations
+#' @rdname modify_experiment_observations
 #' @export
 replace_observations.compphysiol_experiments <- function(object, observations) {
     bound <- if (is.function(observations)) NULL else .split_bound_observations(observations)
@@ -211,18 +219,11 @@ replace_observations.compphysiol_experiments <- function(object, observations) {
     .new_observation_data(out)
 }
 
-#' Attach values to experiment observation schedules
-#'
-#' Values are matched positionally, or may be supplied as corresponding
-#' observation data (including a bound object with an `experiment` column).
-#' Existing schedule rows, duplicates, units, and metadata are preserved.
-#' @param object A `compphysiol_experiments` object.
-#' @param values A value vector, corresponding observation data, or callback.
-#' @returns A `compphysiol_experiments` object containing observation data.
+#' @rdname modify_experiment_observations
 #' @export
 attach_observation_values <- function(object, values) UseMethod("attach_observation_values")
 
-#' @rdname attach_observation_values
+#' @rdname modify_experiment_observations
 #' @export
 attach_observation_values.compphysiol_experiments <- function(object, values) {
     bound <- if (is.function(values)) NULL else .split_bound_observations(values)
@@ -241,6 +242,8 @@ attach_observation_values.compphysiol_experiments <- function(object, values) {
 #' @param object A `compphysiol_experiments` object.
 #' @param start A finite numeric scalar, optionally with units, or a callback.
 #' @returns A `compphysiol_experiments` object.
+#' @seealso [experiment()] for setting the initial start and
+#'   [modify_experiments] for other modifiable experiment components.
 #' @export
 replace_start <- function(object, start) {
     UseMethod("replace_start")

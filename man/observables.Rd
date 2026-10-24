@@ -68,3 +68,7 @@ observables(
     cmt = c("adi","bon")
 ) 
 }
+\seealso{
+\code{\link[=add_observable]{add_observable()}} for adding observables to a model and
+\link{modify_compartment_model} for the complete component map.
+}

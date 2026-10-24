@@ -16,7 +16,7 @@ observables defined as functions of the states and parameters, parameters, and d
 This function initializes an empty model that can then be built up by adding these components using the \verb{add_*} functions.
 }
 \seealso{
-\code{\link[=add_compartment]{add_compartment()}}, \code{\link[=add_molecule]{add_molecule()}}, \code{\link[=add_transport]{add_transport()}}, \code{\link[=add_reaction]{add_reaction()}}, \code{\link[=add_equation]{add_equation()}},
-\code{\link[=add_observable]{add_observable()}}, \code{\link[=add_parameter]{add_parameter()}}, \code{\link[=add_dosing]{add_dosing()}} for building up a \code{compphysiol_compartment_model} object,
-and \code{\link[=to_process_model]{to_process_model()}}, \code{\link[=to_ode_model]{to_ode_model()}}, \code{\link[=to_analytical_model]{to_analytical_model()}} for lowered model representations.
+\link{modify_compartment_model} for a map of constructors and modifying
+functions, and \code{\link[=to_process_model]{to_process_model()}}, \code{\link[=to_ode_model]{to_ode_model()}},
+\code{\link[=to_analytical_model]{to_analytical_model()}} for lowered model representations.
 }

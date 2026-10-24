@@ -45,6 +45,8 @@
 #'     "C{cmt}" = "c[{cmt}]", 
 #'     cmt = c("adi","bon")
 #' ) 
+#' @seealso [add_observable()] for adding observables to a model and
+#'   [modify_compartment_model] for the complete component map.
 #' @export
 observables <- function(..., name = character(0), expr = character(0), cmt = NULL, molec = NULL) {
 
@@ -128,6 +130,8 @@ observables <- function(..., name = character(0), expr = character(0), cmt = NUL
 #' compartment_model() |>
 #'     add_compartment(name = "blo") |>
 #'     add_observable(obs)
+#' @seealso [observables()] for construction and [modify_compartment_model] for
+#'   other model components.
 #' @export
 add_observable <- function(
     model,

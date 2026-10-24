@@ -20,3 +20,7 @@ A \code{compphysiol_experiments} object.
 \description{
 Replace experiment start times
 }
+\seealso{
+\code{\link[=experiment]{experiment()}} for setting the initial start and
+\link{modify_experiments} for other modifiable experiment components.
+}

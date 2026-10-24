@@ -58,3 +58,7 @@ M2 <- compartment_model() |>
     add_compartment(name = "A", volume = 10, unit = "L")
 identical(M1, M2)
 }
+\seealso{
+\code{\link[=compartments]{compartments()}} for construction and \link{modify_compartment_model}
+for other model components.
+}

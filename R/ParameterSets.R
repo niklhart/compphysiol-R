@@ -27,6 +27,8 @@
 #' population
 #' population["individual_1"]
 #' population[["individual_2"]]
+#' @seealso [parameters()] for constructing each set and [modify_parameters]
+#'   for applying parameter sets to experiments.
 #' @export
 parameter_sets <- function(...) {
     x <- list(...)

@@ -14,6 +14,9 @@
 #'     time = c(1, 2, 4) [h],
 #'     observable = "C"
 #' )
+#' @seealso [observation_data()] for schedules carrying values and
+#'   [modify_experiment_observations] for replacing observations or attaching
+#'   values in experiments.
 #' @export
 observation_schedule <- function(time = numeric(), observable = character(), ...) {
     time <- .process_nse_arg(substitute(time), envir = parent.frame())
@@ -93,6 +96,9 @@ observation_schedule <- function(time = numeric(), observable = character(), ...
 #'     observable = "C",
 #'     value = c(8, 6, 3) [mg/L]
 #' )
+#' @seealso [observation_schedule()] for schedules without values and
+#'   [modify_experiment_observations] for replacing observations or attaching
+#'   values in experiments.
 #' @export
 observation_data <- function(time = numeric(), observable = character(), value = numeric(), ...) {
     time <- .process_nse_arg(substitute(time), envir = parent.frame())

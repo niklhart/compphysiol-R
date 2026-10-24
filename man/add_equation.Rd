@@ -49,3 +49,7 @@ eq <- equations(name = "co", expr = "Qadi + Qbon + Qhea + Qkid + Qliv + Qmus + Q
 compartment_model() |>
     add_equation(eq)
 }
+\seealso{
+\code{\link[=equations]{equations()}} for construction and \link{modify_compartment_model} for
+other model components.
+}

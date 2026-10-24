@@ -50,3 +50,7 @@ molecules(name = c("NFkB", "IkB"), unit = "mol/L")
 # Compartment specified: each molecule is associated with a specific compartment
 molecules(name = c("NFkB", "IkB"), cmt = c("cytoplasm", "nucleus"), initial = c(100, 50) [mol/L])
 }
+\seealso{
+\code{\link[=add_molecule]{add_molecule()}} for adding molecules to a model and
+\link{modify_compartment_model} for the complete component map.
+}

@@ -72,3 +72,7 @@ dosing(time = 0, amount = 50, rate = 10, cmt = "Central")
 dosing(time = c(0, 24, 48), amount = 100, cmt = "Central")
 dosing(time = c(0, 24), amount = c(50, 60), rate = 10, cmt = "Central")
 }
+\seealso{
+\link{modify_dosing} for adding dosing to models or adding and replacing
+dosing in experiments.
+}

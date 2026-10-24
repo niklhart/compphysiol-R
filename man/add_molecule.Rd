@@ -63,5 +63,6 @@ all compartments by leaving \code{cmt} unspecified. The latter creates a compact
 wildcard definition that is resolved by \code{\link[=wire]{wire()}} before ODE generation.
 }
 \seealso{
-\code{\link[=molecules]{molecules()}}
+\code{\link[=molecules]{molecules()}} for construction and \link{modify_compartment_model} for
+other model components.
 }

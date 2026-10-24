@@ -17,6 +17,8 @@
 #' compartments('adi', volume = "Vadi")
 #' compartments('adi', volume = 5 [L])
 #' compartments('adi', volume = 5, unit = "L")
+#' @seealso [add_compartment()] for adding compartments to a model and
+#'   [modify_compartment_model] for the complete component map.
 #' @export
 compartments <- function(name = character(0), volume = "V{name}", unit = NULL) {
     # Process NSE argument for volume, which might include units via `value[unit]`
@@ -100,6 +102,8 @@ compartments <- function(name = character(0), volume = "V{name}", unit = NULL) {
 #' M2 <- compartment_model() |>
 #'     add_compartment(name = "A", volume = 10, unit = "L")
 #' identical(M1, M2)
+#' @seealso [compartments()] for construction and [modify_compartment_model]
+#'   for other model components.
 #' @export
 add_compartment <- function(
     model,

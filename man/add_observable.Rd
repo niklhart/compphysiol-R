@@ -83,3 +83,7 @@ compartment_model() |>
     add_compartment(name = "blo") |>
     add_observable(obs)
 }
+\seealso{
+\code{\link[=observables]{observables()}} for construction and \link{modify_compartment_model} for
+other model components.
+}

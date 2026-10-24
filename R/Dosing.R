@@ -36,6 +36,8 @@
 #' # Vectorized dosing examples
 #' dosing(time = c(0, 24, 48), amount = 100, cmt = "Central")
 #' dosing(time = c(0, 24), amount = c(50, 60), rate = 10, cmt = "Central")
+#' @seealso [modify_dosing] for adding dosing to models or adding and replacing
+#'   dosing in experiments.
 #' @export
 dosing <- function(
     time = numeric(0),
@@ -167,23 +169,31 @@ dosing <- function(
     vapply(x, function(value) all(is.na(value)), logical(1))
 }
 
-#' Add one or several dosing events (bolus or infusion) to a `compphysiol_compartment_model` object.
+#' Modify dosing
 #'
-#' This function allows the user to add dosing events to a compartment model.
-#' compphysiol_dosing events can be either bolus (instantaneous) or infusion (continuous over time).
+#' `add_dosing()` adds bolus or infusion events to a compartment model or
+#' appends them to every experiment in a collection. `replace_dosing()` replaces
+#' the complete dosing schedule of every experiment. A dosing callback receives
+#' the current schedule and returns events to add or a complete replacement,
+#' according to the verb.
 #'
-#' Unlike the other `add_*` functions, `add_dosing()` does not simply append the new dosing events 
-#' to the model, but also handles the necessary modifications to the model structure for infusion dosing,
-#' i.e., adding infusion bag and rate compartments, and creating the appropriate events for
-#' starting and stopping the infusion.
+#' For compartment models, `add_dosing()` also handles the structural changes
+#' required for infusions. Complete replacement is intentionally not provided
+#' for models because removing existing infusion auxiliaries cannot generally be
+#' represented as a simple component replacement.
 #'
-#' @param model A `compphysiol_compartment_model` object.
+#' @param object A `compphysiol_compartment_model` or
+#'   `compphysiol_experiments` object.
 #' @inheritParams dosing
-#' @param dose A `compphysiol_dosing` object. Constructed from the other inputs if not provided.
-#' @returns The modified `compphysiol_compartment_model` object.
+#' @param dose A [dosing()] object or callback returning one. Constructed from
+#'   the other inputs if omitted.
+#' @returns The modified object.
 #' @examples
 #' model <- compartment_model() |>
 #'     add_dosing(time = 0, amount = 100, duration = 5, cmt = "cen")
+#' @seealso [dosing()] for construction; [modify_compartment_model] and
+#'   [modify_experiments] for other modifiable components.
+#' @name modify_dosing
 #' @export
 add_dosing <- function(
     object,
@@ -201,7 +211,7 @@ add_dosing <- function(
     UseMethod("add_dosing")
 }
 
-#' @rdname add_dosing
+#' @rdname modify_dosing
 #' @export
 add_dosing.compphysiol_compartment_model <- function(
     object, dose, ..., time = numeric(0), amount = NULL, time_unit = NULL,

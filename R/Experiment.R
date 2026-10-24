@@ -49,6 +49,8 @@
 #' )
 #' e
 #' c(control = e, treatment = experiment())
+#' @seealso [modify_experiments] for modifying experiment components after
+#'   construction.
 #' @export
 experiment <- function(
     parameters = NULL,

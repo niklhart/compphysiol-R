@@ -107,5 +107,6 @@ reaction. In membrane binding models, for example, choosing the membrane as
 such as amount per area per time.
 }
 \seealso{
-\code{\link[=reactions]{reactions()}}
+\code{\link[=reactions]{reactions()}} for construction and \link{modify_compartment_model} for
+other model components.
 }

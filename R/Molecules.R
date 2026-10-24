@@ -27,6 +27,8 @@
 #' molecules(name = c("NFkB", "IkB"), unit = "mol/L")
 #' # Compartment specified: each molecule is associated with a specific compartment
 #' molecules(name = c("NFkB", "IkB"), cmt = c("cytoplasm", "nucleus"), initial = c(100, 50) [mol/L])
+#' @seealso [add_molecule()] for adding molecules to a model and
+#'   [modify_compartment_model] for the complete component map.
 #' @export
 molecules <- function(name = character(0), cmt = NULL, initial = 0, unit = NULL, type = c("concentration","amount")) {
     
@@ -124,8 +126,9 @@ molecules <- function(name = character(0), cmt = NULL, initial = 0, unit = NULL,
 #' @inheritParams molecules
 #' @param molec A `compphysiol_molecules` object. Constructed from the other inputs if not provided.
 #' @returns The modified `compphysiol_compartment_model` object.
+#' @seealso [molecules()] for construction and [modify_compartment_model] for
+#'   other model components.
 #' @export
-#' @seealso [molecules()]
 add_molecule <- function(
     model,
     molec,

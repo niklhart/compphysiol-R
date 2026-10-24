@@ -24,6 +24,9 @@
 #' parameters(name = c("A", "B"), value = c(2, 3), unit = c("", "m"))
 #' # Shorthand notation for interactive use
 #' parameters(A = 2, B = 3[m])
+#' @seealso [modify_parameters] for adding, overlaying, or replacing model and
+#'   experiment parameters; [parameter_sets()] for collections of realized
+#'   parameter sets.
 #' @export
 parameters <- function(..., name = NULL, value = NULL, unit = NULL) {
 
@@ -112,13 +115,32 @@ parameters <- function(..., name = NULL, value = NULL, unit = NULL) {
     invisible(NULL)
 }
 
-#' Add one or several parameters to a `compphysiol_compartment_model` object.
-#' 
-#' @inherit parameters description details
-#' @param model A `compphysiol_compartment_model` object.
+#' Modify parameters
+#'
+#' These verbs modify the parameter component of a compartment model or an
+#' experiment collection. `add_parameter()` accepts only new names,
+#' `overlay_parameter()` replaces matching names and adds new ones, and
+#' `replace_parameters()` replaces the complete component. Use `parameters()`
+#' as the replacement to clear all parameters.
+#'
+#' For experiments, one parameters object is broadcast to every experiment.
+#' A [parameter_sets()] collection expands a length-one experiment collection
+#' or aligns with multiple experiments by effective identifier; wholly unnamed
+#' collections of equal length align positionally. A callback is invoked once
+#' per target and receives its current parameters.
+#'
+#' @inherit parameters details
+#' @param object A `compphysiol_compartment_model` or
+#'   `compphysiol_experiments` object.
 #' @inheritParams parameters
-#' @param param A `compphysiol_parameters` object. Constructed from the other inputs if not provided.
-#' @returns The modified `compphysiol_compartment_model` object.
+#' @param param A [parameters()] object, a [parameter_sets()] collection for
+#'   experiments, or a callback returning one parameters object. Constructed
+#'   from the other inputs if omitted.
+#' @returns The modified object.
+#' @seealso [parameters()] and [parameter_sets()] for construction;
+#'   [modify_compartment_model] and [modify_experiments] for other modifiable
+#'   components.
+#' @name modify_parameters
 #' @export
 add_parameter <- function(
     object,
@@ -131,7 +153,7 @@ add_parameter <- function(
     UseMethod("add_parameter")
 }
 
-#' @rdname add_parameter
+#' @rdname modify_parameters
 #' @export
 add_parameter.compphysiol_compartment_model <- function(
     object, param, ..., name = NULL, value = NULL, unit = NULL
@@ -154,23 +176,13 @@ add_parameter.compphysiol_compartment_model <- function(
     return(model)
 }
 
-#' Overlay or replace parameters
-#'
-#' `overlay_parameter()` replaces parameters with matching names and adds new
-#' names. `replace_parameters()` replaces the complete parameter component;
-#' use `parameters()` to clear it. For experiment collections, a parameters
-#' object is broadcast, while parameter sets expand a length-one collection or
-#' align with a collection by experiment identifier (positionally when both
-#' collections are wholly unnamed). A callback receives the current parameters.
-#'
-#' @inheritParams add_parameter
-#' @returns The modified object.
+#' @rdname modify_parameters
 #' @export
 overlay_parameter <- function(object, param, ..., name = NULL, value = NULL, unit = NULL) {
     UseMethod("overlay_parameter")
 }
 
-#' @rdname overlay_parameter
+#' @rdname modify_parameters
 #' @export
 overlay_parameter.compphysiol_compartment_model <- function(
     object, param, ..., name = NULL, value = NULL, unit = NULL
@@ -182,13 +194,13 @@ overlay_parameter.compphysiol_compartment_model <- function(
     object
 }
 
-#' @rdname overlay_parameter
+#' @rdname modify_parameters
 #' @export
 replace_parameters <- function(object, param, ..., name = NULL, value = NULL, unit = NULL) {
     UseMethod("replace_parameters")
 }
 
-#' @rdname overlay_parameter
+#' @rdname modify_parameters
 #' @export
 replace_parameters.compphysiol_compartment_model <- function(
     object, param, ..., name = NULL, value = NULL, unit = NULL

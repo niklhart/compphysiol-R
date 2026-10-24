@@ -28,3 +28,8 @@ observation_schedule(
     observable = "C"
 )
 }
+\seealso{
+\code{\link[=observation_data]{observation_data()}} for schedules carrying values and
+\link{modify_experiment_observations} for replacing observations or attaching
+values in experiments.
+}

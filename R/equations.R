@@ -20,6 +20,8 @@
 #' equations(co = Qadi + Qbon + Qhea + Qkid + Qliv + Qmus + Qski)
 #' ## Programmatic path with name and expression vectors
 #' equations(name = "co", expr = "Qadi + Qbon + Qhea + Qkid + Qliv + Qmus + Qski")
+#' @seealso [add_equation()] for adding equations to a model and
+#'   [modify_compartment_model] for the complete component map.
 #' @export
 equations <- function(..., name = character(0), expr = character(0)) {
 
@@ -66,6 +68,8 @@ equations <- function(..., name = character(0), expr = character(0)) {
 #' eq <- equations(name = "co", expr = "Qadi + Qbon + Qhea + Qkid + Qliv + Qmus + Qski")
 #' compartment_model() |>
 #'     add_equation(eq)
+#' @seealso [equations()] for construction and [modify_compartment_model] for
+#'   other model components.
 #' @export
 add_equation <- function(model, eq, ..., name = character(0), expr = character(0)) {
     UseMethod("add_equation")

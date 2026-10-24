@@ -39,3 +39,8 @@ parameters(name = c("A", "B"), value = c(2, 3), unit = c("", "m"))
 # Shorthand notation for interactive use
 parameters(A = 2, B = 3[m])
 }
+\seealso{
+\link{modify_parameters} for adding, overlaying, or replacing model and
+experiment parameters; \code{\link[=parameter_sets]{parameter_sets()}} for collections of realized
+parameter sets.
+}

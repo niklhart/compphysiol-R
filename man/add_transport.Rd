@@ -75,3 +75,7 @@ compartment_model() |>
 compartment_model() |>
     add_transport(from = "cen", to = "per", molec = c("DrugA","DrugB"), const = "k_{molec}")
 }
+\seealso{
+\code{\link[=transports]{transports()}} for construction and \link{modify_compartment_model} for
+other model components.
+}
