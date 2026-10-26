@@ -68,11 +68,12 @@ equations <- function(..., name = character(0), expr = character(0)) {
         logical(1)
     )
 
-    repeat {
+    changed <- TRUE
+    while (changed) {
         updated <- time_dependent | vapply(dependencies, function(x) {
             any(time_dependent[x])
         }, logical(1))
-        if (identical(updated, time_dependent)) break
+        changed <- !identical(updated, time_dependent)
         time_dependent <- updated
     }
 

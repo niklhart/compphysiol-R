@@ -72,18 +72,22 @@ test_that("time-dependent volumes retain units across ODE backends", {
     }
 })
 
-test_that("time-dependent volumes reject concentration initials", {
+test_that("time-dependent volumes convert concentration initials at simulation start", {
     model <- compartment_model() |>
         add_compartment(name = "cell", volume = "V") |>
         add_molecule(name = "x", cmt = "cell", initial = 5) |>
+        add_observable(concentration = c[x, cell]) |>
         add_equation(V = V0 * exp(mu * t)) |>
         add_parameter(V0 = 2, mu = 0.1)
 
-    expect_error(
-        to_ode_model(model),
-        "require amount states and amount initials",
-        fixed = TRUE
-    )
+    expected <- 5 * exp(-0.1 * ((2:4) - 2))
+    result <- simulate(model, time = 2:4, engine = deSolve_engine())
+    expect_equal(result$observables$value, expected, tolerance = 1e-6)
+
+    if (requireNamespace("rxode2", quietly = TRUE)) {
+        rxode <- simulate(model, time = 2:4, engine = rxode2_engine())
+        expect_equal(rxode$observables$value, expected, tolerance = 1e-6)
+    }
 })
 
 test_that("unsupported simulation forms reject time-dependent equations", {

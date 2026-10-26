@@ -16,24 +16,6 @@ to_process_model.compphysiol_compartment_model <- function(model) {
     model <- model |> wire() |> make_depot()
     .ode_model_check_transport_compartments(model)
 
-    time_dependent_volumes <- .model_time_dependent_volume_compartments(model)
-    if (length(time_dependent_volumes)) {
-        concentration_initials <- model$molecules$cmt %in% time_dependent_volumes &
-            model$molecules$type == "concentration"
-        if (any(concentration_initials)) {
-            affected <- paste(
-                paste0(model$molecules$name[concentration_initials], " in ",
-                       model$molecules$cmt[concentration_initials]),
-                collapse = ", "
-            )
-            stop(
-                "Time-dependent compartment volumes require amount states and amount initials. ",
-                "Supply amount initials for: ", affected, ".",
-                call. = FALSE
-            )
-        }
-    }
-
     y0_dsl <- initials(model)
     dsl_state_names <- names(y0_dsl)
     state_info <- .ode_model_state_info(model, dsl_state_names)

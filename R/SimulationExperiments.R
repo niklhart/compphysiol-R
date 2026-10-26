@@ -30,7 +30,16 @@
         template$doses <- do.call(c, c(list(dosing()), lapply(prepared, `[[`, "doses")))
         object <- make_depot(template)
     }
-    if (multiple && inherits(engine, "compphysiol_rxode2_engine")) {
+    has_start_dependent_initials <- FALSE
+    if (inherits(object, "compphysiol_compartment_model")) {
+        time_dependent_compartments <- .model_time_dependent_volume_compartments(object)
+        has_start_dependent_initials <- any(
+            object$molecules$type == "concentration" &
+                object$molecules$cmt %in% time_dependent_compartments
+        )
+    }
+    if (multiple && inherits(engine, "compphysiol_rxode2_engine") &&
+        !has_start_dependent_initials) {
         executable <- if (inherits(object, "compphysiol_rxode2_model")) object else to_rxode2_model(object)
         return(.simulate_rxode2_experiments(
             executable, experiments, dimensions = dimensions, engine = engine,

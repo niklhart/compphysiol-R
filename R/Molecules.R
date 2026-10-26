@@ -20,8 +20,9 @@
 #'   and `unit`.
 #' @param unit Unit for the initial conditions (character scalar or `NULL`, the default), to be used if units are not specified via `initial`. 
 #' @param type Type of initial condition, either `"concentration"` (the default) or `"amount"`.
-#'   Compartments with time-dependent volumes require amount initials because
-#'   their states are represented as amounts throughout simulation.
+#'   Compartments with time-dependent volumes are represented using amount
+#'   states. A concentration initial is converted using the volume at the first
+#'   simulation time.
 #' @return A `compphysiol_molecules` object containing the compartment and initial condition
 #'   information for each molecule.
 #' @examples 

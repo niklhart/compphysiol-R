@@ -69,6 +69,9 @@ rxode2_engine <- function(...) {
 #' model uses a time dimension, `time` must carry units through the unit
 #' shorthand or the `unit` argument. Conversely, unit-aware simulation times
 #' require a model with a time dimension.
+#' Model initial conditions apply at the first supplied simulation time. This
+#' time is used when a concentration initial must be converted to an amount
+#' state using a time-dependent compartment volume.
 #'
 #' In unit-aware simulations, `dimensions` defines the solver-facing numerical
 #' scale used when unit-bearing model quantities are converted to plain numbers
@@ -196,6 +199,10 @@ simulate.compphysiol_compartment_model <- function(
 
     export_model <- .simulation_model_with_parameters(object, sim_parameters)
     export_model <- export_model |> wire() |> make_depot()
+    export_model <- .simulation_resolve_time_dependent_volume_initials(
+        export_model,
+        time = time[[1]]
+    )
     if (identical(simulation_type, "analytical")) {
         analytical_model <- to_analytical_model(export_model)
         .simulation_check_free_parameters_available(analytical_model, export_model$parameters)
@@ -240,6 +247,54 @@ simulate.compphysiol_compartment_model <- function(
         parameters = export_model$parameters,
         ...
     )
+}
+
+.simulation_resolve_time_dependent_volume_initials <- function(model, time) {
+    compartments <- .model_time_dependent_volume_compartments(model)
+    convert <- model$molecules$type == "concentration" &
+        model$molecules$cmt %in% compartments
+    if (!any(convert)) return(model)
+
+    env <- list2env(
+        c(unclass(model$parameters), list(t = time)),
+        parent = baseenv()
+    )
+    pending <- seq_along(model$equations)
+    while (length(pending)) {
+        resolved <- logical(length(pending))
+        for (k in seq_along(pending)) {
+            i <- pending[[k]]
+            expr <- model$equations[[i]]
+            if (!all(.dsl_all_vars(expr) %in% names(env))) next
+            assign(names(model$equations)[[i]], .dsl_eval(expr, env), envir = env)
+            resolved[[k]] <- TRUE
+        }
+        if (!any(resolved)) break
+        pending <- pending[!resolved]
+    }
+
+    volume_by_cmt <- setNames(model$compartments$volume, names(model$compartments))
+    for (i in which(convert)) {
+        cmt <- model$molecules$cmt[[i]]
+        initial <- model$molecules$init[[i]]
+        if (.initial_is_expr(initial)) initial <- .dsl_eval(initial, env)
+        volume <- tryCatch(
+            .dsl_eval(.as_call(volume_by_cmt[[cmt]]), env),
+            error = function(e) {
+                stop(
+                    "Cannot evaluate time-dependent volume for compartment '",
+                    cmt,
+                    "' at the first simulation time: ",
+                    e$message,
+                    call. = FALSE
+                )
+            }
+        )
+        model$molecules$init[[i]] <- initial * volume
+        model$molecules$type[[i]] <- "amount"
+    }
+
+    model
 }
 
 #' @export

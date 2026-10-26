@@ -279,9 +279,9 @@ stochastic model conversions currently reject them explicitly.
 
 A compartment with a time-dependent volume is represented with amount states,
 so dilution or concentration caused by volume change is obtained as `amount / V(t)`
-without adding an artificial amount-change term. In the current implementation,
-molecules in such compartments must also specify amount initials; conversion of
-a concentration initial would require an explicit initial-time convention.
+without adding an artificial amount-change term. Initial conditions are defined
+at the first simulation time. A concentration initial in such a compartment is
+therefore converted to an amount using the volume at that time.
 
 Implementation anchor: equations are represented by `compphysiol_equations`
 objects created with `equations()` or added with `add_equation()`.
