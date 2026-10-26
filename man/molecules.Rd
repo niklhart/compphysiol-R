@@ -29,8 +29,9 @@ and \code{unit}.}
 \item{unit}{Unit for the initial conditions (character scalar or \code{NULL}, the default), to be used if units are not specified via \code{initial}.}
 
 \item{type}{Type of initial condition, either \code{"concentration"} (the default) or \code{"amount"}.
-Compartments with time-dependent volumes require amount initials because
-their states are represented as amounts throughout simulation.}
+Compartments with time-dependent volumes are represented using amount
+states. A concentration initial is converted using the volume at the first
+simulation time.}
 }
 \value{
 A \code{compphysiol_molecules} object containing the compartment and initial condition

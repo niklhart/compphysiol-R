@@ -92,6 +92,9 @@ Simulation is either unit-free or unit-aware with respect to time. If the
 model uses a time dimension, \code{time} must carry units through the unit
 shorthand or the \code{unit} argument. Conversely, unit-aware simulation times
 require a model with a time dimension.
+Model initial conditions apply at the first supplied simulation time. This
+time is used when a concentration initial must be converted to an amount
+state using a time-dependent compartment volume.
 
 In unit-aware simulations, \code{dimensions} defines the solver-facing numerical
 scale used when unit-bearing model quantities are converted to plain numbers
