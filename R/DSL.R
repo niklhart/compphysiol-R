@@ -34,6 +34,26 @@
 
     dsl_env <- new.env(parent = envir)
 
+    dimensionless_math <- function(fun) {
+        force(fun)
+        function(x, ...) {
+            if (inherits(x, "units")) {
+                x <- tryCatch(
+                    units::set_units(x, "1", mode = "standard"),
+                    error = function(e) {
+                        stop("argument must be dimensionless: ", e$message, call. = FALSE)
+                    }
+                )
+                x <- units::drop_units(x)
+            }
+            fun(x, ...)
+        }
+    }
+    for (nm in c("exp", "log", "log10", "sin", "cos", "tan",
+                 "sinh", "cosh", "tanh")) {
+        assign(nm, dimensionless_math(get(nm, envir = baseenv())), envir = dsl_env)
+    }
+
     dsl_env$c <- structure(
         list(env = envir, type = "c"),
         class = "compphysiol_dsl"

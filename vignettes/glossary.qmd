@@ -271,6 +271,18 @@ equations can be reused in transport and reaction constants and rate
 expressions. Equations help keep generated ODEs readable while preserving the
 symbolic structure of the model.
 
+The symbol `t` is reserved for current model time. An equation that uses `t`,
+directly or through another equation, is time dependent. For example,
+`V = V0 * exp(mu * t)` defines an exponentially changing volume. ODE backends
+evaluate these equations at the solver's current time. Analytical and
+stochastic model conversions currently reject them explicitly.
+
+A compartment with a time-dependent volume is represented with amount states,
+so dilution or concentration caused by volume change is obtained as `amount / V(t)`
+without adding an artificial amount-change term. In the current implementation,
+molecules in such compartments must also specify amount initials; conversion of
+a concentration initial would require an explicit initial-time convention.
+
 Implementation anchor: equations are represented by `compphysiol_equations`
 objects created with `equations()` or added with `add_equation()`.
 
@@ -284,11 +296,9 @@ amount in a tissue group.
 An observable is not part of the ODE state vector. It is derived from the model
 state rather than integrated as an independent dynamic variable.
 
-Current observable export does not define equation helper variables inside
-observable functions. Observable expressions should therefore be written
-directly in terms of states and parameters for now. Reuse of equations in
-observables is a natural future extension, but is not part of the current
-export contract.
+ODE observable export defines equation helper variables inside observable
+functions, so observables can reuse named equations, including time-dependent
+ones.
 
 Implementation anchor: observables are represented by `compphysiol_observables`
 objects created with `observables()` or added with `add_observable()`.
@@ -301,6 +311,7 @@ other fixed inputs to simulation and analysis.
 
 Parameters can be numeric, categorical, symbolic, or unit-aware. Unit-aware
 parameter values use the general unit shorthand described above.
+The name `t` is reserved and cannot be used for a parameter.
 
 Implementation anchor: parameters are represented by `compphysiol_parameters`
 objects created with `parameters()` or added with `add_parameter()`.

@@ -199,7 +199,7 @@ simulate.compphysiol_compartment_model <- function(
     if (identical(simulation_type, "analytical")) {
         analytical_model <- to_analytical_model(export_model)
         .simulation_check_free_parameters_available(analytical_model, export_model$parameters)
-        export_model <- .check_unit_consistency(export_model)
+        export_model <- .check_unit_consistency(export_model, time = time[[1]])
         .simulation_check_time_mode(export_model, time)
 
         dimensions <- .simulation_dimensions(export_model, time, dimensions)
@@ -217,7 +217,7 @@ simulate.compphysiol_compartment_model <- function(
     ode_model <- to_ode_model(export_model)
     attr(ode_model, "observation_schedule") <- attr(object, "observation_schedule")
     .simulation_check_free_parameters_available(ode_model, export_model$parameters)
-    export_model <- .check_unit_consistency(export_model)
+    export_model <- .check_unit_consistency(export_model, time = time[[1]])
     .simulation_check_time_mode(export_model, time)
 
     dimensions <- .simulation_dimensions(export_model, time, dimensions)
@@ -989,6 +989,10 @@ print.compphysiol_simulation_result <- function(x, ...) {
         .evaluate_initials(model$parameters, allow_unresolved = TRUE)
     values <- c(unclass(inits), unclass(model$parameters))
     env <- list2env(values)
+
+    if (length(.time_dependent_equation_names(model$equations))) {
+        assign("t", .equation_unit_time_value(model$parameters), envir = env)
+    }
 
     .simulation_add_derived_states(env, model)
     .simulation_add_equations(env, model)

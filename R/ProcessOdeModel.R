@@ -16,6 +16,24 @@ to_process_model.compphysiol_compartment_model <- function(model) {
     model <- model |> wire() |> make_depot()
     .ode_model_check_transport_compartments(model)
 
+    time_dependent_volumes <- .model_time_dependent_volume_compartments(model)
+    if (length(time_dependent_volumes)) {
+        concentration_initials <- model$molecules$cmt %in% time_dependent_volumes &
+            model$molecules$type == "concentration"
+        if (any(concentration_initials)) {
+            affected <- paste(
+                paste0(model$molecules$name[concentration_initials], " in ",
+                       model$molecules$cmt[concentration_initials]),
+                collapse = ", "
+            )
+            stop(
+                "Time-dependent compartment volumes require amount states and amount initials. ",
+                "Supply amount initials for: ", affected, ".",
+                call. = FALSE
+            )
+        }
+    }
+
     y0_dsl <- initials(model)
     dsl_state_names <- names(y0_dsl)
     state_info <- .ode_model_state_info(model, dsl_state_names)
@@ -300,6 +318,14 @@ to_analytical_model.compphysiol_compartment_model <- function(model) {
 
 #' @export
 to_analytical_model.compphysiol_process_model <- function(model) {
+    time_dependent <- .time_dependent_equation_names(model$equations)
+    if (length(time_dependent)) {
+        stop(
+            "Analytical models do not support time-dependent equation(s): ",
+            paste(time_dependent, collapse = ", "), ".",
+            call. = FALSE
+        )
+    }
     .analytical_model_check_compatibility(model)
 
     system <- .analytical_model_linear_system(model)
@@ -348,6 +374,14 @@ to_stochastic_model.compphysiol_compartment_model <- function(model) {
 
 #' @export
 to_stochastic_model.compphysiol_process_model <- function(model) {
+    time_dependent <- .time_dependent_equation_names(model$equations)
+    if (length(time_dependent)) {
+        stop(
+            "Stochastic models do not support time-dependent equation(s): ",
+            paste(time_dependent, collapse = ", "), ".",
+            call. = FALSE
+        )
+    }
     .stochastic_model_check_compatibility(model)
 
     propensities <- lapply(seq_len(nrow(model$processes)), function(i) {
@@ -767,7 +801,21 @@ print.compphysiol_ode_model <- function(x, ...) {
 
     obs_funcs <- lapply(model$observables, function(obs) {
         expr <- .ode_model_observable_backend_expr(subst(obs), output_state_names)
-        eval(parse(text = paste0("function(t,y,params) unname(", deparse1(expr), ")")))
+        if (!length(model$equations)) {
+            return(eval(parse(text = paste0(
+                "function(t,y,params) unname(", deparse1(expr), ")"
+            ))))
+        }
+        obs_lines <- "function(t,y,params) {"
+        for (i in seq_along(model$equations)) {
+            obs_lines <- c(
+                obs_lines,
+                paste0("    ", names(model$equations)[[i]], " <- ",
+                       deparse1(subst(model$equations[[i]])))
+            )
+        }
+        obs_lines <- c(obs_lines, paste0("    unname(", deparse1(expr), ")"), "}")
+        eval(parse(text = paste(obs_lines, collapse = "\n")))
     })
     names(obs_funcs) <- names(model$observables)
 
@@ -1609,6 +1657,9 @@ print.compphysiol_ode_model <- function(x, ...) {
 .ode_model_unit_context <- function(model, parameters) {
     y0 <- .ode_model_state_unit_values(model, parameters, allow_unresolved = FALSE)
     env <- list2env(unclass(parameters), parent = baseenv())
+    if (length(.time_dependent_equation_names(model$equations))) {
+        assign("t", .equation_unit_time_value(parameters), envir = env)
+    }
     .ode_model_add_equations(model, env, y0)
     list(y0 = y0, env = env)
 }
@@ -1649,7 +1700,7 @@ print.compphysiol_ode_model <- function(x, ...) {
             if (!all(vars %in% names(env))) next
 
             value <- tryCatch(
-                eval(expr, envir = env),
+                .dsl_eval(expr, envir = env),
                 error = function(e) {
                     stop(
                         "In ODE equation '",
@@ -1672,7 +1723,7 @@ print.compphysiol_ode_model <- function(x, ...) {
 
 .ode_model_eval_expr <- function(expr, env, y_values) {
     expr <- .ode_model_inline_state_values(expr, y_values)
-    if (is.language(expr)) eval(expr, envir = env) else expr
+    if (is.language(expr)) .dsl_eval(expr, envir = env) else expr
 }
 
 .ode_model_inline_state_values <- function(expr, y_values) {

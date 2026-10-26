@@ -4,6 +4,8 @@
 #' which can be used in transports and observables. The main purpose of equations is to 
 #' define physiologically meaningful aggregate parameters (such as cardiac output) 
 #' that are composed of more basic parameters (such as blood flows to individual organs).
+#' The symbol `t` is reserved for current model time. Equations that refer to
+#' `t`, directly or through another equation, are time dependent.
 #' 
 #' compphysiol_observables and equations are very similar, but there are two key differences:
 #' 
@@ -43,11 +45,66 @@ equations <- function(..., name = character(0), expr = character(0)) {
     expr <- lapply(expr, .as_call)
 
     .check_named_values(expr, "equation")
+    if ("t" %in% name) {
+        stop("Equation name 't' is reserved for the current model time.", call. = FALSE)
+    }
     .new_equations(expr)
 }
 
 .new_equations <- function(x = list()) {
     structure(x, class = .compphysiol_class("compphysiol_equations"))
+}
+
+.equation_time_dependence <- function(equations) {
+    eq_names <- names(equations)
+    if (!length(eq_names)) return(setNames(logical(), character()))
+
+    dependencies <- lapply(equations, function(expr) {
+        intersect(.dsl_all_vars(expr), eq_names)
+    })
+    time_dependent <- vapply(
+        equations,
+        function(expr) "t" %in% .dsl_all_vars(expr),
+        logical(1)
+    )
+
+    repeat {
+        updated <- time_dependent | vapply(dependencies, function(x) {
+            any(time_dependent[x])
+        }, logical(1))
+        if (identical(updated, time_dependent)) break
+        time_dependent <- updated
+    }
+
+    setNames(time_dependent, eq_names)
+}
+
+.time_dependent_equation_names <- function(equations) {
+    names(Filter(isTRUE, as.list(.equation_time_dependence(equations))))
+}
+
+.equation_unit_time_value <- function(parameters) {
+    uses_time_units <- any(vapply(
+        unclass(parameters),
+        function(x) inherits(x, "units") && .has_time_dimension(x),
+        logical(1)
+    ))
+    if (uses_time_units) units::set_units(1, "s", mode = "standard") else 1
+}
+
+.model_time_dependent_volume_compartments <- function(model) {
+    time_dependent <- .time_dependent_equation_names(model$equations)
+    if (!length(time_dependent)) return(character())
+
+    volume_vars <- lapply(model$compartments$volume, function(volume) {
+        if (.is_missing_volume(volume)) return(character())
+        .dsl_all_vars(.as_call(volume))
+    })
+    names(model$compartments)[vapply(
+        volume_vars,
+        function(x) any(x %in% time_dependent) || "t" %in% x,
+        logical(1)
+    )]
 }
 
 #' Add one or several equations to a `compphysiol_compartment_model` object.

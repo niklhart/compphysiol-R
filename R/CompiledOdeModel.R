@@ -172,7 +172,28 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
         }
 
         expr <- .ode_model_observable_backend_expr(expr, output_state_names)
-        eval(parse(text = paste0("function(t,y,params) unname(", deparse1(expr), ")")))
+        if (!length(ode_model$equations)) {
+            return(eval(parse(text = paste0(
+                "function(t,y,params) unname(", deparse1(expr), ")"
+            ))))
+        }
+        lines <- "function(t,y,params) {"
+        for (i in seq_along(ode_model$equations)) {
+            equation <- .ode_model_substitute_parameters(
+                ode_model$equations[[i]],
+                eq_names = eq_names,
+                param_values = param_refs,
+                free_params = free_params,
+                dimensions = dimensions
+            )
+            lines <- c(
+                lines,
+                paste0("    ", names(ode_model$equations)[[i]], " <- ",
+                       deparse1(equation))
+            )
+        }
+        lines <- c(lines, paste0("    unname(", deparse1(expr), ")"), "}")
+        eval(parse(text = paste(lines, collapse = "\n")))
     })
     names(obs_funcs) <- names(ode_model$observables)
     obs_funcs

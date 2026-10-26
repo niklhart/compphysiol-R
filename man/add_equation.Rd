@@ -29,6 +29,8 @@ compphysiol_equations allow to define algebraic relationships between model vari
 which can be used in transports and observables. The main purpose of equations is to
 define physiologically meaningful aggregate parameters (such as cardiac output)
 that are composed of more basic parameters (such as blood flows to individual organs).
+The symbol \code{t} is reserved for current model time. Equations that refer to
+\code{t}, directly or through another equation, are time dependent.
 }
 \details{
 compphysiol_observables and equations are very similar, but there are two key differences:

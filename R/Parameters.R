@@ -14,7 +14,8 @@
 #'
 #' @param ... Parameter values as name-value pairs, where values can optionally have units (e.g., `A = 2 [m]`).
 #'   Values are evaluated from left to right and may refer to parameters
-#'   defined earlier in the same call.
+#'   defined earlier in the same call. The name `t` is reserved for current
+#'   model time.
 #' @param name Optional parameter names (if not using named arguments).
 #' @param value Optional parameter values (if not using named arguments).
 #' @param unit Optional parameter units (if not using named arguments).
@@ -110,6 +111,9 @@ parameters <- function(..., name = NULL, value = NULL, unit = NULL) {
     }
     if (anyDuplicated(name)) {
         stop("Parameter names must be unique.", call. = FALSE)
+    }
+    if ("t" %in% name) {
+        stop("Parameter name 't' is reserved for the current model time.", call. = FALSE)
     }
 
     invisible(NULL)

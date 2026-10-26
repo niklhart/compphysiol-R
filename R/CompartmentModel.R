@@ -738,15 +738,19 @@ make_depot <- function(model) {
 #' @param model A `compphysiol_compartment_model` object.
 #' @return The model (invisibly) if all units are consistent, otherwise an error is raised.
 #' @noRd
-.check_unit_consistency <- function(model) {
+.check_unit_consistency <- function(model, time = NULL) {
     .check_class(model, "compphysiol_compartment_model")
 
     # Available variables for unit checking: compartment volumes, initial amounts/concentrations, and parameters
     inits <- initials(model) |>
         .evaluate_initials(model$parameters, allow_unresolved = TRUE)
+    if (is.null(time) && length(.time_dependent_equation_names(model$equations))) {
+        time <- .equation_unit_time_value(model$parameters)
+    }
     varenv <- c(
         unclass(inits),
-        unclass(model$parameters)
+        unclass(model$parameters),
+        if (is.null(time)) list() else list(t = time)
     ) |> list2env()
     varnames <- names(varenv)
     eqnames <- names(model$equations)
