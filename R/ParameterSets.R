@@ -78,6 +78,14 @@ parameter_sets <- function(...) {
 }
 
 .parameter_value_schema <- function(x) {
+    if (.is_interpolation(x)) {
+        return(list(
+            type = "interpolation",
+            method = x$method,
+            value_unit = if (inherits(x$value, "units")) units::deparse_unit(x$value) else NULL,
+            time_unit = if (inherits(x$time, "units")) units::deparse_unit(x$time) else NULL
+        ))
+    }
     list(
         type = typeof(x),
         class = class(x),

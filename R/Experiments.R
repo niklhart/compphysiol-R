@@ -118,6 +118,15 @@
 }
 
 .check_compatible_units <- function(reference, value, label) {
+    if (.is_interpolation(reference) || .is_interpolation(value)) {
+        reference_value <- if (.is_interpolation(reference)) reference$value else reference
+        value_value <- if (.is_interpolation(value)) value$value else value
+        .check_compatible_units(reference_value, value_value, label)
+        if (.is_interpolation(reference) && .is_interpolation(value)) {
+            .check_compatible_units(reference$time, value$time, paste0(label, " time"))
+        }
+        return(invisible(NULL))
+    }
     reference_has_units <- inherits(reference, "units")
     value_has_units <- inherits(value, "units")
     compatible <- identical(reference_has_units, value_has_units)

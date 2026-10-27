@@ -2,7 +2,10 @@
 
 #' `compphysiol_parameters` class.
 #'
-#' The `compphysiol_parameters` class represents a collection of named parameters, which can optionally have associated units.
+#' The `compphysiol_parameters` class represents a collection of named model
+#' inputs. Values may be constant or time dependent and may optionally have
+#' associated units. Use [interpolate()] to construct a time-dependent
+#' continuous value.
 #' 
 #' compphysiol_parameters can be specified in three different ways:
 #' 
@@ -25,6 +28,8 @@
 #' parameters(name = c("A", "B"), value = c(2, 3), unit = c("", "m"))
 #' # Shorthand notation for interactive use
 #' parameters(A = 2, B = 3[m])
+#' # A known parameter that varies over model time
+#' parameters(BW = interpolate(c(0, 12, 24) [h], c(70, 69, 68) [kg]))
 #' @seealso [modify_parameters] for adding, overlaying, or replacing model and
 #'   experiment parameters; [parameter_sets()] for collections of realized
 #'   parameter sets.
@@ -312,6 +317,9 @@ print.compphysiol_parameters <- function(x, ...) {
 #' @method unlist compphysiol_parameters
 #' @export
 unlist.compphysiol_parameters <- function(x, ...) {
+    if (any(vapply(unclass(x), .is_interpolation, logical(1)))) {
+        stop("Time-dependent parameters cannot be unlisted.", call. = FALSE)
+    }
     unlisted <- unlist(unclass(x), recursive = FALSE, use.names = TRUE)
     x <- as.list(unlisted)
     if (length(x)) .check_parameter_names(names(x))

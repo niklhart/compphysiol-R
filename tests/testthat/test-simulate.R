@@ -158,16 +158,14 @@ test_that("compiled ODE backend matches R ODE backend for representative determi
     }
 })
 
-test_that("compiled ODE backend rejects unsupported RHS calls before solving", {
+test_that("compiled ODE backend supports conditional RHS calls", {
     model <- compartment_model() |>
         add_compartment(name = "Central", volume = NA_real_) |>
         add_molecule(name = "drug", cmt = "Central", initial = 100, type = "amount") |>
         add_transport(from = "Central", to = "", rate = "ifelse(a[drug, Central] > 0, a[drug, Central], 0)")
 
-    expect_error(
-        simulate(to_compiled_ode_model(model), time = seq(0, 1, by = 1)),
-        "ifelse\\(\\).*not supported"
-    )
+    result <- simulate(to_compiled_ode_model(model), time = seq(0, 1, by = 1))
+    expect_equal(result$states$a_drug_Central, 100 * exp(-(0:1)), tolerance = 1e-6)
 })
 
 test_that("simulate accepts explicit ODE and analytical simulation types", {

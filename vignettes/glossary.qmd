@@ -309,8 +309,11 @@ A parameter is a named value used in the model. Parameters may represent
 physiology, compound properties, kinetic constants, partition coefficients, or
 other fixed inputs to simulation and analysis.
 
-Parameters can be numeric, categorical, symbolic, or unit-aware. Unit-aware
-parameter values use the general unit shorthand described above.
+Parameters can be numeric, categorical, symbolic, or unit-aware. A continuous
+parameter value may be a scalar or a structured interpolation profile over
+model time. Model expressions use the same bare parameter name in either case;
+the profile supplies its value at current `t`. Unit-aware parameter values use
+the general unit shorthand described above.
 The name `t` is reserved and cannot be used for a parameter.
 
 Implementation anchor: parameters are represented by `compphysiol_parameters`
@@ -524,12 +527,15 @@ earliest scheduled time: adding a later first observation does not shift when
 initial values apply. Negative schedule times require an explicit earlier start.
 Incompatible schedule units remain an error.
 
-Experiment parameters are known values, fixed during the experiment. Joint
-estimation keeps these separate from shared estimated parameters and rejects
-overlap. General scheduled parameter changes
-and time-dependent model equations are not part of the current experiment
-contract. Dosing may be calculated from known experimental values before
-constructing the experiment.
+Experiment parameters are known values. Scalar values are fixed during the
+experiment; a continuous value constructed with `interpolate()` varies over
+the shared model-time axis. Linear and last-observation-carried-forward
+interpolation are supported. Evaluation before the first scheduled time is an
+error, while the last value is carried forward. Joint estimation keeps known
+experiment parameters separate from shared estimated parameters and rejects
+overlap; only scalar continuous parameters are eligible for estimation. Dosing
+may be calculated from known experimental values before constructing the
+experiment.
 
 Current support covers construction, printing, and ODE simulation.
 An experiment supplies the complete dosing schedule, replacing model-attached

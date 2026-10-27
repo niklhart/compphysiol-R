@@ -417,10 +417,10 @@ The experiment representation and covariate equation are unchanged:
 | Unexplained individual variability | None | Individual-level statistical distribution |
 | Observation variability | Observation-level statistical distribution | Observation-level statistical distribution |
 
-The current experiment contract treats covariates as scalar and constant over
-an experiment. Time-varying covariates, covariate measurement error,
-between-occasion variability, and automatic categorical contrast construction
-would require additional behaviour. For the common case of fixed observed
-covariates, keeping them as experiment parameters makes the values explicit and
-allows the same dynamic model to be used for simulation, nonlinear regression,
-and nonlinear mixed-effects estimation.
+Continuous covariates may be scalar and constant over an experiment or supplied
+as structured interpolation profiles with `interpolate()`. Covariate
+measurement error, between-occasion variability, and automatic categorical
+contrast construction still require additional behaviour. Keeping observed
+covariates as experiment parameters makes the values explicit and allows the
+same dynamic model to be used for simulation, nonlinear regression, and
+nonlinear mixed-effects estimation.

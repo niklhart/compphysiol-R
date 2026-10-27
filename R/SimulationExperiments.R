@@ -38,8 +38,11 @@
                 object$molecules$cmt %in% time_dependent_compartments
         )
     }
+    has_time_dependent_parameters <- any(vapply(experiments, function(e) {
+        any(vapply(unclass(e$parameters), .is_interpolation, logical(1)))
+    }, logical(1)))
     if (multiple && inherits(engine, "compphysiol_rxode2_engine") &&
-        !has_start_dependent_initials) {
+        !has_start_dependent_initials && !has_time_dependent_parameters) {
         executable <- if (inherits(object, "compphysiol_rxode2_model")) object else to_rxode2_model(object)
         return(.simulate_rxode2_experiments(
             executable, experiments, dimensions = dimensions, engine = engine,

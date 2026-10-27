@@ -217,6 +217,28 @@ test_that("estimation_problem is the engine-neutral estimation specification", {
     expect_s3_class(problem$statistics$C$mean, "compphysiol_prediction_location")
 })
 
+test_that("time-dependent model parameters are not estimation targets", {
+    model <- estimation_test_model() |>
+        overlay_parameter(
+            k = interpolate(c(0, 4) [h], c(0.2, 0.3) [1/h])
+        )
+    specs <- c(
+        k = parameter_spec(0.2 [1/h]),
+        sigma = parameter_spec(1 [mg/L], lower = 0 [mg/L])
+    )
+
+    expect_error(
+        estimation_problem(
+            model,
+            estimation_test_experiment(),
+            specs,
+            statistical_model(C = normal(sd = "sigma"))
+        ),
+        "Time-dependent parameter(s) cannot be estimated: k.",
+        fixed = TRUE
+    )
+})
+
 test_that("estimation_problem normalizes one experiment to a collection", {
     problem <- estimation_problem(
         model = estimation_test_model(),

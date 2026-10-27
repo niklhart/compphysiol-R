@@ -741,15 +741,19 @@ make_depot <- function(model) {
 .check_unit_consistency <- function(model, time = NULL) {
     .check_class(model, "compphysiol_compartment_model")
 
+    if (is.null(time) && any(vapply(unclass(model$parameters), .is_interpolation, logical(1)))) {
+        stop("Unit checking a model with time-dependent parameters requires a model time.", call. = FALSE)
+    }
+    evaluation_parameters <- if (is.null(time)) model$parameters else .parameters_at_time(model$parameters, time)
     # Available variables for unit checking: compartment volumes, initial amounts/concentrations, and parameters
     inits <- initials(model) |>
-        .evaluate_initials(model$parameters, allow_unresolved = TRUE)
+        .evaluate_initials(evaluation_parameters, allow_unresolved = TRUE)
     if (is.null(time) && length(.time_dependent_equation_names(model$equations))) {
         time <- .equation_unit_time_value(model$parameters)
     }
     varenv <- c(
         unclass(inits),
-        unclass(model$parameters),
+        unclass(evaluation_parameters),
         if (is.null(time)) list() else list(t = time)
     ) |> list2env()
     varnames <- names(varenv)

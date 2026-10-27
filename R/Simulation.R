@@ -199,6 +199,7 @@ simulate.compphysiol_compartment_model <- function(
 
     export_model <- .simulation_model_with_parameters(object, sim_parameters)
     export_model <- export_model |> wire() |> make_depot()
+    .validate_interpolation_start(export_model$parameters, time[[1]])
     export_model <- .simulation_resolve_time_dependent_volume_initials(
         export_model,
         time = time[[1]]
@@ -255,8 +256,9 @@ simulate.compphysiol_compartment_model <- function(
         model$molecules$cmt %in% compartments
     if (!any(convert)) return(model)
 
+    evaluation_parameters <- .parameters_at_time(model$parameters, time)
     env <- list2env(
-        c(unclass(model$parameters), list(t = time)),
+        c(unclass(evaluation_parameters), list(t = time)),
         parent = baseenv()
     )
     pending <- seq_along(model$equations)
@@ -318,8 +320,23 @@ simulate.compphysiol_ode_model <- function(
     }
 
     if (inherits(engine, "compphysiol_rxode2_engine")) {
+        supplied <- .simulation_parameters_object(parameters)
+        supplied_profiles <- vapply(unclass(supplied), .is_interpolation, logical(1))
+        default_profiles <- vapply(unclass(object$parameters), .is_interpolation, logical(1))
+        kind_changing_names <- names(supplied)[
+            supplied_profiles |
+                names(supplied) %in% names(default_profiles)[default_profiles]
+        ]
+        if (length(kind_changing_names)) {
+            object$parameters <- .merge_ode_parameters(object$parameters, supplied)
+            profile_names <- names(object$parameters)[vapply(
+                unclass(object$parameters), .is_interpolation, logical(1)
+            )]
+            object$freeParams <- setdiff(object$freeParams, profile_names)
+            supplied <- .new_parameters()
+        }
         return(simulate(to_rxode2_model(object), time = time, unit = unit,
-                        parameters = parameters, dimensions = dimensions, engine = engine, ...))
+                        parameters = supplied, dimensions = dimensions, engine = engine, ...))
     }
     if (!inherits(engine, "compphysiol_desolve_engine")) {
         stop("Unsupported simulation engine: ", class(engine)[1], ".", call. = FALSE)
@@ -381,6 +398,7 @@ simulate.compphysiol_desolve_compiled_model <- function(
 
     if (is.null(artifact)) {
         merged_parameters <- .merge_ode_parameters(ode_model$parameters, sim_parameters)
+        .validate_interpolation_start(merged_parameters, time[[1]])
         .simulation_check_free_parameters_available(ode_model, merged_parameters)
         .simulation_check_time_mode(ode_model, time, parameters = merged_parameters)
         dimensions <- .compiled_ode_model_dimensions(
@@ -417,6 +435,7 @@ simulate.compphysiol_desolve_compiled_model <- function(
             validate = FALSE
         )
         output_parameters <- sim_parameters
+        .validate_interpolation_start(output_parameters, time[[1]])
     }
 
     .simulation_solve_ode_model(
@@ -647,6 +666,7 @@ simulate.compphysiol_stochastic_model <- function(
 
     sim_parameters <- .simulation_parameters_object(parameters)
     merged_parameters <- .merge_ode_parameters(ode_model$parameters, sim_parameters)
+    .validate_interpolation_start(merged_parameters, time[[1]])
     .simulation_check_free_parameters_available(ode_model, merged_parameters)
     if (isTRUE(check_unit_consistency)) {
         .ode_model_check_unit_consistency(ode_model, merged_parameters)
@@ -1040,9 +1060,10 @@ print.compphysiol_simulation_result <- function(x, ...) {
 
 .simulation_unit_env <- function(model) {
     model <- model |> wire() |> make_depot()
+    evaluation_parameters <- .parameter_representative_values(model$parameters)
     inits <- initials(model) |>
-        .evaluate_initials(model$parameters, allow_unresolved = TRUE)
-    values <- c(unclass(inits), unclass(model$parameters))
+        .evaluate_initials(evaluation_parameters, allow_unresolved = TRUE)
+    values <- c(unclass(inits), unclass(evaluation_parameters))
     env <- list2env(values)
 
     if (length(.time_dependent_equation_names(model$equations))) {
@@ -1148,7 +1169,7 @@ print.compphysiol_simulation_result <- function(x, ...) {
     c(
         inits,
         as.list(model$compartments$volume),
-        unclass(model$parameters),
+        .parameter_dimension_values(model$parameters),
         as.list(model$doses$time),
         as.list(model$doses$amount),
         as.list(model$doses$rate),
@@ -1190,6 +1211,8 @@ print.compphysiol_simulation_result <- function(x, ...) {
     if (!is.list(parameters)) {
         stop("Argument 'parameters' must be a named list or parameters object.", call. = FALSE)
     }
+
+    parameters <- parameters[!vapply(parameters, .is_interpolation, logical(1))]
 
     lapply(parameters, function(x) {
         if (inherits(x, "units")) {

@@ -17,7 +17,8 @@ experiment(
 }
 \arguments{
 \item{parameters}{A \link[=parameters]{compphysiol_parameters} object containing known
-individual and experimental values, including covariates. \code{NULL} creates
+individual and experimental values, including constant or time-dependent
+covariates. \code{NULL} creates
 an empty parameter collection.}
 
 \item{dosing}{A \link[=dosing]{compphysiol_dosing} object. \code{NULL} creates an empty dosing schedule.}
@@ -47,7 +48,8 @@ object. \code{c()} returns the combined \code{compphysiol_experiments} collectio
 }
 \description{
 One experiment represents one independent individual simulation or
-estimation unit. It stores known parameters (including covariates), a fixed
+estimation unit. It stores known parameters (including constant or
+time-dependent covariates), a fixed
 dosing schedule, and observations represented by either an observation
 schedule or observation data. Derived covariate relationships belong in
 model equations rather than in separate subject metadata. An experiment does

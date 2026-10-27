@@ -365,6 +365,23 @@ estimation_problem <- function(model, experiments, parameters, statistics) {
 
     model_observables <- .estimation_model_observables(model)
     estimated_names <- names(parameters)
+    model_parameters <- if (inherits(model, "compphysiol_desolve_compiled_model")) {
+        model$ode_model$parameters
+    } else {
+        model$parameters
+    }
+    time_dependent_estimates <- intersect(
+        estimated_names,
+        names(model_parameters)[vapply(unclass(model_parameters), .is_interpolation, logical(1))]
+    )
+    if (length(time_dependent_estimates)) {
+        stop(
+            "Time-dependent parameter(s) cannot be estimated: ",
+            paste(time_dependent_estimates, collapse = ", "),
+            ". Only scalar continuous parameters are eligible for estimation.",
+            call. = FALSE
+        )
+    }
     observed_names <- character()
     for (i in seq_along(experiments)) {
         e <- .experiment_entry(experiments, i)

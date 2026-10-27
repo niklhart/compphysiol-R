@@ -22,7 +22,10 @@ model time.}
 A \code{compphysiol_parameters} object containing the specified parameters.
 }
 \description{
-The \code{compphysiol_parameters} class represents a collection of named parameters, which can optionally have associated units.
+The \code{compphysiol_parameters} class represents a collection of named model
+inputs. Values may be constant or time dependent and may optionally have
+associated units. Use \code{\link[=interpolate]{interpolate()}} to construct a time-dependent
+continuous value.
 }
 \details{
 compphysiol_parameters can be specified in three different ways:
@@ -39,6 +42,8 @@ This allows for a more concise syntax when specifying parameters with units.
 parameters(name = c("A", "B"), value = c(2, 3), unit = c("", "m"))
 # Shorthand notation for interactive use
 parameters(A = 2, B = 3[m])
+# A known parameter that varies over model time
+parameters(BW = interpolate(c(0, 12, 24) [h], c(70, 69, 68) [kg]))
 }
 \seealso{
 \link{modify_parameters} for adding, overlaying, or replacing model and

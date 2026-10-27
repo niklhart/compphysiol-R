@@ -1,7 +1,8 @@
 #' Describe an experiment
 #'
 #' One experiment represents one independent individual simulation or
-#' estimation unit. It stores known parameters (including covariates), a fixed
+#' estimation unit. It stores known parameters (including constant or
+#' time-dependent covariates), a fixed
 #' dosing schedule, and observations represented by either an observation
 #' schedule or observation data. Derived covariate relationships belong in
 #' model equations rather than in separate subject metadata. An experiment does
@@ -26,7 +27,8 @@
 #' `start`. Empty observations do not impose a time unit.
 #'
 #' @param parameters A [compphysiol_parameters][parameters()] object containing known
-#'   individual and experimental values, including covariates. `NULL` creates
+#'   individual and experimental values, including constant or time-dependent
+#'   covariates. `NULL` creates
 #'   an empty parameter collection.
 #' @param dosing A [compphysiol_dosing][dosing()] object. `NULL` creates an empty dosing schedule.
 #' @param observations An [compphysiol_observation_schedule][observation_schedule()] or

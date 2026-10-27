@@ -615,6 +615,9 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
 
 .compiled_ode_model_source <- function(ode_model, parameter_names, dimensions) {
     env <- .compiled_ode_model_codegen_env(parameter_names, dimensions)
+    inline_profiles <- function(expr) {
+        .substitute_interpolations(expr, ode_model$parameters, dimensions)
+    }
     eq_lines <- character()
     for (i in seq_along(ode_model$equations)) {
         eq_lines <- c(
@@ -622,7 +625,7 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
             sprintf(
                 "  const double %s = %s;",
                 .compiled_ode_model_c_identifier(names(ode_model$equations)[[i]]),
-                .compiled_ode_model_expr(ode_model$equations[[i]], env)
+                .compiled_ode_model_expr(inline_profiles(ode_model$equations[[i]]), env)
             )
         )
         env$equations[[names(ode_model$equations)[[i]]]] <-
@@ -630,11 +633,11 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
     }
 
     rhs_lines <- vapply(seq_along(ode_model$rhs), function(i) {
-        sprintf("  ydot[%i] = %s;", i - 1L, .compiled_ode_model_expr(ode_model$rhs[[i]], env))
+        sprintf("  ydot[%i] = %s;", i - 1L, .compiled_ode_model_expr(inline_profiles(ode_model$rhs[[i]]), env))
     }, character(1))
 
     y0_lines <- vapply(seq_along(ode_model$initials), function(i) {
-        sprintf("  yout[%i] = %s;", i - 1L, .compiled_ode_model_expr(ode_model$initials[[i]], .compiled_ode_model_codegen_env(parameter_names, dimensions)))
+        sprintf("  yout[%i] = %s;", i - 1L, .compiled_ode_model_expr(inline_profiles(ode_model$initials[[i]]), .compiled_ode_model_codegen_env(parameter_names, dimensions)))
     }, character(1))
 
     c(
@@ -707,6 +710,14 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
         if (identical(fn, "(")) return(sprintf("(%s)", render(args[[1]])))
         if (identical(fn, "[")) return(.compiled_ode_model_subset_expr(e, env, render))
         if (fn %in% c("+", "-", "*", "/")) return(.compiled_ode_model_arithmetic_expr(fn, args, render))
+        if (fn %in% c(">=", ">", "<=", "<")) {
+            if (length(args) != 2L) stop("Cannot compile comparison with other than two arguments.", call. = FALSE)
+            return(sprintf("(%s %s %s)", render(args[[1]]), fn, render(args[[2]])))
+        }
+        if (identical(fn, "ifelse")) {
+            if (length(args) != 3L) stop("Cannot compile ifelse() with other than three arguments.", call. = FALSE)
+            return(sprintf("(%s ? %s : %s)", render(args[[1]]), render(args[[2]]), render(args[[3]])))
+        }
         if (identical(fn, "^")) {
             return(sprintf("pow(%s, %s)", render(args[[1]]), render(args[[2]])))
         }

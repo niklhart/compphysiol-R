@@ -257,7 +257,10 @@ to_compiled_ode_model.compphysiol_process_model <- function(model) {
 
 #' @export
 to_compiled_ode_model.compphysiol_ode_model <- function(model) {
-    parameter_names <- sort(unique(c(names(model$parameters), model$freeParams)))
+    fixed_parameters <- names(model$parameters)[!vapply(
+        unclass(model$parameters), .is_interpolation, logical(1)
+    )]
+    parameter_names <- sort(unique(c(fixed_parameters, model$freeParams)))
 
     structure(
         list(
@@ -300,6 +303,11 @@ to_analytical_model.compphysiol_compartment_model <- function(model) {
 
 #' @export
 to_analytical_model.compphysiol_process_model <- function(model) {
+    time_parameters <- names(model$parameters)[vapply(unclass(model$parameters), .is_interpolation, logical(1))]
+    if (length(time_parameters)) {
+        stop("Analytical models do not support time-dependent parameter(s): ",
+             paste(time_parameters, collapse = ", "), ".", call. = FALSE)
+    }
     time_dependent <- .time_dependent_equation_names(model$equations)
     if (length(time_dependent)) {
         stop(
@@ -356,6 +364,11 @@ to_stochastic_model.compphysiol_compartment_model <- function(model) {
 
 #' @export
 to_stochastic_model.compphysiol_process_model <- function(model) {
+    time_parameters <- names(model$parameters)[vapply(unclass(model$parameters), .is_interpolation, logical(1))]
+    if (length(time_parameters)) {
+        stop("Stochastic models do not support time-dependent parameter(s): ",
+             paste(time_parameters, collapse = ", "), ".", call. = FALSE)
+    }
     time_dependent <- .time_dependent_equation_names(model$equations)
     if (length(time_dependent)) {
         stop(
@@ -750,7 +763,9 @@ print.compphysiol_ode_model <- function(x, ...) {
     .check_class(model, "compphysiol_ode_model")
     parameters <- .simulation_parameters_object(parameters)
     params <- merged_parameters %||% .merge_ode_parameters(model$parameters, parameters)
-    param_values <- .to_dimensions_vec(params, dimensions)
+    param_values <- lapply(unclass(params), function(x) {
+        if (.is_interpolation(x)) x else .to_dimensions_value(x, dimensions)
+    })
     free_params <- new.env(parent = emptyenv())
     free_params$list <- character()
     eq_names <- names(model$equations)
@@ -1568,6 +1583,9 @@ print.compphysiol_ode_model <- function(x, ...) {
             if (nm %in% eq_names) return(e)
             if (nm %in% names(param_values)) {
                 val <- param_values[[nm]]
+                if (.is_interpolation(val)) {
+                    return(.interpolation_expression(val, dimensions))
+                }
                 if (is.numeric(val) && length(val) == 1L) return(val)
                 free_params$list <- union(free_params$list, nm)
                 return(bquote(params[[.(nm)]]))
@@ -1637,8 +1655,9 @@ print.compphysiol_ode_model <- function(x, ...) {
 }
 
 .ode_model_unit_context <- function(model, parameters) {
-    y0 <- .ode_model_state_unit_values(model, parameters, allow_unresolved = FALSE)
-    env <- list2env(unclass(parameters), parent = baseenv())
+    evaluation_parameters <- .parameter_representative_values(parameters)
+    y0 <- .ode_model_state_unit_values(model, evaluation_parameters, allow_unresolved = FALSE)
+    env <- list2env(unclass(evaluation_parameters), parent = baseenv())
     if (length(.time_dependent_equation_names(model$equations))) {
         assign("t", .equation_unit_time_value(parameters), envir = env)
     }
@@ -1668,7 +1687,7 @@ print.compphysiol_ode_model <- function(x, ...) {
     dosing_time <- lapply(model$dosing$time, .ode_model_eval_expr, env = list2env(unclass(parameters), parent = baseenv()), y_values = y0)
     dosing_value <- lapply(model$dosing$value, .ode_model_eval_expr, env = list2env(unclass(parameters), parent = baseenv()), y_values = y0)
 
-    c(y0, unclass(parameters), dosing_time, dosing_value)
+    c(y0, .parameter_dimension_values(parameters), dosing_time, dosing_value)
 }
 
 .ode_model_add_equations <- function(model, env, y_values) {

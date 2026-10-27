@@ -23,7 +23,10 @@ to_rxode2_model.compphysiol_process_model <- function(model, ...) {
 
 #' @export
 to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
-    parameter_names <- sort(unique(c(names(model$parameters), model$freeParams)))
+    fixed_parameters <- names(model$parameters)[!vapply(
+        unclass(model$parameters), .is_interpolation, logical(1)
+    )]
+    parameter_names <- sort(unique(c(fixed_parameters, model$freeParams)))
     maps <- .rxode2_identifier_maps(model, parameter_names)
     structure(
         list(
@@ -76,13 +79,14 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
             }
             return(model$identifiers$states[[model$stateNames[[idx]]]])
         }
-        allowed <- c("+", "-", "*", "/", "^", "exp", "log", "log10", "sqrt", "abs",
-                     "sin", "cos", "tan", "sinh", "cosh", "tanh", "min", "max", "pmin", "pmax")
+        allowed <- c("+", "-", "*", "/", "^", ">=", ">", "<=", "<", "ifelse",
+                     "exp", "log", "log10", "sqrt", "abs", "sin", "cos", "tan",
+                     "sinh", "cosh", "tanh", "min", "max", "pmin", "pmax")
         if (!(fun %in% allowed)) {
             stop("Unsupported call '", fun, "' in rxode2 ", context, ": ", original, call. = FALSE)
         }
         args <- vapply(as.list(x[-1]), render, character(1))
-        if (fun %in% c("+", "-", "*", "/", "^") && length(args) <= 2L) {
+        if (fun %in% c("+", "-", "*", "/", "^", ">=", ">", "<=", "<") && length(args) <= 2L) {
             if (length(args) == 1L) return(paste0("(", fun, args, ")"))
             return(paste0("(", args[[1]], " ", fun, " ", args[[2]], ")"))
         }
@@ -97,18 +101,18 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
     for (i in seq_along(ode$initials)) {
         state <- model$identifiers$states[[i]]
         lines <- c(lines, paste0(state, "(0) = ",
-            .rxode2_render_expr(ode$initials[[i]], model, dimensions,
+            .rxode2_render_expr(.substitute_interpolations(ode$initials[[i]], ode$parameters, dimensions), model, dimensions,
                                 paste0("initial value for '", ode$states$dsl_name[[i]], "'")), ";"))
     }
     for (i in seq_along(ode$equations)) {
         lines <- c(lines, paste0(model$identifiers$equations[[i]], " = ",
-            .rxode2_render_expr(ode$equations[[i]], model, dimensions,
+            .rxode2_render_expr(.substitute_interpolations(ode$equations[[i]], ode$parameters, dimensions), model, dimensions,
                                 paste0("equation '", names(ode$equations)[[i]], "'")), ";"))
     }
     for (i in seq_along(ode$rhs)) {
         state <- model$identifiers$states[[i]]
         lines <- c(lines, paste0("d/dt(", state, ") = ",
-            .rxode2_render_expr(ode$rhs[[i]], model, dimensions,
+            .rxode2_render_expr(.substitute_interpolations(ode$rhs[[i]], ode$parameters, dimensions), model, dimensions,
                                 paste0("right-hand side for '", ode$states$dsl_name[[i]], "'")), ";"))
     }
     paste(lines, collapse = "\n")
@@ -439,17 +443,20 @@ simulate.compphysiol_rxode2_model <- function(
     time <- .simulation_apply_time_unit(time, unit)
     .simulation_validate_time(time)
     supplied <- .simulation_parameters_object(parameters)
-    unknown <- setdiff(names(supplied), object$parameterNames)
+    supplied_profiles <- vapply(unclass(supplied), .is_interpolation, logical(1))
+    runtime_supplied <- .new_parameters(unclass(supplied)[!supplied_profiles])
+    unknown <- setdiff(names(runtime_supplied), object$parameterNames)
     if (length(unknown)) stop("Unknown rxode2 model parameter(s): ", paste(unknown, collapse = ", "), ".", call. = FALSE)
     cached <- if (exists("artifact", envir = object$cache, inherits = FALSE)) get("artifact", object$cache) else NULL
     if (is.null(cached)) {
         merged <- .merge_ode_parameters(ode$parameters, supplied)
+        .validate_interpolation_start(merged, time[[1]])
         .simulation_check_free_parameters_available(ode, merged)
         .simulation_check_time_mode(ode, time, parameters = merged)
         dimensions <- .simulation_dimensions(ode, time, dimensions, parameters = merged)
         artifact <- .rxode2_artifact(object, dimensions, parameters = merged)
     } else {
-        .compiled_ode_model_check_runtime_parameter_signature(cached$parameterSignature, supplied)
+        .compiled_ode_model_check_runtime_parameter_signature(cached$parameterSignature, runtime_supplied)
         .compiled_ode_model_check_time_mode(cached, time)
         if (!is.null(dimensions) && !identical(dimensions, cached$dimensions)) {
             stop("rxode2 model uses fixed solver dimensions; requested dimensions differ from the compiled model.", call. = FALSE)
@@ -457,8 +464,9 @@ simulate.compphysiol_rxode2_model <- function(
         dimensions <- cached$dimensions
         artifact <- cached
         merged <- supplied
+        .validate_interpolation_start(merged, time[[1]])
     }
-    parameter_values <- .rxode2_runtime_parameter_values(artifact, supplied, dimensions)
+    parameter_values <- .rxode2_runtime_parameter_values(artifact, runtime_supplied, dimensions)
     info <- .rxode2_runtime_info(object, artifact, parameter_values)
     if (!is.null(attr(ode, "experiment_dosing"))) {
         info$events <- .simulation_experiment_events(
