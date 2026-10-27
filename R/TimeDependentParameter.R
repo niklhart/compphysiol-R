@@ -12,12 +12,12 @@
 #' @param time Unique finite numeric times, optionally with compatible units.
 #' @param value Finite numeric values of the same length as `time`, optionally
 #'   with compatible units.
-#' @param method Interpolation method: `"linear"` or `"constant"` (last
+#' @param method Interpolation method: `"linear"` or `"locf"` (last
 #'   observation carried forward).
 #' @returns A structured time-dependent parameter value for use in
 #'   [parameters()].
 #' @export
-interpolate <- function(time, value, method = c("linear", "constant")) {
+interpolate <- function(time, value, method = c("linear", "locf")) {
     method <- match.arg(method)
     if (!is.numeric(time) || !is.null(dim(time)) || !length(time)) {
         stop("'time' must be a nonempty numeric vector.", call. = FALSE)
@@ -75,7 +75,7 @@ print.compphysiol_interpolation <- function(x, ...) {
     if (at < scheduled[[1]]) {
         stop("Cannot evaluate a time-dependent parameter before its first scheduled time.", call. = FALSE)
     }
-    if (identical(x$method, "constant") || length(scheduled) == 1L) {
+    if (identical(x$method, "locf") || length(scheduled) == 1L) {
         return(x$value[[max(which(scheduled <= at))]])
     }
     if (at >= scheduled[[length(scheduled)]]) return(x$value[[length(scheduled)]])
@@ -110,7 +110,7 @@ print.compphysiol_interpolation <- function(x, ...) {
     value <- as.numeric(.to_dimensions_value(x$value, dimensions))
     if (length(time) == 1L) return(value[[1]])
 
-    if (identical(x$method, "constant")) {
+    if (identical(x$method, "locf")) {
         expr <- value[[1]]
         for (i in 2:length(time)) {
             expr <- call("ifelse", call(">=", quote(t), time[[i]]), value[[i]], expr)

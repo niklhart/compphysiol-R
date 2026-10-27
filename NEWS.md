@@ -2,6 +2,7 @@
 
 * Introduced "rate type" concept for reactions and transports for improved clarity
 * Introduced keyword "t" for current time in equations
+* Support time-dependent continuous covariates
 
 # compphysiol 0.5.0
 

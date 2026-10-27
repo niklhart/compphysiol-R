@@ -4,7 +4,7 @@
 \alias{interpolate}
 \title{Construct a time-dependent parameter value}
 \usage{
-interpolate(time, value, method = c("linear", "constant"))
+interpolate(time, value, method = c("linear", "locf"))
 }
 \arguments{
 \item{time}{Unique finite numeric times, optionally with compatible units.}
@@ -12,7 +12,7 @@ interpolate(time, value, method = c("linear", "constant"))
 \item{value}{Finite numeric values of the same length as \code{time}, optionally
 with compatible units.}
 
-\item{method}{Interpolation method: \code{"linear"} or \code{"constant"} (last
+\item{method}{Interpolation method: \code{"linear"} or \code{"locf"} (last
 observation carried forward).}
 }
 \value{

@@ -9,18 +9,19 @@ test_that("interpolate validates and sorts schedules", {
     expect_error(interpolate(0:1, 1), "same length")
     expect_error(interpolate(c(0, Inf), 1:2), "only finite")
     expect_error(interpolate(0:1, c(1, NA)), "only finite")
+    expect_error(interpolate(0:1, 1:2, "constant"), "arg")
     expect_error(interpolate(0:1, 1:2, "spline"), "arg")
 })
 
 test_that("interpolation methods use agreed boundary behavior", {
     linear <- interpolate(0:2, c(1, 2, 4), method = "linear")
-    constant <- interpolate(0:2, c(1, 2, 4), method = "constant")
+    locf <- interpolate(0:2, c(1, 2, 4), method = "locf")
 
     expect_equal(compphysiol:::.interpolation_value(linear, 0.5), 1.5)
     expect_equal(compphysiol:::.interpolation_value(linear, 3), 4)
-    expect_equal(compphysiol:::.interpolation_value(constant, 0.5), 1)
-    expect_equal(compphysiol:::.interpolation_value(constant, 1), 2)
-    expect_equal(compphysiol:::.interpolation_value(constant, 3), 4)
+    expect_equal(compphysiol:::.interpolation_value(locf, 0.5), 1)
+    expect_equal(compphysiol:::.interpolation_value(locf, 1), 2)
+    expect_equal(compphysiol:::.interpolation_value(locf, 3), 4)
     expect_error(
         compphysiol:::.interpolation_value(linear, -1),
         "before its first scheduled time"
@@ -91,9 +92,9 @@ test_that("a scalar parameter can override a time-dependent default", {
     }
 })
 
-test_that("constant time-dependent parameters carry observations forward", {
+test_that("LOCF time-dependent parameters carry observations forward", {
     model <- .time_parameter_model(
-        interpolate(0:2, c(1, 2, 4), method = "constant")
+        interpolate(0:2, c(1, 2, 4), method = "locf")
     )
     time <- c(0, 0.5, 1, 1.5, 2, 2.5, 3)
     integrated_rate <- c(0, 0.5, 1, 2, 3, 5, 7)

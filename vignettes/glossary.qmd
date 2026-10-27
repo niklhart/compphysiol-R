@@ -530,7 +530,7 @@ Incompatible schedule units remain an error.
 Experiment parameters are known values. Scalar values are fixed during the
 experiment; a continuous value constructed with `interpolate()` varies over
 the shared model-time axis. Linear and last-observation-carried-forward
-interpolation are supported. Evaluation before the first scheduled time is an
+(`"locf"`) interpolation are supported. Evaluation before the first scheduled time is an
 error, while the last value is carried forward. Joint estimation keeps known
 experiment parameters separate from shared estimated parameters and rejects
 overlap; only scalar continuous parameters are eligible for estimation. Dosing
