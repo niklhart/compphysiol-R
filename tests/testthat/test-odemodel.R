@@ -50,12 +50,13 @@ test_that("to_compiled_ode_model returns a compiled-backend representation", {
     expect_named(
         compiled_model,
         c(
-            "ode_model", "parameterNames", "backend", "source", "dll",
-            "cache", "entryPoints"
+            "ode_model", "parameterNames", "dynamicParameterNames", "backend",
+            "source", "dll", "cache", "entryPoints"
         )
     )
     expect_identical(compiled_model$ode_model, ode_model)
     expect_equal(compiled_model$parameterNames, c("A0", "CL", "V"))
+    expect_identical(compiled_model$dynamicParameterNames, character())
     expect_equal(compiled_model$backend, "deSolve_compiled_rhs")
     expect_null(compiled_model$source)
     expect_null(compiled_model$dll)
@@ -63,6 +64,7 @@ test_that("to_compiled_ode_model returns a compiled-backend representation", {
     expect_equal(ls(compiled_model$cache), character(0))
     expect_equal(compiled_model$entryPoints$func, "derivs")
     expect_equal(compiled_model$entryPoints$initfunc, "initmod")
+    expect_equal(compiled_model$entryPoints$initforc, "initforc")
 })
 
 test_that("to_compiled_ode_model accepts CompartmentModel and ProcessModel inputs", {

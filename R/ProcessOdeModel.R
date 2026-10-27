@@ -260,12 +260,14 @@ to_compiled_ode_model.compphysiol_ode_model <- function(model) {
     fixed_parameters <- names(model$parameters)[!vapply(
         unclass(model$parameters), .is_interpolation, logical(1)
     )]
+    dynamic_parameter_names <- .interpolation_parameter_names(model$parameters)
     parameter_names <- sort(unique(c(fixed_parameters, model$freeParams)))
 
     structure(
         list(
             ode_model = model,
             parameterNames = parameter_names,
+            dynamicParameterNames = dynamic_parameter_names,
             backend = "deSolve_compiled_rhs",
             source = NULL,
             dll = NULL,
@@ -273,6 +275,7 @@ to_compiled_ode_model.compphysiol_ode_model <- function(model) {
             entryPoints = list(
                 func = "derivs",
                 initfunc = "initmod",
+                initforc = "initforc",
                 y0func = "init_y"
             )
         ),

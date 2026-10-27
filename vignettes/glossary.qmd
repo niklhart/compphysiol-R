@@ -314,6 +314,16 @@ parameter value may be a scalar or a structured interpolation profile over
 model time. Model expressions use the same bare parameter name in either case;
 the profile supplies its value at current `t`. Unit-aware parameter values use
 the general unit shorthand described above.
+The interpolation method belongs to the parameter slot used by a prepared
+model. Experiments may supply different schedules for that slot, but they must
+use the same method. A scalar experiment value for a time-dependent slot is
+treated as a constant profile beginning at that experiment's initial time.
+Compiled models contain the slot and its interpolation behavior, while profile
+times and values remain experiment inputs and can differ between individuals.
+
+Only scalar continuous parameter values are eligible for estimation. A
+time-dependent parameter profile is known experiment data; scalar parameters
+that describe its effect in a model equation remain eligible for estimation.
 The name `t` is reserved and cannot be used for a parameter.
 
 Implementation anchor: parameters are represented by `compphysiol_parameters`

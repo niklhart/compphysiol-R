@@ -66,7 +66,8 @@ test_that("rxode2 handles bolus, infusion, experiments, and cache reuse", {
             "parameterSignature", "parameterTransforms", "obsFuncs",
             "stateUnitValues", "stateUnitScales",
             "observableUnitValues", "observableExportUnitValues", "observableUnitScales",
-            "events", "modelUsesTime", "modelHasTimeDependentProcess"
+            "events", "modelUsesTime", "modelHasTimeDependentProcess",
+            "dynamicParameterMethods"
         )
     )
     expect_equal(second, first)

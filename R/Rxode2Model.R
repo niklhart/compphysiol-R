@@ -26,8 +26,9 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
     fixed_parameters <- names(model$parameters)[!vapply(
         unclass(model$parameters), .is_interpolation, logical(1)
     )]
+    dynamic_parameter_names <- .interpolation_parameter_names(model$parameters)
     parameter_names <- sort(unique(c(fixed_parameters, model$freeParams)))
-    maps <- .rxode2_identifier_maps(model, parameter_names)
+    maps <- .rxode2_identifier_maps(model, c(parameter_names, dynamic_parameter_names))
     structure(
         list(
             ode_model = model,
@@ -35,6 +36,7 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
             source = NULL,
             compiled = NULL,
             parameterNames = parameter_names,
+            dynamicParameterNames = dynamic_parameter_names,
             stateNames = model$states$output_name,
             cache = new.env(parent = emptyenv())
         ),
@@ -97,7 +99,9 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
 
 .rxode2_source <- function(model, dimensions) {
     ode <- model$ode_model
-    lines <- character()
+    lines <- vapply(model$dynamicParameterNames, function(name) {
+        paste0(ode$parameters[[name]]$method, "(", model$identifiers$parameters[[name]], ");")
+    }, character(1))
     for (i in seq_along(ode$initials)) {
         state <- model$identifiers$states[[i]]
         lines <- c(lines, paste0(state, "(0) = ",
@@ -106,13 +110,13 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
     }
     for (i in seq_along(ode$equations)) {
         lines <- c(lines, paste0(model$identifiers$equations[[i]], " = ",
-            .rxode2_render_expr(.substitute_interpolations(ode$equations[[i]], ode$parameters, dimensions), model, dimensions,
+            .rxode2_render_expr(ode$equations[[i]], model, dimensions,
                                 paste0("equation '", names(ode$equations)[[i]], "'")), ";"))
     }
     for (i in seq_along(ode$rhs)) {
         state <- model$identifiers$states[[i]]
         lines <- c(lines, paste0("d/dt(", state, ") = ",
-            .rxode2_render_expr(.substitute_interpolations(ode$rhs[[i]], ode$parameters, dimensions), model, dimensions,
+            .rxode2_render_expr(ode$rhs[[i]], model, dimensions,
                                 paste0("right-hand side for '", ode$states$dsl_name[[i]], "'")), ";"))
     }
     paste(lines, collapse = "\n")
@@ -151,7 +155,9 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
         parameterTransforms = .compiled_ode_model_parameter_transforms(
             model$parameterNames, parameters, dimensions
         ),
-        obsFuncs = .compiled_ode_model_observable_functions(ode, model$parameterNames, dimensions),
+        obsFuncs = .compiled_ode_model_observable_functions(
+            ode, model$parameterNames, model$dynamicParameterNames, dimensions
+        ),
         stateUnitValues = state_unit_values,
         stateUnitScales = .compiled_ode_model_unit_scales(state_unit_values, state_unit_values),
         observableUnitValues = observable_unit_values,
@@ -159,7 +165,8 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
         observableUnitScales = .compiled_ode_model_unit_scales(observable_export_unit_values, observable_unit_values),
         events = .compiled_ode_model_events(ode, dimensions),
         modelUsesTime = any(vapply(.simulation_dimension_values(ode, parameters), .has_time_dimension, logical(1))),
-        modelHasTimeDependentProcess = .simulation_has_time_dependent_process(ode)
+        modelHasTimeDependentProcess = .simulation_has_time_dependent_process(ode),
+        dynamicParameterMethods = .interpolation_methods(parameters)
     )
     assign("artifact", artifact, envir = model$cache)
     artifact
@@ -210,7 +217,7 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
     supplied <- lapply(experiments, function(e) .simulation_parameters_object(e$parameters))
     parameter_indices <- if (homogeneity[["parameter_schema"]]) 1L else seq_along(supplied)
     unknown <- unique(unlist(lapply(supplied[parameter_indices], function(x) {
-        setdiff(names(x), object$parameterNames)
+        setdiff(names(x), c(object$parameterNames, object$dynamicParameterNames))
     })))
     if (length(unknown)) stop("Unknown rxode2 model parameter(s): ", paste(unknown, collapse = ", "), ".", call. = FALSE)
 
@@ -262,8 +269,11 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
                 ode,
                 union(names(ode$parameters), names(supplied[[i]]))
             )
+            scalar_supplied <- supplied[[i]][
+                !vapply(unclass(supplied[[i]]), .is_interpolation, logical(1))
+            ]
             .compiled_ode_model_check_runtime_parameter_signature(
-                artifact$parameterSignature, supplied[[i]]
+                artifact$parameterSignature, scalar_supplied
             )
         }
         if (!shared_time || i == 1L) {
@@ -272,7 +282,10 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
         parameter_values[[i]] <- if (homogeneity[["parameters"]] && i > 1L) {
             parameter_values[[1]]
         } else {
-            .rxode2_runtime_parameter_values(artifact, supplied[[i]], dimensions)
+            scalar_supplied <- supplied[[i]][
+                !vapply(unclass(supplied[[i]]), .is_interpolation, logical(1))
+            ]
+            .rxode2_runtime_parameter_values(artifact, scalar_supplied, dimensions)
         }
         if (is.null(prepared)) {
             solver_times[[i]] <- .simulation_numeric_time(times[[i]], dimensions)
@@ -298,6 +311,15 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
         records <- do.call(rbind, records)
         records[order(records$id, records$time, -records$evid), , drop = FALSE]
     }
+    record_parts <- split(records, records$id)
+    record_parts <- lapply(seq_along(experiments), function(i) {
+        .rxode2_add_dynamic_records(
+            record_parts[[as.character(i)]], supplied[[i]], dimensions,
+            object$identifiers$parameters, id = i
+        )
+    })
+    records <- do.call(rbind, record_parts)
+    rownames(records) <- NULL
 
     params <- as.data.frame(do.call(rbind, parameter_values), check.names = FALSE)
     names(params) <- unname(object$identifiers$parameters[names(params)])
@@ -415,6 +437,46 @@ to_rxode2_model.compphysiol_ode_model <- function(model, ...) {
     )
 }
 
+.rxode2_add_dynamic_records <- function(records, parameters, dimensions, identifiers, id = NULL) {
+    dynamic <- .interpolation_parameter_names(parameters)
+    if (!length(dynamic)) return(records)
+    if (!"evid" %in% names(records)) records$evid <- 0L
+    if (!"cmt" %in% names(records)) records$cmt <- NA_character_
+    if (!"amt" %in% names(records)) records$amt <- NA_real_
+    knot_times <- unique(unlist(lapply(dynamic, function(name) {
+        as.numeric(.to_dimensions_value(parameters[[name]]$time, dimensions))
+    })))
+    knot_times <- knot_times[
+        knot_times >= min(records$time) & knot_times <= max(records$time)
+    ]
+    extra_time <- setdiff(knot_times, records$time)
+    extra <- data.frame(
+        time = extra_time,
+        evid = rep.int(2L, length(extra_time)),
+        cmt = rep.int(NA_character_, length(extra_time)),
+        amt = rep.int(NA_real_, length(extra_time))
+    )
+    if (!is.null(id)) extra$id <- rep.int(id, nrow(extra))
+    if (nrow(extra)) {
+        extra <- extra[names(records)]
+        records <- rbind(records, extra)
+    }
+    for (name in dynamic) {
+        profile <- parameters[[name]]
+        solver_profile <- interpolate(
+            as.numeric(.to_dimensions_value(profile$time, dimensions)),
+            as.numeric(.to_dimensions_value(profile$value, dimensions)),
+            method = profile$method
+        )
+        records[[identifiers[[name]]]] <- vapply(
+            records$time,
+            function(time) .interpolation_value(solver_profile, time),
+            numeric(1)
+        )
+    }
+    records[order(records$time, -records$evid), , drop = FALSE]
+}
+
 #' @export
 print.compphysiol_rxode2_model <- function(x, ...) {
     artifact <- if (exists("artifact", envir = x$cache, inherits = FALSE)) get("artifact", x$cache) else NULL
@@ -445,7 +507,7 @@ simulate.compphysiol_rxode2_model <- function(
     supplied <- .simulation_parameters_object(parameters)
     supplied_profiles <- vapply(unclass(supplied), .is_interpolation, logical(1))
     runtime_supplied <- .new_parameters(unclass(supplied)[!supplied_profiles])
-    unknown <- setdiff(names(runtime_supplied), object$parameterNames)
+    unknown <- setdiff(names(supplied), c(object$parameterNames, object$dynamicParameterNames))
     if (length(unknown)) stop("Unknown rxode2 model parameter(s): ", paste(unknown, collapse = ", "), ".", call. = FALSE)
     cached <- if (exists("artifact", envir = object$cache, inherits = FALSE)) get("artifact", object$cache) else NULL
     if (is.null(cached)) {
@@ -484,12 +546,17 @@ simulate.compphysiol_rxode2_model <- function(
         records <- rbind(dose, data.frame(time = solver_time, evid = 0L, cmt = NA_character_, amt = NA_real_))
         records <- records[order(records$time, -records$evid), , drop = FALSE]
     }
+    effective <- .merge_ode_parameters(ode$parameters, supplied)
+    records <- .rxode2_add_dynamic_records(
+        records, effective, dimensions, object$identifiers$parameters
+    )
     numeric_params <- parameter_values
     if (length(numeric_params)) {
         names(numeric_params) <- unname(object$identifiers$parameters[names(numeric_params)])
     }
-    args <- c(list(object = artifact$compiled, params = numeric_params,
-                   events = records, returnType = "data.frame"), engine$arguments, list(...))
+    args <- list(object = artifact$compiled, events = records, returnType = "data.frame")
+    if (length(numeric_params)) args$params <- numeric_params
+    args <- c(args, engine$arguments, list(...))
     out <- do.call(rxode2::rxSolve, args)
     out <- as.data.frame(out)
     out <- out[out$time %in% solver_time, c("time", unname(object$identifiers$states)), drop = FALSE]

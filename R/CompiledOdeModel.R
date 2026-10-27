@@ -89,7 +89,9 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
     .check_class(ode_model, "compphysiol_ode_model")
 
     parameters <- .simulation_parameters_object(parameters)
-    if (isTRUE(validate)) .compiled_ode_model_check_parameter_names(names(parameters), model$parameterNames)
+    if (isTRUE(validate)) .compiled_ode_model_check_parameter_names(
+        names(parameters), c(model$parameterNames, model$dynamicParameterNames)
+    )
     if (is.null(merged_parameters) && is.null(.compiled_ode_model_cached_artifact(model))) {
         merged_parameters <- .merge_ode_parameters(ode_model$parameters, parameters)
     }
@@ -120,6 +122,9 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
         events = build$events,
         dllname = build$dllname,
         initfunc = build$initfunc,
+        initforc = build$initforc,
+        forcings = build$forcings,
+        fcontrol = build$fcontrol,
         parms = build$parms,
         compiled = build
     )
@@ -146,10 +151,13 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
     out
 }
 
-.compiled_ode_model_observable_functions <- function(ode_model, parameter_names, dimensions = NULL) {
+.compiled_ode_model_observable_functions <- function(ode_model, parameter_names,
+                                                     dynamic_parameter_names = character(),
+                                                     dimensions = NULL) {
     eq_names <- names(ode_model$equations)
     output_state_names <- ode_model$states$output_name
-    param_refs <- as.list(stats::setNames(rep("", length(parameter_names)), parameter_names))
+    interface_names <- c(parameter_names, dynamic_parameter_names)
+    param_refs <- as.list(stats::setNames(rep("", length(interface_names)), interface_names))
 
     obs_funcs <- lapply(ode_model$observables, function(obs) {
         free_params <- new.env(parent = emptyenv())
@@ -161,7 +169,7 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
             free_params = free_params,
             dimensions = dimensions
         )
-        outside_interface <- setdiff(free_params$list, parameter_names)
+        outside_interface <- setdiff(free_params$list, interface_names)
         if (length(outside_interface) > 0L) {
             stop(
                 "compiled deSolve model expression contains parameter(s) outside the frozen interface: ",
@@ -226,15 +234,33 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
     )
     parameter_values <- .compiled_ode_model_runtime_parameter_values(
         artifact,
-        parameters = parameters,
+        parameters = parameters[!vapply(unclass(parameters), .is_interpolation, logical(1))],
         dimensions = dimensions
     )
+    effective_parameters <- merged_parameters %||% .merge_ode_parameters(
+        model$ode_model$parameters, parameters
+    )
+    dynamic <- artifact$dynamicParameterMethods
+    forcings <- lapply(names(dynamic), function(name) {
+        value <- effective_parameters[[name]]
+        if (!.is_interpolation(value)) {
+            stop("Time-dependent parameter '", name, "' requires a profile.", call. = FALSE)
+        }
+        .interpolation_solver_profile(value, artifact$dimensions)
+    })
+    names(forcings) <- names(dynamic)
 
     c(
         artifact,
         list(
             parms = parameter_values,
-            parameterNames = model$parameterNames
+            parameterNames = model$parameterNames,
+            forcings = forcings,
+            fcontrol = if (length(dynamic)) list(
+                method = if (identical(unname(dynamic[[1]]), "locf")) "constant" else "linear",
+                rule = 2,
+                f = 0
+            ) else NULL
         )
     )
 }
@@ -259,16 +285,19 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
     }
 
     ode_model <- model$ode_model
+    .dynamic_parameter_schema(parameters, list(), backend = "deSolve")
     .ode_model_check_unit_consistency(ode_model, parameters)
     source <- .compiled_ode_model_source(
         ode_model,
         parameter_names = model$parameterNames,
+        dynamic_parameter_names = .interpolation_parameter_names(parameters),
         dimensions = dimensions
     )
     paths <- .compiled_ode_model_compile(source)
     artifact <- list(
         func = model$entryPoints$func,
         initfunc = model$entryPoints$initfunc,
+        initforc = model$entryPoints$initforc,
         y0func = model$entryPoints$y0func,
         dllname = paths$dllname,
         source = paths$source,
@@ -282,6 +311,7 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
         obsFuncs = .compiled_ode_model_observable_functions(
             ode_model,
             parameter_names = model$parameterNames,
+            dynamic_parameter_names = .interpolation_parameter_names(parameters),
             dimensions = dimensions
         ),
         stateUnitValues = .compiled_ode_model_state_unit_values(
@@ -312,7 +342,8 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
             model$parameterNames,
             parameters,
             dimensions
-        )
+        ),
+        dynamicParameterMethods = .interpolation_methods(parameters)
     )
     artifact$observableExportUnitValues <- lapply(artifact$observableUnitValues, function(x) {
         if (inherits(x, "units")) do.call(.to_dimensions, c(list(x), dimensions)) else x
@@ -613,11 +644,10 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
     setNames(unlist(values, use.names = FALSE), parameter_names)
 }
 
-.compiled_ode_model_source <- function(ode_model, parameter_names, dimensions) {
-    env <- .compiled_ode_model_codegen_env(parameter_names, dimensions)
-    inline_profiles <- function(expr) {
-        .substitute_interpolations(expr, ode_model$parameters, dimensions)
-    }
+.compiled_ode_model_source <- function(ode_model, parameter_names, dynamic_parameter_names = character(), dimensions) {
+    env <- .compiled_ode_model_codegen_env(
+        parameter_names, dimensions, dynamic_parameter_names
+    )
     eq_lines <- character()
     for (i in seq_along(ode_model$equations)) {
         eq_lines <- c(
@@ -625,7 +655,7 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
             sprintf(
                 "  const double %s = %s;",
                 .compiled_ode_model_c_identifier(names(ode_model$equations)[[i]]),
-                .compiled_ode_model_expr(inline_profiles(ode_model$equations[[i]]), env)
+                .compiled_ode_model_expr(ode_model$equations[[i]], env)
             )
         )
         env$equations[[names(ode_model$equations)[[i]]]] <-
@@ -633,11 +663,14 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
     }
 
     rhs_lines <- vapply(seq_along(ode_model$rhs), function(i) {
-        sprintf("  ydot[%i] = %s;", i - 1L, .compiled_ode_model_expr(inline_profiles(ode_model$rhs[[i]]), env))
+        sprintf("  ydot[%i] = %s;", i - 1L, .compiled_ode_model_expr(ode_model$rhs[[i]], env))
     }, character(1))
 
     y0_lines <- vapply(seq_along(ode_model$initials), function(i) {
-        sprintf("  yout[%i] = %s;", i - 1L, .compiled_ode_model_expr(inline_profiles(ode_model$initials[[i]]), .compiled_ode_model_codegen_env(parameter_names, dimensions)))
+        sprintf("  yout[%i] = %s;", i - 1L, .compiled_ode_model_expr(
+            .substitute_interpolations(ode_model$initials[[i]], ode_model$parameters, dimensions),
+            .compiled_ode_model_codegen_env(parameter_names, dimensions)
+        ))
     }, character(1))
 
     c(
@@ -645,10 +678,16 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
         "#include <math.h>",
         "",
         sprintf("static double parms[%i];", max(1L, length(parameter_names))),
+        sprintf("static double forc[%i];", max(1L, length(dynamic_parameter_names))),
         "",
         "void initmod(void (* odeparms)(int *, double *)) {",
         sprintf("  int N = %i;", length(parameter_names)),
         "  odeparms(&N, parms);",
+        "}",
+        "",
+        "void initforc(void (* odeforcs)(int *, double *)) {",
+        sprintf("  int N = %i;", length(dynamic_parameter_names)),
+        "  odeforcs(&N, forc);",
         "}",
         "",
         "void derivs(int *neq, double *t, double *y, double *ydot, double *yout, int *ip) {",
@@ -667,10 +706,11 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
     )
 }
 
-.compiled_ode_model_codegen_env <- function(parameter_names, dimensions) {
+.compiled_ode_model_codegen_env <- function(parameter_names, dimensions, dynamic_parameter_names = character()) {
     list(
         parameter_names = parameter_names,
         parameters = setNames(seq_along(parameter_names) - 1L, parameter_names),
+        forcings = setNames(seq_along(dynamic_parameter_names) - 1L, dynamic_parameter_names),
         equations = list(),
         dimensions = dimensions
     )
@@ -695,6 +735,9 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
             if (nm %in% names(env$equations)) return(env$equations[[nm]])
             if (nm %in% names(env$parameters)) {
                 return(sprintf("parms[%i]", env$parameters[[nm]]))
+            }
+            if (nm %in% names(env$forcings)) {
+                return(sprintf("forc[%i]", env$forcings[[nm]]))
             }
             if (identical(nm, "pi")) return(.compiled_ode_model_number(pi))
             if (identical(nm, "Inf")) return("R_PosInf")

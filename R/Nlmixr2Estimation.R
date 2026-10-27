@@ -205,9 +205,24 @@
     .nlmixr2_validate_scope(problem)
     model <- problem$model
     if (inherits(model, "compphysiol_desolve_compiled_model")) model <- model$ode_model
-    executable <- if (inherits(model, "compphysiol_rxode2_model")) model else to_rxode2_model(model)
-    ode <- executable$ode_model
     experiments <- .experiments_elements(problem$experiments)
+    ode <- if (inherits(model, "compphysiol_rxode2_model")) model$ode_model else {
+        if (inherits(model, "compphysiol_ode_model")) model else to_ode_model(model)
+    }
+    dynamic_schema <- .dynamic_parameter_schema(
+        ode$parameters, lapply(experiments, `[[`, "parameters"), backend = "rxode2"
+    )
+    if (length(dynamic_schema)) {
+        normalized <- lapply(experiments, function(experiment) {
+            .normalize_dynamic_parameters(
+                experiment$parameters, ode$parameters, dynamic_schema,
+                .experiment_effective_start(experiment$start)
+            )
+        })
+        ode$parameters <- normalized[[1]]
+        ode$freeParams <- setdiff(ode$freeParams, names(dynamic_schema))
+    }
+    executable <- to_rxode2_model(ode)
     initial_parameters <- .new_parameters(lapply(problem$parameters, `[[`, "initial"))
     supplied <- .merge_ode_parameters(experiments[[1]]$parameters, initial_parameters)
     typical <- lapply(.nlmixr2_individual_targets(problem$statistics), function(target) {
@@ -313,7 +328,8 @@
     )
     model_function <- eval(parse(text = source), envir = parent.frame())
     data <- .nlmixr2_data(problem, executable, artifact, dimensions,
-                          observation, theta_parameters, individual)
+                          observation, theta_parameters, individual,
+                          dynamic_schema = dynamic_schema)
     list(model = model_function, source = source, data = data,
          executable = executable, artifact = artifact, dimensions = dimensions,
          theta_ids = theta_ids, eta_ids = eta_ids,
@@ -323,10 +339,15 @@
 }
 
 .nlmixr2_data <- function(problem, executable, artifact, dimensions,
-                          observation, theta_parameters, individual) {
+                          observation, theta_parameters, individual,
+                          dynamic_schema = character()) {
     experiments <- .experiments_elements(problem$experiments)
     rows <- lapply(seq_along(experiments), function(i) {
         experiment <- experiments[[i]]
+        experiment$parameters <- .normalize_dynamic_parameters(
+            experiment$parameters, executable$ode_model$parameters,
+            dynamic_schema, .experiment_effective_start(experiment$start)
+        )
         events <- .simulation_experiment_events(
             executable$ode_model, experiment$dosing, dimensions,
             experiment$parameters, state_unit_values = artifact$stateUnitValues
@@ -349,19 +370,54 @@
             DVID = match(observed$observable, observation),
             CP_ROW = seq_len(nrow(observed))
         )
+        start_time <- as.numeric(.to_dimensions_value(
+            .experiment_effective_start(experiment$start), dimensions
+        ))
+        knot_time <- if (length(dynamic_schema)) unique(c(
+            start_time,
+            unlist(lapply(names(dynamic_schema), function(name) {
+                as.numeric(.to_dimensions_value(
+                    experiment$parameters[[name]]$time, dimensions
+                ))
+            }))
+        )) else numeric()
+        if (length(knot_time)) {
+            upper <- max(c(events$time, .simulation_numeric_time(observed$time, dimensions)))
+            knot_time <- knot_time[knot_time >= start_time & knot_time <= upper]
+        }
+        knots <- if (length(dynamic_schema)) data.frame(
+            ID = i,
+            TIME = knot_time,
+            EVID = 2L, CMT = 0L, AMT = NA_real_, DV = NA_real_,
+            DVID = NA_integer_, CP_ROW = NA_integer_
+        ) else NULL
         fixed <- .merge_ode_parameters(executable$ode_model$parameters,
                                        experiment$parameters)
         excluded <- union(theta_parameters, individual)
         fixed <- fixed[setdiff(names(fixed), excluded)]
-        for (name in names(fixed)) {
+        for (name in setdiff(names(fixed), names(dynamic_schema))) {
             backend <- .nlmixr2_parameter_id(executable, name, fallback = FALSE)
             if (!is.null(backend)) {
                 value <- as.numeric(.to_dimensions_value(fixed[[name]], dimensions))
                 obs[[backend]] <- value
                 if (!is.null(doses)) doses[[backend]] <- value
+                if (!is.null(knots)) knots[[backend]] <- value
             }
         }
-        out <- rbind(doses, obs)
+        out <- rbind(doses, obs, knots)
+        for (name in names(dynamic_schema)) {
+            backend <- .nlmixr2_parameter_id(executable, name, fallback = FALSE)
+            profile <- experiment$parameters[[name]]
+            solver_profile <- interpolate(
+                as.numeric(.to_dimensions_value(profile$time, dimensions)),
+                as.numeric(.to_dimensions_value(profile$value, dimensions)),
+                method = profile$method
+            )
+            out[[backend]] <- vapply(
+                out$TIME, function(time) .interpolation_value(solver_profile, time),
+                numeric(1)
+            )
+        }
         out[order(out$TIME, -out$EVID), , drop = FALSE]
     })
     do.call(rbind, rows)

@@ -393,7 +393,10 @@ simulate.compphysiol_desolve_compiled_model <- function(
     .simulation_validate_time(time)
 
     sim_parameters <- .simulation_parameters_object(parameters)
-    .compiled_ode_model_check_parameter_names(names(sim_parameters), object$parameterNames)
+    .compiled_ode_model_check_parameter_names(
+        names(sim_parameters),
+        c(object$parameterNames, object$dynamicParameterNames)
+    )
     artifact <- .compiled_ode_model_cached_artifact(object)
 
     if (is.null(artifact)) {
@@ -418,7 +421,7 @@ simulate.compphysiol_desolve_compiled_model <- function(
     } else {
         .compiled_ode_model_check_runtime_parameter_signature(
             artifact$parameterSignature,
-            sim_parameters
+            sim_parameters[!vapply(unclass(sim_parameters), .is_interpolation, logical(1))]
         )
         .compiled_ode_model_check_time_mode(artifact, time)
         dimensions <- .compiled_ode_model_dimensions(
@@ -738,6 +741,11 @@ simulate.compphysiol_stochastic_model <- function(
     solver_args$events <- odeinfo$events
     if (!is.null(odeinfo$dllname)) solver_args$dllname <- odeinfo$dllname
     if (!is.null(odeinfo$initfunc)) solver_args$initfunc <- odeinfo$initfunc
+    if (length(odeinfo$forcings)) {
+        solver_args$forcings <- odeinfo$forcings
+        solver_args$initforc <- odeinfo$initforc
+        solver_args$fcontrol <- odeinfo$fcontrol
+    }
     solver_args$rtol <- solver_args$rtol %||% 1e-10
     solver_args$atol <- solver_args$atol %||% 1e-10
 
@@ -1001,6 +1009,21 @@ print.compphysiol_simulation_result <- function(x, ...) {
 
     obs_params <- odeinfo$obsParams
     if (is.null(obs_params)) obs_params <- list()
+    obs_params <- as.list(obs_params)
+    effective_parameters <- .merge_ode_parameters(model$parameters, parameters)
+    for (name in .interpolation_parameter_names(effective_parameters)) {
+        profile <- effective_parameters[[name]]
+        solver_profile <- interpolate(
+            as.numeric(.to_dimensions_value(profile$time, dimensions)),
+            as.numeric(.to_dimensions_value(profile$value, dimensions)),
+            method = profile$method
+        )
+        obs_params[[name]] <- vapply(
+            solver_time,
+            function(at) .interpolation_value(solver_profile, at),
+            numeric(1)
+        )
+    }
     obs_names <- names(odeinfo$obsFuncs)
     observables <- lapply(odeinfo$obsFuncs, function(fun) {
         rep_len(fun(solver_time, solver_output, obs_params), length(time))

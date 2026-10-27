@@ -137,3 +137,72 @@ test_that("analytical and stochastic models reject time-dependent parameters", {
     expect_error(to_analytical_model(process), "time-dependent parameter(s): k", fixed = TRUE)
     expect_error(to_stochastic_model(process), "time-dependent parameter(s): k", fixed = TRUE)
 })
+
+test_that("compiled backends reuse one model for experiment-specific profiles", {
+    model <- .time_parameter_model(interpolate(0:1, c(1, 1)))
+    design <- c(
+        first = experiment(
+            parameters = parameters(k = interpolate(0:1, c(1, 2))),
+            observations = observation_schedule(0:2, "amount")
+        ),
+        second = experiment(
+            parameters = parameters(k = interpolate(c(0, 2), c(2, 4))),
+            observations = observation_schedule(0:2, "amount")
+        )
+    )
+
+    compiled <- to_compiled_ode_model(model)
+    deSolve_result <- simulate(compiled, experiment = design)
+    expect_equal(
+        deSolve_result$observables$value,
+        c(10, 10 * exp(-1.5), 10 * exp(-3.5),
+          10, 10 * exp(-2.5), 10 * exp(-6)),
+        tolerance = 1e-5
+    )
+    artifact <- compphysiol:::.compiled_ode_model_cached_artifact(compiled)
+    expect_identical(artifact$dynamicParameterMethods, c(k = "linear"))
+    expect_match(paste(readLines(artifact$source), collapse = "\n"), "initforc", fixed = TRUE)
+
+    if (requireNamespace("rxode2", quietly = TRUE)) {
+        executable <- to_rxode2_model(model)
+        rxode_result <- simulate(executable, experiment = design)
+        expect_equal(
+            rxode_result$observables$value,
+            deSolve_result$observables$value,
+            tolerance = 1e-5
+        )
+        artifact <- get("artifact", envir = executable$cache)
+        expect_match(artifact$source, "linear\\(cp_par_k\\)")
+    }
+})
+
+test_that("compiled backend interpolation contracts are validated", {
+    mixed_parameters <- compartment_model() |>
+        add_compartment(name = "central") |>
+        add_molecule(name = "drug", cmt = "central", initial = 10, type = "amount") |>
+        add_transport(from = "central", to = "", molec = "drug", rate = "(k1 + k2) * a[drug, central]") |>
+        add_observable(amount = a[drug, central]) |>
+        add_parameter(k1 = interpolate(0:1, 1:2, method = "linear")) |>
+        add_parameter(k2 = interpolate(0:1, 1:2, method = "locf"))
+    design <- experiment(observations = observation_schedule(0:1, "amount"))
+    expect_error(
+        simulate(to_compiled_ode_model(mixed_parameters), experiment = design),
+        "deSolve requires all time-dependent parameters"
+    )
+
+    conflicting <- c(
+        a = experiment(
+            parameters = parameters(k = interpolate(0:1, 1:2, method = "linear")),
+            observations = observation_schedule(0:1, "amount")
+        ),
+        b = experiment(
+            parameters = parameters(k = interpolate(0:1, 1:2, method = "locf")),
+            observations = observation_schedule(0:1, "amount")
+        )
+    )
+    expect_error(
+        simulate(.time_parameter_model(1), experiment = conflicting,
+                 engine = rxode2_engine()),
+        "must use one interpolation method"
+    )
+})

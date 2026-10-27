@@ -47,6 +47,69 @@ interpolate <- function(time, value, method = c("linear", "locf")) {
 
 .is_interpolation <- function(x) inherits(x, "compphysiol_interpolation")
 
+.interpolation_parameter_names <- function(parameters) {
+    names(parameters)[vapply(unclass(parameters), .is_interpolation, logical(1))]
+}
+
+.interpolation_methods <- function(parameters) {
+    names <- .interpolation_parameter_names(parameters)
+    setNames(vapply(names, function(name) parameters[[name]]$method, character(1)), names)
+}
+
+.dynamic_parameter_schema <- function(defaults, supplied, backend = c("rxode2", "deSolve")) {
+    backend <- match.arg(backend)
+    supplied <- lapply(supplied, .simulation_parameters_object)
+    default_methods <- .interpolation_methods(defaults)
+    all_names <- unique(c(
+        names(default_methods),
+        unlist(lapply(supplied, .interpolation_parameter_names), use.names = FALSE)
+    ))
+    methods <- setNames(character(length(all_names)), all_names)
+    for (name in all_names) {
+        candidates <- if (name %in% names(default_methods)) default_methods[[name]] else NULL
+        candidates <- c(candidates, unlist(lapply(supplied, function(parameters) {
+            value <- parameters[[name]]
+            if (.is_interpolation(value)) value$method else NULL
+        }), use.names = FALSE))
+        candidates <- unique(candidates)
+        if (length(candidates) > 1L) {
+            stop(
+                "Time-dependent parameter '", name,
+                "' must use one interpolation method across the model and experiments.",
+                call. = FALSE
+            )
+        }
+        methods[[name]] <- candidates[[1]]
+    }
+    if (identical(backend, "deSolve") && length(unique(methods)) > 1L) {
+        stop(
+            "deSolve requires all time-dependent parameters in a simulation or estimation problem to use the same interpolation method.",
+            call. = FALSE
+        )
+    }
+    methods
+}
+
+.normalize_dynamic_parameters <- function(parameters, defaults, schema, start) {
+    merged <- .merge_ode_parameters(defaults, parameters)
+    for (name in names(schema)) {
+        value <- merged[[name]]
+        if (is.null(value)) {
+            stop("Missing time-dependent parameter: ", name, ".", call. = FALSE)
+        }
+        if (.is_interpolation(value)) next
+        merged[[name]] <- interpolate(start, value, method = schema[[name]])
+    }
+    merged
+}
+
+.interpolation_solver_profile <- function(x, dimensions) {
+    cbind(
+        time = as.numeric(.to_dimensions_value(x$time, dimensions)),
+        value = as.numeric(.to_dimensions_value(x$value, dimensions))
+    )
+}
+
 #' @export
 format.compphysiol_interpolation <- function(x, ...) {
     paste0("<", x$method, " interpolation, ", length(x$time), " points>")

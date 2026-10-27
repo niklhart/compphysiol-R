@@ -3,6 +3,55 @@
     multiple <- length(experiment) > 1L
     homogeneity <- .experiments_component_homogeneity(experiment)
     experiments <- .experiments_elements(experiment)
+    backend <- if (inherits(engine, "compphysiol_rxode2_engine")) "rxode2" else "deSolve"
+    model_parameters <- if (inherits(object, c(
+        "compphysiol_desolve_compiled_model", "compphysiol_rxode2_model"
+    ))) object$ode_model$parameters else object$parameters
+    dynamic_schema <- .dynamic_parameter_schema(
+        model_parameters,
+        lapply(experiments, `[[`, "parameters"),
+        backend = backend
+    )
+    if (length(dynamic_schema)) {
+        for (i in seq_along(experiments)) {
+            experiments[[i]]$parameters <- .normalize_dynamic_parameters(
+                experiments[[i]]$parameters,
+                model_parameters,
+                dynamic_schema,
+                .experiment_effective_start(experiments[[i]]$start)
+            )
+        }
+        template_parameters <- experiments[[1]]$parameters
+        if (inherits(object, "compphysiol_rxode2_model")) {
+            if (exists("artifact", envir = object$cache, inherits = FALSE)) {
+                artifact <- get("artifact", envir = object$cache, inherits = FALSE)
+                if (!identical(artifact$dynamicParameterMethods, dynamic_schema)) {
+                    stop("A compiled rxode2 model cannot change its time-dependent parameter interface.", call. = FALSE)
+                }
+            }
+            ode <- object$ode_model
+            ode$parameters <- template_parameters
+            ode$freeParams <- setdiff(ode$freeParams, names(dynamic_schema))
+            updated <- to_rxode2_model(ode)
+            updated$cache <- object$cache
+            object <- updated
+        } else if (inherits(object, "compphysiol_desolve_compiled_model")) {
+            if (!is.null(.compiled_ode_model_cached_artifact(object))) {
+                artifact <- .compiled_ode_model_cached_artifact(object)
+                if (!identical(artifact$dynamicParameterMethods, dynamic_schema)) {
+                    stop("A compiled deSolve model cannot change its time-dependent parameter interface.", call. = FALSE)
+                }
+            }
+            ode <- object$ode_model
+            ode$parameters <- template_parameters
+            ode$freeParams <- setdiff(ode$freeParams, names(dynamic_schema))
+            updated <- to_compiled_ode_model(ode)
+            updated$cache <- object$cache
+            object <- updated
+        } else {
+            object$parameters <- template_parameters
+        }
+    }
     validation_indices <- if (!length(experiments)) {
         integer()
     } else if (homogeneity[["observation_plan"]]) {
@@ -38,11 +87,8 @@
                 object$molecules$cmt %in% time_dependent_compartments
         )
     }
-    has_time_dependent_parameters <- any(vapply(experiments, function(e) {
-        any(vapply(unclass(e$parameters), .is_interpolation, logical(1)))
-    }, logical(1)))
     if (multiple && inherits(engine, "compphysiol_rxode2_engine") &&
-        !has_start_dependent_initials && !has_time_dependent_parameters) {
+        !has_start_dependent_initials) {
         executable <- if (inherits(object, "compphysiol_rxode2_model")) object else to_rxode2_model(object)
         return(.simulate_rxode2_experiments(
             executable, experiments, dimensions = dimensions, engine = engine,
