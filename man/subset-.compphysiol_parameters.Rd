@@ -11,7 +11,8 @@
 
 \item{i}{Indices or names of the parameters to replace}
 
-\item{value}{Another \code{compphysiol_parameters} object with the new values to insert}
+\item{value}{Another \code{compphysiol_parameters} object with the new values to insert,
+or \code{NULL} to delete selected entries.}
 }
 \value{
 The modified \code{compphysiol_parameters} object

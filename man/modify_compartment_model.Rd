@@ -31,6 +31,9 @@ them with \code{\link[=add_parameter]{add_parameter()}}, \code{\link[=overlay_pa
 \item Dosing: construct with \code{\link[=dosing]{dosing()}}, add with \code{\link[=add_dosing]{add_dosing()}}, or replace the
 complete schedule with \code{\link[=replace_dosing]{replace_dosing()}}.
 }
+
+Use \link{remove_components} to remove selected entries locally. Component
+subassignment with \code{x[i] <- NULL} supports the same deletion behavior.
 }
 
 \seealso{

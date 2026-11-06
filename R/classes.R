@@ -77,6 +77,7 @@
         compphysiol_parameters = "Parameters",
         compphysiol_parameter_sets = "Parameter sets",
         compphysiol_dosing = "Dosing",
+        compphysiol_dosing_sets = "Dosing sets",
         compphysiol_ode_dosing = "ODE dosing",
         compphysiol_experiments = "Experiments",
         compphysiol_observation_schedule = "Observation schedule",

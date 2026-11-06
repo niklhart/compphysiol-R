@@ -59,6 +59,10 @@ experiment collection. \code{add_parameter()} accepts only new names,
 \code{overlay_parameter()} replaces matching names and adds new ones, and
 \code{replace_parameters()} replaces the complete component. Use \code{parameters()}
 as the replacement to clear all parameters.
+In \code{overlay_parameter()} only, named \code{NULL} arguments delete existing
+parameters, e.g. \code{overlay_parameter(model, k = NULL, Vmax = 5 [mg/h])}.
+An absent deletion target is an error in every affected experiment.
+Deletion instructions are not stored in parameter objects.
 }
 \details{
 For experiments, one parameters object is broadcast to every experiment.

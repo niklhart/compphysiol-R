@@ -18,7 +18,7 @@ Construct one set with \code{\link[=parameters]{parameters()}} or a collection w
 
 \section{Dosing}{
 
-Construct events with \code{\link[=dosing]{dosing()}}. Use \code{\link[=add_dosing]{add_dosing()}} to append events or
+Construct events with \code{\link[=dosing]{dosing()}} and alternatives with \code{\link[=dosing_sets]{dosing_sets()}}. Use \code{\link[=add_dosing]{add_dosing()}} to append events or
 \code{\link[=replace_dosing]{replace_dosing()}} to replace the complete dosing schedule.
 }
 

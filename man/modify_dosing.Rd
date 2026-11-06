@@ -98,7 +98,8 @@ replace_dosing(
 \item{object}{A \code{compphysiol_compartment_model} or
 \code{compphysiol_experiments} object.}
 
-\item{dose}{A \code{\link[=dosing]{dosing()}} object or callback returning one. Constructed from
+\item{dose}{A \code{\link[=dosing]{dosing()}} object, a \code{\link[=dosing_sets]{dosing_sets()}} collection for experiments,
+or callback returning one dosing object. Constructed from
 the other inputs if omitted.}
 
 \item{...}{Unused, enforces \code{rate} and \code{duration} for infusion dosing to be specified
@@ -133,6 +134,11 @@ callback receives the current schedule and returns events to add or a
 complete replacement, according to the verb.
 }
 \details{
+Dosing-set collections follow the same broadcasting and identifier alignment
+rules as \code{\link[=parameter_sets]{parameter_sets()}}: either collection may be scalar; otherwise
+lengths and effective identifiers must match. Wholly unnamed collections
+align by position. Scalar names do not constrain alignment.
+
 Infusion dosing on compartment models requires structural changes during
 model preparation. If a model already contains infusion auxiliaries created
 from an earlier dosing schedule,

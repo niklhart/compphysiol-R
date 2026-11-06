@@ -66,7 +66,7 @@ parameters <- function(..., name = NULL, value = NULL, unit = NULL) {
     structure(x, class = .class_parameters())
 }
 
-.process_parameter_args <- function(args, envir) {
+.process_parameter_args <- function(args, envir, keep_null = FALSE) {
     param_names <- names(args)
     eval_env <- new.env(parent = envir)
     value <- vector("list", length(args))
@@ -87,7 +87,8 @@ parameters <- function(..., name = NULL, value = NULL, unit = NULL) {
             )
         }
 
-        value[[i]] <- .process_nse_arg(args[[i]], envir = eval_env)
+        evaluated <- .process_nse_arg(args[[i]], envir = eval_env)
+        if (keep_null) value[i] <- list(evaluated) else value[[i]] <- evaluated
         assign(param_names[[i]], value[[i]], envir = eval_env)
     }
 
@@ -131,6 +132,10 @@ parameters <- function(..., name = NULL, value = NULL, unit = NULL) {
 #' `overlay_parameter()` replaces matching names and adds new ones, and
 #' `replace_parameters()` replaces the complete component. Use `parameters()`
 #' as the replacement to clear all parameters.
+#' In `overlay_parameter()` only, named `NULL` arguments delete existing
+#' parameters, e.g. `overlay_parameter(model, k = NULL, Vmax = 5 [mg/h])`.
+#' An absent deletion target is an error in every affected experiment.
+#' Deletion instructions are not stored in parameter objects.
 #'
 #' For experiments, one parameters object is broadcast to every experiment.
 #' A [parameter_sets()] collection expands a length-one experiment collection
@@ -200,9 +205,8 @@ overlay_parameter <- function(object, param, ..., name = NULL, value = NULL, uni
 overlay_parameter.compphysiol_compartment_model <- function(
     object, param, ..., name = NULL, value = NULL, unit = NULL
 ) {
-    param <- .parameter_input(match.call(), parent.frame())
+    param <- .parameter_overlay_input(match.call(), parent.frame())
     if (is.function(param)) param <- param(object$parameters)
-    .check_class(param, "compphysiol_parameters")
     object$parameters <- .parameters_overlay(object$parameters, param)
     object
 }
@@ -229,8 +233,31 @@ replace_parameters.compphysiol_compartment_model <- function(
     .forward_or_use("param", "parameters", call, envir)
 }
 
+.parameter_overlay_input <- function(call, envir) {
+    .forward_or_use("param", ".parameter_overlay_values", call, envir)
+}
+
+.parameter_overlay_values <- function(..., name = NULL, value = NULL, unit = NULL) {
+    args <- eval(substitute(alist(...)))
+    if (!length(args)) return(parameters(name = name, value = value, unit = unit))
+    if (!is.null(name) || !is.null(value) || !is.null(unit)) {
+        stop("Cannot use both '...' and 'name'/'value/unit' arguments.", call. = FALSE)
+    }
+    .check_parameter_names(names(args))
+    structure(.process_parameter_args(args, parent.frame(), keep_null = TRUE),
+              class = "compphysiol_parameter_overlay")
+}
+
 .parameters_overlay <- function(current, incoming) {
-    .check_class(incoming, "compphysiol_parameters")
+    if (!inherits(incoming, "compphysiol_parameter_overlay")) {
+        .check_class(incoming, "compphysiol_parameters")
+    }
+    deleted <- names(incoming)[vapply(incoming, is.null, logical(1))]
+    unknown <- setdiff(deleted, names(current))
+    if (length(unknown)) {
+        stop("Cannot delete unknown parameters: ", paste(unknown, collapse = ", "),
+             ".", call. = FALSE)
+    }
     out <- unclass(current)
     for (nm in names(incoming)) out[[nm]] <- incoming[[nm]]
     .check_parameter_names(names(out))
@@ -259,10 +286,12 @@ names.compphysiol_parameters <- function(x) names(unclass(x))
 #' Replace parts of a `compphysiol_parameters` object
 #' @param x A `compphysiol_parameters` object
 #' @param i Indices or names of the parameters to replace
-#' @param value Another `compphysiol_parameters` object with the new values to insert
+#' @param value Another `compphysiol_parameters` object with the new values to insert,
+#'   or `NULL` to delete selected entries.
 #' @returns The modified `compphysiol_parameters` object
 #' @export
 `[<-.compphysiol_parameters` <- function(x, i, value) {
+    if (is.null(value)) return(.remove_component_entries(x, i))
     .check_class(value, "compphysiol_parameters")
     x <- unclass(x)
     x[i] <- unclass(value)

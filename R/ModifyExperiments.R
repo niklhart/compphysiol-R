@@ -13,10 +13,16 @@
 .modify_experiments_scalar <- function(object, component, input, combine) {
     .check_class(object, "compphysiol_experiments")
     entries <- .experiments_elements(object)
-    out <- lapply(entries, function(entry) {
-        incoming <- if (is.function(input)) input(entry[[component]]) else input
-        value <- combine(entry[[component]], incoming)
-        .rebuild_experiment(entry, component, value)
+    identifiers <- .collection_identifiers(entries, "Experiment")
+    out <- lapply(seq_along(entries), function(i) {
+        entry <- entries[[i]]
+        tryCatch({
+            incoming <- if (is.function(input)) input(entry[[component]]) else input
+            value <- combine(entry[[component]], incoming)
+            .rebuild_experiment(entry, component, value)
+        }, error = function(e) {
+            stop("Experiment '", identifiers[[i]], "': ", conditionMessage(e), call. = FALSE)
+        })
     })
     names(out) <- names(entries)
     .experiments_validate_result(out)
@@ -52,7 +58,8 @@
 }
 
 .modify_experiment_parameters <- function(object, param, verb) {
-    if (is.function(param) || inherits(param, "compphysiol_parameters")) {
+    if (is.function(param) || inherits(param, "compphysiol_parameters") ||
+        inherits(param, "compphysiol_parameter_overlay")) {
         return(.modify_experiments_scalar(object, "parameters", param, verb))
     }
     .check_class(param, "compphysiol_parameter_sets")
@@ -85,7 +92,7 @@ add_parameter.compphysiol_experiments <- function(
 overlay_parameter.compphysiol_experiments <- function(
     object, param, ..., name = NULL, value = NULL, unit = NULL
 ) {
-    param <- .parameter_input(match.call(), parent.frame())
+    param <- .parameter_overlay_input(match.call(), parent.frame())
     .modify_experiment_parameters(object, param, .parameters_overlay)
 }
 
@@ -105,6 +112,21 @@ replace_parameters.compphysiol_experiments <- function(
     .forward_or_use("dose", "dosing", call, envir)
 }
 
+.modify_experiment_dosing <- function(object, dose, combine) {
+    .check_class(object, "compphysiol_experiments")
+    if (!inherits(dose, "compphysiol_dosing_sets")) {
+        return(.modify_experiments_scalar(object, "dosing", dose, combine))
+    }
+    aligned <- .align_experiment_components(
+        .experiments_elements(object), .dosing_sets_elements(dose), "Dosing sets"
+    )
+    out <- Map(function(entry, incoming) {
+        .rebuild_experiment(entry, "dosing", combine(entry$dosing, incoming))
+    }, aligned$entries, aligned$incoming)
+    names(out) <- names(aligned$entries)
+    .experiments_validate_result(out)
+}
+
 #' @rdname modify_dosing
 #' @export
 add_dosing.compphysiol_experiments <- function(
@@ -112,7 +134,7 @@ add_dosing.compphysiol_experiments <- function(
     amount_unit = NULL, molec = NULL, cmt = NULL, rate = NULL, duration = NULL
 ) {
     dose <- .dosing_input(match.call(), parent.frame())
-    .modify_experiments_scalar(object, "dosing", dose, function(current, incoming) {
+    .modify_experiment_dosing(object, dose, function(current, incoming) {
         .check_class(incoming, "compphysiol_dosing")
         c(current, incoming)
     })
@@ -132,7 +154,7 @@ replace_dosing.compphysiol_experiments <- function(
     amount_unit = NULL, molec = NULL, cmt = NULL, rate = NULL, duration = NULL
 ) {
     dose <- .dosing_input(match.call(), parent.frame())
-    .modify_experiments_scalar(object, "dosing", dose, function(current, incoming) {
+    .modify_experiment_dosing(object, dose, function(current, incoming) {
         .check_class(incoming, "compphysiol_dosing")
         incoming
     })

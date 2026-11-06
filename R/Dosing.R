@@ -177,6 +177,11 @@ dosing <- function(
 #' callback receives the current schedule and returns events to add or a
 #' complete replacement, according to the verb.
 #'
+#' Dosing-set collections follow the same broadcasting and identifier alignment
+#' rules as [parameter_sets()]: either collection may be scalar; otherwise
+#' lengths and effective identifiers must match. Wholly unnamed collections
+#' align by position. Scalar names do not constrain alignment.
+#'
 #' Infusion dosing on compartment models requires structural changes during
 #' model preparation. If a model already contains infusion auxiliaries created
 #' from an earlier dosing schedule,
@@ -187,7 +192,8 @@ dosing <- function(
 #' @param object A `compphysiol_compartment_model` or
 #'   `compphysiol_experiments` object.
 #' @inheritParams dosing
-#' @param dose A [dosing()] object or callback returning one. Constructed from
+#' @param dose A [dosing()] object, a [dosing_sets()] collection for experiments,
+#'   or callback returning one dosing object. Constructed from
 #'   the other inputs if omitted.
 #' @returns The modified object.
 #' @examples

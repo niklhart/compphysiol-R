@@ -21,6 +21,9 @@
 #' - Dosing: construct with [dosing()], add with [add_dosing()], or replace the
 #'   complete schedule with [replace_dosing()].
 #'
+#' Use [remove_components] to remove selected entries locally. Component
+#' subassignment with `x[i] <- NULL` supports the same deletion behavior.
+#'
 #' @seealso [modify_experiments] for the corresponding experiment operations.
 #' @name modify_compartment_model
 NULL
@@ -38,7 +41,7 @@ NULL
 #' [replace_parameters()] to replace the complete component.
 #'
 #' @section Dosing:
-#' Construct events with [dosing()]. Use [add_dosing()] to append events or
+#' Construct events with [dosing()] and alternatives with [dosing_sets()]. Use [add_dosing()] to append events or
 #' [replace_dosing()] to replace the complete dosing schedule.
 #'
 #' @section Observations:

@@ -40,6 +40,14 @@ often a species in a location rather than the location alone.
 Implementation anchor: `compartment_model()` creates the authored
 `compphysiol_compartment_model` representation.
 
+Model components can be removed locally through `remove_*()` functions or
+component subassignment with `x[i] <- NULL`. Removal preserves the component's
+representation, including empty components, and does not cascade into other
+components. References may remain unresolved during editing and are checked
+when preparing the model for use. Parameter overlays additionally accept
+named `NULL` instructions to remove old parameters while adding or replacing
+others. These instructions are operations, not stored parameter values.
+
 ## Compartment
 
 A compartment is a space, location, tissue, organ, subcellular region, or
@@ -367,6 +375,23 @@ schedule, not necessarily physiological compartments.
 Implementation anchor: dosing events are represented by `compphysiol_dosing`
 objects created with `dosing()` or added with `add_dosing()`.
 
+## Dosing set
+
+A dosing set collection holds alternative complete dosing schedules. Each
+schedule may contain several bolus or infusion events, or no events for an
+untreated experiment. It describes realized regimens rather than a rule for
+sampling or generating doses. Names optionally identify the alternatives.
+
+Dosing sets and parameter sets follow the same experiment alignment rules:
+either input may be scalar and broadcast across the other; otherwise lengths
+must match and named collections align by effective identifier. No Cartesian
+product is formed. Adding schedules appends their events, while replacing
+schedules supplies the complete regimen for each resulting experiment.
+
+Implementation anchor: `dosing_sets()` creates `compphysiol_dosing_sets`.
+Subsetting with `[` retains the collection; `[[` extracts one dosing schedule.
+Use `add_dosing()` or `replace_dosing()` to apply the collection to experiments.
+
 ## Observation schedule
 
 An observation schedule specifies which named model observables to evaluate and
@@ -569,8 +594,8 @@ unnamed. Names are preserved when supplied but are not generated when a
 protocol is extended across unnamed parameter sets. Positive whole-number names
 are reserved for transient positional identifiers and cannot be supplied
 explicitly.
-Parameter modification aligns experiment collections and parameter-set collections
-without forming all combinations. Either collection may have length one and
+Parameter and dosing modification align experiment collections with parameter-set
+or dosing-set collections without forming all combinations. Either collection may have length one and
 broadcast across the other; otherwise their lengths must match. Non-scalar
 collections align by effective identifier when names are present, or by position
 when both are wholly unnamed. Scalar names do not constrain alignment.
