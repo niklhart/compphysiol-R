@@ -1,3 +1,9 @@
+# compphysiol (development version)
+
+* Added `dosing_sets()` and scalar broadcasting of dosing schedules and parameter sets across experiments.
+* Added parameter deletion via named `NULL` values in `overlay_parameter()`.
+* Added `remove_*()` functions and `x[i] <- NULL` syntax for local component deletion.
+
 # compphysiol 0.5.1
 
 * Introduced "rate type" concept for reactions and transports for improved clarity
