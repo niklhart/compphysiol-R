@@ -741,3 +741,23 @@ test_that("estimate does not accept the model in place of an EstimationProblem",
         "EstimationProblem|method"
     )
 })
+
+test_that("estimation uses deSolve engine options on repeated evaluations", {
+    problem <- estimation_problem(
+        estimation_test_model(),
+        estimation_test_experiment(),
+        c(k = parameter_spec(0.1 [1/h], transform = "log"),
+          sigma = parameter_spec(1 [mg/L], transform = "log")),
+        statistical_model(C = normal(sd = "sigma"))
+    )
+    for (compiled in c(FALSE, TRUE)) {
+        fit <- estimate(problem, engine = optim_engine(
+            control = list(maxit = 1), hessian = FALSE,
+            simulation = deSolve_engine(compiled = compiled, method = "euler")
+        ))
+        expect_s3_class(fit, "compphysiol_estimation_result")
+        expect_error(estimate(problem, engine = optim_engine(
+            simulation = deSolve_engine(compiled = compiled, method = "invalid")
+        )), "initial values|invalid|arg")
+    }
+})

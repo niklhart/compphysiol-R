@@ -576,10 +576,12 @@ test_that("prepared compiled experiment designs preserve heterogeneous simulatio
         )
     )
     executable <- to_compiled_ode_model(model)
-    expected <- simulate(executable, experiment = studies)
+    engine <- deSolve_engine(compiled = TRUE, method = "euler")
+    expected <- simulate(executable, experiment = studies, engine = engine)
+    expect_equal(as.numeric(expected$states$a_drug_Central), c(100, 80, 100, 72))
     prepared <- .simulation_prepare_compiled_experiments(executable, studies)
     actual <- .simulate_prepared_compiled_experiments(
-        executable, studies, prepared, deSolve_engine(compiled = TRUE)
+        executable, studies, prepared, engine
     )
 
     expect_length(prepared$times, 2L)
@@ -1146,4 +1148,29 @@ test_that("simulate errors informatively for unregistered derived custom units",
         simulate(model, time = c(0, 1) [h]),
         "not registered|install_model_unit|register_model_unit"
     )
+})
+
+test_that("deSolve engines own named solver options", {
+    engine <- deSolve_engine(method = "euler", rtol = 1e-8)
+    expect_equal(engine$arguments, list(method = "euler", rtol = 1e-8, atol = 1e-10))
+    expect_error(deSolve_engine(1e-8), "TRUE or FALSE")
+    expect_error(deSolve_engine(FALSE, 1e-8), "unique, non-empty names")
+    expect_error(deSolve_engine(rtol = 1e-8, rtol = 1e-6), "unique, non-empty names")
+    for (name in c("y", "times", "func", "parms", "events", "dllname", "forcings")) {
+        expect_error(do.call(deSolve_engine, setNames(list(1), name)), "managed by compphysiol")
+    }
+})
+
+test_that("deSolve solver options reach authored, lowered and compiled simulation", {
+    model <- test_model_for_simulation()
+    ode <- to_ode_model(model)
+    compiled <- to_compiled_ode_model(ode)
+    for (object in list(model, ode, compiled)) {
+        result <- simulate(object, time = 0:2, engine = deSolve_engine(method = "euler"))
+        expect_equal(result$states$a_drug_Central, c(100, 80, 64))
+        expect_error(simulate(object, time = 0:2, rtol = 1e-8), "through deSolve_engine")
+    }
+    result <- simulate(model, time = 0:2,
+                       engine = deSolve_engine(compiled = TRUE, method = "euler"))
+    expect_equal(result$states$a_drug_Central, c(100, 80, 64))
 })

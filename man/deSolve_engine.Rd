@@ -4,16 +4,19 @@
 \alias{deSolve_engine}
 \title{Configure the deSolve simulation engine}
 \usage{
-deSolve_engine(compiled = FALSE)
+deSolve_engine(compiled = FALSE, ...)
 }
 \arguments{
 \item{compiled}{Whether to prepare a \code{compphysiol_desolve_compiled_model} before simulation.}
+
+\item{...}{Named solver options passed to \code{\link[deSolve:ode]{deSolve::ode()}}, such as \code{method},
+\code{rtol}, and \code{atol}. Both tolerances default to \code{1e-10}. Model, parameter,
+initial-value, event, and compiled-code arguments are managed by compphysiol.}
 }
 \value{
 A \code{compphysiol_desolve_engine} object.
 }
 \description{
-This object describes how a consumer such as an estimation engine prepares
-models for the existing deSolve simulation path. It is not yet a public
-argument to \code{\link[=simulate]{simulate()}}.
+Use this engine with \code{\link[=simulate]{simulate()}} or as the \code{simulation} argument of
+\code{\link[=optim_engine]{optim_engine()}} to configure model preparation and numerical integration.
 }

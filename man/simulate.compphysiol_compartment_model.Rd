@@ -60,7 +60,9 @@ simulation output in addition to the requested \code{time} points.}
 \item{max_events}{Maximum number of stochastic reaction events allowed per
 realization. The default \code{Inf} imposes no limit.}
 
-\item{...}{Additional arguments passed to \code{\link[deSolve:ode]{deSolve::ode()}}.}
+\item{...}{For ODE simulation, supply solver options through
+\code{\link[=deSolve_engine]{deSolve_engine()}} instead. For hybrid simulation, additional arguments
+are passed to \code{\link[deSolve:ode]{deSolve::ode()}}.}
 
 \item{experiment}{A \code{compphysiol_experiments} collection, as an alternative
 to \code{time}, \code{unit}, and \code{parameters}. Currently supported for the ODE route

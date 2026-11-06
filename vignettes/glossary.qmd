@@ -699,8 +699,11 @@ to minimize the joint negative log-likelihood across experiments and delegates
 ODE evaluation to a deSolve simulation engine. The latter can prepare either an
 ODE model or a compiled deSolve model; compilation changes the representation
 consumed by the same deSolve path rather than selecting another estimation
-engine. An
-estimation result exposes coefficients, the negative log-likelihood, population
+engine. The simulation engine also owns numerical solver settings, such as
+integration method and tolerances. A `deSolve_engine(...)` configuration can
+be shared between direct simulation and `optim_engine(simulation = ...)`
+estimation. These settings control numerical execution rather than the model
+or statistical assumptions. An estimation result exposes coefficients, the negative log-likelihood, population
 predictions, optional individual predictions, and the native engine result.
 Convergence information, residual diagnostics, objectives, and other
 backend-specific quantities remain in the native engine result.

@@ -1,18 +1,35 @@
 #' Configure the deSolve simulation engine
 #'
-#' This object describes how a consumer such as an estimation engine prepares
-#' models for the existing deSolve simulation path. It is not yet a public
-#' argument to [simulate()].
+#' Use this engine with [simulate()] or as the `simulation` argument of
+#' [optim_engine()] to configure model preparation and numerical integration.
 #'
 #' @param compiled Whether to prepare a `compphysiol_desolve_compiled_model` before simulation.
+#' @param ... Named solver options passed to [deSolve::ode()], such as `method`,
+#'   `rtol`, and `atol`. Both tolerances default to `1e-10`. Model, parameter,
+#'   initial-value, event, and compiled-code arguments are managed by compphysiol.
 #' @returns A `compphysiol_desolve_engine` object.
 #' @export
-deSolve_engine <- function(compiled = FALSE) {
+deSolve_engine <- function(compiled = FALSE, ...) {
     if (!is.logical(compiled) || length(compiled) != 1L || is.na(compiled)) {
         stop("compiled must be TRUE or FALSE.", call. = FALSE)
     }
+    args <- list(...)
+    if (length(args) && (is.null(names(args)) || anyNA(names(args)) ||
+                         any(names(args) == "") || anyDuplicated(names(args)))) {
+        stop("deSolve engine arguments must have unique, non-empty names.", call. = FALSE)
+    }
+    managed <- intersect(names(args), c(
+        "y", "times", "func", "parms", "events", "dllname", "initfunc",
+        "forcings", "initforc", "fcontrol", "nout", "outnames"
+    ))
+    if (length(managed)) {
+        stop("deSolve engine argument(s) managed by compphysiol: ",
+             paste(managed, collapse = ", "), ".", call. = FALSE)
+    }
+    args$rtol <- args$rtol %||% 1e-10
+    args$atol <- args$atol %||% 1e-10
     structure(
-        list(compiled = compiled),
+        list(compiled = compiled, arguments = args),
         class = .compphysiol_class(
             "compphysiol_desolve_engine",
             parents = c("compphysiol_simulation_engine", "compphysiol_engine")
@@ -114,7 +131,9 @@ rxode2_engine <- function(...) {
 #'   experiment names serving as individual identifiers.
 #' @param max_events Maximum number of stochastic reaction events allowed per
 #'   realization. The default `Inf` imposes no limit.
-#' @param ... Additional arguments passed to [deSolve::ode()].
+#' @param ... For ODE simulation, supply solver options through
+#'   [deSolve_engine()] instead. For hybrid simulation, additional arguments
+#'   are passed to [deSolve::ode()].
 #' @returns A `compphysiol_simulation_result` with rectangular `states` and long-format
 #'   `observables` (`time`, `observable`, `value`, plus `rep` for stochastic
 #'   replicates). Direct `time` input requests all observables at every output
@@ -246,6 +265,7 @@ simulate.compphysiol_compartment_model <- function(
         time = time,
         dimensions = dimensions,
         parameters = export_model$parameters,
+        engine = engine,
         ...
     )
 }
@@ -351,6 +371,7 @@ simulate.compphysiol_ode_model <- function(
         envir = parent.frame(),
         export = .to_deSolve,
         check_unit_consistency = TRUE,
+        engine = engine,
         ...
     )
 }
@@ -447,6 +468,7 @@ simulate.compphysiol_desolve_compiled_model <- function(
         time = time,
         dimensions = dimensions,
         parameters = output_parameters,
+        engine = engine,
         ...
     )
 }
@@ -659,6 +681,7 @@ simulate.compphysiol_stochastic_model <- function(
     export,
     check_unit_consistency = TRUE,
     dimensions_resolver = .simulation_dimensions,
+    engine = deSolve_engine(),
     ...
 ) {
     .check_class(ode_model, "compphysiol_ode_model")
@@ -690,6 +713,7 @@ simulate.compphysiol_stochastic_model <- function(
         time = time,
         dimensions = dimensions,
         parameters = merged_parameters,
+        engine = engine,
         ...
     )
 }
@@ -722,7 +746,13 @@ simulate.compphysiol_stochastic_model <- function(
     time
 }
 
-.simulation_solve_ode_model <- function(model, odeinfo, time, dimensions, parameters, ...) {
+.simulation_solve_ode_model <- function(
+    model, odeinfo, time, dimensions, parameters, engine = deSolve_engine(), ...
+) {
+    if (length(list(...))) {
+        stop("Supply ODE solver options through deSolve_engine(), not simulate() or estimate().",
+             call. = FALSE)
+    }
     solver_time <- attr(model, "prepared_solver_time") %||%
         .simulation_numeric_time(time, dimensions)
     experiment_dosing <- attr(model, "experiment_dosing")
@@ -733,7 +763,7 @@ simulate.compphysiol_stochastic_model <- function(
         odeinfo$events <- .simulation_experiment_events(model, experiment_dosing, dimensions, parameters)
     }
 
-    solver_args <- list(...)
+    solver_args <- engine$arguments
     solver_args$y <- odeinfo$y0
     solver_args$times <- solver_time
     solver_args$func <- odeinfo$odefun
@@ -746,8 +776,6 @@ simulate.compphysiol_stochastic_model <- function(
         solver_args$initforc <- odeinfo$initforc
         solver_args$fcontrol <- odeinfo$fcontrol
     }
-    solver_args$rtol <- solver_args$rtol %||% 1e-10
-    solver_args$atol <- solver_args$atol %||% 1e-10
 
     event_data <- odeinfo$events$data
     if (!is.null(event_data)) {
