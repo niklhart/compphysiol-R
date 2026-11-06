@@ -1,9 +1,7 @@
 # compphysiol (development version)
 
-* ODE solver options now belong in `deSolve_engine(...)`, shared by simulation
-  and `optim_engine(simulation = ...)` estimation. Passing these options directly
-  through `simulate()` or `estimate()` now reports a migration error.
-
+* ODE solver options moved to `deSolve_engine(...)`, shared by simulation
+  and `optim_engine(simulation = ...)` estimation. 
 * Added `dosing_sets()` and scalar broadcasting of dosing schedules and parameter sets across experiments.
 * Added parameter deletion via named `NULL` values in `overlay_parameter()`.
 * Added `remove_*()` functions and `x[i] <- NULL` syntax for local component deletion.
