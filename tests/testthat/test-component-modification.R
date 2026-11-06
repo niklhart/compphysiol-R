@@ -88,3 +88,36 @@ test_that("observation verbs preserve and validate correspondence", {
     expect_s3_class(.experiment_entry(replacement)$observations, "compphysiol_observation_data")
     expect_equal(nrow(.experiment_entry(replace_observations(studies, \(x) x[1, ]))$observations), 1)
 })
+
+test_that("scalar parameter-set collections broadcast through all parameter verbs", {
+    studies <- c(a = experiment(parameters = parameters(old = 1)),
+                 b = experiment(parameters = parameters(old = 2)))
+    scalar <- parameter_sets(unrelated = parameters(new = 3))
+    for (verb in list(add_parameter, overlay_parameter, replace_parameters)) {
+        result <- verb(studies, scalar)
+        expect_identical(names(result), names(studies))
+        expect_length(result, 2)
+        for (i in 1:2) {
+            expect_equal(.experiment_entry(result, i)$parameters$new, 3)
+        }
+    }
+    overlaid <- overlay_parameter(studies, parameter_sets(parameters(old = 4)))
+    expect_equal(.experiment_entry(overlaid, 2)$parameters, parameters(old = 4))
+    expect_equal(.experiment_entry(studies, 2)$parameters, parameters(old = 2))
+})
+
+test_that("parameter alignment preserves positional and scalar naming semantics", {
+    scalar <- experiment(name = "protocol")
+    sets <- parameter_sets(parameters(id = 1), parameters(id = 2))
+    expanded <- replace_parameters(scalar, sets)
+    expect_null(names(expanded))
+    expect_equal(.experiment_entry(expanded, 2)$parameters$id, 2)
+    aligned <- replace_parameters(expanded, sets[2:1])
+    expect_equal(.experiment_entry(aligned, 1)$parameters$id, 2)
+    single <- replace_parameters(scalar, parameter_sets(other = parameters(id = 1)))
+    expect_identical(names(single), "protocol")
+    expect_error(replace_parameters(expanded, c(sets, parameter_sets(parameters(id = 3)))),
+                 "length one or match")
+    expect_error(replace_parameters(expanded, parameter_sets(a = parameters(), b = parameters())),
+                 "identifiers")
+})

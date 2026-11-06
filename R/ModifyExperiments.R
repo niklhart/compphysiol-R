@@ -22,29 +22,31 @@
     .experiments_validate_result(out)
 }
 
-.align_parameter_sets <- function(object, sets) {
-    entries <- .experiments_elements(object)
-    incoming <- .parameter_sets_elements(sets)
-    if (length(entries) == 1L) {
+.align_experiment_components <- function(entries, incoming, label) {
+    if (length(entries) == 1L && length(incoming) != 1L) {
         entries <- rep(entries, length(incoming))
         names(entries) <- names(incoming)
-        return(list(entries = entries, incoming = incoming))
-    }
-    if (length(entries) != length(incoming)) {
-        stop("Parameter sets must match the number of experiments.", call. = FALSE)
-    }
-    entry_names <- names(entries)
-    set_names <- names(incoming)
-    wholly_unnamed <- (is.null(entry_names) || all(!nzchar(entry_names))) &&
-        (is.null(set_names) || all(!nzchar(set_names)))
-    if (!wholly_unnamed) {
-        entry_ids <- .collection_identifiers(entries, "Experiment")
-        set_ids <- .collection_identifiers(incoming, "Parameter set")
-        positions <- match(entry_ids, set_ids)
-        if (anyNA(positions) || anyDuplicated(positions)) {
-            stop("Parameter sets must have the same experiment identifiers.", call. = FALSE)
+    } else if (length(incoming) == 1L) {
+        incoming <- rep(incoming, length(entries))
+        names(incoming) <- names(entries)
+    } else {
+        if (length(entries) != length(incoming)) {
+            stop(label, " must have length one or match the number of experiments.",
+                 call. = FALSE)
         }
-        incoming <- incoming[positions]
+        entry_names <- names(entries)
+        incoming_names <- names(incoming)
+        wholly_unnamed <- (is.null(entry_names) || all(!nzchar(entry_names))) &&
+            (is.null(incoming_names) || all(!nzchar(incoming_names)))
+        if (!wholly_unnamed) {
+            entry_ids <- .collection_identifiers(entries, "Experiment")
+            incoming_ids <- .collection_identifiers(incoming, label)
+            positions <- match(entry_ids, incoming_ids)
+            if (anyNA(positions) || anyDuplicated(positions)) {
+                stop(label, " must have the same experiment identifiers.", call. = FALSE)
+            }
+            incoming <- incoming[positions]
+        }
     }
     list(entries = entries, incoming = incoming)
 }
@@ -54,7 +56,9 @@
         return(.modify_experiments_scalar(object, "parameters", param, verb))
     }
     .check_class(param, "compphysiol_parameter_sets")
-    aligned <- .align_parameter_sets(object, param)
+    aligned <- .align_experiment_components(
+        .experiments_elements(object), .parameter_sets_elements(param), "Parameter sets"
+    )
     out <- Map(function(entry, incoming) {
         .rebuild_experiment(entry, "parameters", verb(entry$parameters, incoming))
     }, aligned$entries, aligned$incoming)

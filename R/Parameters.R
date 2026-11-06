@@ -135,7 +135,11 @@ parameters <- function(..., name = NULL, value = NULL, unit = NULL) {
 #' For experiments, one parameters object is broadcast to every experiment.
 #' A [parameter_sets()] collection expands a length-one experiment collection
 #' or aligns with multiple experiments by effective identifier; wholly unnamed
-#' collections of equal length align positionally. A callback is invoked once
+#' collections of equal length align positionally. A length-one parameter-set
+#' collection broadcasts across experiments. Scalar names do not constrain
+#' alignment; expansion uses the non-scalar collection's names, while otherwise
+#' experiment names are retained. Other length mismatches are rejected.
+#' A callback is invoked once
 #' per target and receives its current parameters.
 #'
 #' @inherit parameters details

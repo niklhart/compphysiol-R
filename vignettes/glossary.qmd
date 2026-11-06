@@ -569,6 +569,14 @@ unnamed. Names are preserved when supplied but are not generated when a
 protocol is extended across unnamed parameter sets. Positive whole-number names
 are reserved for transient positional identifiers and cannot be supplied
 explicitly.
+Parameter modification aligns experiment collections and parameter-set collections
+without forming all combinations. Either collection may have length one and
+broadcast across the other; otherwise their lengths must match. Non-scalar
+collections align by effective identifier when names are present, or by position
+when both are wholly unnamed. Scalar names do not constrain alignment.
+Expansion takes the non-scalar collection's names; otherwise experiment names
+are retained.
+
 Subsetting with `[` retains a collection and `[[` is blocked. Collections can
 be combined with `c()`. Printing chooses its presentation by length: a
 length-one collection shows the full experiment details, while a longer
