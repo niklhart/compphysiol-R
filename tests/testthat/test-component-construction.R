@@ -130,6 +130,9 @@ test_that("model add functions check explicitly supplied component classes", {
 })
 
 test_that("model component modifiers share the component-first S3 interface", {
+
+    skip("Skipping S3 generic tests until ubuntu-latest supports it again.")
+
     expected <- list(
         add_compartment = "comp",
         add_molecule = "molec",
