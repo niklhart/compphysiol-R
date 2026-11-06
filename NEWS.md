@@ -1,4 +1,4 @@
-# compphysiol (development version)
+# compphysiol 0.5.1
 
 * Introduced "rate type" concept for reactions and transports for improved clarity
 * Introduced keyword "t" for current time in equations
