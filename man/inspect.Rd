@@ -6,6 +6,7 @@
 \alias{str.compphysiol_molecules}
 \alias{str.compphysiol_reactions}
 \alias{str.compphysiol_states}
+\alias{str.compphysiol_transports}
 \title{Inspect model components and experiment collections}
 \usage{
 \method{str}{compphysiol_compartments}(object, ...)
@@ -15,6 +16,8 @@
 \method{str}{compphysiol_reactions}(object, ...)
 
 \method{str}{compphysiol_states}(object, ...)
+
+\method{str}{compphysiol_transports}(object, ...)
 }
 \arguments{
 \item{object}{A package component or experiment collection.}
@@ -34,14 +37,14 @@ and \code{list.len} control the amount of detail.
 Subsetting with \code{x[i]} retains the component or collection class. For
 experiments, \code{x[1]} prints the full details of the first experiment.
 
-Compartments, molecules, reactions, and states block direct \code{[[} access.
+Compartments, molecules, reactions, states, and transports block direct \code{[[} access.
 Use \code{as.data.frame(x)} for ordinary row and column access, for example
-\code{as.data.frame(x)[["name"]]}. Molecules and reactions also support
+\code{as.data.frame(x)[["name"]]}. Molecules, reactions, and transports also support
 \code{as.list(x)}, returning a list of entries rather than columns.
 
 Experiments block direct \code{[[} access too. Use \code{as.list(x)[[1]]} to inspect
 the first entry's \code{parameters}, \code{dosing}, \code{observations}, and \code{start}.
-Transports, parameter sets, and dosing sets support direct \code{x[[1]]} access.
+Parameter sets and dosing sets support direct \code{x[[1]]} access.
 }
 \examples{
 x <- compartments(c("central", "peripheral"))

@@ -68,7 +68,6 @@
         compphysiol_stochastic_model = "Stochastic model",
         compphysiol_compartments = "Compartments",
         compphysiol_molecules = "Molecules",
-        compphysiol_transport = "Transport",
         compphysiol_transports = "Transports",
         compphysiol_states = "States",
         compphysiol_reactions = "Reactions",

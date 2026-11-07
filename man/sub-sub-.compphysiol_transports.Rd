@@ -2,18 +2,24 @@
 % Please edit documentation in R/Transports.R
 \name{[[.compphysiol_transports}
 \alias{[[.compphysiol_transports}
-\title{Access an element in a \code{compphysiol_transports} object}
+\title{Direct transport extraction is not supported}
 \usage{
-\method{[[}{compphysiol_transports}(x, i)
+\method{[[}{compphysiol_transports}(x, i, ...)
 }
 \arguments{
-\item{x}{A \code{compphysiol_transports} object}
+\item{x}{A \code{compphysiol_transports} object.}
 
-\item{i}{Row index to access}
+\item{i}{Row index to access.}
+
+\item{...}{Unused.}
 }
 \value{
-A \code{compphysiol_transport} object, which is a list with entries \code{from}, \code{to}, \code{molec}, \code{rate}, \code{const}, and \code{type}.
+This method always errors. Use \code{[} to retain the collection class,
+or \code{as.list()} to inspect ordinary component lists.
 }
 \description{
-Access an element in a \code{compphysiol_transports} object
+Direct transport extraction is not supported
+}
+\seealso{
+\link{inspect} for structure inspection and component access.
 }

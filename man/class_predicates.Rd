@@ -13,7 +13,6 @@
 \alias{is_stochastic_model}
 \alias{is_compartments}
 \alias{is_molecules}
-\alias{is_transport}
 \alias{is_transports}
 \alias{is_states}
 \alias{is_reactions}
@@ -73,8 +72,6 @@ is_stochastic_model(x)
 is_compartments(x)
 
 is_molecules(x)
-
-is_transport(x)
 
 is_transports(x)
 

@@ -59,10 +59,6 @@ is_molecules <- function(x) .inherits_compphysiol(x, "molecules")
 
 #' @rdname class_predicates
 #' @export
-is_transport <- function(x) .inherits_compphysiol(x, "transport")
-
-#' @rdname class_predicates
-#' @export
 is_transports <- function(x) .inherits_compphysiol(x, "transports")
 
 #' @rdname class_predicates

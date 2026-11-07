@@ -23,7 +23,15 @@ test_that(".subst_eq() correctly substitutes equations into transports", {
     substituted_transp <- .subst_eq(transp, eqs)
 
     # Check that const expressions have been correctly substituted
-    expect_null(substituted_transp$constr[[1]])
+    expect_null(substituted_transp$const[[1]])
+    expect_s3_class(substituted_transp, "compphysiol_transports")
+    expect_s3_class(substituted_transp$rate, "AsIs")
+    expect_s3_class(substituted_transp$const, "AsIs")
+    expect_identical(substituted_transp$from, transp$from)
+    expect_identical(substituted_transp$to, transp$to)
+    expect_identical(substituted_transp$molec, transp$molec)
+    expect_identical(substituted_transp$type, transp$type)
+    expect_identical(transp$const[[2]], quote(k2))
     expect_equal(substituted_transp$const[[2]], quote(k21 + k22))
 
     # Check that rate expressions have been correctly substituted
@@ -31,4 +39,10 @@ test_that(".subst_eq() correctly substitutes equations into transports", {
     # but they should be mathematically equivalent.
     expect_true(all.equal(substituted_transp$rate[[1]], quote((k11 + k12) * a[A])))
     expect_true(all.equal(substituted_transp$rate[[2]], quote((k21 + k22) * a[B])))
+})
+
+test_that("equation substitution preserves empty transports and unit constants", {
+    expect_identical(.subst_eq(transports(), equations()), transports())
+    trans <- transports("A", "B", const = 2 [1/h])
+    expect_identical(.subst_eq(trans, equations()), trans)
 })

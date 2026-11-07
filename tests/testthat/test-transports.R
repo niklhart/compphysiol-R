@@ -49,6 +49,58 @@ test_that("Transport subsetting works correctly", {
     expect_equal(t1$to, "B")
     expect_equal(t1$const[[1]], quote(kAB))
     expect_equal(t1$rate[[1]], quote(kAB*a[A]))
+    expect_s3_class(t1, "compphysiol_transports")
+    expect_error(t12[[1]], "as.data.frame.*inspect")
+    expect_error(t12[["from"]], "as.data.frame.*inspect")
+})
+
+test_that("transport list conversion returns ordinary unwrapped component lists", {
+    linear <- transports("A", "B", molec = "drug", const = 2 [1/h])
+    nonlinear <- transports("B", NULL, molec = "drug", rate = "k * a[drug,B]")
+    source <- transports(NULL, "A", rate = "input")
+    x <- c(linear, nonlinear, source)
+    entries <- as.list(x)
+    expect_identical(class(entries), "list")
+    expect_length(entries, 3L)
+    for (i in seq_along(entries)) {
+        entry <- entries[[i]]
+        expect_false(is.object(entry))
+        expect_named(entry, c("from", "to", "molec", "rate", "const", "type"))
+        expect_identical(entry$from, x$from[i])
+        expect_identical(entry$to, x$to[i])
+        expect_identical(entry$molec, x$molec[i])
+        expect_identical(entry$rate, x$rate[[i]])
+        expect_identical(entry$const, x$const[[i]])
+        expect_identical(entry$type, x$type[i])
+    }
+    expect_identical(as.list(linear), entries[1])
+    expect_identical(as.list(transports()), list())
+    expect_null(entries[[2]]$const)
+    expect_named(entries[[2]], c("from", "to", "molec", "rate", "const", "type"))
+})
+
+test_that("wiring ordinary transport lists preserves constants and expands wildcards", {
+    model <- compartment_model() |>
+        add_compartment(name = c("A", "B")) |>
+        add_molecule(name = c("drug", "metabolite"), type = "amount") |>
+        add_transport(from = "A", to = "B", const = 2 [1/h]) |>
+        add_transport(from = "B", to = NULL, rate = "k * a[B]") |>
+        add_transport(from = NULL, to = "A", molec = "drug", rate = "input")
+    wired <- wire(model)
+    expect_s3_class(wired$transports, "compphysiol_transports")
+    expect_identical(wired$transports$molec,
+                     c("drug", "metabolite", "drug", "metabolite", "drug"))
+    expect_identical(wired$transports$const[[1]], model$transports$const[[1]])
+    expect_identical(wired$transports$const[[2]], model$transports$const[[1]])
+    expect_null(wired$transports$const[[3]])
+    expect_null(wired$transports$const[[4]])
+    expect_identical(wired$transports$rate[[3]], quote(k * a[drug, B]))
+    expect_identical(wired$transports$rate[[4]], quote(k * a[metabolite, B]))
+    expect_identical(wired$transports$rate[[5]], quote(input))
+    expect_identical(wired$transports$to[3:4], rep(NA_character_, 2))
+    expect_identical(wired$transports$from[5], NA_character_)
+    empty <- wire(compartment_model() |> add_compartment(name = "A") |> add_molecule(name = "drug"))
+    expect_identical(empty$transports, transports())
 })
 
 test_that("Vectorized transport creation with substitution works correctly", {

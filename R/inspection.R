@@ -8,14 +8,14 @@
 #' Subsetting with `x[i]` retains the component or collection class. For
 #' experiments, `x[1]` prints the full details of the first experiment.
 #'
-#' Compartments, molecules, reactions, and states block direct `[[` access.
+#' Compartments, molecules, reactions, states, and transports block direct `[[` access.
 #' Use `as.data.frame(x)` for ordinary row and column access, for example
-#' `as.data.frame(x)[["name"]]`. Molecules and reactions also support
+#' `as.data.frame(x)[["name"]]`. Molecules, reactions, and transports also support
 #' `as.list(x)`, returning a list of entries rather than columns.
 #'
 #' Experiments block direct `[[` access too. Use `as.list(x)[[1]]` to inspect
 #' the first entry's `parameters`, `dosing`, `observations`, and `start`.
-#' Transports, parameter sets, and dosing sets support direct `x[[1]]` access.
+#' Parameter sets and dosing sets support direct `x[[1]]` access.
 #'
 #' @name inspect
 #' @param object A package component or experiment collection.
@@ -62,5 +62,11 @@ str.compphysiol_reactions <- function(object, ...) {
 #' @rdname inspect
 #' @export
 str.compphysiol_states <- function(object, ...) {
+    .str_components(object, ...)
+}
+
+#' @rdname inspect
+#' @export
+str.compphysiol_transports <- function(object, ...) {
     .str_components(object, ...)
 }

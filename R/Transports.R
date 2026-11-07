@@ -24,6 +24,7 @@
 #' f1 <- transports(from = "A", to = "B", const = "k1")   # rate will be k1 * a[A]
 #' # Nonlinear transport
 #' f2 <- transports(from = "A", to = "B", rate = "k1 * A*B/(B+K)")
+#' @seealso [inspect] for printing, structure inspection, and component access.
 #' @seealso [add_transport()] for adding transports to a model and
 #'   [modify_compartment_model] for the complete component map.
 #' @export
@@ -296,30 +297,26 @@ as.data.frame.compphysiol_transports <- function(x, ...) {
     x
 }
 
-#' Convert a `compphysiol_transports` object to a list of `compphysiol_transport` objects (experimental).
-#' 
-#' `compphysiol_transport` objects are light-weighted representations of individual transports, 
-#' where each transport is represented as a list with entries 
-#' `from`, `to`, `molec`, `rate`, `const`, and `type`. 
-#' This function is useful for iterating over transports in a `compphysiol_transports` object.
-#' 
-#' @param x A `compphysiol_transports` object
-#' @param ... Additional arguments (not used)
-#' @return A list of `compphysiol_transport` objects, where each component is a list of the form `list(from, to, molec, rate, const, type)`
+#' Convert transports to ordinary component lists
+#'
+#' Each entry is an ordinary list with `from`, `to`, `molec`, `rate`, `const`,
+#' and `type` components. Expressions and constants are unwrapped from their
+#' list columns; an unused constant remains `NULL`.
+#'
+#' @param x A `compphysiol_transports` object.
+#' @param ... Unused.
+#' @returns A list of component lists, one per transport.
+#' @seealso [inspect] for structure inspection and component access.
 #' @export
 as.list.compphysiol_transports <- function(x, ...) {
-    lst <- do.call(
-        what = Map, 
+    do.call(
+        what = Map,
         args = c(
-            list(list), 
+            list(list),
             as.list(as.data.frame(x)),
             USE.NAMES = FALSE
         )
     )
-    lapply(lst, function(l) {
-        class(l) <- "compphysiol_transport"
-        l
-    })
 }
 
 #' Subset a `compphysiol_transports` object
@@ -342,86 +339,13 @@ c.compphysiol_transports <- function(...) {
     .new_transports(.combine_df_like(...))
 }
 
-#' Access an element in a `compphysiol_transports` object
-#' 
-#' @param x A `compphysiol_transports` object
-#' @param i Row index to access
-#' @returns A `compphysiol_transport` object, which is a list with entries `from`, `to`, `molec`, `rate`, `const`, and `type`.
-#' @export
-`[[.compphysiol_transports` <- function(x, i) {
-    if (!is.numeric(i) || length(i) != 1) stop("Index must be a single numeric value.")
-    if (i < 1 || i > length(x)) stop("Index out of bounds.")
-
-    structure(
-        list(
-            from = x$from[i],
-            to = x$to[i],
-            molec = x$molec[i],
-            rate = x$rate[[i]],
-            const = x$const[[i]],
-            type = x$type[i]
-        ),
-        class = .compphysiol_class(
-            "compphysiol_transport"
-        )
-    )
-}
-
-#' Print a `compphysiol_transport` object
+#' Direct transport extraction is not supported
 #'
-#' @param x A `compphysiol_transport` object
-#' @param ... Additional arguments (not used)
-#' @return The `compphysiol_transport` object (invisible)
+#' @param x A `compphysiol_transports` object.
+#' @param i Row index to access.
+#' @param ... Unused.
+#' @returns This method always errors. Use `[` to retain the collection class,
+#'   or `as.list()` to inspect ordinary component lists.
+#' @seealso [inspect] for structure inspection and component access.
 #' @export
-print.compphysiol_transport <- function(x, ...) {
-    empty_symbol <- "\u2205" # empty set symbol for source/sink compartments
-    from <- if (is.na(x$from)) empty_symbol else x$from
-    to <- if (is.na(x$to)) empty_symbol else x$to
-    molec <- if (is.na(x$molec)) "<all molec>" else x$molec
-    rate <- deparse1(x$rate)
-
-    cat(sprintf(
-        " Transport: %s \u2192 %s, molec = %s, amount rate = %s\n",
-        from,
-        to,
-        molec,
-        rate
-    ))
-    invisible(x)
-}
-
-#' Combine multiple `compphysiol_transport` objects into a `compphysiol_transports` object
-#' 
-#' @param ... Multiple `compphysiol_transport` objects to combine
-#' @return A combined `compphysiol_transports` object
-#' @export
-c.compphysiol_transport <- function(...) {
-    objs <- list(...)
-    if (!all(sapply(objs, function(o) inherits(o, "compphysiol_transport")))) {
-        stop("All inputs must be transport objects.")
-    }
-    
-    # Combine the components into vectors/lists
-    from <- vapply(objs, function(o) o$from, character(1))
-    to <- vapply(objs, function(o) o$to, character(1))
-    molec <- vapply(objs, function(o) o$molec, character(1))
-    rate <- lapply(objs, function(o) o$rate)
-    const <- lapply(objs, function(o) o$const)
-    type <- vapply(objs, function(o) o$type, character(1))
-
-    # Assemble into a Transports object
-    structure(
-        data.frame(
-            from = from,
-            to = to,
-            molec = molec,
-            rate = I(rate),
-            const = I(const),
-            type = type,
-            stringsAsFactors = FALSE
-        ),
-        class = .compphysiol_class(
-            "compphysiol_transports"
-        )
-    )
-}
+`[[.compphysiol_transports` <- function(x, i, ...) .extract_df_like(x, i)

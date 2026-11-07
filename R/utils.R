@@ -446,13 +446,13 @@ with_units <- function(expr) {
 #' @returns A `compphysiol_transports` object with the equations substituted into the rate expressions
 #' @noRd
 .subst_eq <- function(trans, eqs) {
-    lapply(trans, function(tr) {
-        tr$rate <- do.call("substitute", list(tr$rate, env = unclass(eqs)))
-        if (!is.null(tr$const)) {
-            tr$const <- do.call("substitute", list(tr$const, env = unclass(eqs)))
-        }
-        tr
-    }) |> do.call(what = "c")
+    substitute_equations <- function(expr) {
+        if (is.null(expr)) return(NULL)
+        do.call("substitute", list(expr, env = unclass(eqs)))
+    }
+    trans$rate <- I(lapply(trans$rate, substitute_equations))
+    trans$const <- I(lapply(trans$const, substitute_equations))
+    trans
 }
 
 .check_subset_index <- function(i) {

@@ -2,6 +2,7 @@ test_that("structure inspection preserves classes at every storage length", {
     examples <- list(
         compartments("central", volume = 5 [L]),
         molecules("drug"),
+        transports("central", "peripheral", const = 1 [1/h]),
         reactions(input = "drug", output = "metabolite", const = "k"),
         state(molec = "drug", cmt = "central")
     )

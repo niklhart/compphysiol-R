@@ -2,21 +2,23 @@
 % Please edit documentation in R/Transports.R
 \name{as.list.compphysiol_transports}
 \alias{as.list.compphysiol_transports}
-\title{Convert a \code{compphysiol_transports} object to a list of \code{compphysiol_transport} objects (experimental).}
+\title{Convert transports to ordinary component lists}
 \usage{
 \method{as.list}{compphysiol_transports}(x, ...)
 }
 \arguments{
-\item{x}{A \code{compphysiol_transports} object}
+\item{x}{A \code{compphysiol_transports} object.}
 
-\item{...}{Additional arguments (not used)}
+\item{...}{Unused.}
 }
 \value{
-A list of \code{compphysiol_transport} objects, where each component is a list of the form \code{list(from, to, molec, rate, const, type)}
+A list of component lists, one per transport.
 }
 \description{
-\code{compphysiol_transport} objects are light-weighted representations of individual transports,
-where each transport is represented as a list with entries
-\code{from}, \code{to}, \code{molec}, \code{rate}, \code{const}, and \code{type}.
-This function is useful for iterating over transports in a \code{compphysiol_transports} object.
+Each entry is an ordinary list with \code{from}, \code{to}, \code{molec}, \code{rate}, \code{const},
+and \code{type} components. Expressions and constants are unwrapped from their
+list columns; an unused constant remains \code{NULL}.
+}
+\seealso{
+\link{inspect} for structure inspection and component access.
 }

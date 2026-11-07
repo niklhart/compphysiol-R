@@ -200,6 +200,12 @@ objects created with `transports()` or added with `add_transport()`. Transport r
 may use parameters, states, and equations; during ODE export, equations can be
 used to define reusable transport rate constants or rate expressions.
 
+The same collection class represents zero, one, or several transports.
+Subsetting with `[` retains that class; direct `[[` extraction is blocked.
+`as.list()` exposes ordinary component lists for inspection and iteration,
+with individual rate expressions and constants unwrapped from list columns.
+There is no separate singular transport class.
+
 ## Flow
 
 "Flow" is common PBPK jargon for movement between compartments, especially
