@@ -5,6 +5,8 @@
 * Added `dosing_sets()` and scalar broadcasting of dosing schedules and parameter sets across experiments.
 * Added parameter deletion via named `NULL` values in `overlay_parameter()`.
 * Added `remove_*()` functions and `x[i] <- NULL` syntax for local component deletion.
+* Removed experimental (singular) `compphysiol_transport` class: `as.list.compphysiol_transports()` 
+  now creates a list of lists instead of a list of `compphysiol_transport` objects.
 
 # compphysiol 0.5.1
 
