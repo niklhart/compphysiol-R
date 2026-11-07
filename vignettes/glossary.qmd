@@ -606,6 +606,8 @@ Subsetting with `[` retains a collection and `[[` is blocked. Collections can
 be combined with `c()`. Printing chooses its presentation by length: a
 length-one collection shows the full experiment details, while a longer
 collection shows shared and per-entry summaries.
+Use `x[i]` to inspect one entry in full, `str(x)` to inspect the collection's
+structure, or `as.list(x)` to access its entries as ordinary component lists.
 
 Collections require a common time unit mode across experiments, including their
 initial times: all unit-free or all in compatible time units. Parameters shared

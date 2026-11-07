@@ -20,3 +20,6 @@ A \code{compphysiol_states} object.
 \code{compphysiol_states} represent molecule-compartment pairs. In reactions, repeated states
 are interpreted as stoichiometric multiplicity during reaction construction.
 }
+\seealso{
+\link{inspect} for printing, structure inspection, and component access.
+}

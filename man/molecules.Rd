@@ -56,4 +56,6 @@ molecules(name = c("NFkB", "IkB"), cmt = c("cytoplasm", "nucleus"), initial = c(
 \seealso{
 \code{\link[=add_molecule]{add_molecule()}} for adding molecules to a model and
 \link{modify_compartment_model} for the complete component map.
+
+\link{inspect} for printing, structure inspection, and component access.
 }

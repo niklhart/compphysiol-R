@@ -7,6 +7,7 @@
 #' @param molec Character vector of molecule names.
 #' @param cmt Character vector of compartment names.
 #' @return A `compphysiol_states` object.
+#' @seealso [inspect] for printing, structure inspection, and component access.
 #' @export
 state <- function(..., molec, cmt) {
     if (length(list(...)) > 0) {
@@ -405,6 +406,7 @@ print.compphysiol_states <- function(x, ...) {
 #' 
 #' @seealso [add_reaction()] for adding reactions to a model and
 #'   [modify_compartment_model] for the complete component map.
+#' @seealso [inspect] for printing, structure inspection, and component access.
 #' @export
 reactions <- function(
     input = character(0),

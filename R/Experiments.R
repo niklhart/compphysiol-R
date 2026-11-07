@@ -168,7 +168,7 @@
 #' @returns This method always errors. Use `[` to retain the public collection class.
 #' @export
 `[[.compphysiol_experiments` <- function(x, i, ..., exact = TRUE) {
-    stop("Experiment extraction with [[ is not supported; use [ to retain the experiments collection.",
+    stop("Experiment extraction with [[ is not supported; use [ to retain the experiments collection, or as.list(x) to inspect entries (see ?inspect).",
          call. = FALSE)
 }
 
@@ -316,6 +316,27 @@ observations <- function(x) {
     out <- do.call(rbind, lapply(tables, as.data.frame))
     rownames(out) <- NULL
     if (all(data)) .new_observation_data(out) else .new_observation_schedule(out)
+}
+
+#' Inspect a collection of experiments
+#'
+#' Printing a collection summarizes its entries. Use `x[i]` to print the full
+#' details of one experiment, or `as.list(x)` to access the entries as ordinary
+#' lists with parameters, dosing, observations, and start components.
+#' @param x A `compphysiol_experiments` object.
+#' @param object A `compphysiol_experiments` object.
+#' @param ... Further arguments passed to `str()` for structure inspection.
+#' @returns `as.list()` returns a named or unnamed list of experiment entries.
+#'   `str()` returns `NULL`, invisibly.
+#' @export
+as.list.compphysiol_experiments <- function(x, ...) {
+    .experiments_elements(x)
+}
+
+#' @rdname as.list.compphysiol_experiments
+#' @export
+str.compphysiol_experiments <- function(object, ...) {
+    .str_components(object, ...)
 }
 
 #' Print a collection of experiments

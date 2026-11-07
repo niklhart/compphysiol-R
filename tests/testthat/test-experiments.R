@@ -205,6 +205,31 @@ test_that("individual experiments combine directly with c", {
     expect_named(c(replacement = original), "replacement")
 })
 
+test_that("collections support list conversion and structure inspection", {
+    e <- experiment(
+        parameters = parameters(BW = 70 [kg]),
+        dosing = dosing(time = 0 [h], amount = 100 [mg], cmt = "Central"),
+        observations = observation_data(c(1, 2) [h], "C", c(8, 5) [mg/L]),
+        start = 0 [h]
+    )
+    x <- c(treatment = e, control = experiment(start = 0 [h]))
+    entries <- as.list(x)
+    expect_identical(class(entries), "list")
+    expect_named(entries, c("treatment", "control"))
+    expect_null(attr(entries, "component_homogeneity"))
+    expect_identical(entries$treatment, .experiment_entry(e))
+    expect_identical(as.list(e), list(.experiment_entry(e)))
+    expect_identical(as.list(e[integer()]), list())
+    output <- capture.output(result <- str(x))
+    expect_null(result)
+    expect_true(any(grepl("treatment", output)))
+    expect_true(any(grepl("BW", output)))
+    expect_true(any(grepl("observations", output)))
+    expect_output(str(x, max.level = 0), "List of 2")
+    expect_output(str(e[integer()]), "list\\(\\)")
+    expect_error(x[[1]], "not supported")
+})
+
 test_that("collection printing summarizes while single printing shows details", {
     e <- experiment(
         parameters = parameters(BW = 70 [kg]),

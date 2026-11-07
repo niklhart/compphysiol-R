@@ -55,6 +55,7 @@
 #' c(control = e, treatment = experiment())
 #' @seealso [modify_experiments] for modifying experiment components after
 #'   construction.
+#' @seealso [inspect] for printing, structure inspection, and component access.
 #' @export
 experiment <- function(
     parameters = NULL,

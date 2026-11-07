@@ -86,4 +86,6 @@ c(control = e, treatment = experiment())
 \seealso{
 \link{modify_experiments} for modifying experiment components after
 construction.
+
+\link{inspect} for printing, structure inspection, and component access.
 }

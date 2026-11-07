@@ -555,7 +555,7 @@ with_units <- function(expr) {
 .extract_df_like <- function(x, i, ...) {
 
     stop(sprintf(
-        "Direct element access is not supported for class '%s'. Use subsetting with [ and a scalar index instead.",
+        "Direct element access is not supported for class '%s'. Use [ to select entries, or as.data.frame(x) to inspect columns (see ?inspect).",
         class(x)[1]
     ))
 }

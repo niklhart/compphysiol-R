@@ -36,4 +36,6 @@ compartments('adi', volume = 5, unit = "L")
 \seealso{
 \code{\link[=add_compartment]{add_compartment()}} for adding compartments to a model and
 \link{modify_compartment_model} for the complete component map.
+
+\link{inspect} for printing, structure inspection, and component access.
 }

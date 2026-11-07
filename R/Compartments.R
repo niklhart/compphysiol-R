@@ -21,6 +21,7 @@
 #' compartments('adi', volume = 5, unit = "L")
 #' @seealso [add_compartment()] for adding compartments to a model and
 #'   [modify_compartment_model] for the complete component map.
+#' @seealso [inspect] for printing, structure inspection, and component access.
 #' @export
 compartments <- function(name = character(0), volume = "V{name}", unit = NULL) {
     # Process NSE argument for volume, which might include units via `value[unit]`
