@@ -1,4 +1,4 @@
-# compphysiol (development version)
+# compphysiol 0.5.2
 
 * ODE solver options moved to `deSolve_engine(...)`, shared by simulation
   and `optim_engine(simulation = ...)` estimation. 
