@@ -232,8 +232,12 @@ with_units <- function(expr) {
         return(eval(call[[object_arg_name]], parent_env))
     }
 
-    # Rewrite call to constructor
-    call[[1]] <- as.name(constructor_name)
+    # Resolve the constructor here, but evaluate its arguments in the caller.
+    call[[1]] <- get(
+        constructor_name,
+        envir = environment(.forward_or_use),
+        inherits = TRUE
+    )
     call$model <- NULL
     call$object <- NULL
 
