@@ -1,3 +1,7 @@
+# compphysiol (development version)
+
+* fixed a constructor forwarding bug
+
 # compphysiol 0.5.2
 
 * ODE solver options moved to `deSolve_engine(...)`, shared by simulation
