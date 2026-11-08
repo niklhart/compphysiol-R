@@ -300,5 +300,99 @@ ggplot(profile_data, aes(x = time, group = individual)) +
     theme_minimal()
 ```
 
+## Simulate population concentration-time distributions
+
+After fitting and inspecting the diagnostics, we can use the estimated
+random-effects distribution to explore the spread of concentration trajectories
+in a larger population. Here we draw 500 new individual clearances using
+`coef(fit)` and simulate on a common, dense time grid with rxode2.
+The protocol retains the same dose, but its observation schedule now requests
+predictions every quarter hour.
+
+```{r}
+#| label: population-trajectories
+#| eval: !expr has_nlmixr2
+set.seed(2027)
+
+prediction_population <- sample_population(
+    statistics,
+    parameters = coef(fit),
+    n = 500,
+    targets = "CL"
+)
+
+prediction_protocol <- protocol |>
+    replace_observations(observation_schedule(
+        time = seq(0, 24, by = 0.25) [h],
+        observable = "C"
+    ))
+
+prediction_studies <- overlay_parameter(
+    prediction_protocol, prediction_population
+)
+
+population_predictions <- simulate(
+    model,
+    experiment = prediction_studies,
+    engine = rxode2_engine()
+) |>
+    as_observables_long()
+```
+
+These are conditional observable predictions: we do not call
+`sample_observations()`. Consequently, the spread reflects between-individual
+clearance variability, without residual measurement error. The observation-level
+distribution for `C` in `statistics` is not used in this simulation.
+
+For the concentration observable, we summarize across individuals separately
+at each time point. The median and quantiles retain the concentration units.
+With multiple observables, each observable should be summarized separately.
+
+```{r}
+#| label: population-quantiles
+#| eval: !expr has_nlmixr2
+concentration_predictions <- subset(population_predictions, observable == "C")
+rows_by_time <- split(
+    seq_len(nrow(concentration_predictions)),
+    concentration_predictions$time
+)
+
+population_summary <- do.call(rbind, lapply(rows_by_time, function(rows) {
+    values <- concentration_predictions$value[rows]
+    data.frame(
+        time = concentration_predictions$time[rows[1]],
+        median = median(values),
+        lower = quantile(values, probs = 0.05, names = FALSE),
+        upper = quantile(values, probs = 0.95, names = FALSE)
+    )
+}))
+population_summary <- population_summary[order(population_summary$time), ]
+
+ggplot(population_summary, aes(x = time)) +
+    geom_ribbon(
+        aes(ymin = lower, ymax = upper),
+        fill = "#3366AA", alpha = 0.25
+    ) +
+    geom_line(
+        aes(y = median),
+        colour = "#3366AA", linetype = "dashed", linewidth = 0.8
+    ) +
+    labs(
+        x = "Time",
+        y = "Concentration",
+        title = "Population concentration-time distribution",
+        subtitle = "Median and pointwise central 90% population interval"
+    ) +
+    theme_minimal()
+```
+
+The plot remains longitudinal: the dashed line connects time-specific medians,
+and the ribbon spans the 5th to 95th percentiles at each time. This is a
+pointwise description of population variability, not a confidence interval for
+the median or a band containing 90% of complete individual trajectories.
+In general, the median trajectory need not equal the prediction for the typical
+individual (`PRED`). Population parameters are fixed at their fitted estimates here; their
+estimation uncertainty is not represented.
+
 If nlmixr2 is not installed, the backend-dependent chunks are skipped while
 the model and statistical specification remain visible.
