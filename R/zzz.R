@@ -14,6 +14,6 @@
 
 
 #' @importFrom stats rlnorm rnorm setNames
-#' @importFrom utils head tail
+#' @importFrom utils head tail getS3method
 #' @importFrom deSolve ode
 NULL
