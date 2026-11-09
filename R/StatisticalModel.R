@@ -75,7 +75,8 @@ combined <- function(constant, proportional) {
 #' as a fraction (0.3 means 30 percent). It is converted to
 #' `sdlog = sqrt(log1p(cv^2))`; an explicitly supplied `sdlog` takes priority.
 #' Statistical-parameter references must use `sdlog`, rather than `cv`.
-#' Printing includes percent CV, computed as `100 * sqrt(expm1(sdlog^2))`.
+#' Printing includes percent CV for fixed spreads, computed as
+#' `100 * sqrt(expm1(sdlog^2))`. Named spreads omit CV.
 #'
 #' `logitnormal()` uses a median on the original scale and dimensionless
 #' `sdlogit`. For bounds L and U, log((X-L)/(U-X)) is normal with location
@@ -699,14 +700,10 @@ print.compphysiol_statistical_model <- function(x, ...) {
             scale <- paste0(scale, "; lower = ", .statistical_format_value_spec(d$lower),
                             "; upper = ", .statistical_format_value_spec(d$upper))
         }
-        if (inherits(d, "compphysiol_lognormal_distribution")) {
-            cv <- if (is.character(d$sdlog)) {
-                paste0("100 * sqrt(expm1(", d$sdlog, "^2))")
-            } else {
-                sigma <- .sampling_dimensionless(d$sdlog, parameters(), "sdlog")
-                format(100 * sqrt(expm1(sigma^2)))
-            }
-            scale <- paste0(scale, "; %CV = ", cv)
+        if (inherits(d, "compphysiol_lognormal_distribution") && !is.character(d$sdlog)) {
+            sigma <- .sampling_dimensionless(d$sdlog, parameters(), "sdlog")
+            cv <- format(100 * sqrt(expm1(sigma^2)))
+            scale <- paste0(scale, " (CV = ", cv, "%)")
         }
         level <- d$level %||% "<unresolved>"
         cat(sprintf("  (%s) %s: %s; location = %s; %s = %s; level = %s\n",

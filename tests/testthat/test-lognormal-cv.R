@@ -18,11 +18,11 @@ test_that("fixed CV is normalized to the canonical lognormal spread", {
 
 test_that("printing lognormal distributions includes percent CV", {
     expect_output(print(statistical_model(V = lognormal(median = 10 [L], cv = 0.3))),
-                  "; %CV = 30;", fixed = TRUE)
+                  " (CV = 30%);", fixed = TRUE)
     expect_output(print(statistical_model(V = lognormal(sdlog = 0))),
-                  "; %CV = 0;", fixed = TRUE)
+                  " (CV = 0%);", fixed = TRUE)
     expect_output(print(statistical_model(V = lognormal(sdlog = "omega"))),
-                  "; %CV = 100 * sqrt(expm1(omega^2));", fixed = TRUE)
-    expect_output(print(statistical_model(V = lognormal(sdlog = sqrt(log(2)) [1]))),
-                  "; %CV = 100;", fixed = TRUE)
+                  "sdlog = omega; level =", fixed = TRUE)
+    expect_output(print(statistical_model(V = lognormal(sdlog = sqrt(log(2))))),
+                  " (CV = 100%);", fixed = TRUE)
 })

@@ -54,7 +54,8 @@ Alternatively, \code{cv} supplies a fixed dimensionless coefficient of variation
 as a fraction (0.3 means 30 percent). It is converted to
 \code{sdlog = sqrt(log1p(cv^2))}; an explicitly supplied \code{sdlog} takes priority.
 Statistical-parameter references must use \code{sdlog}, rather than \code{cv}.
-Printing includes percent CV, computed as \code{100 * sqrt(expm1(sdlog^2))}.
+Printing includes percent CV for fixed spreads, computed as
+\code{100 * sqrt(expm1(sdlog^2))}. Named spreads omit CV.
 
 \code{logitnormal()} uses a median on the original scale and dimensionless
 \code{sdlogit}. For bounds L and U, log((X-L)/(U-X)) is normal with location
