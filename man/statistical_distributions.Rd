@@ -9,7 +9,7 @@
 \usage{
 normal(mean = NULL, sd, level = NULL)
 
-lognormal(median = NULL, sdlog, level = NULL)
+lognormal(median = NULL, sdlog = NULL, level = NULL, cv = NULL)
 
 logitnormal(median = NULL, sdlogit, lower = 0, upper = 1, level = NULL)
 }
@@ -27,7 +27,10 @@ from the target when validated against a dynamic model.}
 for an observable prediction default.}
 
 \item{sdlog}{Name or fixed dimensionless scalar value of the log-scale
-standard deviation.}
+standard deviation. Takes priority over \code{cv} when supplied.}
+
+\item{cv}{Fixed non-negative dimensionless coefficient of variation as a
+fraction, used when \code{sdlog} is omitted or \code{NULL}.}
 
 \item{sdlogit}{Name or fixed dimensionless log-odds standard deviation.}
 
@@ -47,6 +50,11 @@ values, including unit-bearing values where appropriate.
 \code{lognormal()} uses the median (equivalently, the geometric mean) as its
 location. It intentionally does not accept arithmetic-mean or raw log-mean
 parameterizations. \code{sdlog} is a dimensionless log-scale standard deviation.
+Alternatively, \code{cv} supplies a fixed dimensionless coefficient of variation
+as a fraction (0.3 means 30 percent). It is converted to
+\code{sdlog = sqrt(log1p(cv^2))}; an explicitly supplied \code{sdlog} takes priority.
+Statistical-parameter references must use \code{sdlog}, rather than \code{cv}.
+Printing includes percent CV, computed as \code{100 * sqrt(expm1(sdlog^2))}.
 
 \code{logitnormal()} uses a median on the original scale and dimensionless
 \code{sdlogit}. For bounds L and U, log((X-L)/(U-X)) is normal with location
@@ -62,6 +70,7 @@ checked against a dynamic model: an observable uses its model prediction,
 while a structural parameter requires an explicit location.
 }
 \examples{
+lognormal(median = 10 [L], cv = 0.3)
 logitnormal(median = 0.8, sdlogit = 0.5)
 logitnormal(median = 5 [L], sdlogit = 0.4, lower = 2 [L], upper = 8 [L])
 }

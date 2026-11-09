@@ -71,6 +71,11 @@ combined <- function(constant, proportional) {
 #' `lognormal()` uses the median (equivalently, the geometric mean) as its
 #' location. It intentionally does not accept arithmetic-mean or raw log-mean
 #' parameterizations. `sdlog` is a dimensionless log-scale standard deviation.
+#' Alternatively, `cv` supplies a fixed dimensionless coefficient of variation
+#' as a fraction (0.3 means 30 percent). It is converted to
+#' `sdlog = sqrt(log1p(cv^2))`; an explicitly supplied `sdlog` takes priority.
+#' Statistical-parameter references must use `sdlog`, rather than `cv`.
+#' Printing includes percent CV, computed as `100 * sqrt(expm1(sdlog^2))`.
 #'
 #' `logitnormal()` uses a median on the original scale and dimensionless
 #' `sdlogit`. For bounds L and U, log((X-L)/(U-X)) is normal with location
@@ -92,13 +97,16 @@ combined <- function(constant, proportional) {
 #' @param median Name or fixed scalar value of the distribution median, or `NULL`
 #'   for an observable prediction default.
 #' @param sdlog Name or fixed dimensionless scalar value of the log-scale
-#'   standard deviation.
+#'   standard deviation. Takes priority over `cv` when supplied.
+#' @param cv Fixed non-negative dimensionless coefficient of variation as a
+#'   fraction, used when `sdlog` is omitted or `NULL`.
 #' @param sdlogit Name or fixed dimensionless log-odds standard deviation.
 #' @param lower,upper Names or fixed finite bounds, defaulting to 0 and 1.
 #' @param level `NULL`, `"individual"`, or `"observation"`. `NULL` is inferred
 #'   from the target when validated against a dynamic model.
 #' @returns A `compphysiol_statistical_distribution` object.
 #' @examples
+#' lognormal(median = 10 [L], cv = 0.3)
 #' logitnormal(median = 0.8, sdlogit = 0.5)
 #' logitnormal(median = 5 [L], sdlogit = 0.4, lower = 2 [L], upper = 8 [L])
 #' @name statistical_distributions
@@ -125,11 +133,23 @@ normal <- function(mean = NULL, sd, level = NULL) {
 
 #' @rdname statistical_distributions
 #' @export
-lognormal <- function(median = NULL, sdlog, level = NULL) {
+lognormal <- function(median = NULL, sdlog = NULL, level = NULL, cv = NULL) {
     median <- .process_nse_arg(substitute(median), envir = parent.frame())
     if (!is.null(median)) median <- .statistical_value_spec(median, "median")
-    if (missing(sdlog)) stop("sdlog must be supplied.", call. = FALSE)
     sdlog <- .process_nse_arg(substitute(sdlog), envir = parent.frame())
+    if (is.null(sdlog)) {
+        cv <- .process_nse_arg(substitute(cv), envir = parent.frame())
+        if (is.null(cv)) stop("sdlog or cv must be supplied.", call. = FALSE)
+        cv <- .statistical_value_spec(cv, "cv")
+        if (is.character(cv)) {
+            stop("cv must be a fixed dimensionless scalar; use sdlog for statistical-parameter names.",
+                 call. = FALSE)
+        }
+        cv <- .sampling_dimensionless(cv, parameters(), "cv")
+        if (cv < 0) stop("cv must be non-negative.", call. = FALSE)
+        # Avoid squaring overflow for large, finite CV values.
+        sdlog <- if (cv > sqrt(.Machine$double.xmax)) sqrt(2 * log(cv)) else sqrt(log1p(cv^2))
+    }
     sdlog <- .statistical_value_spec(sdlog, "sdlog")
     structure(
         list(median = median, sdlog = sdlog, level = .statistical_level(level)),
@@ -678,6 +698,15 @@ print.compphysiol_statistical_model <- function(x, ...) {
         if (inherits(d, "compphysiol_logitnormal_distribution")) {
             scale <- paste0(scale, "; lower = ", .statistical_format_value_spec(d$lower),
                             "; upper = ", .statistical_format_value_spec(d$upper))
+        }
+        if (inherits(d, "compphysiol_lognormal_distribution")) {
+            cv <- if (is.character(d$sdlog)) {
+                paste0("100 * sqrt(expm1(", d$sdlog, "^2))")
+            } else {
+                sigma <- .sampling_dimensionless(d$sdlog, parameters(), "sdlog")
+                format(100 * sqrt(expm1(sigma^2)))
+            }
+            scale <- paste0(scale, "; %CV = ", cv)
         }
         level <- d$level %||% "<unresolved>"
         cat(sprintf("  (%s) %s: %s; location = %s; %s = %s; level = %s\n",

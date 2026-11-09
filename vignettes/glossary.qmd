@@ -463,6 +463,12 @@ median is also its geometric mean. It is not the arithmetic mean, and the API
 does not accept `mean` or a raw `logmean`. For an individual parameter `CL`,
 `lognormal(median = "CL_pop", sdlog = "omega_CL")` means that `log(CL)` is
 normal with location `log(CL_pop)` and standard deviation `omega_CL`.
+A fixed coefficient of variation can alternatively be supplied as `cv`, expressed
+as a fraction: `cv = 0.3` means 30 percent. The constructor converts it to
+`sdlog = sqrt(log1p(cv^2))`, retaining the same internal representation.
+An explicit non-NULL `sdlog` takes priority over `cv`. Named statistical
+parameters continue to use `sdlog`. Printing also shows percent CV as
+`100 * sqrt(expm1(sdlog^2))`, or its formula for an unresolved named spread.
 
 A logit-normal distribution uses a median on the original scale, dimensionless
 `sdlogit`, and finite lower and upper bounds (default 0 and 1). For bounds L
