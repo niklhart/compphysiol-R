@@ -52,7 +52,7 @@ to_process_model.compphysiol_compartment_model <- function(model) {
         from_idx <- if (!is.na(from)) .ode_model_transport_state_idx(molec, from, name2idx) else NULL
         to_idx <- if (!is.na(to)) .ode_model_transport_state_idx(molec, to, name2idx) else NULL
         rate <- lower(model$transports$rate[[j]])
-        const <- if (is.null(model$transports$const[[j]])) NA else lower(model$transports$const[[j]])
+        const <- if (is.null(model$transports$const[[j]])) NA else lower(.transport_amount_const(model, j))
         input_states <- if (!is.na(from)) from_idx else integer(0)
         input_stoich <- if (!is.na(from)) 1 else numeric(0)
 

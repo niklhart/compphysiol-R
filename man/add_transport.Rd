@@ -13,7 +13,8 @@ add_transport(
   to,
   molec = NA_character_,
   rate = NULL,
-  const = NULL
+  const = NULL,
+  const_basis = c("amount", "concentration")
 )
 
 \method{add_transport}{compphysiol_compartment_model}(
@@ -24,7 +25,8 @@ add_transport(
   to,
   molec = NA_character_,
   rate = NULL,
-  const = NULL
+  const = NULL,
+  const_basis = c("amount", "concentration")
 )
 }
 \arguments{
@@ -45,6 +47,13 @@ mutually exclusive with \code{const})}
 
 \item{const}{Rate constant for first-order transports (character, call, numeric,
 or unit-bearing value, optional, mutually exclusive with \code{rate})}
+
+\item{const_basis}{Whether \code{const} multiplies the source amount (default) or
+source concentration. Both define linear transports with amount/time rates.
+Amount-based constants have units 1/time; concentration-based constants have
+units compartment size/time (usually volume/time). Concentration-based
+transports require a source compartment size when preparing the model.
+Only applicable with \code{const}.}
 }
 \value{
 The modified \code{compphysiol_compartment_model} object.

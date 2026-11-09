@@ -206,6 +206,20 @@ Subsetting with `[` retains that class; direct `[[` extraction is blocked.
 with individual rate expressions and constants unwrapped from list columns.
 There is no separate singular transport class.
 
+Transport constants may multiply the source amount (the default, with units
+1/time) or the source concentration (`const_basis = "concentration"`, with
+units compartment size/time). Both describe linear transports and produce
+amount/time rates. Concentration-based constants are converted to effective
+amount-based constants using the source compartment size during preparation.
+
+Passive exchange is a pair of opposing concentration-based transports sharing
+one exchange clearance, constructed with `passive_exchange()` or added with
+`add_passive_exchange()`. Its net flux is the clearance times the concentration
+difference. It conserves total amount and assumes equal concentrations at
+equilibrium, without a partitioning correction. The clearance need not be a
+literal fluid flow; for diffusion it can represent a permeability-surface area
+product.
+
 ## Flow
 
 "Flow" is common PBPK jargon for movement between compartments, especially

@@ -11,7 +11,7 @@ lump_model <- function(M, partitioning = list(), normalize = list()) {
 
     # --- validate model ------------------------------------------------------
     .check_class(M, "compphysiol_compartment_model")
-    M <- wire(M)
+    M <- .transport_amount_basis(wire(M))
     if (!.is_linear(M)) stop("Lumping is only supported for linear models.")
     if (length(M$reactions) > 0) {
         stop("Lumping reactions is not supported yet.")

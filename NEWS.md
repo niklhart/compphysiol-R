@@ -3,6 +3,7 @@
 * Fixed a constructor forwarding bug
 * Included logit-normal parameters and CV% parametrization for lognormal parameters
 * Extended population modelling vignette by including prediction intervals
+* Added "passive exchange" concept for common PK transports
 
 # compphysiol 0.5.2
 

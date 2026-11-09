@@ -65,7 +65,7 @@ test_that("transport list conversion returns ordinary unwrapped component lists"
     for (i in seq_along(entries)) {
         entry <- entries[[i]]
         expect_false(is.object(entry))
-        expect_named(entry, c("from", "to", "molec", "rate", "const", "type"))
+        expect_named(entry, c("from", "to", "molec", "rate", "const", "type", "const_basis"))
         expect_identical(entry$from, x$from[i])
         expect_identical(entry$to, x$to[i])
         expect_identical(entry$molec, x$molec[i])
@@ -76,7 +76,7 @@ test_that("transport list conversion returns ordinary unwrapped component lists"
     expect_identical(as.list(linear), entries[1])
     expect_identical(as.list(transports()), list())
     expect_null(entries[[2]]$const)
-    expect_named(entries[[2]], c("from", "to", "molec", "rate", "const", "type"))
+    expect_named(entries[[2]], c("from", "to", "molec", "rate", "const", "type", "const_basis"))
 })
 
 test_that("wiring ordinary transport lists preserves constants and expands wildcards", {
@@ -178,4 +178,65 @@ test_that("Adding transports to CompartmentModels works", {
     expect_equal(model$transports$const[[2]], NULL)
     expect_equal(model$transports$rate[[1]], quote(k1 * a[A]))
     expect_equal(model$transports$rate[[2]], quote(k2 * a[C]))
+})
+
+test_that("concentration-based constants preserve linearity and collection metadata", {
+    tr <- transports("A", "B", const = "Q_{molec}",
+                     molec = c("drug", "met"), const_basis = "concentration")
+    expect_equal(tr$type, rep("linear", 2))
+    expect_equal(tr$rate[[1]], quote(Q_drug * c[drug, A]))
+    expect_equal(tr$rate[[2]], quote(Q_met * c[met, A]))
+    expect_equal(c(tr[1], tr[2]), tr)
+    expect_equal(as.list(tr)[[1]]$const_basis, "concentration")
+    expect_error(transports("A", "B", const = "Q", const_basis = "invalid"), "arg")
+    expect_error(transports("A", "B", rate = "r", const_basis = "amount"), "only.*const")
+    model <- compartment_model() |>
+        add_compartment(name = c("A", "B"), volume = c(2, 4)) |>
+        add_molecule(name = c("drug", "met"), type = "amount") |>
+        add_transport(from = "A", to = "B", const = "Q", const_basis = "concentration")
+    wired <- wire(model)
+    expect_equal(wired$transports$const_basis, rep("concentration", 2))
+    expect_equal(wired$transports$rate[[2]], quote(Q * c[met, A]))
+})
+
+test_that("passive exchange conserves amount and equilibrates at equal concentrations", {
+    model <- compartment_model() |>
+        add_compartment(name = c("pla", "tis"), volume = c("Vp", "Vt")) |>
+        add_molecule(name = "parent", initial = c(12, 0),
+                     cmt = c("pla", "tis"), type = "amount") |>
+        add_parameter(Vp = 2, Vt = 4, Q = 3) |>
+        add_passive_exchange(c("pla", "tis"), molec = "parent", clearance = "Q")
+    expect_equal(model$transports$from, c("pla", "tis"))
+    expect_equal(model$transports$type, rep("linear", 2))
+    process <- to_process_model(model)
+    expect_equal(eval(process$processes$const[[1]], list(Q = 3, Vp = 2)), 1.5)
+    expect_equal(eval(process$processes$const[[2]], list(Q = 3, Vt = 4)), 0.75)
+    reference <- model
+    reference$transports <- transports(c("pla", "tis"), c("tis", "pla"),
+                                      molec = "parent", const = c("Q/Vp", "Q/Vt"))
+    expect_equal(to_analytical_model(model), to_analytical_model(reference))
+    expect_equal(lump_model(model), lump_model(reference))
+    ode <- .to_ode(model)
+    out <- deSolve::ode(y = ode$y0, times = c(0, 1, 20), func = ode$odefun)
+    expect_equal(unname(rowSums(out[, -1])), rep(12, 3), tolerance = 1e-6)
+    expect_equal(unname(out[3, 2] / 2), unname(out[3, 3] / 4), tolerance = 1e-6)
+})
+
+test_that("passive exchange supports units and rejects invalid endpoints", {
+    tr <- passive_exchange(c("A", "B"), clearance = 2 [L/h])
+    expect_s3_class(tr$const[[1]], "units")
+    expect_equal(tr$const[[1]], tr$const[[2]])
+    expect_equal(tr$const_basis, rep("concentration", 2))
+    for (between in list(c("A", "A"), c("A", NA), c("A", ""), "A", NULL)) {
+        expect_error(passive_exchange(between, clearance = "Q"), "two distinct compartments")
+    }
+    model <- compartment_model() |>
+        add_compartment(name = c("A", "B"), volume = 2 [L]) |>
+        add_molecule(name = "drug", initial = 1 [mg], type = "amount") |>
+        add_passive_exchange(c("A", "B"), clearance = 2 [L/h])
+    expect_no_error(.to_ode(model))
+    model$transports <- passive_exchange(c("A", "B"), clearance = 2 [1/h])
+    expect_error(.to_ode(model), "unit|Unit")
+    model$compartments <- compartments(c("A", "B"), volume = NA_real_)
+    expect_error(to_process_model(model), "volume|size")
 })

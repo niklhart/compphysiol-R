@@ -18,17 +18,31 @@
 #'   mutually exclusive with `const`)
 #' @param const Rate constant for first-order transports (character, call, numeric,
 #'   or unit-bearing value, optional, mutually exclusive with `rate`)
+#' @param const_basis Whether `const` multiplies the source amount (default) or
+#'   source concentration. Both define linear transports with amount/time rates.
+#'   Amount-based constants have units 1/time; concentration-based constants have
+#'   units compartment size/time (usually volume/time). Concentration-based
+#'   transports require a source compartment size when preparing the model.
+#'   Only applicable with `const`.
 #' @return A `compphysiol_transports` object
 #' @examples
 #' # Linear transport
 #' f1 <- transports(from = "A", to = "B", const = "k1")   # rate will be k1 * a[A]
+#' # Concentration-based linear transport: rate will be Q * c[drug,A]
+#' transports("A", "B", molec = "drug", const = "Q",
+#'            const_basis = "concentration")
 #' # Nonlinear transport
 #' f2 <- transports(from = "A", to = "B", rate = "k1 * A*B/(B+K)")
 #' @seealso [inspect] for printing, structure inspection, and component access.
 #' @seealso [add_transport()] for adding transports to a model and
 #'   [modify_compartment_model] for the complete component map.
 #' @export
-transports <- function(from, to, molec = NA_character_, ..., rate = NULL, const = NULL) {
+transports <- function(from, to, molec = NA_character_, ..., rate = NULL, const = NULL,
+                       const_basis = c("amount", "concentration")) {
+    if (!is.null(rate) && !missing(const_basis)) {
+        stop("Argument 'const_basis' can only be used with 'const'.", call. = FALSE)
+    }
+    const_basis <- match.arg(const_basis)
     const_expr <- substitute(const)
     if (.dsl_has_state_ref(const_expr)) {
         stop(
@@ -61,6 +75,7 @@ transports <- function(from, to, molec = NA_character_, ..., rate = NULL, const 
                 rate = I(list()),
                 const = I(list()),
                 type = character(),
+                const_basis = character(),
                 stringsAsFactors = FALSE
             )
         ))
@@ -143,9 +158,10 @@ transports <- function(from, to, molec = NA_character_, ..., rate = NULL, const 
                     call. = FALSE
                 )
             }
+            prefix <- if (const_basis == "amount") "a" else "c"
             rate <- Map(
                 function(f, c) .mul(c, .as_call(f)),
-                ifelse(is.na(molec), paste0("a[", from, "]"), paste0("a[", molec, ",", from, "]")),
+                ifelse(is.na(molec), paste0(prefix, "[", from, "]"), paste0(prefix, "[", molec, ",", from, "]")),
                 const,
                 USE.NAMES = FALSE
             )
@@ -160,6 +176,7 @@ transports <- function(from, to, molec = NA_character_, ..., rate = NULL, const 
             rate = I(rate),
             const = I(const),
             type = type,
+            const_basis = if (type == "linear") const_basis else NA_character_,
             stringsAsFactors = FALSE
         ))
 }
@@ -202,7 +219,8 @@ add_transport <- function(
     to,
     molec = NA_character_,
     rate = NULL,
-    const = NULL
+    const = NULL,
+    const_basis = c("amount", "concentration")
 ) {
     UseMethod("add_transport")
 }
@@ -217,7 +235,8 @@ add_transport.compphysiol_compartment_model <- function(
     to,
     molec = NA_character_,
     rate = NULL,
-    const = NULL
+    const = NULL,
+    const_basis = c("amount", "concentration")
 ) {
     .check_class(model, "compphysiol_compartment_model")
 
@@ -300,8 +319,8 @@ as.data.frame.compphysiol_transports <- function(x, ...) {
 #' Convert transports to ordinary component lists
 #'
 #' Each entry is an ordinary list with `from`, `to`, `molec`, `rate`, `const`,
-#' and `type` components. Expressions and constants are unwrapped from their
-#' list columns; an unused constant remains `NULL`.
+#' `type`, and `const_basis` components. Expressions and constants are unwrapped
+#' from their list columns; an unused constant remains `NULL`.
 #'
 #' @param x A `compphysiol_transports` object.
 #' @param ... Unused.
@@ -349,3 +368,93 @@ c.compphysiol_transports <- function(...) {
 #' @seealso [inspect] for structure inspection and component access.
 #' @export
 `[[.compphysiol_transports` <- function(x, i, ...) .extract_df_like(x, i)
+
+
+# Convert a linear transport coefficient to the amount basis at a model boundary.
+.transport_amount_const <- function(model, i) {
+    trans <- model$transports
+    const <- trans$const[[i]]
+    if (!identical(trans$const_basis[[i]], "concentration")) return(const)
+    from <- trans$from[[i]]
+    idx <- match(from, names(model$compartments))
+    vol <- if (is.na(idx)) NULL else model$compartments$volume[[idx]]
+    if (is.null(vol) || .is_missing_volume(vol)) {
+        stop("Concentration-based transport requires a size for source compartment '",
+             from, "'.", call. = FALSE)
+    }
+    call("/", const, .as_call(vol))
+}
+
+.transport_amount_basis <- function(model) {
+    for (i in seq_along(model$transports)) {
+        if (identical(model$transports$const_basis[[i]], "concentration")) {
+            model$transports$const[[i]] <- .transport_amount_const(model, i)
+            model$transports$rate[[i]] <- .mul(
+                model$transports$const[[i]],
+                .as_call(.dsl_make_state(model$transports$molec[[i]],
+                                         model$transports$from[[i]], prefix = "a"))
+            )
+            model$transports$const_basis[[i]] <- "amount"
+        }
+    }
+    model
+}
+
+#' Passive bidirectional exchange between two compartments
+#'
+#' Specify passive exchange using a shared exchange clearance rather than two
+#' first-order constants. The directional amount rates are clearance times the
+#' source concentration; the net flux from the first compartment to the second
+#' is `clearance * (c_first - c_second)`. Compartment sizes are taken from the
+#' model during preparation, so no volume parameter names need to be supplied.
+#'
+#' This law conserves molecular identity and total amount and, for positive
+#' clearance and fixed positive volumes, equilibrates at equal concentrations.
+#' It assumes no partitioning correction: tissue partitioning would instead
+#' require a law such as `Q * (c_plasma - c_tissue / Kp)`. The exchange clearance
+#' has units volume/time for volumetric compartments and need not represent a
+#' literal fluid flow; it can also represent a permeability-surface area product.
+#'
+#' @param between Character vector naming two distinct compartments. Sources and
+#'   sinks are not supported.
+#' @param molec Molecule names; omitted means all molecules, resolved by `wire()`.
+#' @param clearance Shared concentration-based coefficient, supplied as a symbolic
+#'   character expression or an explicit numeric or unit-bearing value.
+#' @returns An ordinary `compphysiol_transports` collection containing both
+#'   directions for each molecule, with linearity metadata preserved.
+#' @examples
+#' passive_exchange(c("pla", "tis"), molec = "parent", clearance = "Q")
+#' compartment_model() |>
+#'   add_passive_exchange(c("pla", "tis"), clearance = 2 [L/h])
+#' @export
+passive_exchange <- function(between, molec = NA_character_, clearance) {
+    if (!is.character(between) || length(between) != 2L ||
+        anyNA(between) || any(!nzchar(between)) || anyDuplicated(between)) {
+        stop("Argument 'between' must name two distinct compartments.", call. = FALSE)
+    }
+    clearance <- .process_unit_shorthand_arg(
+        expr = substitute(clearance), value = clearance, envir = parent.frame()
+    )
+    c(
+        transports(between[1], between[2], molec = molec,
+                   const = clearance, const_basis = "concentration"),
+        transports(between[2], between[1], molec = molec,
+                   const = clearance, const_basis = "concentration")
+    )
+}
+
+#' Add passive bidirectional exchange to a model
+#' @inherit passive_exchange description details params
+#' @param model A `compphysiol_compartment_model` object.
+#' @returns The modified model.
+#' @export
+add_passive_exchange <- function(model, between, molec = NA_character_, clearance) {
+    .check_class(model, "compphysiol_compartment_model")
+    trans <- .forward_or_use(
+        object_arg_name = "trans",
+        constructor_name = "passive_exchange",
+        call = match.call(),
+        parent_env = parent.frame()
+    )
+    add_transport(model, trans = trans)
+}

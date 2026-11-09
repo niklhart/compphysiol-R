@@ -16,8 +16,8 @@ A list of component lists, one per transport.
 }
 \description{
 Each entry is an ordinary list with \code{from}, \code{to}, \code{molec}, \code{rate}, \code{const},
-and \code{type} components. Expressions and constants are unwrapped from their
-list columns; an unused constant remains \code{NULL}.
+\code{type}, and \code{const_basis} components. Expressions and constants are unwrapped
+from their list columns; an unused constant remains \code{NULL}.
 }
 \seealso{
 \link{inspect} for structure inspection and component access.

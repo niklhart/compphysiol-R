@@ -911,7 +911,7 @@ make_depot <- function(model) {
 
         if (type == "linear") {
             # Check that all parameters in the rate constant are defined in the model, warn if not (we cannot check units in this case)
-            const <- model$transports$const[[i]]
+            const <- .transport_amount_const(model, i)
             if (!all(all.vars(const) %in% varnames)) {
                 warning("Cannot check units for transport (", i, "): some parameter(s) in the rate constant are not defined in the model.")
                 next
