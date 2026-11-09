@@ -47,7 +47,9 @@ model
 
 ## Simulation
 
-`simulate()` allows to simulate a compartment model (by default, using ODEs). 
+For all supported model representations and arguments, see
+[`help("simulation", package = "compphysiol")`](../html/simulation.html).
+`simulate()` runs a compartment model (by default, using ODEs).
 It handles units properly, ensuring that the simulation results are unit-aware.
 
 ```{r}
@@ -115,10 +117,11 @@ selected <- simulate(model, experiment = e)
 as_observables_wide(selected)
 ```
 
-One `Experiment` represents one independent individual simulation unit. For an
-`Experiments` collection, element names are individual identifiers and
-`simulate()` returns a corresponding list of results. The results remain
-separate rather than being bound automatically into a population table.
+Each experiment represents one independent individual simulation unit. For a
+collection with multiple experiments, `simulate()` returns one simulation result
+whose state and observable tables contain an `experiment` factor identifying
+individuals in collection order. Collection names provide the identifiers. A
+length-one experiment returns tables without this factor.
 
 The observable table can also be processed independently of its simulation
 result. For example, filter predictions before widening:

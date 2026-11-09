@@ -16,3 +16,6 @@ A \code{compphysiol_ode_model} object.
 \code{to_ode_model()} lowers a \code{compphysiol_compartment_model} or \code{compphysiol_process_model} to a
 solver-neutral ODE representation with indexed one-dimensional states.
 }
+\seealso{
+\link[=simulation]{simulate()} for running the returned model.
+}

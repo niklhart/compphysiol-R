@@ -33,3 +33,6 @@ predictions |>
     subset(observable == "A") |>
     as_observables_wide()
 }
+\seealso{
+\link[=simulation]{simulate()} for producing state and observable trajectories.
+}

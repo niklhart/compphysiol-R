@@ -21,3 +21,6 @@ The first implementation supports homogeneous first-order linear systems.
 The constant source term \code{b} is part of the representation, but nonzero
 entries are rejected for now.
 }
+\seealso{
+\link[=simulation]{simulate()} for running the returned model.
+}

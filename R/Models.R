@@ -5,6 +5,7 @@
 #'
 #' @return An object of class `compphysiol_compartment_model`
 #' @export
+#' @seealso [simulate()][simulation] for simulation options and output.
 #' @examples
 #' \donttest{
 #' ## Full workflow from model specification to plotting
@@ -110,6 +111,7 @@ sMD_PBPK_12CMT_wellstirred <- function() {
 #'
 #' @return An object of class `compphysiol_compartment_model`
 #' @export
+#' @seealso [simulate()][simulation] for simulation options and output.
 #' @examples
 #' \donttest{
 #' ## Full workflow from model specification to plotting

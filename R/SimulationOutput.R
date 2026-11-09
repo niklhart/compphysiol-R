@@ -11,6 +11,7 @@
 #'   data frame with `time`, `observable`, and `value` columns, and optionally
 #'   `rep`.
 #' @returns A `compphysiol_observation_data` object containing observable predictions.
+#' @seealso [simulate()][simulation] for producing state and observable trajectories.
 #' @export
 as_observables_long <- function(x) {
     if (is.data.frame(x)) {
@@ -49,6 +50,7 @@ as_observables_long <- function(x) {
 #' predictions |>
 #'     subset(observable == "A") |>
 #'     as_observables_wide()
+#' @seealso [simulate()][simulation] for producing state and observable trajectories.
 #' @export
 as_observables_wide <- function(x) {
     long <- as_observables_long(x)

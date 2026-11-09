@@ -62,7 +62,7 @@ Existing names are preserved unless an input is given an outer argument name
 in \code{c()}; that outer name replaces the name stored on the length-one input.
 Positive whole-number names are reserved for transient positional identifiers.
 
-Pass an experiment to \code{\link[=simulate]{simulate()}} through the \code{experiment} argument for ODE
+Pass an experiment to \link[=simulation]{simulate()} through the \code{experiment} argument for ODE
 simulation, or include observation data when using it for estimation.
 
 Observation rows retain their order, duplicates, additional columns, and

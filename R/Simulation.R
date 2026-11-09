@@ -1,6 +1,6 @@
 #' Configure the deSolve simulation engine
 #'
-#' Use this engine with [simulate()] or as the `simulation` argument of
+#' Use this engine with [simulate()][simulation] or as the `simulation` argument of
 #' [optim_engine()] to configure model preparation and numerical integration.
 #'
 #' @param compiled Whether to prepare a `compphysiol_desolve_compiled_model` before simulation.
@@ -39,6 +39,8 @@ deSolve_engine <- function(compiled = FALSE, ...) {
 
 #' Configure the rxode2 simulation engine
 #'
+#' Use this engine with [simulate()][simulation] for numerical ODE simulation.
+#'
 #' @param ... Named arguments passed to [rxode2::rxSolve()]. Model, parameter,
 #'   initial-value, event, and return-type arguments are managed by compphysiol.
 #' @returns A `compphysiol_rxode2_engine` object.
@@ -76,12 +78,17 @@ rxode2_engine <- function(...) {
     model
 }
 
-#' Simulate a compartment model
+#' Simulate compartment models and lowered model representations
 #'
-#' `simulate()` solves a `compphysiol_compartment_model` and returns toolbox-level output.
-#' The default route wraps the `deSolve` ODE export and returns ODE states and
-#' observables.
+#' `simulate()` runs a compartment model or a supported lowered representation
+#' and returns state trajectories and observable predictions with output units.
+#' For compartment models, the default route uses numerical ODE integration
+#' through deSolve. Call the [stats::simulate()] generic to dispatch to these methods.
 #'
+#' @name simulation
+#' @aliases simulate
+#' @order 1
+#' @details
 #' Simulation is either unit-free or unit-aware with respect to time. If the
 #' model uses a time dimension, `time` must carry units through the unit
 #' shorthand or the `unit` argument. Conversely, unit-aware simulation times
@@ -97,15 +104,16 @@ rxode2_engine <- function(...) {
 #' converted to kilograms internally, an `atol` value is applied on the kilogram
 #' scale even if results are displayed back in milligrams.
 #'
-#' @param object A `compphysiol_compartment_model` object.
-#' @param nsim Number of stochastic realizations for `simulation_type = "ssa"`.
+#' @param object A compartment model or one of the lowered representations listed
+#'   under Supported inputs.
+#' @param nsim Number of stochastic realizations for SSA or hybrid simulation.
 #'   Ignored by deterministic simulation routes.
 #' @param seed Optional random seed for stochastic simulation routes.
 #' @param time Simulation time points. Units can be supplied with the unit
 #'   shorthand, e.g. `seq(0, 24) [h]`.
 #' @param unit Optional time unit used when `time` is numeric without units.
-#' @param parameters Free parameters passed to the ODE solver, as a named list
-#'   or `compphysiol_parameters` object.
+#' @param parameters Runtime parameter values, as a named list or
+#'   [compphysiol_parameters][parameters()] object, overriding model defaults.
 #' @param dimensions Named list of unit dimensions defining the numerical scale
 #'   used at the solver boundary. These dimensions affect the scale of solver
 #'   tolerances such as `atol`.
@@ -114,7 +122,8 @@ rxode2_engine <- function(...) {
 #'   linear models. `"ssa"` uses Gillespie's stochastic simulation algorithm.
 #'   `"hybrid"` uses the Alfonsi hybrid stochastic-deterministic algorithm.
 #' @param engine Numerical ODE simulation engine. Defaults to
-#'   [deSolve_engine()] for compatibility; use [rxode2_engine()] for rxode2.
+#'   [deSolve_engine()] for compartment and ODE models; use [rxode2_engine()]
+#'   for rxode2. Executable models default to their own backend's engine.
 #' @param partition Partitioning for `simulation_type = "hybrid"`. A logical
 #'   vector marks stochastic reactions with `TRUE` and deterministic reactions
 #'   with `FALSE`. A non-negative numeric scalar enables adaptive partitioning:
@@ -123,26 +132,63 @@ rxode2_engine <- function(...) {
 #'   simulation output in addition to the requested `time` points.
 #' @param experiment A `compphysiol_experiments` collection, as an alternative
 #'   to `time`, `unit`, and `parameters`. Currently supported for the ODE route
-#'   and `compphysiol_ode_model`/`compphysiol_desolve_compiled_model` inputs. Known parameters override model
+#'   and ODE, compiled deSolve, and rxode2 model inputs. Known parameters override model
 #'   defaults; experiment dosing replaces model dosing, including when empty.
 #'   Simulation starts at the experiment's initial time and evaluates only its
 #'   scheduled observable-time pairs. Each experiment is one independent
-#'   individual simulation unit. Collections return a list in input order, with
-#'   experiment names serving as individual identifiers.
+#'   individual simulation unit. Collections return one simulation result, with
+#'   experiment names serving as individual identifiers when combining runs.
 #' @param max_events Maximum number of stochastic reaction events allowed per
 #'   realization. The default `Inf` imposes no limit.
 #' @param ... For ODE simulation, supply solver options through
-#'   [deSolve_engine()] instead. For hybrid simulation, additional arguments
+#'   [deSolve_engine()] or [rxode2_engine()] instead. For hybrid simulation, additional arguments
 #'   are passed to [deSolve::ode()].
 #' @returns A `compphysiol_simulation_result` with rectangular `states` and long-format
 #'   `observables` (`time`, `observable`, `value`, plus `rep` for stochastic
 #'   replicates). Direct `time` input requests all observables at every output
 #'   time. Values are numeric, `units`, or `mixed_units` depending on their units.
 #'   Without observables the component is `NULL`. A `compphysiol_experiments`
-#'   input returns one result whose state and observable tables contain an
-#'   `experiment` factor identifying each individual. See
+#'   input with multiple experiments returns one result whose state and observable
+#'   tables contain an `experiment` factor identifying each individual in input
+#'   order. A length-one experiment returns ordinary tables without that factor. See
 #'   [as_observables_long()] and
 #'   [as_observables_wide()] for a storage-independent processing interface.
+#' @section Supported inputs:
+#' | Input class | Execution and restrictions |
+#' | --- | --- |
+#' | `compphysiol_compartment_model` | `simulation_type` selects ODE, analytical, SSA, or hybrid execution. Engines and experiments apply to the ODE route. |
+#' | `compphysiol_ode_model` | ODE execution with [deSolve_engine()] or [rxode2_engine()]. |
+#' | `compphysiol_desolve_compiled_model` | Requires [deSolve_engine()]; reuses compiled execution metadata. |
+#' | `compphysiol_rxode2_model` | Requires [rxode2_engine()]; reuses compiled execution metadata. |
+#' | `compphysiol_analytical_model` | Analytical execution; experiments are unsupported. |
+#' | `compphysiol_stochastic_model` | `simulation_type` selects SSA or hybrid execution; experiments are unsupported. |
+#'
+#' Lower models with [to_ode_model()], [to_compiled_ode_model()],
+#' [to_rxode2_model()], [to_analytical_model()], or [to_stochastic_model()]
+#' to reuse their structure across runs with different runtime parameters.
+#' A process model from [to_process_model()] must first be lowered to a
+#' supported representation; it has no direct simulation method.
+#' Compartment model inputs retain diagnostics in terms of model components.
+#'
+#' After their first execution, compiled deSolve and rxode2 models cache the
+#' parameter interface, solver dimensions, and executable structure. Later runs
+#' must use compatible parameter units and the same solver dimensions and
+#' cannot introduce new parameters or change the state structure. Experiment
+#' dosing can only target existing amount states, including any infusion depots.
+#'
+#' @section Output times and events:
+#' Direct `time` input requests every observable at every supplied time.
+#' An experiment instead evaluates its scheduled observable-time pairs,
+#' preserving observation order and duplicate rows. Its state table includes
+#' the initial time and sorted unique observation times. States and observables
+#' at dosing times use the post-event state, including a bolus at time zero.
+#'
+#' @seealso [compartment_model()], [experiment()], [observation_schedule()],
+#'   [deSolve_engine()], [rxode2_engine()], [as_observables_long()],
+#'   [as_observables_wide()], [sample_observations()].
+#'   For a worked example, see
+#'   \href{../doc/simulation-plotting.html}{Simulating and plotting unit-aware models}
+#'   (`vignette("simulation-plotting", package = "compphysiol")`).
 #' @examples
 #' M <- multiCompModel(ncomp = 1, type = "micro", unit = "mg") |>
 #'     add_dosing(time = 0 [h], amount = 100 [mg], cmt = "cen") |>
@@ -155,6 +201,20 @@ rxode2_engine <- function(...) {
 #' )
 #' out$states
 #' out$observables
+#'
+#' # Reuse a lowered model with different runtime parameters
+#' ode_model <- to_ode_model(M)
+#' simulate(ode_model, time = seq(0, 24) [h],
+#'          parameters = parameters(kc0 = 0.1 [1/h], Vcen = 10 [L]))
+#'
+#' # Evaluate selected observable-time pairs in independent experiments
+#' e <- experiment(
+#'     parameters = parameters(kc0 = 0.2 [1/h], Vcen = 10 [L]),
+#'     dosing = dosing(time = 0 [h], amount = 100 [mg], cmt = "cen"),
+#'     observations = observation_schedule(c(1, 4, 12) [h], "Ccen")
+#' )
+#' selected <- simulate(M, experiment = c(first = e, second = e))
+#' as_observables_long(selected)
 #' @importFrom stats simulate
 #' @method simulate compphysiol_compartment_model
 #' @export
@@ -319,6 +379,7 @@ simulate.compphysiol_compartment_model <- function(
     model
 }
 
+#' @rdname simulation
 #' @export
 simulate.compphysiol_ode_model <- function(
     object,
@@ -376,6 +437,7 @@ simulate.compphysiol_ode_model <- function(
     )
 }
 
+#' @rdname simulation
 #' @export
 simulate.compphysiol_desolve_compiled_model <- function(
     object,
@@ -473,6 +535,7 @@ simulate.compphysiol_desolve_compiled_model <- function(
     )
 }
 
+#' @rdname simulation
 #' @export
 simulate.compphysiol_analytical_model <- function(
     object,
@@ -538,6 +601,7 @@ simulate.compphysiol_analytical_model <- function(
     )
 }
 
+#' @rdname simulation
 #' @export
 simulate.compphysiol_stochastic_model <- function(
     object,
@@ -848,6 +912,8 @@ simulate.compphysiol_stochastic_model <- function(
 }
 
 #' Print a simulation result
+#'
+#' See [simulate()][simulation] for result components and output conventions.
 #'
 #' @param x A `compphysiol_simulation_result` object.
 #' @param ... Additional arguments, currently ignored.

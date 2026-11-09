@@ -5,6 +5,7 @@
 #' observables defined as functions of the states and parameters, parameters, and dosing events. 
 #' This function initializes an empty model that can then be built up by adding these components using the `add_*` functions.
 #' 
+#' @seealso [simulate()][simulation] for running the model.
 #' @returns A new `compphysiol_compartment_model` object.
 #' @seealso [modify_compartment_model] for a map of constructors and modifying
 #'   functions, and [to_process_model()], [to_ode_model()],

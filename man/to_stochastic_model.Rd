@@ -21,3 +21,6 @@ The first implementation supports models whose processes can be rendered as
 elementary propensities from their \code{const} and input-state metadata. Explicit
 \code{rate = ...} processes and dosing are rejected.
 }
+\seealso{
+\link[=simulation]{simulate()} for running the returned model.
+}

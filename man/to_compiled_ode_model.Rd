@@ -14,7 +14,10 @@ A \code{compphysiol_desolve_compiled_model} object.
 }
 \description{
 \code{to_compiled_ode_model()} lowers a \code{compphysiol_compartment_model}, \code{compphysiol_process_model}, or
-\code{compphysiol_ode_model} to a compiled-backend representation. The first implementation
-records the stable model metadata needed by the compiled deSolve backend;
-code generation and dynamic loading are attached in later backend steps.
+\code{compphysiol_ode_model} to an executable deSolve representation. The first
+simulation generates and loads compiled code and caches solver dimensions,
+the parameter interface, and output metadata for reuse in subsequent runs.
+}
+\seealso{
+\link[=simulation]{simulate()} for running the returned model.
 }

@@ -22,6 +22,7 @@
 #'   observation-distribution parameters.
 #' @returns A `compphysiol_observation_data` object whose `value` column contains sampled
 #'   observations.
+#' @seealso [simulate()][simulation] for generating conditional predictions.
 #' @examples
 #' predictions <- observation_data(
 #'     time = c(1, 2) [h], observable = "C", value = c(5, 3) [mg/L]

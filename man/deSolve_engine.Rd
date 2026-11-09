@@ -17,6 +17,6 @@ initial-value, event, and compiled-code arguments are managed by compphysiol.}
 A \code{compphysiol_desolve_engine} object.
 }
 \description{
-Use this engine with \code{\link[=simulate]{simulate()}} or as the \code{simulation} argument of
+Use this engine with \link[=simulation]{simulate()} or as the \code{simulation} argument of
 \code{\link[=optim_engine]{optim_engine()}} to configure model preparation and numerical integration.
 }

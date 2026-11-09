@@ -15,5 +15,5 @@
 The \code{compphysiol_simulation_result} object, invisibly.
 }
 \description{
-Print a simulation result
+See \link[=simulation]{simulate()} for result components and output conventions.
 }

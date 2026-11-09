@@ -14,5 +14,5 @@ initial-value, event, and return-type arguments are managed by compphysiol.}
 A \code{compphysiol_rxode2_engine} object.
 }
 \description{
-Configure the rxode2 simulation engine
+Use this engine with \link[=simulation]{simulate()} for numerical ODE simulation.
 }

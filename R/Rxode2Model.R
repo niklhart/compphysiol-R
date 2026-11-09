@@ -8,6 +8,7 @@
 #' @param model A compphysiol compartment, process, or ODE model.
 #' @param ... Reserved for future use.
 #' @returns A `compphysiol_rxode2_model` object.
+#' @seealso [simulate()][simulation] for running the returned model.
 #' @export
 to_rxode2_model <- function(model, ...) UseMethod("to_rxode2_model")
 
@@ -487,6 +488,9 @@ print.compphysiol_rxode2_model <- function(x, ...) {
     invisible(x)
 }
 
+#' @name simulation
+#' @rdname simulation
+#' @order 6
 #' @export
 simulate.compphysiol_rxode2_model <- function(
     object, nsim = NULL, seed = NULL, time = numeric(0), unit = NULL,

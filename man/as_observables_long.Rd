@@ -23,3 +23,6 @@ Experiment schedule order and duplicate observation rows are retained.
 Both helpers accept an observable table directly, allowing filtering before
 reshaping without modifying the simulation result.
 }
+\seealso{
+\link[=simulation]{simulate()} for producing state and observable trajectories.
+}

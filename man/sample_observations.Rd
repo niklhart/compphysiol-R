@@ -50,3 +50,6 @@ sample_observations(
     parameters(sigma_add = 0.1 [mg/L], sigma_prop = 0.2)
 )
 }
+\seealso{
+\link[=simulation]{simulate()} for generating conditional predictions.
+}

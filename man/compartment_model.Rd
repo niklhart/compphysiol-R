@@ -16,6 +16,8 @@ observables defined as functions of the states and parameters, parameters, and d
 This function initializes an empty model that can then be built up by adding these components using the \verb{add_*} functions.
 }
 \seealso{
+\link[=simulation]{simulate()} for running the model.
+
 \link{modify_compartment_model} for a map of constructors and modifying
 functions, and \code{\link[=to_process_model]{to_process_model()}}, \code{\link[=to_ode_model]{to_ode_model()}},
 \code{\link[=to_analytical_model]{to_analytical_model()}} for lowered model representations.

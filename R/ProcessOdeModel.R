@@ -187,6 +187,7 @@ to_process_model.compphysiol_compartment_model <- function(model) {
 #'
 #' @param model A `compphysiol_compartment_model` or `compphysiol_process_model` object.
 #' @returns A `compphysiol_ode_model` object.
+#' @seealso [simulate()][simulation] for running the returned model.
 #' @export
 to_ode_model <- function(model) {
     UseMethod("to_ode_model")
@@ -234,12 +235,13 @@ to_ode_model.compphysiol_process_model <- function(model) {
 #' Create a compiled ODE model representation
 #'
 #' `to_compiled_ode_model()` lowers a `compphysiol_compartment_model`, `compphysiol_process_model`, or
-#' `compphysiol_ode_model` to a compiled-backend representation. The first implementation
-#' records the stable model metadata needed by the compiled deSolve backend;
-#' code generation and dynamic loading are attached in later backend steps.
+#' `compphysiol_ode_model` to an executable deSolve representation. The first
+#' simulation generates and loads compiled code and caches solver dimensions,
+#' the parameter interface, and output metadata for reuse in subsequent runs.
 #'
 #' @param model A `compphysiol_compartment_model`, `compphysiol_process_model`, or `compphysiol_ode_model` object.
 #' @returns A `compphysiol_desolve_compiled_model` object.
+#' @seealso [simulate()][simulation] for running the returned model.
 #' @export
 to_compiled_ode_model <- function(model) {
     UseMethod("to_compiled_ode_model")
@@ -294,6 +296,7 @@ to_compiled_ode_model.compphysiol_ode_model <- function(model) {
 #'
 #' @param model A `compphysiol_compartment_model` or `compphysiol_process_model` object.
 #' @returns A `compphysiol_analytical_model` object.
+#' @seealso [simulate()][simulation] for running the returned model.
 #' @export
 to_analytical_model <- function(model) {
     UseMethod("to_analytical_model")
@@ -355,6 +358,7 @@ to_analytical_model.compphysiol_process_model <- function(model) {
 #'
 #' @param model A `compphysiol_compartment_model` or `compphysiol_process_model` object.
 #' @returns A `compphysiol_stochastic_model` object.
+#' @seealso [simulate()][simulation] for running the returned model.
 #' @export
 to_stochastic_model <- function(model) {
     UseMethod("to_stochastic_model")

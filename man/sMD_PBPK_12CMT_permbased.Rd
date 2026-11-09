@@ -127,3 +127,6 @@ plot(
 )
 }
 }
+\seealso{
+\link[=simulation]{simulate()} for simulation options and output.
+}

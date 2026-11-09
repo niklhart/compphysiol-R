@@ -14,6 +14,7 @@
 #'     time = c(1, 2, 4) [h],
 #'     observable = "C"
 #' )
+#' @seealso [simulate()][simulation] for evaluating the schedule through [experiment()].
 #' @seealso [observation_data()] for schedules carrying values and
 #'   [modify_experiment_observations] for replacing observations or attaching
 #'   values in experiments.

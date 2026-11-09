@@ -20,3 +20,6 @@ solver-neutral ODE representation. Compilation is cached on first use,
 because unit-aware source generation needs the solver dimensions selected at
 the simulation boundary.
 }
+\seealso{
+\link[=simulation]{simulate()} for running the returned model.
+}
