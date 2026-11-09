@@ -92,6 +92,9 @@ sample_observations <- function(x, statistics, parameters) {
 }
 
 .sample_observation_distribution <- function(distribution, prediction, parameters) {
+    if (inherits(distribution, "compphysiol_logitnormal_distribution")) {
+        return(.statistical_logitnormal_draw(distribution, prediction, parameters, stats::rnorm(1L)))
+    }
     if (!inherits(distribution, c(
         "compphysiol_normal_distribution", "compphysiol_lognormal_distribution"
     ))) {

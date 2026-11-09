@@ -448,7 +448,7 @@ describe the probabilistic relationship between predictions and values in
 observation data. The statistical model does not obtain a
 population location implicitly from a fixed structural-model value.
 
-The primary distribution families are `normal()` and `lognormal()`. Locations
+The primary distribution families are `normal()`, `lognormal()`, and `logitnormal()`. Locations
 and scale components may refer to statistical parameters by name or may be
 fixed scalar values. Unit-bearing fixed values are retained. A normal
 distribution has a mean and a standard-deviation specification. A bare
@@ -464,9 +464,19 @@ does not accept `mean` or a raw `logmean`. For an individual parameter `CL`,
 `lognormal(median = "CL_pop", sdlog = "omega_CL")` means that `log(CL)` is
 normal with location `log(CL_pop)` and standard deviation `omega_CL`.
 
+A logit-normal distribution uses a median on the original scale, dimensionless
+`sdlogit`, and finite lower and upper bounds (default 0 and 1). For bounds L
+and U, the transformed quantity `log((X-L)/(U-X))` is normal, centered at the
+transformed median. The median is generally not the arithmetic mean. Bounds
+and median have compatible units; dimensional quantities require explicit
+unit-bearing bounds. Exact endpoints are excluded. Correlations describe the
+latent normal variables rather than the original bounded quantities. Sampling
+allows zero spread, while continuous likelihood evaluation requires positive
+spread. The nlmixr2 engine does not currently support this family.
+
 Missing locations are context-sensitive. For an observable, a missing normal
-mean or log-normal median resolves to the dynamic-model prediction; in the
-log-normal case the prediction is explicitly the conditional median. An
+mean or log-normal/logit-normal median resolves to the dynamic-model prediction; in the
+transformed-normal cases the prediction is explicitly the conditional median. An
 individual-level structural parameter always requires an explicit location.
 Levels are otherwise inferred during validation: unresolved structural
 parameters are individual-level and observables are observation-level. A name
@@ -474,7 +484,8 @@ that identifies both requires an explicit level, and fixed structural
 parameters cannot initially be replaced by individual distributions.
 
 Normal locations and constant standard deviations use the target's units.
-Proportional coefficients and log-normal `sdlog` values are dimensionless.
+Proportional coefficients, log-normal `sdlog`, and logit-normal `sdlogit`
+values are dimensionless.
 Consequently realized structural values retain structural target units and
 observations retain observable units.
 

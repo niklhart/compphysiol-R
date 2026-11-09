@@ -4,11 +4,14 @@
 \alias{statistical_distributions}
 \alias{normal}
 \alias{lognormal}
+\alias{logitnormal}
 \title{Statistical distribution specifications}
 \usage{
 normal(mean = NULL, sd, level = NULL)
 
 lognormal(median = NULL, sdlog, level = NULL)
+
+logitnormal(median = NULL, sdlogit, lower = 0, upper = 1, level = NULL)
 }
 \arguments{
 \item{mean}{Name or fixed scalar value of the normal location, or \code{NULL} for
@@ -20,11 +23,15 @@ specification from \code{\link[=proportional]{proportional()}} or \code{\link[=c
 \item{level}{\code{NULL}, \code{"individual"}, or \code{"observation"}. \code{NULL} is inferred
 from the target when validated against a dynamic model.}
 
-\item{median}{Name or fixed scalar value of the log-normal median, or \code{NULL}
+\item{median}{Name or fixed scalar value of the distribution median, or \code{NULL}
 for an observable prediction default.}
 
 \item{sdlog}{Name or fixed dimensionless scalar value of the log-scale
 standard deviation.}
+
+\item{sdlogit}{Name or fixed dimensionless log-odds standard deviation.}
+
+\item{lower, upper}{Names or fixed finite bounds, defaulting to 0 and 1.}
 }
 \value{
 A \code{compphysiol_statistical_distribution} object.
@@ -41,7 +48,20 @@ values, including unit-bearing values where appropriate.
 location. It intentionally does not accept arithmetic-mean or raw log-mean
 parameterizations. \code{sdlog} is a dimensionless log-scale standard deviation.
 
+\code{logitnormal()} uses a median on the original scale and dimensionless
+\code{sdlogit}. For bounds L and U, log((X-L)/(U-X)) is normal with location
+log((median-L)/(U-median)) and standard deviation \code{sdlogit}. The median
+and bounds must have compatible units; dimensional targets require explicit
+unit-bearing bounds. The median must be strictly inside the bounds.
+Sampling permits zero spread; continuous likelihoods require positive spread.
+Exact endpoints are outside the support. Correlations refer to latent normals.
+The nlmixr2 engine does not currently support this family.
+
 Missing locations are resolved internally when the statistical model is
 checked against a dynamic model: an observable uses its model prediction,
 while a structural parameter requires an explicit location.
+}
+\examples{
+logitnormal(median = 0.8, sdlogit = 0.5)
+logitnormal(median = 5 [L], sdlogit = 0.4, lower = 2 [L], upper = 8 [L])
 }

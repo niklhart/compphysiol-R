@@ -22,7 +22,7 @@ statistical parameter. Unspecified pairs are uncorrelated.
 }
 \details{
 Correlations apply to the latent normal variables underlying individual-level
-normal and log-normal distributions. Normal distributions using
+normal, log-normal, and logit-normal distributions. Normal distributions using
 \code{\link[=proportional]{proportional()}} or \code{\link[=combined]{combined()}} standard deviations are not supported in a
 correlated block.
 }

@@ -49,6 +49,7 @@
 \alias{is_physiology}
 \alias{is_drug}
 \alias{is_drugs}
+\alias{is_logitnormal_distribution}
 \title{Test for compphysiol classes}
 \usage{
 is_model(x)
@@ -144,6 +145,8 @@ is_physiology(x)
 is_drug(x)
 
 is_drugs(x)
+
+is_logitnormal_distribution(x)
 }
 \arguments{
 \item{x}{An object to test.}

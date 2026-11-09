@@ -463,10 +463,14 @@ estimation_problem <- function(model, experiments, parameters, statistics) {
             } else {
                 distribution$sd
             }
+        } else if (inherits(distribution, "compphysiol_logitnormal_distribution")) {
+            list(distribution$sdlogit, distribution$lower, distribution$upper)
         } else {
             distribution$sdlog
         }
-        c(if (is.character(location)) location, unlist(scale, use.names = FALSE))
+        scale_specs <- if (is.list(scale)) scale else list(scale)
+        scale_names <- unlist(Filter(is.character, scale_specs), use.names = FALSE)
+        c(if (is.character(location)) location, scale_names)
     }), use.names = FALSE)
     correlation_specs <- vapply(
         .statistical_correlations(statistics),
@@ -1053,6 +1057,18 @@ print.compphysiol_estimation_result <- function(x, ...) {
     if (inherits(distribution, "compphysiol_normal_distribution")) {
         sd <- .estimation_normal_sd(distribution$sd, location, unit, parameters)
         nll <- .estimation_normal_nll(obs, location, sd)
+    } else if (inherits(distribution, "compphysiol_logitnormal_distribution")) {
+        values <- .statistical_logitnormal_values(distribution, location_value, parameters)
+        lower <- values$lower
+        upper <- values$upper
+        sigma <- values$sigma
+        if (obs <= lower || obs >= upper || location <= lower || location >= upper || sigma <= 0) {
+            return(list(nll = Inf))
+        }
+        z <- log(obs - lower) - log(upper - obs)
+        mu <- log(location - lower) - log(upper - location)
+        nll <- -stats::dnorm(z, mu, sigma, log = TRUE) +
+            log(obs - lower) + log(upper - obs) - log(upper - lower)
     } else if (inherits(distribution, "compphysiol_lognormal_distribution")) {
         sigma <- .estimation_dimensionless_spec(distribution$sdlog, parameters, "sdlog")
         if (obs <= 0 || location <= 0 || sigma <= 0) return(list(nll = Inf))

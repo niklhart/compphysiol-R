@@ -72,6 +72,15 @@ combined <- function(constant, proportional) {
 #' location. It intentionally does not accept arithmetic-mean or raw log-mean
 #' parameterizations. `sdlog` is a dimensionless log-scale standard deviation.
 #'
+#' `logitnormal()` uses a median on the original scale and dimensionless
+#' `sdlogit`. For bounds L and U, log((X-L)/(U-X)) is normal with location
+#' log((median-L)/(U-median)) and standard deviation `sdlogit`. The median
+#' and bounds must have compatible units; dimensional targets require explicit
+#' unit-bearing bounds. The median must be strictly inside the bounds.
+#' Sampling permits zero spread; continuous likelihoods require positive spread.
+#' Exact endpoints are outside the support. Correlations refer to latent normals.
+#' The nlmixr2 engine does not currently support this family.
+#'
 #' Missing locations are resolved internally when the statistical model is
 #' checked against a dynamic model: an observable uses its model prediction,
 #' while a structural parameter requires an explicit location.
@@ -80,13 +89,18 @@ combined <- function(constant, proportional) {
 #'   an observable prediction default.
 #' @param sd Name or fixed scalar value of a constant standard deviation, or a
 #'   specification from [proportional()] or [combined()].
-#' @param median Name or fixed scalar value of the log-normal median, or `NULL`
+#' @param median Name or fixed scalar value of the distribution median, or `NULL`
 #'   for an observable prediction default.
 #' @param sdlog Name or fixed dimensionless scalar value of the log-scale
 #'   standard deviation.
+#' @param sdlogit Name or fixed dimensionless log-odds standard deviation.
+#' @param lower,upper Names or fixed finite bounds, defaulting to 0 and 1.
 #' @param level `NULL`, `"individual"`, or `"observation"`. `NULL` is inferred
 #'   from the target when validated against a dynamic model.
 #' @returns A `compphysiol_statistical_distribution` object.
+#' @examples
+#' logitnormal(median = 0.8, sdlogit = 0.5)
+#' logitnormal(median = 5 [L], sdlogit = 0.4, lower = 2 [L], upper = 8 [L])
 #' @name statistical_distributions
 NULL
 
@@ -126,6 +140,77 @@ lognormal <- function(median = NULL, sdlog, level = NULL) {
     )
 }
 
+#' @rdname statistical_distributions
+#' @export
+logitnormal <- function(median = NULL, sdlogit, lower = 0, upper = 1, level = NULL) {
+    median <- .process_nse_arg(substitute(median), envir = parent.frame())
+    if (!is.null(median)) median <- .statistical_value_spec(median, "median")
+    if (missing(sdlogit)) stop("sdlogit must be supplied.", call. = FALSE)
+    sdlogit <- .statistical_value_spec(
+        .process_nse_arg(substitute(sdlogit), envir = parent.frame()), "sdlogit"
+    )
+    lower <- .statistical_value_spec(
+        .process_nse_arg(substitute(lower), envir = parent.frame()), "lower"
+    )
+    upper <- .statistical_value_spec(
+        .process_nse_arg(substitute(upper), envir = parent.frame()), "upper"
+    )
+    if (!is.character(sdlogit)) {
+        sigma <- .sampling_dimensionless(sdlogit, parameters(), "sdlogit")
+        if (sigma < 0) stop("sdlogit must be non-negative.", call. = FALSE)
+    }
+    if (!is.character(lower) && !is.character(upper)) {
+        hi <- .sampling_target_scale(upper, lower, parameters(), "upper")
+        if (as.numeric(lower) >= hi) stop("lower must be less than upper.", call. = FALSE)
+    }
+    for (bound in list(lower = lower, upper = upper)) {
+        if (!is.null(median) && !is.character(median) && !is.character(bound)) {
+            .sampling_target_scale(bound, median, parameters(), "bound")
+        }
+    }
+    if (!is.null(median) && !any(vapply(list(median, lower, upper), is.character, logical(1)))) {
+        lo <- .sampling_target_scale(lower, median, parameters(), "lower")
+        hi <- .sampling_target_scale(upper, median, parameters(), "upper")
+        if (as.numeric(median) <= lo || as.numeric(median) >= hi) {
+            stop("Logit-normal median must lie strictly between lower and upper.", call. = FALSE)
+        }
+    }
+    .new_logitnormal_distribution(median, sdlogit, lower, upper, .statistical_level(level))
+}
+
+.new_logitnormal_distribution <- function(median, sdlogit, lower, upper, level) {
+    structure(
+        list(median = median, sdlogit = sdlogit, lower = lower, upper = upper,
+             level = level),
+        class = .compphysiol_class("compphysiol_logitnormal_distribution",
+                                  parents = "compphysiol_statistical_distribution")
+    )
+}
+
+# Resolve physical bounds in the median's units before taking log odds.
+.statistical_logitnormal_values <- function(distribution, median, parameters) {
+    lower <- .sampling_target_scale(distribution$lower, median, parameters, "lower")
+    upper <- .sampling_target_scale(distribution$upper, median, parameters, "upper")
+    sigma <- .sampling_dimensionless(distribution$sdlogit, parameters, "sdlogit")
+    if (lower >= upper) stop("lower must be less than upper.", call. = FALSE)
+    if (sigma < 0) stop("sdlogit must be non-negative.", call. = FALSE)
+    list(lower = lower, upper = upper, sigma = sigma)
+}
+
+.statistical_logitnormal_draw <- function(distribution, median, parameters, latent) {
+    values <- .statistical_logitnormal_values(distribution, median, parameters)
+    lower <- values$lower
+    upper <- values$upper
+    m <- as.numeric(median)
+    if (m <= lower || m >= upper) {
+        stop("Logit-normal median must lie strictly between lower and upper.", call. = FALSE)
+    }
+    if (values$sigma == 0) return(.sampling_restore_units(rep(m, length(latent)), median))
+    location <- log(m - lower) - log(upper - m)
+    draws <- lower + (upper - lower) * stats::plogis(location + values$sigma * latent)
+    .sampling_restore_units(draws, median)
+}
+
 #' Specify correlations between individual parameters
 #'
 #' Each argument declares one pairwise correlation as
@@ -135,7 +220,7 @@ lognormal <- function(median = NULL, sdlog, level = NULL) {
 #' statistical parameter. Unspecified pairs are uncorrelated.
 #'
 #' Correlations apply to the latent normal variables underlying individual-level
-#' normal and log-normal distributions. Normal distributions using
+#' normal, log-normal, and logit-normal distributions. Normal distributions using
 #' [proportional()] or [combined()] standard deviations are not supported in a
 #' correlated block.
 #'
@@ -201,7 +286,7 @@ correlated <- function(...) {
 #' model is resolved against a dynamic model by downstream statistical workflows.
 #'
 #' @param ... Named distribution specifications created by [normal()] or
-#'   [lognormal()], plus optional unnamed specifications created by
+#'   [lognormal()] or [logitnormal()], plus optional unnamed specifications created by
 #'   `correlated()`.
 #' @returns A `compphysiol_statistical_model` object.
 #' @examples
@@ -522,10 +607,20 @@ statistical_model <- function(...) {
                 .statistical_require_target_units(median_value, target_value,
                     .statistical_spec_label(distribution$median, "fixed median"), target)
             }
-            .statistical_require_dimensionless(
-                .statistical_value(distribution$sdlog, parameters, "sdlog"),
-                .statistical_spec_label(distribution$sdlog, "fixed sdlog")
-            )
+            if (inherits(distribution, "compphysiol_logitnormal_distribution")) {
+                values <- .statistical_logitnormal_values(distribution, target_value, parameters)
+                if (!inherits(distribution$median, "compphysiol_prediction_location")) {
+                    m <- .sampling_target_scale(distribution$median, target_value, parameters, "median")
+                    if (m <= values$lower || m >= values$upper) {
+                        stop("Logit-normal median must lie strictly between lower and upper.", call. = FALSE)
+                    }
+                }
+            } else {
+                .statistical_require_dimensionless(
+                    .statistical_value(distribution$sdlog, parameters, "sdlog"),
+                    .statistical_spec_label(distribution$sdlog, "fixed sdlog")
+                )
+            }
         }
     }
     correlation_matrix <- .statistical_correlation_matrix(x, parameters)
@@ -569,16 +664,20 @@ print.compphysiol_statistical_model <- function(x, ...) {
     cat(" Statistical model:\n")
     for (i in seq_along(x)) {
         d <- x[[i]]
-        family <- if (inherits(d, "compphysiol_normal_distribution")) "normal" else "lognormal"
+        family <- if (inherits(d, "compphysiol_normal_distribution")) "normal" else if (inherits(d, "compphysiol_logitnormal_distribution")) "logitnormal" else "lognormal"
         location <- if (inherits(d, "compphysiol_normal_distribution")) d$mean else d$median
         location <- if (inherits(location, "compphysiol_prediction_location")) "prediction" else {
             if (is.null(location)) "<unresolved>" else paste(format(location), collapse = ", ")
         }
-        scale_name <- if (inherits(d, "compphysiol_normal_distribution")) "sd" else "sdlog"
+        scale_name <- if (inherits(d, "compphysiol_normal_distribution")) "sd" else if (inherits(d, "compphysiol_logitnormal_distribution")) "sdlogit" else "sdlog"
         scale <- if (inherits(d, "compphysiol_normal_distribution")) {
             .statistical_format_sd(d$sd)
         } else {
-            .statistical_format_value_spec(d$sdlog)
+            .statistical_format_value_spec(d[[scale_name]])
+        }
+        if (inherits(d, "compphysiol_logitnormal_distribution")) {
+            scale <- paste0(scale, "; lower = ", .statistical_format_value_spec(d$lower),
+                            "; upper = ", .statistical_format_value_spec(d$upper))
         }
         level <- d$level %||% "<unresolved>"
         cat(sprintf("  (%s) %s: %s; location = %s; %s = %s; level = %s\n",

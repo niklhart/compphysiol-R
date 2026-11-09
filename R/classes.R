@@ -85,6 +85,7 @@
         compphysiol_statistical_distribution = "Statistical distribution",
         compphysiol_normal_distribution = "Normal distribution",
         compphysiol_lognormal_distribution = "Lognormal distribution",
+        compphysiol_logitnormal_distribution = "Logit-normal distribution",
         compphysiol_proportional_sd = "Proportional SD",
         compphysiol_combined_sd = "Combined SD",
         compphysiol_correlations = "Correlations",

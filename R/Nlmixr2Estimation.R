@@ -162,6 +162,9 @@
 }
 
 .nlmixr2_validate_scope <- function(problem) {
+    if (any(vapply(problem$statistics, inherits, logical(1), "compphysiol_logitnormal_distribution"))) {
+        stop("The nlmixr2 engine does not yet support logitnormal distributions.", call. = FALSE)
+    }
     if (length(.statistical_correlations(problem$statistics))) {
         stop("The nlmixr2 engine currently supports diagonal individual variability only; correlations are not yet supported.",
              call. = FALSE)

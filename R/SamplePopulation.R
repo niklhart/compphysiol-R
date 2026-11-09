@@ -115,6 +115,10 @@ sample_population <- function(statistics, parameters, n, targets = NULL) {
         draws <- as.numeric(mean) + sd * latent
         return(.sampling_restore_units(draws, mean))
     }
+    if (inherits(distribution, "compphysiol_logitnormal_distribution")) {
+        median <- .sampling_value(distribution$median, parameters, "median")
+        return(.statistical_logitnormal_draw(distribution, median, parameters, latent))
+    }
     if (inherits(distribution, "compphysiol_lognormal_distribution")) {
         median <- .sampling_value(distribution$median, parameters, "median")
         sdlog <- .sampling_dimensionless(

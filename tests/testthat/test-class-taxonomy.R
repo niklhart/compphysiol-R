@@ -97,6 +97,7 @@ test_that("domain and statistical objects have prefixed primary classes", {
         statistical_model = statistical_model(),
         normal_distribution = normal(sd = 1),
         lognormal_distribution = lognormal(sdlog = 1),
+        logitnormal_distribution = logitnormal(sdlogit = 1),
         proportional_sd = proportional(1),
         combined_sd = combined(1, 1),
         correlations = correlated(list("x", "y", 0))
@@ -163,6 +164,7 @@ test_that("public predicates mirror prefixed class names", {
         statistical_model = statistical_model(),
         normal_distribution = normal(sd = 1),
         lognormal_distribution = lognormal(sdlog = 1),
+        logitnormal_distribution = logitnormal(sdlogit = 1),
         proportional_sd = proportional(1),
         combined_sd = combined(1, 1),
         correlations = correlated(list("x", "y", 0)),

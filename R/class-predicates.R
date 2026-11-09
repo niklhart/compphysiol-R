@@ -200,3 +200,7 @@ is_drug <- function(x) .inherits_compphysiol(x, "drug")
 #' @rdname class_predicates
 #' @export
 is_drugs <- function(x) .inherits_compphysiol(x, "drugs")
+
+#' @rdname class_predicates
+#' @export
+is_logitnormal_distribution <- function(x) .inherits_compphysiol(x, "logitnormal_distribution")
