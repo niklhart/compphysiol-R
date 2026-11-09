@@ -1,9 +1,10 @@
-# compphysiol (development version)
+# compphysiol 0.5.3
 
 * Fixed a constructor forwarding bug
 * Included logit-normal parameters and CV% parametrization for lognormal parameters
 * Extended population modelling vignette by including prediction intervals
 * Added "passive exchange" concept for common PK transports
+* added a simulate help topic for improved discoverability
 
 # compphysiol 0.5.2
 
