@@ -1,6 +1,8 @@
 # compphysiol (development version)
 
-* fixed a constructor forwarding bug
+* Fixed a constructor forwarding bug
+* Included logit-normal parameters and CV% parametrization for lognormal parameters
+* Extended population modelling vignette by including prediction intervals
 
 # compphysiol 0.5.2
 
