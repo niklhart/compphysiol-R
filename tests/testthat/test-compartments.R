@@ -62,6 +62,20 @@ test_that("Compartments concatenation with units works correctly", {
 })
 
 
+test_that("logical missing volumes normalize to numeric missing volumes", {
+    expect_identical(compartments("test", volume = NA), compartments("test", volume = NA_real_))
+    expect_identical(compartments(c("a", "b"), volume = NA),
+                     compartments(c("a", "b"), volume = NA_real_))
+    expect_identical(compartments(c("a", "b"), volume = c(NA, NA)),
+                     compartments(c("a", "b"), volume = c(NA_real_, NA_real_)))
+    expect_identical(
+        compartment_model() |> add_compartment(name = "test", volume = NA),
+        compartment_model() |> add_compartment(name = "test", volume = NA_real_)
+    )
+    expect_error(compartments("test", volume = TRUE), "must be numeric or character")
+    expect_error(compartments(c("a", "b"), volume = c(NA, FALSE)), "must be numeric or character")
+})
+
 test_that("Parametrized volumes work correctly", {
 
     # Without replacement

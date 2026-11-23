@@ -44,6 +44,10 @@ compartments <- function(name = character(0), volume = "V{name}", unit = NULL) {
     }
     
 
+    if (is.logical(volume) && length(volume) > 0L && all(is.na(volume))) {
+        volume <- as.numeric(volume)
+    }
+
     if (is.numeric(volume)) {
 
         volume <- as.list(volume)
