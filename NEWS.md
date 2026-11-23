@@ -4,6 +4,7 @@
 * Fixed state indexing in equations used by observables.
 * Fixed observation-time matching on unit-aware simulation grids.
 * Fixed coincident infusion events being averaged instead of added.
+* Added support for logical `NA` compartment volumes.
 
 # compphysiol 0.5.3
 
