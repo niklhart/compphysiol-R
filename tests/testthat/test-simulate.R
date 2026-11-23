@@ -1034,6 +1034,34 @@ test_that("simulate observables use post-dose event states", {
     expect_equal(subset(out$observables, observable == "C")$value, out$states$a_drug_Central / 10, tolerance = 1e-5)
 })
 
+test_that("coincident infusion events add their rates", {
+    base <- compartment_model() |>
+        add_compartment(name = "A") |>
+        add_molecule(name = "drug", cmt = "A", initial = 0, type = "amount")
+    schedules <- list(
+        list(time = c(0, 0), duration = c(2, 2), expected = c(0, 4, 8, 8, 8)),
+        list(time = c(0, 1), duration = c(2, 1), expected = c(0, 1, 5, 5, 5)),
+        list(time = c(0, 2), duration = c(2, 2), expected = c(0, 1, 2, 5, 8))
+    )
+    for (schedule in schedules) {
+        model <- base |>
+            add_dosing(cmt = "A", molec = "drug", time = schedule$time,
+                       rate = c(1, 3), duration = schedule$duration)
+        result <- simulate(model, time = 0:4)
+        expect_equal(result$states$a_drug_A, schedule$expected, tolerance = 1e-8)
+        expect_equal(tail(result$states$a_drug_ReleaseRate_drug_A, 1), 0, tolerance = 1e-8)
+    }
+
+    unit_model <- compartment_model() |>
+        add_compartment(name = "A") |>
+        add_molecule(name = "drug", cmt = "A", initial = 0 [mg], type = "amount") |>
+        add_dosing(cmt = "A", molec = "drug", time = c(0, 0) [h],
+                   rate = c(1, 3) [mg/h], duration = 2 [h])
+    result <- simulate(unit_model, time = with_units((0:4) [h]))
+    expect_equal(units::set_units(result$states$a_drug_A, "mg"),
+                 with_units(c(0, 4, 8, 8, 8) [mg]), tolerance = 1e-8)
+})
+
 test_that("simulate applies infusion dosing events", {
     model <- compartment_model() |>
         add_compartment(name = "Central", volume = NA_real_) |>

@@ -845,7 +845,10 @@ simulate.compphysiol_stochastic_model <- function(
     if (!is.null(event_data)) {
         event_data <- event_data[event_data$time >= min(solver_time) &
                                  event_data$time <= max(solver_time), , drop = FALSE]
+        event_data <- event_data[order(event_data$time), , drop = FALSE]
         odeinfo$events$data <- event_data
+        # Keep coincident events separate; deSolve otherwise averages them.
+        odeinfo$events$ties <- "ordered"
         solver_args$events <- odeinfo$events
         solver_args$times <- sort(unique(c(solver_time, event_data$time)))
     }
