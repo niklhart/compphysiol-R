@@ -967,7 +967,8 @@ make_depot <- function(model) {
                 next
             }
             one_h <- units::set_units(1, "h")
-            expected <- c(from_val, to_val) / one_h
+            amount_val <- from_val %||% to_val
+            expected <- amount_val / one_h
             units::ud_are_convertible(units(rate_val), units(expected)) ||
                 stop(
                     sprintf(

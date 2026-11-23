@@ -56,6 +56,34 @@ test_that("transport rate + compartment amount unit mismatch errors", {
 
 })
 
+test_that("source and sink transport rates use the existing endpoint amount units", {
+    base <- compartment_model() |>
+        add_compartment(name = "A", volume = 1 [L]) |>
+        add_molecule(name = "drug", cmt = "A", initial = 0 [mg], type = "amount") |>
+        add_parameter(k = 1 [mg/h])
+
+    source <- base |>
+        add_transport(from = NULL, to = "A", molec = "drug", rate = "k")
+    sink <- base |>
+        add_transport(from = "A", to = NULL, molec = "drug", rate = "k")
+
+    for (model in list(source, sink)) {
+        expect_silent(compphysiol:::.check_unit_consistency(model))
+        invalid <- model
+        invalid$parameters <- parameters(k = 1 [1/h])
+        expect_error(
+            compphysiol:::.check_unit_consistency(invalid),
+            "must be compatible with unit of compartment per time"
+        )
+    }
+
+    result <- simulate(source, time = with_units(c(0, 1) [h]))
+    expect_equal(
+        units::set_units(result$states$a_drug_A, "mg"),
+        with_units(c(0, 1) [mg])
+    )
+})
+
 test_that("unit mismatch in observable definition errors", {
     M <- compartment_model() |>
         add_compartment(name = 'cen') |>
