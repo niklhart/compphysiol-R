@@ -1,5 +1,10 @@
 # compphysiol (development version)
 
+* Fixed unit checks for source transports.
+* Fixed state indexing in equations used by observables.
+* Fixed observation-time matching on unit-aware simulation grids.
+* Fixed coincident infusion events being averaged instead of added.
+
 # compphysiol 0.5.3
 
 * Fixed a constructor forwarding bug
