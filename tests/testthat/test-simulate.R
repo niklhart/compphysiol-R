@@ -1,3 +1,40 @@
+test_that("unit-aware output grids preserve observable time mappings", {
+    model <- compartment_model() |>
+        add_compartment(name = "solution", volume = NA_real_) |>
+        add_molecule(name = "X", cmt = "solution", initial = 1 [mol/L], type = "concentration") |>
+        add_parameter(k = 0.001 [1/min]) |>
+        add_reaction(formula = "X -> NULL", cmt = "solution", const = "k") |>
+        add_observable(X = c[X, solution])
+
+    grids <- list(
+        c(0, 0.97),
+        c(seq(0, 10, by = 0.01), seq(11, 1800, by = 1)),
+        c(0, 0.97, 0.97 + 1e-10)
+    )
+    for (grid in grids) {
+        for (time_unit in c("min", "s")) {
+            result <- simulate(
+                model, time = grid, unit = "min",
+                dimensions = list(time = time_unit, amount = "mol", length = "dm")
+            )
+            expect_equal(nrow(result$observables), length(grid))
+            expect_equal(result$observables$time, result$states$time)
+            expect_equal(result$observables$value, units::set_units(result$states$c_X_solution, "mol/L"))
+            expect_equal(as.numeric(result$observables$value), exp(-0.001 * grid), tolerance = 1e-7)
+        }
+    }
+
+    schedule <- observation_schedule(
+        time = with_units(c(0.97, 0, 0.97, 0.97 + 1e-10) [min]),
+        observable = "X"
+    )
+    result <- simulate(model, experiment = experiment(observations = schedule, start = 0 [min]),
+                       dimensions = list(time = "min", amount = "mol", length = "dm"))
+    expect_equal(as.numeric(result$observables$value), exp(-0.001 * c(0.97, 0, 0.97, 0.97 + 1e-10)),
+                 tolerance = 1e-7)
+    expect_equal(result$observables$time, schedule$time)
+})
+
 test_model_for_simulation <- function(amount_unit = NULL, time_unit = FALSE) {
     model <- compartment_model() |>
         add_compartment(name = "Central", volume = NA_real_) |>

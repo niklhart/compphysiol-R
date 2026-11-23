@@ -121,8 +121,13 @@ as_observables_wide <- function(x) {
     schedule <- attr(model, "observation_schedule")
     if (is.null(schedule)) {
         obs <- names(odeinfo$obsFuncs)
-        schedule <- data.frame(time = rep(time, times = length(obs)),
+        schedule <- data.frame(time = rep(solver_time, times = length(obs)),
                                observable = rep(obs, each = length(time)))
+        # Reuse the solver grid before attaching output units to its times.
+        observation_plan <- observation_plan %||% .simulation_prepare_observation_plan(
+            schedule, solver_time, dimensions
+        )
+        schedule$time <- rep(time, times = length(obs))
     }
     observation_plan <- observation_plan %||% .simulation_prepare_observation_plan(
         schedule, solver_output[, "time"], dimensions
