@@ -194,6 +194,7 @@ print.compphysiol_desolve_compiled_model <- function(x, ...) {
                 free_params = free_params,
                 dimensions = dimensions
             )
+            equation <- .ode_model_observable_backend_expr(equation, output_state_names)
             lines <- c(
                 lines,
                 paste0("    ", names(ode_model$equations)[[i]], " <- ",

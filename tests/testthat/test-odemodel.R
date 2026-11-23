@@ -256,6 +256,28 @@ test_that("OdeModel equations can contain lowered state references", {
     expect_equal(ode_model$freeParams, "CL")
 })
 
+test_that("observables referencing equations read the correct state columns", {
+    model <- compartment_model() |>
+        add_compartment(name = "blood", volume = NA_real_) |>
+        add_molecule(
+            name = c("X", "Y"), cmt = "blood",
+            initial = c(10, 20), type = "concentration"
+        ) |>
+        add_equation(q = c[Y, blood]) |>
+        add_observable(via = q, direct = c[Y, blood])
+
+    result <- simulate(model, time = c(0, 1))
+    expect_equal(result$observables$value[result$observables$observable == "direct"], c(20, 20))
+    expect_equal(result$observables$value[result$observables$observable == "via"], c(20, 20))
+
+    ode_model <- to_ode_model(model)
+    compiled_observables <- compphysiol:::.compiled_ode_model_observable_functions(
+        ode_model, parameter_names = character()
+    )
+    states <- cbind(time = c(0, 1), c_X_blood = c(10, 10), c_Y_blood = c(20, 30))
+    expect_equal(compiled_observables$via(c(0, 1), states, list()), c(20, 30))
+})
+
 test_that("to_ode_model expands infusion depots before creating ODE states", {
     model <- compartment_model() |>
         add_compartment(name = "Central", volume = NA_real_) |>

@@ -812,10 +812,13 @@ print.compphysiol_ode_model <- function(x, ...) {
         }
         obs_lines <- "function(t,y,params) {"
         for (i in seq_along(model$equations)) {
+            equation <- .ode_model_observable_backend_expr(
+                subst(model$equations[[i]]), output_state_names
+            )
             obs_lines <- c(
                 obs_lines,
                 paste0("    ", names(model$equations)[[i]], " <- ",
-                       deparse1(subst(model$equations[[i]])))
+                       deparse1(equation))
             )
         }
         obs_lines <- c(obs_lines, paste0("    unname(", deparse1(expr), ")"), "}")
