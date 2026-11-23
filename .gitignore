@@ -9,5 +9,6 @@
 .vscode/
 
 data-raw/demo/
-/doc/
+/doc/*
+!/doc/estimation-api/
 /Meta/
