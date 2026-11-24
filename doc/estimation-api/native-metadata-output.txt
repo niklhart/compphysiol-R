@@ -1,0 +1,257 @@
+
+ focei 
+finalUi model identical to FOCEi: TRUE 
+
+finalUi parameter signature:
+  ntheta neta1 neta2     name     lower upper   fix
+1      1    NA    NA cp_fix_1 -6.907755   Inf FALSE
+2      2    NA    NA cp_fix_2 -6.907755   Inf FALSE
+3     NA     1     1 cp_eta_1      -Inf   Inf FALSE
+row map:
+[1] 1 2 3 4 5 6
+origData identical to export: TRUE 
+
+ saem 
+finalUi model identical to FOCEi: TRUE 
+
+finalUi parameter signature:
+  ntheta neta1 neta2     name     lower upper   fix
+1      1    NA    NA cp_fix_1 -6.907755   Inf FALSE
+2      2    NA    NA cp_fix_2 -6.907755   Inf FALSE
+3     NA     1     1 cp_eta_1      -Inf   Inf FALSE
+row map:
+[1] 1 2 3 4 5 6
+origData identical to export: TRUE 
+
+ impmap 
+finalUi model identical to FOCEi: TRUE 
+
+finalUi parameter signature:
+  ntheta neta1 neta2     name     lower upper   fix
+1      1    NA    NA cp_fix_1 -6.907755   Inf FALSE
+2      2    NA    NA cp_fix_2 -6.907755   Inf FALSE
+3     NA     1     1 cp_eta_1      -Inf   Inf FALSE
+row map:
+[1] 1 2 3 4 5 6
+origData identical to export: TRUE 
+
+INSTALLED FUNCTION: .impmapFamilyFit 
+function (env, ui, ...) 
+{
+    .control <- ui$control
+    .covMethodUser <- .control$covMethod
+    .control$maxOuterIterations <- 0L
+    .control$covMethod <- 0L
+    .gmUser <- .control$gammaMethodUser
+    if (is.null(.gmUser)) {
+        .gmUser <- .control$gammaMethod
+    }
+    .control$gammaMethodUser <- .gmUser
+    .control$gammaMethod <- .impmapResolveGammaMethod(.gmUser, 
+        ui)
+    .control$autoNonNormal <- identical(.impmapResolveGammaMethod("auto", 
+        ui), "individual")
+    warning(.impmapGammaRunInfo(.control$gammaMethod, .gmUser, 
+        .control$iaccept), call. = FALSE)
+    if (identical(.control$nIter, 0L)) {
+        .etaSrc <- if (inherits(nlmixr2global$etaMat, "nlmixr2FitCore") && 
+            identical(.control$etaMat, nlmixr2global$etaMat$etaMat)) {
+            "etas from the last fit"
+        }
+        else if (!is.null(.control$etaMat)) {
+            "etas from etaMat"
+        }
+        else {
+            "etas 0"
+        }
+        warning("E-step only (nIter=0): fixed parameters, ", 
+            .etaSrc, call. = FALSE)
+    }
+    ui$foceiOptEnv
+    .iniDf <- ui$iniDf
+    .th <- .iniDf[!is.na(.iniDf$ntheta), ]
+    .thNames <- .th[order(.th$ntheta), "name"]
+    .etaRows <- .iniDf[!is.na(.iniDf$neta1) & .iniDf$neta1 == 
+        .iniDf$neta2, ]
+    .etaNames <- .etaRows[order(.etaRows$neta1), "name"]
+    .mr <- ui$muRefDataFrame
+    .muThetaIdx <- as.integer(match(.mr$theta, .thNames) - 1L)
+    .muEtaIdx <- as.integer(match(.mr$eta, .etaNames) - 1L)
+    .covGroupTheta <- rxode2::rxGetControl(ui, "foceiMuGroupTheta", 
+        integer(0))
+    .keep <- !is.na(.muThetaIdx) & !is.na(.muEtaIdx) & !(.muThetaIdx %in% 
+        .covGroupTheta)
+    .control$impMuThetaIdx <- .muThetaIdx[.keep]
+    .control$impMuEtaIdx <- .muEtaIdx[.keep]
+    .control$impThetaSensIdx <- as.integer(.impmapEstTheta(ui)$all - 
+        1L)
+    .control$combSens <- isTRUE(.control$combSens) && length(.control$impThetaSensIdx) > 
+        0L
+    .etaOrd <- .etaRows[order(.etaRows$neta1), ]
+    .control$impOmegaFixedEta <- as.integer(which(isTRUE(.etaOrd$fix) | 
+        .etaOrd$fix) - 1L)
+    assign("control", .control, envir = ui)
+    .impSeed <- if (is.null(.control$impSeed)) 
+        42L
+    else as.integer(.control$impSeed)
+    .est <- if (exists("est", envir = env)) 
+        get("est", envir = env)
+    else "impmap"
+    .fit <- rxode2::rxWithSeed(.impSeed, rxseed = .impSeed, code = .foceiFamilyReturn(env, 
+        ui, ..., est = .est))
+    .impmapNameCov(.fit, ui)
+    .impRestoreCovMethod(.fit, .covMethodUser)
+    tryCatch({
+        .fenv0 <- .fit$env
+        if (is.environment(.fenv0)) 
+            assign("odeSwapInfo", .odeSwapInfo(), envir = .fenv0)
+    }, error = function(e) NULL)
+    .impmapRecomputeObjf(.fit)
+    tryCatch({
+        .fenv <- .fit$env
+        if (is.environment(.fenv)) {
+            assign("impPsisK", .impPsisKAll(.fenv), envir = .fenv)
+        }
+    }, error = function(e) NULL)
+    .fit
+}
+<bytecode: 0x10d4c7e40>
+<environment: namespace:nlmixr2est>
+
+INSTALLED FUNCTION: .setOfvImp 
+function (fit, type = c("imp", "impmap")) 
+{
+    .type <- match.arg(type)
+    .rn <- toupper(.type)
+    if (any(rownames(fit$objDf) == .rn)) {
+        return(invisible(fit))
+    }
+    nlmixrWithTiming(paste0(.type, "Lik"), {
+        .sigdig <- fit$foceiControl$sigdig
+        .ctl <- impmapControl(print = 0L, nIter = 0L, covMethod = "", 
+            calcTables = FALSE, compress = FALSE, sigdig = if (is.null(.sigdig)) 
+                3
+            else .sigdig)
+        .ctl$etaMat <- fit$etaMat
+        .newFit <- .nlmixr2PriorGateBypass(nlmixr2(fit, nlme::getData(fit), 
+            .type, control = .ctl))
+        .newEnv <- .newFit$env
+        .env <- fit$env
+        .df <- attr(get("logLik", .env), "df")
+        .nobs <- .env$nobs
+        .objf <- .newEnv$impObj
+        .m2ll <- .objf + .nobs * log(2 * pi)
+        .adj <- .env$adjObf
+        if (is.null(.adj)) {
+            .adj <- fit$foceiControl$adjObf
+        }
+        if (isFALSE(.adj)) {
+            .objf <- .m2ll
+        }
+        .tmp <- data.frame(OBJF = .objf, AIC = .m2ll + 2 * .df, 
+            BIC = .m2ll + log(.nobs) * .df, `Log-likelihood` = -.m2ll/2, 
+            check.names = FALSE)
+        nlmixrAddObjectiveFunctionDataFrame(fit, .tmp, .rn)
+        invisible(fit)
+    }, envir = fit)
+}
+<bytecode: 0x10d4db938>
+<environment: namespace:nlmixr2est>
+
+INSTALLED FUNCTION: .impmapRecomputeObjf 
+function (fit) 
+{
+    .env <- tryCatch(fit$env, error = function(e) NULL)
+    if (!is.environment(.env)) {
+        return(invisible(FALSE))
+    }
+    .ui <- tryCatch(rxode2::rxUiDecompress(unserialize(serialize(fit$ui, 
+        NULL))), error = function(e) NULL)
+    if (is.null(.ui)) {
+        return(invisible(FALSE))
+    }
+    .sigdig <- tryCatch(fit$foceiControl$sigdig, error = function(e) NULL)
+    .savedMuRef <- .muRefTrans$cur
+    on.exit(.muRefTrans$cur <- .savedMuRef, add = TRUE)
+    .savedGlobal <- as.list(nlmixr2global, all.names = TRUE)
+    on.exit({
+        rm(list = ls(nlmixr2global, all.names = TRUE), envir = nlmixr2global)
+        for (.gn in names(.savedGlobal)) {
+            assign(.gn, .savedGlobal[[.gn]], envir = nlmixr2global)
+        }
+    }, add = TRUE)
+    .ctl <- try(foceiControl(print = 0L, covMethod = "", maxOuterIterations = 0L, 
+        calcTables = FALSE, compress = FALSE, sigdig = if (is.null(.sigdig)) 
+            4
+        else .sigdig), silent = TRUE)
+    if (inherits(.ctl, "try-error")) {
+        return(invisible(FALSE))
+    }
+    .f2 <- try(suppressMessages(suppressWarnings(.nlmixr2PriorGateBypass(nlmixr2(.ui, 
+        data = nlme::getData(fit), est = "focei", control = .ctl)))), 
+        silent = TRUE)
+    if (inherits(.f2, "try-error")) {
+        return(invisible(FALSE))
+    }
+    .e2 <- tryCatch(.f2$env, error = function(e) NULL)
+    if (!is.environment(.e2)) {
+        return(invisible(FALSE))
+    }
+    for (.n in c("objective", "OBJF", "objf", "logLik", "AIC", 
+        "BIC", "etaObf", "etaObfFull", "phiH", "phiC", "phiR", 
+        "phiSE", "phiRSE")) {
+        if (exists(.n, envir = .e2, inherits = FALSE)) {
+            assign(.n, get(.n, envir = .e2), envir = .env)
+        }
+    }
+    if (exists("objDf", envir = .e2, inherits = FALSE)) {
+        .newObjDf <- get("objDf", envir = .e2)
+        .oldObjDf <- tryCatch(get("objDf", envir = .env, inherits = FALSE), 
+            error = function(e) NULL)
+        if (is.data.frame(.oldObjDf) && is.data.frame(.newObjDf) && 
+            nrow(.oldObjDf) == nrow(.newObjDf)) {
+            for (.c in intersect(names(.newObjDf), names(.oldObjDf))) {
+                .oldObjDf[[.c]] <- .newObjDf[[.c]]
+            }
+            assign("objDf", .oldObjDf, envir = .env)
+        }
+        else {
+            assign("objDf", .newObjDf, envir = .env)
+        }
+    }
+    invisible(TRUE)
+}
+<bytecode: 0x10d4e0940>
+<environment: namespace:nlmixr2est>
+
+INSTALLED FUNCTION: setOfv 
+function (x, type) 
+{
+    assertNlmixrFit(x)
+    .objDf <- x$objDf
+    .w <- which(tolower(row.names(.objDf)) == tolower(type))
+    if (length(.w) != 1) {
+        return(.setOfvAdd(x, type))
+    }
+    .env <- x$env
+    .objf <- .objDf[.w, "OBJF"]
+    .lik <- .objDf[.w, "Log-likelihood"]
+    attr(.lik, "df") <- attr(get("logLik", .env), "df")
+    attr(.lik, "nobs") <- attr(get("logLik", .env), "nobs")
+    class(.lik) <- "logLik"
+    .bic <- .objDf[.w, "BIC"]
+    .aic <- .objDf[.w, "AIC"]
+    assign("OBJF", .objf, .env)
+    assign("objf", .objf, .env)
+    assign("objective", .objf, .env)
+    assign("logLik", .lik, .env)
+    assign("AIC", .aic, .env)
+    assign("BIC", .bic, .env)
+    if (!is.null(x$saem)) {
+        .setSaemExtra(.env, type)
+    }
+    .env$ofvType <- type
+    invisible(x)
+}
+<bytecode: 0x10d4f1e08>
+<environment: namespace:nlmixr2est>

@@ -1,0 +1,320 @@
+
+RUN: start 
+
+
+
+
+
+  cp_fix_1   cp_fix_2 
+-1.5000000  0.6931472 
+         cp_eta_1
+cp_eta_1     0.04
+          OBJF      AIC      BIC Log-likelihood
+FOCEi 15.37232 32.39958 31.77486      -13.19979
+original data matches export: TRUE 
+iniUi iniDf:
+  ntheta neta1 neta2     name     lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA cp_fix_1 -6.907755 -1.5000000   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA cp_fix_2 -6.907755  0.6931472   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3     NA     1     1 cp_eta_1      -Inf  0.0400000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+finalUi iniDf:
+  ntheta neta1 neta2     name     lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA cp_fix_1 -6.907755 -1.5000000   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA cp_fix_2 -6.907755  0.6931472   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3     NA     1     1 cp_eta_1      -Inf  0.0400000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+iniUi model:
+model({
+    cp_stat_CL_pop = exp(cp_fix_1)
+    cp_stat_sigma = exp(cp_fix_2)
+    cp_par_CL = cp_stat_CL_pop * exp(cp_eta_1)
+    cp_state_a_drug_Central(0) = (100)
+    d/dt(cp_state_a_drug_Central) = (-(cp_par_CL * (cp_state_a_drug_Central/1)))
+    cp_obs_C = (cp_state_a_drug_Central/1)
+    cp_obs_C ~ add(cp_stat_sigma)
+})
+table columns: ID TIME DV PRED RES WRES IPRED IRES IWRES CPRED CRES CWRES cp_eta_1 cp_state_a_drug_Central cp_stat_CL_pop cp_stat_sigma cp_par_CL 
+
+RUN: existing conversion 
+ Parameters:
+  (1) CL_pop = 0.2231302
+  (2) omega_CL = 0.2
+  (3) sigma = 2
+ Parameters:
+  (1) CL_pop = NA
+  (2) omega_CL = NA
+  (3) sigma = NA
+[1] 13.19979
+
+RUN: structure 
+
+
+
+
+
+  cp_fix_1   cp_fix_2 
+-1.6094379  0.6931472 
+         cp_eta_1
+cp_eta_1     0.04
+         OBJF      AIC      BIC Log-likelihood
+FOCEi 771.034 788.0613 787.4365      -391.0306
+original data matches export: TRUE 
+iniUi iniDf:
+  ntheta neta1 neta2     name     lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA cp_fix_1 -6.907755 -1.6094379   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA cp_fix_2 -6.907755  0.6931472   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3     NA     1     1 cp_eta_1      -Inf  0.0400000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+finalUi iniDf:
+  ntheta neta1 neta2     name     lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA cp_fix_1 -6.907755 -1.6094379   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA cp_fix_2 -6.907755  0.6931472   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3     NA     1     1 cp_eta_1      -Inf  0.0400000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+iniUi model:
+model({
+    cp_stat_CL_pop = exp(cp_fix_1)
+    cp_stat_sigma = exp(cp_fix_2)
+    cp_par_CL = cp_stat_CL_pop * exp(cp_eta_1)
+    cp_state_a_drug_Central(0) = (100)
+    d/dt(cp_state_a_drug_Central) = (-(cp_par_CL * (cp_state_a_drug_Central/1)))
+    cp_obs_C = 2 * (cp_state_a_drug_Central/1)
+    cp_obs_C ~ add(cp_stat_sigma)
+})
+table columns: ID TIME DV PRED RES WRES IPRED IRES IWRES CPRED CRES CWRES cp_eta_1 cp_state_a_drug_Central cp_stat_CL_pop cp_stat_sigma cp_par_CL 
+
+RUN: existing conversion 
+ Parameters:
+  (1) CL_pop = 0.2
+  (2) omega_CL = 0.2
+  (3) sigma = 2
+ Parameters:
+  (1) CL_pop = NA
+  (2) omega_CL = NA
+  (3) sigma = NA
+[1] 391.0306
+
+RUN: data 
+  cp_fix_1   cp_fix_2 
+-1.6094379  0.6931472 
+         cp_eta_1
+cp_eta_1     0.04
+          OBJF     AIC      BIC Log-likelihood
+FOCEi 16.18564 33.2129 32.58818      -13.60645
+original data matches export: FALSE 
+iniUi iniDf:
+  ntheta neta1 neta2     name     lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA cp_fix_1 -6.907755 -1.6094379   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA cp_fix_2 -6.907755  0.6931472   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3     NA     1     1 cp_eta_1      -Inf  0.0400000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+finalUi iniDf:
+  ntheta neta1 neta2     name     lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA cp_fix_1 -6.907755 -1.6094379   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA cp_fix_2 -6.907755  0.6931472   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3     NA     1     1 cp_eta_1      -Inf  0.0400000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+iniUi model:
+model({
+    cp_stat_CL_pop = exp(cp_fix_1)
+    cp_stat_sigma = exp(cp_fix_2)
+    cp_par_CL = cp_stat_CL_pop * exp(cp_eta_1)
+    cp_state_a_drug_Central(0) = (100)
+    d/dt(cp_state_a_drug_Central) = (-(cp_par_CL * (cp_state_a_drug_Central/1)))
+    cp_obs_C = (cp_state_a_drug_Central/1)
+    cp_obs_C ~ add(cp_stat_sigma)
+})
+table columns: ID TIME DV PRED RES WRES IPRED IRES IWRES CPRED CRES CWRES cp_eta_1 cp_state_a_drug_Central cp_stat_CL_pop cp_stat_sigma cp_par_CL 
+
+RUN: existing conversion 
+ Parameters:
+  (1) CL_pop = 0.2
+  (2) omega_CL = 0.2
+  (3) sigma = 2
+ Parameters:
+  (1) CL_pop = NA
+  (2) omega_CL = NA
+  (3) sigma = NA
+[1] 13.60645
+
+RUN: endpoint 
+  cp_fix_1   cp_fix_2 
+-1.6094379  0.6931472 
+         cp_eta_1
+cp_eta_1     0.04
+          OBJF      AIC      BIC Log-likelihood
+FOCEi 15.91809 32.94535 32.32063      -13.47268
+original data matches export: FALSE 
+iniUi iniDf:
+  ntheta neta1 neta2     name     lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA cp_fix_1 -6.907755 -1.6094379   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA cp_fix_2 -6.907755  0.6931472   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3     NA     1     1 cp_eta_1      -Inf  0.0400000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+finalUi iniDf:
+  ntheta neta1 neta2     name     lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA cp_fix_1 -6.907755 -1.6094379   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA cp_fix_2 -6.907755  0.6931472   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3     NA     1     1 cp_eta_1      -Inf  0.0400000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+iniUi model:
+model({
+    cp_stat_CL_pop = exp(cp_fix_1)
+    cp_stat_sigma = exp(cp_fix_2)
+    cp_par_CL = cp_stat_CL_pop * exp(cp_eta_1)
+    cp_state_a_drug_Central(0) = (100)
+    d/dt(cp_state_a_drug_Central) = (-(cp_par_CL * (cp_state_a_drug_Central/1)))
+    cp_obs_C = (cp_state_a_drug_Central/1)
+    cp_obs_C ~ add(cp_stat_sigma)
+})
+table columns: ID TIME DV PRED RES WRES IPRED IRES IWRES CPRED CRES CWRES cp_eta_1 cp_state_a_drug_Central cp_stat_CL_pop cp_stat_sigma cp_par_CL 
+
+RUN: existing conversion 
+ Parameters:
+  (1) CL_pop = 0.2
+  (2) omega_CL = 0.2
+  (3) sigma = 2
+ Parameters:
+  (1) CL_pop = NA
+  (2) omega_CL = NA
+  (3) sigma = NA
+[1] 13.47268
+
+RUN: rows 
+  cp_fix_1   cp_fix_2 
+-1.6094379  0.6931472 
+         cp_eta_1
+cp_eta_1     0.04
+          OBJF      AIC      BIC Log-likelihood
+FOCEi 15.91809 32.94535 32.32063      -13.47268
+original data matches export: FALSE 
+iniUi iniDf:
+  ntheta neta1 neta2     name     lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA cp_fix_1 -6.907755 -1.6094379   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA cp_fix_2 -6.907755  0.6931472   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3     NA     1     1 cp_eta_1      -Inf  0.0400000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+finalUi iniDf:
+  ntheta neta1 neta2     name     lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA cp_fix_1 -6.907755 -1.6094379   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA cp_fix_2 -6.907755  0.6931472   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3     NA     1     1 cp_eta_1      -Inf  0.0400000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+iniUi model:
+model({
+    cp_stat_CL_pop = exp(cp_fix_1)
+    cp_stat_sigma = exp(cp_fix_2)
+    cp_par_CL = cp_stat_CL_pop * exp(cp_eta_1)
+    cp_state_a_drug_Central(0) = (100)
+    d/dt(cp_state_a_drug_Central) = (-(cp_par_CL * (cp_state_a_drug_Central/1)))
+    cp_obs_C = (cp_state_a_drug_Central/1)
+    cp_obs_C ~ add(cp_stat_sigma)
+})
+table columns: ID TIME DV PRED RES WRES IPRED IRES IWRES CPRED CRES CWRES cp_eta_1 cp_state_a_drug_Central cp_stat_CL_pop cp_stat_sigma cp_par_CL 
+
+RUN: existing conversion 
+ Parameters:
+  (1) CL_pop = 0.2
+  (2) omega_CL = 0.2
+  (3) sigma = 2
+ Parameters:
+  (1) CL_pop = NA
+  (2) omega_CL = NA
+  (3) sigma = NA
+[1] 13.47268
+
+RUN: no_tables 
+  cp_fix_1   cp_fix_2 
+-1.6094379  0.6931472 
+         cp_eta_1
+cp_eta_1     0.04
+          OBJF      AIC      BIC Log-likelihood
+FOCEi 15.91809 32.94535 32.32063      -13.47268
+original data matches export: TRUE 
+iniUi iniDf:
+  ntheta neta1 neta2     name     lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA cp_fix_1 -6.907755 -1.6094379   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA cp_fix_2 -6.907755  0.6931472   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3     NA     1     1 cp_eta_1      -Inf  0.0400000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+finalUi iniDf:
+  ntheta neta1 neta2     name     lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA cp_fix_1 -6.907755 -1.6094379   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA cp_fix_2 -6.907755  0.6931472   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3     NA     1     1 cp_eta_1      -Inf  0.0400000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+iniUi model:
+model({
+    cp_stat_CL_pop = exp(cp_fix_1)
+    cp_stat_sigma = exp(cp_fix_2)
+    cp_par_CL = cp_stat_CL_pop * exp(cp_eta_1)
+    cp_state_a_drug_Central(0) = (100)
+    d/dt(cp_state_a_drug_Central) = (-(cp_par_CL * (cp_state_a_drug_Central/1)))
+    cp_obs_C = (cp_state_a_drug_Central/1)
+    cp_obs_C ~ add(cp_stat_sigma)
+})
+table columns: scaleInfo omega qfirst origData phiC objective nEstOmega fail llikObs phiH nAGQ sessioninfo foceiControl0 ofvType iniDf0 table nConditionalInnerHessian nsub aqLow foceiModel objDf ui nInnerRerank extra mixIdx fixef est nobs nTrustInner message qw aqn qx aqHi AIC parFixed censInformation ranef method BIC time shrink parFixedDf covLvl logLik tolFactor etaObf runInfo 
+
+RUN: existing conversion 
+ERROR: cannot coerce class ‘"nlmixr2FitCore"’ to a data.frame 
+
+RUN: SAEM unbounded 
+
+
+
+
+
+
+
+
+
+
+
+
+ cp_fix_1  cp_fix_2 
+-1.378602 -2.605457 
+           cp_eta_1
+cp_eta_1 0.02705872
+       OBJF AIC BIC Log-likelihood
+lFOCEi   NA  NA  NA             NA
+original data matches export: TRUE 
+iniUi iniDf:
+  ntheta neta1 neta2                 name lower        est upper   fix label backTransform condition prior
+1      1    NA    NA             cp_fix_1  -Inf -1.6094379   Inf FALSE  <NA>          <NA>      <NA>  <NA>
+2      2    NA    NA rxBoundedTr.cp_fix_2  -Inf  0.6931472   Inf FALSE  <NA>          <NA>      <NA>  <NA>
+3     NA     1     1             cp_eta_1  -Inf  0.0400000   Inf FALSE  <NA>          <NA>        id  <NA>
+4     NA     2     2      rx.eta.cp_fix_2  -Inf  0.1000000   Inf FALSE  <NA>          <NA>        id  <NA>
+   err
+1 <NA>
+2 <NA>
+3 <NA>
+4 <NA>
+finalUi iniDf:
+  ntheta neta1 neta2     name lower         est upper   fix label backTransform condition prior  err
+1      1    NA    NA cp_fix_1  -Inf -1.37860208   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA cp_fix_2  -Inf -2.60545695   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3     NA     1     1 cp_eta_1  -Inf  0.02705872   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+iniUi model:
+model({
+    cp_stat_CL_pop = exp(cp_fix_1)
+    cp_stat_sigma = exp(cp_fix_2)
+    cp_par_CL = cp_stat_CL_pop * exp(cp_eta_1)
+    cp_state_a_drug_Central(0) = (100)
+    d/dt(cp_state_a_drug_Central) = (-(cp_par_CL * (cp_state_a_drug_Central/1)))
+    cp_obs_C = (cp_state_a_drug_Central/1)
+    cp_obs_C ~ add(cp_stat_sigma)
+})
+table columns: ID TIME DV PRED RES IPRED IRES IWRES cp_eta_1 cp_obs_C cp_state_a_drug_Central cp_stat_CL_pop cp_stat_sigma cp_par_CL 
+
+RUN: existing conversion 
+
+ Parameters:
+  (1) CL_pop = 0.2519305
+  (2) omega_CL = 0.1644953
+  (3) sigma = 0.07386937
+ Parameters:
+  (1) CL_pop = NA
+  (2) omega_CL = NA
+  (3) sigma = NA
+[1] 22.30575
+      PRED    IPRED cp_stat_CL_pop cp_par_CL cp_stat_sigma
+1 77.72998 81.88076      0.2519305 0.1999073    0.07472558
+2 60.41938 67.04449      0.2519305 0.1999073    0.07472558
+3 36.50506 44.94952      0.2519305 0.1999073    0.07472558
+4 77.72998 78.04024      0.2519305 0.2479468    0.07302298
+5 60.41938 60.90269      0.2519305 0.2479468    0.07302298
+6 36.50506 37.09141      0.2519305 0.2479468    0.07302298
+'log Lik.' -22.30575 (df=4)
+
+RUN: SAEM inlined 
+WARNING: is.na() applied to non-(list or vector) of type 'language' 
+ERROR: the condition has length > 1 

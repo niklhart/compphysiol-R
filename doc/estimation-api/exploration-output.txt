@@ -1,0 +1,538 @@
+Revision: 8f1c68fb934e82e97480d35df79055409e8b7d30 
+R version 4.5.2 (2025-10-31)
+Platform: aarch64-apple-darwin20
+Running under: macOS Tahoe 26.6.2
+
+Matrix products: default
+BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
+
+locale:
+[1] C.UTF-8/C.UTF-8/C.UTF-8/C/C.UTF-8/C.UTF-8
+
+time zone: Europe/Berlin
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices datasets  utils     methods   base     
+
+other attached packages:
+[1] compphysiol_0.5.4.9000 testthat_3.3.2        
+
+loaded via a namespace (and not attached):
+ [1] vctrs_0.7.0       cli_3.6.5         rlang_1.1.7       otel_0.2.0        purrr_1.2.1      
+ [6] pkgload_1.4.1     renv_1.1.5        deSolve_1.42      glue_1.8.0        rprojroot_2.1.1  
+[11] pkgbuild_1.4.8    brio_1.1.5        grid_4.5.2        expm_1.0-1        ellipsis_0.3.2   
+[16] fastmap_1.2.0     lifecycle_1.0.5   memoise_2.0.1     compiler_4.5.2    fs_1.6.6         
+[21] sessioninfo_1.2.3 Rcpp_1.1.2        rstudioapi_0.18.0 lattice_0.22-9    R6_2.6.1         
+[26] usethis_3.2.1     magrittr_2.0.4    Matrix_1.7-5      tools_4.5.2       devtools_2.4.6   
+[31] units_1.0-1       remotes_2.5.0     cachem_1.1.0      desc_1.4.3       
+nlmixr2est 7.1.0 
+rxode2 5.1.7.1 
+nlmixr2data 2.0.10 
+units 1.0.1 
+
+EXPORTED SOURCE
+ function() {
+ini({
+cp_fix_1 <- c(-6.9077552789821368e+00, -1.6094379124341003e+00, Inf)
+cp_fix_2 <- c(-6.9077552789821368e+00, 6.9314718055994529e-01, Inf)
+cp_eta_1 ~ 4.0000000000000008e-02
+})
+model({
+cp_stat_CL_pop = exp(cp_fix_1);
+cp_stat_sigma = exp(cp_fix_2);
+cp_par_CL = cp_stat_CL_pop * exp(cp_eta_1);
+cp_state_a_drug_Central(0) = (1e+02);
+d/dt(cp_state_a_drug_Central) = (-(cp_par_CL * (cp_state_a_drug_Central / 1e+00)));
+cp_obs_C = (cp_state_a_drug_Central / 1e+00);
+cp_obs_C ~ add(cp_stat_sigma);
+})
+} 
+  ID TIME EVID CMT AMT DV DVID CP_ROW
+1  1    1    0   0  NA 82    1      1
+2  1    2    0   0  NA 67    1      2
+3  1    4    0   0  NA 45    1      3
+4  2    1    0   0  NA 78    1      1
+5  2    2    0   0  NA 61    1      2
+6  2    4    0   0  NA 37    1      3
+
+RUN: FOCEi 
+
+
+
+
+
+calculating covariance matrix
+done
+class: nlmixr2FitData nlmixr2FitCore nlmixr2.focei tbl_df tbl data.frame 
+columns: ID TIME DV PRED RES WRES IPRED IRES IWRES CPRED CRES CWRES cp_eta_1 cp_state_a_drug_Central cp_stat_CL_pop cp_stat_sigma cp_par_CL 
+est :
+[1] "focei"
+ofvType :
+[1] "focei"
+theta :
+ cp_fix_1  cp_fix_2 
+-1.533373 -2.419655 
+omega :
+          cp_eta_1
+cp_eta_1 0.0172406
+objDf :
+           OBJF      AIC      BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+FOCEi -6.012793 11.01447 10.38975      -2.507234        23.58343        15.57693
+impObj :
+NULL
+nobs :
+[1] 8
+covMethod :
+[1] "r,s"
+'log Lik.' -2.507234 (df=3)
+            cp_fix_1    cp_fix_2
+cp_fix_1 0.005962291 0.002791745
+cp_fix_2 0.002791745 0.001690497
+environment fields:
+ [1] ".fdFullCov"               ".fdFullS"                 ".rownum"                 
+ [4] "AIC"                      "aqHi"                     "aqLow"                   
+ [7] "aqn"                      "BIC"                      "censInformation"         
+[10] "cholR"                    "cholS"                    "conditionNumberCor"      
+[13] "conditionNumberCov"       "convergence"              "cov"                     
+[16] "covLvl"                   "covMethod"                "covOptions"              
+[19] "covR"                     "covRS"                    "covS"                    
+[22] "eigenCor"                 "eigenCov"                 "eigenVecCor"             
+[25] "eigenVecCov"              "est"                      "etaObf"                  
+[28] "extra"                    "fixef"                    "foceiControl0"           
+[31] "foceiModel"               "fullCor"                  "iniDf0"                  
+[34] "llikObs"                  "logLik"                   "message"                 
+[37] "method"                   "mixIdx"                   "nAGQ"                    
+[40] "nConditionalInnerHessian" "nEstOmega"                "nInnerRerank"            
+[43] "nobs"                     "nsub"                     "nTrustInner"             
+[46] "objDf"                    "objective"                "ofvType"                 
+[49] "omega"                    "optReturn"                "origData"                
+[52] "parFixed"                 "parFixedDf"               "parHistData"             
+[55] "phiC"                     "phiH"                     "qfirst"                  
+[58] "qw"                       "qx"                       "R"                       
+[61] "R.0"                      "R.E"                      "R.pd"                    
+[64] "ranef"                    "Rinv"                     "runInfo"                 
+[67] "S"                        "S.E"                      "S.pd"                    
+[70] "S0"                       "scaleInfo"                "sessioninfo"             
+[73] "shrink"                   "Sper"                     "table"                   
+[76] "time"                     "tolFactor"                "ui"                      
+iniUi class: rxUi list 
+iniDf:
+  ntheta neta1 neta2     name     lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA cp_fix_1 -6.907755 -1.6094379   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA cp_fix_2 -6.907755  0.6931472   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3     NA     1     1 cp_eta_1      -Inf  0.0400000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+model expressions:
+model({
+    cp_stat_CL_pop = exp(cp_fix_1)
+    cp_stat_sigma = exp(cp_fix_2)
+    cp_par_CL = cp_stat_CL_pop * exp(cp_eta_1)
+    cp_state_a_drug_Central(0) = (100)
+    d/dt(cp_state_a_drug_Central) = (-(cp_par_CL * (cp_state_a_drug_Central/1)))
+    cp_obs_C = (cp_state_a_drug_Central/1)
+    cp_obs_C ~ add(cp_stat_sigma)
+})
+finalUi class: rxUi list 
+iniDf:
+  ntheta neta1 neta2     name     lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA cp_fix_1 -6.907755 -1.5333732   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA cp_fix_2 -6.907755 -2.4196550   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3     NA     1     1 cp_eta_1      -Inf  0.0172406   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+model expressions:
+model({
+    cp_stat_CL_pop = exp(cp_fix_1)
+    cp_stat_sigma = exp(cp_fix_2)
+    cp_par_CL = cp_stat_CL_pop * exp(cp_eta_1)
+    cp_state_a_drug_Central(0) = (100)
+    d/dt(cp_state_a_drug_Central) = (-(cp_par_CL * (cp_state_a_drug_Central/1)))
+    cp_obs_C = (cp_state_a_drug_Central/1)
+    cp_obs_C ~ add(cp_stat_sigma)
+})
+ui class: rxUi list 
+iniDf:
+  ntheta neta1 neta2     name     lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA cp_fix_1 -6.907755 -1.5333732   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA cp_fix_2 -6.907755 -2.4196550   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3     NA     1     1 cp_eta_1      -Inf  0.0172406   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+model expressions:
+model({
+    cp_stat_CL_pop = exp(cp_fix_1)
+    cp_stat_sigma = exp(cp_fix_2)
+    cp_par_CL = cp_stat_CL_pop * exp(cp_eta_1)
+    cp_state_a_drug_Central(0) = (100)
+    d/dt(cp_state_a_drug_Central) = (-(cp_par_CL * (cp_state_a_drug_Central/1)))
+    cp_obs_C = (cp_state_a_drug_Central/1)
+    cp_obs_C ~ add(cp_stat_sigma)
+})
+getData:
+  ID TIME EVID CMT AMT DV DVID CP_ROW
+1  1    1    0   0  NA 82    1      1
+2  1    2    0   0  NA 67    1      2
+3  1    4    0   0  NA 45    1      3
+4  2    1    0   0  NA 78    1      1
+5  2    2    0   0  NA 61    1      2
+6  2    4    0   0  NA 37    1      3
+origData:
+  ID TIME EVID CMT AMT DV DVID CP_ROW
+1  1    1    0   0  NA 82    1      1
+2  1    2    0   0  NA 67    1      2
+3  1    4    0   0  NA 45    1      3
+4  2    1    0   0  NA 78    1      1
+5  2    2    0   0  NA 61    1      2
+6  2    4    0   0  NA 37    1      3
+table:
+  ID TIME DV     PRED       RES       WRES    IPRED        IRES      IWRES    CPRED      CRES      CWRES
+1  1    1 82 80.58917  1.410831  0.6173492 81.89915  0.10085486  1.1338083 80.62920  1.370796  0.6378363
+2  1    2 67 64.94568  2.054319  0.5579428 67.07428 -0.07427543 -0.8350029 64.99399  2.006008  0.5701165
+3  1    4 45 42.17937  2.820627  0.5898460 44.98954  0.01046395  0.1176355 42.19886  2.801135  0.5935271
+4  2    1 78 80.58917 -2.589169 -1.1329646 78.03216 -0.03216129 -0.3615565 80.72739 -2.727387 -1.0724887
+5  2    2 61 64.94568 -3.945681 -1.0716272 60.88974  0.11025996  1.2395403 65.09627 -4.096272 -1.0324342
+6  2    4 37 42.17937 -5.179373 -1.0831042 37.07535 -0.07535464 -0.8471354 42.19817 -5.198170 -1.0759079
+     cp_eta_1 cp_state_a_drug_Central cp_stat_CL_pop cp_stat_sigma cp_par_CL
+1 -0.07765484                81.89915      0.2158065     0.0889523 0.1996822
+2 -0.07765484                67.07428      0.2158065     0.0889523 0.1996822
+3 -0.07765484                44.98954      0.2158065     0.0889523 0.1996822
+4  0.13924615                78.03216      0.2158065     0.0889523 0.2480495
+5  0.13924615                60.88974      0.2158065     0.0889523 0.2480495
+6  0.13924615                37.07535      0.2158065     0.0889523 0.2480495
+existing result conversion:
+
+RUN: convert 
+$coefficients
+ Parameters:
+  (1) CL_pop = 0.2158065
+  (2) omega_CL = 0.1313035
+  (3) sigma = 0.0889523
+
+$standard_errors
+ Parameters:
+  (1) CL_pop = 0.01666369
+  (2) omega_CL = NA
+  (3) sigma = 0.003657332
+
+$neg_log_lik
+[1] 2.507234
+
+
+RUN: SAEM 
+
+
+
+
+
+
+
+
+
+
+
+
+class: nlmixr2FitData nlmixr2FitCore nlmixr2.saem tbl_df tbl data.frame 
+columns: ID TIME DV PRED RES IPRED IRES IWRES cp_eta_1 cp_obs_C cp_state_a_drug_Central cp_stat_CL_pop cp_stat_sigma cp_par_CL 
+est :
+[1] "saem"
+ofvType :
+[1] "foce"
+theta :
+ cp_fix_1  cp_fix_2 
+-1.993601 -2.421303 
+omega :
+          cp_eta_1
+cp_eta_1 0.2526893
+objDf :
+       OBJF AIC BIC Log-likelihood
+lFOCEi   NA  NA  NA             NA
+impObj :
+NULL
+nobs :
+[1] 8
+covMethod :
+NULL
+
+'log Lik.' -53.2956 (df=4)
+NULL
+environment fields:
+ [1] ".likTime"                 ".rownum"                  "adjObf"                  
+ [4] "AIC"                      "aqHi"                     "aqLow"                   
+ [7] "aqn"                      "BIC"                      "censInformation"         
+[10] "covLvl"                   "est"                      "etaObf"                  
+[13] "extra"                    "fixef"                    "foceiControl0"           
+[16] "iniDf0"                   "logitThetasF"             "logitThetasHiF"          
+[19] "logitThetasLowF"          "logLik"                   "logThetasF"              
+[22] "mcmcAccept"               "mcmcAcceptCol"            "mcmcPhiAcf"              
+[25] "mcmcPhiSd"                "mcmcStuck"                "message"                 
+[28] "method"                   "mixIdx"                   "nAGQ"                    
+[31] "nConditionalInnerHessian" "nEstOmega"                "nInnerRerank"            
+[34] "nobs"                     "nsub"                     "objDf"                   
+[37] "objective"                "objf"                     "OBJF"                    
+[40] "ofvType"                  "omega"                    "origData"                
+[43] "parFixed"                 "parFixedDf"               "parHistData"             
+[46] "phiM"                     "probitThetasF"            "probitThetasHiF"         
+[49] "probitThetasLowF"         "qfirst"                   "qw"                      
+[52] "qx"                       "ranef"                    "runInfo"                 
+[55] "saem0"                    "saemControl"              "saemModel"               
+[58] "scaleInfo"                "sessioninfo"              "shrink"                  
+[61] "table"                    "time"                     "tolFactor"               
+[64] "ui"                      
+iniUi class: rxUi list 
+iniDf:
+  ntheta neta1 neta2                 name lower      est upper   fix label backTransform condition prior  err
+1      1    NA    NA rxBoundedTr.cp_fix_1  -Inf 1.667389   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA rxBoundedTr.cp_fix_2  -Inf 2.028267   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3     NA     1     1             cp_eta_1  -Inf 0.040000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+4     NA     2     2      rx.eta.cp_fix_2  -Inf 0.100000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+model expressions:
+model({
+    cp_stat_CL_pop = exp(cp_fix_1)
+    cp_stat_sigma = exp(cp_fix_2)
+    cp_par_CL = cp_stat_CL_pop * exp(cp_eta_1)
+    cp_state_a_drug_Central(0) = (100)
+    d/dt(cp_state_a_drug_Central) = (-(cp_par_CL * (cp_state_a_drug_Central/1)))
+    cp_obs_C = (cp_state_a_drug_Central/1)
+    cp_obs_C ~ add(cp_stat_sigma)
+})
+finalUi class: rxUi list 
+iniDf:
+  ntheta neta1 neta2     name     lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA cp_fix_1 -6.907755 -1.9936010   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA cp_fix_2 -6.907755 -2.4213034   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3     NA     1     1 cp_eta_1      -Inf  0.2526893   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+model expressions:
+model({
+    cp_stat_CL_pop = exp(cp_fix_1)
+    cp_stat_sigma = exp(cp_fix_2)
+    cp_par_CL = cp_stat_CL_pop * exp(cp_eta_1)
+    cp_state_a_drug_Central(0) = (100)
+    d/dt(cp_state_a_drug_Central) = (-(cp_par_CL * (cp_state_a_drug_Central/1)))
+    cp_obs_C = (cp_state_a_drug_Central/1)
+    cp_obs_C ~ add(cp_stat_sigma)
+})
+ui class: rxUi list 
+iniDf:
+  ntheta neta1 neta2     name     lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA cp_fix_1 -6.907755 -1.9936010   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA cp_fix_2 -6.907755 -2.4213034   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3     NA     1     1 cp_eta_1      -Inf  0.2526893   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+model expressions:
+model({
+    cp_stat_CL_pop = exp(cp_fix_1)
+    cp_stat_sigma = exp(cp_fix_2)
+    cp_par_CL = cp_stat_CL_pop * exp(cp_eta_1)
+    cp_state_a_drug_Central(0) = (100)
+    d/dt(cp_state_a_drug_Central) = (-(cp_par_CL * (cp_state_a_drug_Central/1)))
+    cp_obs_C = (cp_state_a_drug_Central/1)
+    cp_obs_C ~ add(cp_stat_sigma)
+})
+getData:
+  ID TIME EVID CMT AMT DV DVID CP_ROW
+1  1    1    0   0  NA 82    1      1
+2  1    2    0   0  NA 67    1      2
+3  1    4    0   0  NA 45    1      3
+4  2    1    0   0  NA 78    1      1
+5  2    2    0   0  NA 61    1      2
+6  2    4    0   0  NA 37    1      3
+origData:
+  ID TIME EVID CMT AMT DV DVID CP_ROW
+1  1    1    0   0  NA 82    1      1
+2  1    2    0   0  NA 67    1      2
+3  1    4    0   0  NA 45    1      3
+4  2    1    0   0  NA 78    1      1
+5  2    2    0   0  NA 61    1      2
+6  2    4    0   0  NA 37    1      3
+table:
+  ID TIME DV     PRED       RES    IPRED      IRES     IWRES  cp_eta_1 cp_obs_C cp_state_a_drug_Central
+1  1    1 82 99.88547 -17.88547 99.83225 -17.83225 -16312.53 0.3819299 99.83225                99.83225
+2  1    2 67 99.77108 -32.77108 99.66478 -32.66478 -29880.99 0.3819299 99.66478                99.66478
+3  1    4 45 99.54268 -54.54268 99.33069 -54.33069 -49700.46 0.3819299 99.33069                99.33069
+4  2    1 78 99.88547 -21.88547 99.79153 -21.79153 -19945.11 0.5994830 99.79153                99.79153
+5  2    2 61 99.77108 -38.77108 99.58349 -38.58349 -35314.27 0.5994830 99.58349                99.58349
+6  2    4 37 99.54268 -62.54268 99.16871 -62.16871 -56901.09 0.5994830 99.16871                99.16871
+  cp_stat_CL_pop cp_stat_sigma   cp_par_CL
+1    0.001145916   0.001093163 0.001678892
+2    0.001145916   0.001093163 0.001678892
+3    0.001145916   0.001093163 0.001678892
+4    0.001145916   0.001092575 0.002086915
+5    0.001145916   0.001092575 0.002086915
+6    0.001145916   0.001092575 0.002086915
+existing result conversion:
+
+RUN: convert 
+$coefficients
+ Parameters:
+  (1) CL_pop = 0.1362041
+  (2) omega_CL = 0.5026821
+  (3) sigma = 0.0888058
+
+$standard_errors
+ Parameters:
+  (1) CL_pop = NA
+  (2) omega_CL = NA
+  (3) sigma = NA
+
+$neg_log_lik
+[1] 53.2956
+
+
+RUN: SAEM -> IMPMAP nIter=0 
+
+
+
+
+
+class: nlmixr2FitData nlmixr2FitCore nlmixr2.impmap tbl_df tbl data.frame 
+columns: ID TIME DV PRED RES WRES IPRED IRES IWRES CPRED CRES CWRES cp_eta_1 cp_state_a_drug_Central cp_stat_CL_pop cp_stat_sigma cp_par_CL 
+est :
+[1] "impmap"
+ofvType :
+[1] "focei"
+theta :
+ cp_fix_1  cp_fix_2 
+-1.993601 -2.421303 
+omega :
+          cp_eta_1
+cp_eta_1 0.2526893
+objDf :
+            OBJF      AIC      BIC Log-likelihood
+FOCEi -0.1153227 16.91194 16.28722       -5.45597
+impObj :
+[1] -0.1147968
+nobs :
+[1] 8
+covMethod :
+NULL
+'log Lik.' -5.45597 (df=3)
+NULL
+environment fields:
+ [1] ".rownum"            "AIC"                "aqHi"               "aqLow"              "aqn"               
+ [6] "BIC"                "censInformation"    "covLvl"             "est"                "etaObf"            
+[11] "extra"              "fixef"              "foceiModel"         "impAuto"            "impBurnFreezeOmega"
+[16] "impCondMean"        "impCondVar"         "impConverged"       "impDfInd"           "impEonly"          
+[21] "impEtaHess"         "impEtaMode"         "impGammaInd"        "impGammaMethod"     "impGammaTrace"     
+[26] "impGammaUsed"       "impIacceptInd"      "impIter"            "impKhatIter"        "impLi"             
+[31] "impmapControl"      "impMapIter"         "impMStepDamped"     "impMStepSkipped"    "impMuGroupN"       
+[36] "impNburn"           "impNeff"            "impNeffFrac"        "impNiter"           "impNsample"        
+[41] "impNsampleInd"      "impObj"             "impObjTrace"        "impPropInd"         "impProposal"       
+[46] "impPsisK"           "impQr"              "impQrScramble"      "impSamples"         "impSir"            
+[51] "impSirSample"       "impWeights"         "impXi"              "impXiTrace"         "iniDf0"            
+[56] "llikObs"            "logLik"             "method"             "mixIdx"             "nAGQ"              
+[61] "nEstOmega"          "nobs"               "nsub"               "objDf"              "objective"         
+[66] "odeSwapInfo"        "ofvType"            "omega"              "origData"           "parFixed"          
+[71] "parFixedDf"         "parHistData"        "phiC"               "phiH"               "qfirst"            
+[76] "qw"                 "qx"                 "ranef"              "runInfo"            "scaleInfo"         
+[81] "sessioninfo"        "shrink"             "table"              "time"               "tolFactor"         
+[86] "ui"                
+iniUi class: rxUi list 
+iniDf:
+  ntheta neta1 neta2     name     lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA cp_fix_1 -6.907755 -1.9936010   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA cp_fix_2 -6.907755 -2.4213034   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3     NA     1     1 cp_eta_1      -Inf  0.2526893   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+model expressions:
+model({
+    cp_stat_CL_pop = exp(cp_fix_1)
+    cp_stat_sigma = exp(cp_fix_2)
+    cp_par_CL = cp_stat_CL_pop * exp(cp_eta_1)
+    cp_state_a_drug_Central(0) = (100)
+    d/dt(cp_state_a_drug_Central) = (-(cp_par_CL * (cp_state_a_drug_Central/1)))
+    cp_obs_C = (cp_state_a_drug_Central/1)
+    cp_obs_C ~ add(cp_stat_sigma)
+})
+finalUi class: rxUi list 
+iniDf:
+  ntheta neta1 neta2     name     lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA cp_fix_1 -6.907755 -1.9936010   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA cp_fix_2 -6.907755 -2.4213034   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3     NA     1     1 cp_eta_1      -Inf  0.2526893   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+model expressions:
+model({
+    cp_stat_CL_pop = exp(cp_fix_1)
+    cp_stat_sigma = exp(cp_fix_2)
+    cp_par_CL = cp_stat_CL_pop * exp(cp_eta_1)
+    cp_state_a_drug_Central(0) = (100)
+    d/dt(cp_state_a_drug_Central) = (-(cp_par_CL * (cp_state_a_drug_Central/1)))
+    cp_obs_C = (cp_state_a_drug_Central/1)
+    cp_obs_C ~ add(cp_stat_sigma)
+})
+ui class: rxUi list 
+iniDf:
+  ntheta neta1 neta2     name     lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA cp_fix_1 -6.907755 -1.9936010   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA cp_fix_2 -6.907755 -2.4213034   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3     NA     1     1 cp_eta_1      -Inf  0.2526893   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+model expressions:
+model({
+    cp_stat_CL_pop = exp(cp_fix_1)
+    cp_stat_sigma = exp(cp_fix_2)
+    cp_par_CL = cp_stat_CL_pop * exp(cp_eta_1)
+    cp_state_a_drug_Central(0) = (100)
+    d/dt(cp_state_a_drug_Central) = (-(cp_par_CL * (cp_state_a_drug_Central/1)))
+    cp_obs_C = (cp_state_a_drug_Central/1)
+    cp_obs_C ~ add(cp_stat_sigma)
+})
+getData:
+  ID TIME EVID CMT AMT DV DVID CP_ROW
+1  1    1    0   0  NA 82    1      1
+2  1    2    0   0  NA 67    1      2
+3  1    4    0   0  NA 45    1      3
+4  2    1    0   0  NA 78    1      1
+5  2    2    0   0  NA 61    1      2
+6  2    4    0   0  NA 37    1      3
+origData:
+  ID TIME EVID CMT AMT DV DVID CP_ROW
+1  1    1    0   0  NA 82    1      1
+2  1    2    0   0  NA 67    1      2
+3  1    4    0   0  NA 45    1      3
+4  2    1    0   0  NA 78    1      1
+5  2    2    0   0  NA 61    1      2
+6  2    4    0   0  NA 37    1      3
+table:
+  ID TIME DV     PRED        RES       WRES    IPRED         IRES      IWRES    CPRED       CRES      CWRES
+1  1    1 82 87.26648  -5.266476 -0.8813413 81.89949  0.100513136  1.1318308 88.15551  -6.155512 -0.7487512
+2  1    2 67 76.15436  -9.154358 -0.8778147 67.07484 -0.074835192 -0.8426836 77.32284 -10.322837 -0.7665625
+3  1    4 45 57.99438 -12.994382 -0.8180668 44.99029  0.009712983  0.1093733 58.73795 -13.737953 -0.7604750
+4  2    1 78 87.26648  -9.266476 -1.5507388 78.03183 -0.031830115 -0.3584238 89.63563 -11.635633 -1.1958064
+5  2    2 61 76.15436 -15.154358 -1.4531568 60.88922  0.110776903  1.2474062 78.99960 -17.999599 -1.1852698
+6  2    4 37 57.99438 -20.994382 -1.3217102 37.07473 -0.074725337 -0.8414466 59.12979 -22.129789 -1.1966117
+   cp_eta_1 cp_state_a_drug_Central cp_stat_CL_pop cp_stat_sigma cp_par_CL
+1 0.3825521                81.89949      0.1362041     0.0888058 0.1996781
+2 0.3825521                67.07484      0.1362041     0.0888058 0.1996781
+3 0.3825521                44.99029      0.1362041     0.0888058 0.1996781
+4 0.5994911                78.03183      0.1362041     0.0888058 0.2480537
+5 0.5994911                60.88922      0.1362041     0.0888058 0.2480537
+6 0.5994911                37.07473      0.1362041     0.0888058 0.2480537
+existing result conversion:
+
+RUN: convert 
+$coefficients
+ Parameters:
+  (1) CL_pop = 0.1362041
+  (2) omega_CL = 0.5026821
+  (3) sigma = 0.0888058
+
+$standard_errors
+ Parameters:
+  (1) CL_pop = NA
+  (2) omega_CL = NA
+  (3) sigma = NA
+
+$neg_log_lik
+[1] 5.45597
+
+population equality after evaluation:
+[1] TRUE
+[1] TRUE
+raw impObj plus normalizing constant:
+       impObj normalizedNLL 
+   -0.1147968     7.2941098 
+
+RUN: setOfv(SAEM, impmap) 
+ERROR: unknown error 
+setOfv objective table and selected logLik:
+                 OBJF       AIC       BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+IMPMAP     -0.1143577  22.58866  22.90642      -7.294329              NA              NA
+gauss3_1.6 91.8881863 114.59120 114.90897     -53.295601              NA              NA
+'log Lik.' -7.294329 (df=4)
+[1] "gauss3_1.6"
+[1] TRUE
+[1] TRUE

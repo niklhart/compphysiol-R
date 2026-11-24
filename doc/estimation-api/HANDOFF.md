@@ -1,7 +1,9 @@
 # nlmixr2 estimation API handoff
 
 Date: 2026-11-23
-Status: Design agreed; native-result exploration and implementation pending.
+Status: Initial native-result exploration completed; implementation pending.
+See [findings.md](findings.md) for evidence, proposed checks, and unresolved
+SAEM translation and likelihood-normalization issues.
 
 ## Objective
 
@@ -100,5 +102,5 @@ implement on `main`. Do not hand-edit generated `man/` or `NAMESPACE`, change
 `renv.lock` unintentionally, or regenerate package data. Run focused estimation
 tests first and broaden for shared unit, DSL, or model-generation changes.
 
-This handoff records the agreed direction. No native-result experiments or API
-implementation have been completed as part of creating this directory.
+This handoff records the agreed direction. The initial experiments are now
+recorded in `findings.md`; no public API implementation has been completed.
