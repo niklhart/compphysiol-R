@@ -1,6 +1,7 @@
 # nlmixr2 estimation API handoff
 
 Date: 2026-11-23
+Updated: 2026-11-24
 Status: Initial native-result exploration completed; implementation pending.
 See [findings.md](findings.md) for evidence, proposed checks, and unresolved
 SAEM translation and likelihood-normalization issues.
@@ -60,6 +61,48 @@ Inspect the available evidence for:
 Use these observations to propose the compatibility contract and likelihood
 selection API. These are research outcomes, not questions awaiting the user.
 Separate verified observations from proposed rules and unresolved limitations.
+
+## Next investigation: identify the selected likelihood
+
+Agreed direction: `likelihood = "auto"` follows the likelihood currently
+selected by native `logLik()`, provided its calculation method and value can be
+identified consistently. Multiple available likelihood evaluations alone do
+not make selection ambiguous. Explicit selection should allow importing another
+supported evaluation. Always annotate the compphysiol result with the likelihood
+calculation method, separately from the parameter estimation algorithm.
+
+This investigation is pending. Use one fixed model and dataset and keep the
+scope limited to likelihood selection, identification, and consistency.
+
+1. Inspect the installed implementations of `logLik()`, the selected-method
+   accessor, the objective table, and `setOfv()`. Establish which fields are
+   authoritative or derived, and which calls trigger calculation or mutate the
+   result. Record the installed package versions.
+2. Compare four native workflows: FOCEi estimation, SAEM estimation, FOCEi
+   followed by IMPMAP evaluation, and SAEM followed by IMPMAP evaluation.
+   Capture the relevant metadata before and after calling `logLik()`, then
+   repeat the call to check stability. Use independent copies where calls
+   mutate objects. For SAEM, determine what is selected initially and what is
+   calculated on demand. For IMPMAP, distinguish the selected likelihood from
+   the separately available sampling objective.
+3. Probe explicit selection between available likelihood methods through the
+   native API. Check agreement between the selected-method label, objective-table
+   entry, and returned likelihood. Reproduce the previously observed partial
+   selection failure separately and inspect the resulting state.
+4. Derive and test an identification rule. Produce a concise decision table
+   describing the evidence identifying each likelihood, consistency checks,
+   and conditions under which `auto` must fail. Do not infer the likelihood
+   calculation method solely from the estimation algorithm.
+
+Add a focused reproducible script and a short findings section. Success means
+being able to state for each supported workflow: `logLik()` returns this value,
+these fields establish its calculation method, and these conditions make that
+identification unreliable.
+
+Keep likelihood normalization as a separate unresolved question; an explicit
+method argument cannot bypass an unresolved numerical convention. Broader
+estimator, SAEM translation, and prediction-table experiments are outside this
+focused step.
 
 ## Implementation sequence after exploration
 
