@@ -1,5 +1,7 @@
 # compphysiol (development version)
 
+* Added generalized estimation API for nlmixr2, supporting SAEM, likelihood evaluation methods, and correlated random effects.
+
 # compphysiol 0.5.4
 
 * Fixed unit checks for source transports.
