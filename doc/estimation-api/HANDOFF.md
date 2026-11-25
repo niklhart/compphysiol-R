@@ -250,6 +250,50 @@ preserve the agreed likelihood-selection policy. Until validation passes,
 retain explicit restrictions and describe lognormal variability as the initial
 validated scope in documentation.
 
+### Correlated individual random effects
+
+Plan support for full and block random-effect covariance structures, with SAEM
+as a primary use case. Reuse the statistical model's existing `correlated()`
+concept rather than introduce a second correlation API. The current diagonal
+restriction is an integration limitation; do not treat it as an intrinsic FOCEi
+or SAEM restriction.
+
+Begin with a focused investigation of what native nlmixr2 needs:
+
+1. Map latent-normal marginal SDs and correlations to omega via
+   `Omega[i,j] = rho[i,j] * SD[i] * SD[j]`. Respect units for normal marginals
+   and dimensionless latent spreads for transformed marginals. Inspect native
+   block syntax, eta ordering, initialization, and returned covariance metadata.
+2. Establish support for fixed versus estimated correlations and SDs, including
+   mixed fixed/free blocks. A fixed correlation with estimated SDs is not a
+   fixed covariance. Verify how to preserve each declared constraint, rather
+   than silently estimate every entry of a native omega block.
+3. Preserve the existing meaning that unspecified pairs are uncorrelated.
+   Establish whether native block estimation can enforce declared zero pairs
+   within a connected block, and how block structure affects this. Investigate
+   positive-definiteness requirements for estimation versus the positive
+   semidefinite matrices allowed by population sampling; reject unsupported
+   singular structures explicitly.
+4. Extend export/import mappings beyond diagonal variances: decode correlations
+   as covariances divided by marginal SDs, and map available joint uncertainty
+   through the full transformation Jacobian. Keep random-effect correlations
+   distinct from correlations between parameter estimates. Define behavior at
+   zero marginal variance and for unavailable uncertainty.
+5. Extend compatibility signatures to preserve eta identities/order, block
+   structure, fixed/free constraints, and zero-pattern semantics through native
+   estimation and evaluation-only stages. Validate both SAEM and FOCEi where
+   supported, including explicit IMPMAP evaluation and population preservation.
+
+Use small two-effect and structured-block native examples to establish the
+contract before implementation. Add independent multivariate Gaussian marginal
+likelihood references, unit-aware covariance/correlation round trips, and tests
+for fixed, estimated, zero, invalid, and singular correlation structures. Reuse
+converted fixtures to keep runtime bounded. Retain the diagonal-only rejection
+until the supported cases are validated; record unsupported cases precisely.
+
+This is planned follow-up work, not an expansion of the currently validated
+scope or a request for a time-based automation.
+
 ## Existing implementation anchors
 
 - `R/Estimation.R`: `nlmixr2_engine()`, `estimate()`, and public result contract.
