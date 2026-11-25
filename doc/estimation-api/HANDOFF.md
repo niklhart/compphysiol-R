@@ -4,8 +4,9 @@ Date: 2026-11-23
 Updated: 2026-11-25
 Status: Initial exploration, likelihood-selection investigation, and a follow-up
 on normalization and SAEM representation issues completed; implementation pending.
-See [findings.md](findings.md) for evidence, proposed checks, and unresolved
-SAEM translation and likelihood-normalization issues.
+The API decisions below are authoritative. See [findings.md](findings.md)
+for experimental evidence and remaining numerical/backend limitations; earlier
+policy recommendations in the findings are superseded by this handoff.
 
 ## Objective
 
@@ -14,9 +15,9 @@ adding SAEM to `estimate()`. Export/import is the shared foundation for the
 wrapper and for native nlmixr2 workflows.
 
 The concrete advanced use case is SAEM estimation followed by IMPMAP likelihood
-evaluation at the fitted population parameters. This belongs in the native
-export/import workflow; a wrapped multi-step estimation API is outside the
-initial scope.
+evaluation at the fitted population parameters. Support this through both
+native export/import and explicit likelihood evaluation in the wrapper.
+Arbitrary sequences of estimation algorithms remain outside the wrapper scope.
 
 ## Agreed scope
 
@@ -38,114 +39,142 @@ initial scope.
   No additional persistent storage or cross-version compatibility guarantee is
   required initially.
 
-## First step: investigate native results
+## Agreed likelihood API
 
-Run small reproducible examples with FOCEi, SAEM, and SAEM followed by IMPMAP
-likelihood evaluation. Record package versions, controls, seeds, scripts, and
-observed result structures in [findings.md](findings.md). Verify the installed
-version's actual likelihood-evaluation mechanism rather than assuming an
-IMPMAP fit is evaluation-only.
+Keep the estimation algorithm separate from likelihood evaluation. The public
+argument is `likelihood`, defaulting to `"auto"`; public export/import function
+names and argument placement remain implementation choices.
 
-Inspect the available evidence for:
+### `estimate()` wrapper
 
-1. Original and final model structure, parameterization, parameter identities,
-   fixed/estimated status, bounds, and random-effect covariance structure.
-2. Original data, subject IDs, endpoints, observation rows, and event records.
-3. Population estimates before and after likelihood evaluation, distinguishing
-   them from individual modes or sampling-proposal updates.
-4. Available likelihoods, their approximation/integration methods, numerical
-   conventions, and reliable extraction paths. Do not assume the default native
-   `logLik()` selects the intended importance-sampling likelihood.
-5. Coefficients, covariance, predictions, and behavior when optional outputs are
-   absent. Establish what transfers reliably between algorithms.
+| Estimation algorithm | `likelihood = "auto"` | Explicit likelihood |
+| --- | --- | --- |
+| FOCEi | Report the verified FOCEi likelihood | Evaluate the requested supported method at the fitted population parameters |
+| SAEM | Return `NA` likelihood and record that explicit evaluation is required | Evaluate the requested supported method at the fitted population parameters |
 
-Use these observations to propose the compatibility contract and likelihood
-selection API. These are research outcomes, not questions awaiting the user.
-Separate verified observations from proposed rules and unresolved limitations.
+Support explicit `"focei"` and `"impmap"` where the problem/evaluation is
+supported. In particular, SAEM with `likelihood = "impmap"` performs SAEM
+estimation followed by evaluation-only IMPMAP. This is supported wrapper
+behavior, not a general multi-step estimation framework. Evaluation must
+preserve fitted population parameters; individual modes/proposals may change.
+The explicit choice removes ambiguity, so the internal evaluation step does
+not cause an `auto` ambiguity error.
 
-## Completed investigation: identify the selected likelihood
+### Native export/execution/import
 
-Agreed direction: `likelihood = "auto"` follows the likelihood currently
-selected by native `logLik()`, provided its calculation method and value can be
-identified consistently. Multiple available likelihood evaluations alone do
-not make selection ambiguous. Explicit selection should allow importing another
-supported evaluation. Always annotate the compphysiol result with the likelihood
-calculation method, separately from the parameter estimation algorithm.
+| Native workflow | Import with `likelihood = "auto"` | Explicit likelihood |
+| --- | --- | --- |
+| Plain FOCEi fit | Report verified FOCEi likelihood | Select or perform the requested supported evaluation |
+| Plain SAEM fit | Return `NA` likelihood and record that explicit evaluation is required | Select or perform the requested supported evaluation |
+| FOCEi or SAEM followed by IMPMAP evaluation | Error requiring explicit likelihood selection | Choose `"focei"` or `"impmap"` |
+| Inconsistent or insufficient required metadata | Error | Explicit selection cannot bypass compatibility, provenance, or normalization checks |
 
-Completed on 2026-11-25 using one fixed model and dataset. The script is
-`investigate-likelihood.R`; results and the decision table are in the follow-up
-section of [findings.md](findings.md). The investigation scope was:
+The IMPMAP workflow is ambiguous under `auto` even when the native object's
+selected likelihood is identifiable and remains FOCEi. The user must choose
+which evaluation to report. Do not silently follow `logLik()` in that case.
+This applies equally to FOCEi- and SAEM-origin estimates. An explicitly selected
+IMPMAP likelihood is not suppressed merely because SAEM supplied the estimates.
 
-1. Inspect the installed implementations of `logLik()`, the selected-method
-   accessor, the objective table, and `setOfv()`. Establish which fields are
-   authoritative or derived, and which calls trigger calculation or mutate the
-   result. Record the installed package versions.
-2. Compare four native workflows: FOCEi estimation, SAEM estimation, FOCEi
-   followed by IMPMAP evaluation, and SAEM followed by IMPMAP evaluation.
-   Capture the relevant metadata before and after calling `logLik()`, then
-   repeat the call to check stability. Use independent copies where calls
-   mutate objects. For SAEM, determine what is selected initially and what is
-   calculated on demand. For IMPMAP, distinguish the selected likelihood from
-   the separately available sampling objective.
-3. Probe explicit selection between available likelihood methods through the
-   native API. Check agreement between the selected-method label, objective-table
-   entry, and returned likelihood. Reproduce the previously observed partial
-   selection failure separately and inspect the resulting state.
-4. Derive and test an identification rule. Produce a concise decision table
-   describing the evidence identifying each likelihood, consistency checks,
-   and conditions under which `auto` must fail. Do not infer the likelihood
-   calculation method solely from the estimation algorithm.
+Import of an evaluation-only stage requires a reference to the preceding fit
+so theta and omega preservation can be checked. Compare against a snapshot of
+that reference; the evaluated object alone does not establish its history.
+Detect supported workflow evidence from inspectable native metadata and reject
+insufficient evidence rather than infer unsupported histories.
 
-Outcome: read the selected method after calling `logLik()`, require a unique
-matching objective-table row and matching finite likelihood, and annotate the
-result with that method. All four standard workflow probes passed this
-identification rule. The reproduced partial SAEM objective-selection failure
-was rejected because its label and likelihood row disagreed. SAEM can lazily
-calculate quadrature; inspected source falls back to FOCEi if that fails.
+For plain SAEM with `auto`, do not trigger native lazy quadrature just to
+produce a likelihood that the API deliberately leaves absent. Missing
+likelihood does not prevent importing coefficients, available uncertainty, and
+valid required predictions.
 
-The numerical normalization and SAEM translation issues remain unresolved.
-An additional eager SAEM likelihood probe failed during fit construction;
-it produced no result to identify. See the findings for these limits.
+### Shared result and validation contract
 
-Keep likelihood normalization as a separate unresolved question; an explicit
-method argument cannot bypass an unresolved numerical convention. Broader
-estimator, SAEM translation, and prediction-table experiments are outside this
-focused step.
+- Annotate every reported likelihood with its calculation method separately
+  from the parameter-estimation algorithm. Record why a likelihood is absent.
+- Restore public parameter coordinates, units, uncertainty, predictions, and
+  likelihood conventions using exported mappings.
+- Accept missing/partial covariance as missing public uncertainty. Require
+  the valid prediction outputs needed by the current result contract.
+- Reject unsupported SAEM specifications and constraints clearly, including
+  during SAEM-targeted export/preparation. Never silently remove bounds or
+  disable their enforcement to obtain a fit. Algorithm changes after export
+  still need capability checks at execution/import as appropriate.
+- Reject incompatible changes to the scientific model, parameterization,
+  data, or identifier/endpoint/row mappings. Controls and starting-value
+  changes are allowed only when the compatibility contract remains satisfied.
+- Native SAEM quadrature is initially unsupported. Document the observed
+  discrepancies; do not silently replace a selected/requested quadrature
+  calculation with FOCEi. Do not annotate requested quadrature node counts
+  as effective counts when the backend caps them.
+- Recommend the same explicitly chosen likelihood evaluation when comparing
+  estimates obtained by different estimation algorithms.
 
-## Implementation sequence after exploration
+## Evidence and implementation constraints
 
-The normalization/SAEM follow-up is recorded in [findings.md](findings.md).
-Sampling normalization was verified against independent likelihoods for the
-exercised additive/proportional normal and lognormal endpoints: count actual
-non-missing responses, add normal constants, restore lognormal response
-Jacobians, then apply exported unit corrections. Native `nobs` is unsuitable
-for the constant and native sampling objective rows need convention checks.
+The initial exploration and focused follow-ups are complete. Reproduction
+scripts and reports are indexed in [findings.md](findings.md).
 
-SAEM needs direct native residual-scale coordinates and corresponding public
-decoding mappings. The wrong bounded predictions reproduce an extra bound
-transformation. Disabling native transformations is unsafe: a tight-bound
-probe returned an out-of-bounds estimate. Zero-iteration FOCEi reevaluation
-restores predictions while preserving theta/omega in the fixture, but does
-not prove constrained estimation is valid. Finite-bound support and native
-SAEM quadrature accuracy remain unresolved. Do not silently drop bounds or
-substitute a different likelihood under `auto`.
+- Native likelihood selection can often be identified after `logLik()` by
+  matching the selected label to a unique objective-table row and finite value.
+  This is a consistency check, not the agreed `auto` policy. A reproduced
+  partial SAEM selection failure leaves a stale label and must be rejected.
+- Sampling normalization was checked independently for additive/proportional
+  normal and lognormal endpoints. Count actual contributing responses, restore
+  normal constants and endpoint-specific lognormal response Jacobians, then
+  apply the exported unit correction. Native `nobs` and native sampling rows
+  are not sufficient on their own. Other families/conventions require validation.
+- Direct native residual-SD coordinates avoid the transformed-residual-helper
+  problem. Their mapping to public values and uncertainty must be explicit.
+- Bounded SAEM predictions exhibit an extra transformation. Zero-iteration
+  FOCEi reevaluation restores predictions while preserving theta/omega in the
+  fixture, but does not prove correct constrained estimation. Disabling native
+  bound transformations can return out-of-bounds estimates. Initially reject
+  unverified finite constraints unless a constraint-preserving solution is
+  independently validated.
+- SAEM quadrature still disagrees with independent likelihood calculations;
+  explicit FOCEi or corrected importance-sampling evaluation is the planned
+  supported route, subject to validation of the relevant problem scope.
 
-Native quadrature can cap the node count while retaining the requested count
-in its label. Annotate method identity separately from requested/effective
-settings and retain relevant warnings.
+## Agreed implementation sequence
 
-1. Define permitted native changes and inspectable compatibility checks.
-2. Define explicit likelihood selection/provenance and verification that an
-   evaluation-only stage retained the population estimates.
-3. Expose export/import using the existing preparation and result conversion
-   boundaries where practical; settle public names after exploration.
-4. Add SAEM to the single-step wrapper using the same export/import machinery.
-5. Add focused regression coverage for compatible and incompatible imports,
-   existing outputs, parameter/covariance transformations, unit-aware round
-   trips, and the SAEM-to-IMPMAP workflow.
-6. Document the public API and native workflow example; update the glossary's
-   initial FOCEi scope and explain the export/import contract and the distinction
-   between parameter estimation and likelihood evaluation.
+1. Define the S3 export object and compatibility signature. Preserve the
+   scientific problem, native model/source/data, parsed model and parameter
+   roles/bounds/fixed-status/covariance structure, units and coordinate mappings,
+   subject/endpoint/row mappings, and likelihood-convention metadata. Use the
+   existing preparation boundary where practical.
+2. Establish algorithm capability checks and SAEM translation. Use direct native
+   residual coordinates with explicit decoding/uncertainty mappings. Reject
+   unsupported residual specifications and unverified constraints before
+   execution; validate a supported route for required predictions.
+3. Implement shared evaluation and likelihood normalization. Support FOCEi and
+   evaluation-only IMPMAP on compatible problems, verify population-parameter
+   preservation, and retain native results/provenance. Implement the exact
+   wrapper/import `auto` tables above, including absent SAEM likelihood and
+   ambiguous IMPMAP workflow errors. Do not let native selection override them.
+4. Expose guarded import using the export and, for evaluation stages, a
+   preceding-fit reference. Check model/data/parameter/mapping compatibility,
+   required outputs, likelihood provenance and numerical convention; restore
+   units/public coordinates and attach the agreed annotations. Operate on copies
+   when native access/evaluation could mutate the caller's fit.
+5. Generalize `estimate()` to FOCEi and SAEM with method-specific controls,
+   explicit likelihood selection, and the same export/evaluation/import
+   machinery. Preserve established FOCEi behavior by default. Keep arbitrary
+   multi-step estimation workflows outside the wrapper.
+6. Add focused regression tests for all API-table cases, including SAEM `auto`
+   without lazy likelihood evaluation; explicit SAEM-to-IMPMAP evaluation;
+   ambiguous native IMPMAP imports for both origins; population preservation;
+   unsupported constraints; incompatible edits; missing likelihood/covariance;
+   required predictions; coordinate/uncertainty/unit restoration; and independent
+   likelihood normalization, including mixed endpoints and missing responses.
+7. Document the wrapper and native workflow examples, the quadrature and SAEM
+   capability limits, and fair algorithm comparison. Update the glossary to
+   distinguish estimation from likelihood evaluation and describe the export/
+   import contract. Generate public reference documentation through roxygen.
+
+Public function/class/metadata field names and precise numerical comparison
+tolerances remain implementation choices. Cross-version persistence and
+arbitrary native model rewrites are not initial requirements. Existing research
+limitations must be reflected in capability checks rather than silently
+expanding the supported scope.
 
 ## Existing implementation anchors
 
