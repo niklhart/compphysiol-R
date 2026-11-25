@@ -59,12 +59,12 @@ test_that("nlmixr2 translation produces executable content and population data",
     expect_identical(translated$data$DV, c(82, 67, 45, 78, 61, 37))
 })
 
-test_that("nlmixr2 scope rejects correlations and combined residual error", {
+test_that("nlmixr2 scope rejects invalid correlation targets and combined residual error", {
     problem <- nlmixr2_test_problem()
     attr(problem$statistics, "correlations") <- list(list(
         first = "CL", second = "other", value = 0
     ))
-    expect_error(.nlmixr2_validate_scope(problem), "diagonal")
+    expect_error(.nlmixr2_validate_scope(problem), "Correlation targets")
 
     problem <- nlmixr2_test_problem()
     problem$statistics$C$sd <- combined("sigma", "sigma_prop")

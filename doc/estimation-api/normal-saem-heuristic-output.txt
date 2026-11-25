@@ -1,0 +1,13 @@
+nlmixr2est 7.1.0 
+
+handleUninformativeEtas: TRUE 
+location    sigma 
+3.000000 0.464233 
+      eta
+eta 1e-06
+
+handleUninformativeEtas: FALSE 
+  location      sigma 
+2.97196690 0.09031158 
+          eta
+eta 0.2078103

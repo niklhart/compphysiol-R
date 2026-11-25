@@ -492,7 +492,8 @@ and median have compatible units; dimensional quantities require explicit
 unit-bearing bounds. Exact endpoints are excluded. Correlations describe the
 latent normal variables rather than the original bounded quantities. Sampling
 allows zero spread, while continuous likelihood evaluation requires positive
-spread. The nlmixr2 engine does not currently support this family.
+spread. The nlmixr2 integration supports this family for individual variability,
+but not for observation-level error.
 
 Missing locations are context-sensitive. For an observable, a missing normal
 mean or log-normal/logit-normal median resolves to the dynamic-model prediction; in the
@@ -771,11 +772,20 @@ distinct from numerical ODE simulation, where the simulation type selects ODE
 semantics and a deSolve or rxode2 engine selects the interchangeable execution
 backend.
 
-The nlmixr2 engine supports FOCEi and a restricted SAEM scope with independent
-individual-level random effects. SAEM requires lognormal individual variability,
-directly estimated residual SDs, and verified natural parameter domains;
-unverified finite constraints are rejected. Correlated random effects and
-combined residual SD remain outside the current integration.
+The nlmixr2 engine supports normal, lognormal, and logit-normal individual
+variability and positive-definite correlated random-effect blocks. Estimated
+correlations use the latent normal covariance; fixed nonzero correlations are
+rejected for estimation while remaining valid in simulation. Unspecified
+correlations are preserved as fixed zeros. Shared variability/correlation
+parameters across multiple entries are not yet supported.
+
+SAEM requires directly estimated residual SDs and verified parameter domains:
+identity domains for normal locations, log domains for lognormal medians, and
+matching logit domains for logit-normal medians with fixed bounds. Normal SAEM
+execution disables the native uninformative-eta heuristic because it caused
+variance collapse in the reference example; exports provide this required
+control and import checks it. Other unverified finite optimizer constraints
+and combined residual SD remain unsupported.
 
 Estimation and likelihood evaluation are separate operations. The `likelihood`
 engine option defaults to `"auto"`: plain FOCEi reports a FOCEi approximation,

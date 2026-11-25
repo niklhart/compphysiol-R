@@ -8,20 +8,46 @@
 
 .nlmixr2_signature <- function(ui) {
     fields <- c("ntheta", "neta1", "neta2", "name", "lower", "upper", "fix")
-    list(model = ui$model, parameters = ui$iniDf[, fields, drop = FALSE])
+    parameters <- ui$iniDf[, fields, drop = FALSE]
+    parameters$fixed_value <- ifelse(parameters$fix, ui$iniDf$est, NA_real_)
+    list(model = ui$model, parameters = parameters)
 }
 
 .nlmixr2_saem_scope <- function(problem) {
     individual <- .nlmixr2_individual_targets(problem$statistics)
     if (!length(individual)) stop("SAEM requires individual random effects.", call. = FALSE)
-    if (any(!vapply(problem$statistics[individual], inherits, logical(1),
-                    "compphysiol_lognormal_distribution")))
-        stop("SAEM currently supports lognormal individual variability only.", call. = FALSE)
+    spreads <- unlist(lapply(problem$statistics[individual], function(d) {
+        value <- .nlmixr2_scale_name(d)
+        if (is.character(value)) value else character()
+    }), use.names = FALSE)
+    normal_locations <- character()
+    bounded_locations <- list()
+    for (target in individual) {
+        d <- problem$statistics[[target]]
+        if (inherits(d,"compphysiol_normal_distribution") && is.character(d$mean))
+            normal_locations <- c(normal_locations,d$mean)
+        if (inherits(d, "compphysiol_logitnormal_distribution") && is.character(d$median))
+            bounded_locations[[d$median]] <- d
+    }
     for (name in names(problem$parameters)) {
         spec <- problem$parameters[[name]]
-        if (name %in% vapply(problem$statistics[individual], .nlmixr2_scale_name, character(1))) {
+        if (name %in% spreads) {
             if (as.numeric(spec$lower) != 0 || !is.infinite(as.numeric(spec$upper)))
                 stop("SAEM does not support finite variability constraints.", call. = FALSE)
+            next
+        }
+        if (name %in% .nlmixr2_correlation_parameters(problem)) next
+        if (name %in% normal_locations) {
+            if (spec$transform != "identity" || !is.infinite(as.numeric(spec$lower)) ||
+                !is.infinite(as.numeric(spec$upper)))
+                stop("SAEM normal locations require an unbounded identity domain.", call. = FALSE)
+            next
+        }
+        if (name %in% names(bounded_locations)) {
+            d <- bounded_locations[[name]]
+            if (spec$transform != "logit" ||
+                !isTRUE(all.equal(spec$lower, d$lower)) || !isTRUE(all.equal(spec$upper, d$upper)))
+                stop("SAEM logitnormal medians require a matching logit parameter domain.", call. = FALSE)
             next
         }
         residual <- name %in% .nlmixr2_residual_parameters(problem)
@@ -50,6 +76,10 @@
 #' The S3 export retains native inputs and the scientific and unit mappings needed
 #' for guarded import. Ordinary base R serialization is supported within a session
 #' environment; cross-version compatibility is not guaranteed.
+#' The `control` field contains required native control defaults. Normal SAEM
+#' execution requires `handleUninformativeEtas = FALSE`; import verifies it.
+#' Fixed nonzero correlations and singular covariance blocks are rejected.
+#' Unspecified correlations remain fixed zeros, not free initial values.
 #' @param problem An estimation problem.
 #' @param method Target fitting method, `"focei"` or `"saem"`.
 #' @param dimensions Solver unit dimensions.
@@ -59,7 +89,7 @@
 #' # problem uses the supported natural parameter domains for SAEM.
 #' exported <- to_nlmixr2(problem, method = "saem")
 #' fit <- nlmixr2est::nlmixr2(exported$model, exported$data, "saem",
-#'     control = nlmixr2est::saemControl())
+#'     control = do.call(nlmixr2est::saemControl, exported$control))
 #' result <- from_nlmixr2(fit, exported) # likelihood is NA
 #' sampled <- from_nlmixr2(fit, exported, likelihood = "impmap")
 #' # Equivalently, use the wrapper with explicit likelihood evaluation:
@@ -89,12 +119,16 @@ to_nlmixr2 <- function(problem, method = c("focei", "saem"), dimensions = NULL) 
     }
     ui <- nlmixr2est::nlmixr2(translated$model)
     .new_nlmixr2_export(c(translated, list(problem = problem, decoding_problem = decoding,
-        method = method, signature = .nlmixr2_signature(ui))))
+        method = method, control = if (method == "saem" &&
+            any(vapply(problem$statistics, inherits, logical(1), "compphysiol_normal_distribution") &
+                vapply(problem$statistics, function(d) identical(d$level,"individual"),logical(1))))
+                    list(handleUninformativeEtas = FALSE) else list(),
+        signature = .nlmixr2_signature(ui))))
 }
 
 .nlmixr2_compatible <- function(fit, exported) {
     if (!inherits(fit, "nlmixr2FitCore")) stop("Expected a native nlmixr2 fit.", call. = FALSE)
-    if (!identical(.nlmixr2_signature(fit$finalUi), exported$signature))
+    if (!isTRUE(all.equal(.nlmixr2_signature(fit$finalUi), exported$signature, tolerance = 1e-8)))
         stop("Native model or parameter signature is incompatible with the export.", call. = FALSE)
     actual <- fit$origData
     if (!is.data.frame(actual) || !isTRUE(all.equal(actual, exported$data, check.attributes = FALSE)))
@@ -166,6 +200,10 @@ from_nlmixr2 <- function(fit, exported, likelihood = c("auto", "focei", "impmap"
             stop("Evaluation population parameters differ from reference_fit.", call. = FALSE)
         method <- reference_fit$est
     }
+    control_fit <- if (sampling) reference_fit else fit
+    if (method == "saem" && length(exported$control) &&
+        !identical(control_fit$saemControl$handleUninformativeEtas, FALSE))
+        stop("Normal SAEM import requires handleUninformativeEtas = FALSE; use exported$control.", call. = FALSE)
     if (method == "saem" && exported$method != "saem")
         stop("SAEM requires an export prepared for SAEM.", call. = FALSE)
     tab <- tryCatch(as.data.frame(fit), error = function(e) NULL)

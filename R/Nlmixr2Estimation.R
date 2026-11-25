@@ -13,6 +13,8 @@
 .nlmixr2_scale_name <- function(distribution) {
     if (inherits(distribution, "compphysiol_normal_distribution")) {
         distribution$sd
+    } else if (inherits(distribution, "compphysiol_logitnormal_distribution")) {
+        distribution$sdlogit
     } else {
         distribution$sdlog
     }
@@ -113,6 +115,8 @@
     problem, covariance, theta, omega, translated, coefficients
 ) {
     specs <- problem$parameters
+    if (length(translated$correlation_parameters))
+        return(.nlmixr2_correlated_uncertainty(problem, covariance, theta, omega, translated, coefficients))
     if (is.null(covariance) || !is.matrix(covariance) ||
         is.null(rownames(covariance)) || is.null(colnames(covariance))) {
         return(.estimation_public_uncertainty(NULL, numeric(), specs))
@@ -120,9 +124,7 @@
     backend_names <- character()
     derivatives <- numeric()
     for (name in names(specs)) {
-        omega_target <- names(translated$omega_parameters)[
-            translated$omega_parameters == name
-        ]
+        omega_target <- names(translated$omega_parameters)[which(translated$omega_parameters == name)]
         spec <- specs[[name]]
         scale <- .nlmixr2_public_unit_scale(spec, translated$dimensions)
         if (length(omega_target)) {
@@ -162,21 +164,23 @@
 }
 
 .nlmixr2_validate_scope <- function(problem) {
-    if (any(vapply(problem$statistics, inherits, logical(1), "compphysiol_logitnormal_distribution"))) {
-        stop("The nlmixr2 engine does not yet support logitnormal distributions.", call. = FALSE)
-    }
-    if (length(.statistical_correlations(problem$statistics))) {
-        stop("The nlmixr2 engine currently supports diagonal individual variability only; correlations are not yet supported.",
-             call. = FALSE)
-    }
+    correlations <- .nlmixr2_correlation_parameters(problem)
+    if (anyDuplicated(correlations)) stop("Shared correlation parameters are not yet supported by nlmixr2.", call. = FALSE)
     individual <- .nlmixr2_individual_targets(problem$statistics)
+    for (pair in .statistical_correlations(problem$statistics)) {
+        if (!all(c(pair$first, pair$second) %in% individual))
+            stop("Correlation targets must be individual parameters.", call. = FALSE)
+        if (!is.character(pair$value) && as.numeric(pair$value) != 0)
+            stop("Fixed nonzero correlations are unsupported for nlmixr2 estimation.", call. = FALSE)
+    }
+    scales <- unlist(lapply(problem$statistics[individual], function(d) {
+        s <- .nlmixr2_scale_name(d)
+        if (is.character(s)) s else character()
+    }), use.names = FALSE)
+    if (anyDuplicated(scales)) stop("Shared individual SD parameters are not yet supported by nlmixr2.", call. = FALSE)
     for (target in individual) {
         distribution <- problem$statistics[[target]]
         scale <- .nlmixr2_scale_name(distribution)
-        if (!is.character(scale)) {
-            stop("The first nlmixr2 implementation requires an estimated SD or sdlog parameter for individual target '",
-                 target, "'.", call. = FALSE)
-        }
         if (inherits(scale, c("compphysiol_proportional_sd", "compphysiol_combined_sd"))) {
             stop("Individual-level normal distributions require a constant SD in the nlmixr2 engine.",
                  call. = FALSE)
@@ -184,6 +188,8 @@
     }
     for (target in .nlmixr2_observation_targets(problem$statistics)) {
         distribution <- problem$statistics[[target]]
+        if (inherits(distribution, "compphysiol_logitnormal_distribution"))
+            stop("Logitnormal observation error is not supported by nlmixr2.", call. = FALSE)
         location <- if (inherits(distribution, "compphysiol_normal_distribution")) {
             distribution$mean
         } else distribution$median
@@ -245,21 +251,18 @@
 
     individual <- .nlmixr2_individual_targets(problem$statistics)
     omega_parameters <- vapply(individual, function(target) {
-        .nlmixr2_scale_name(problem$statistics[[target]])
+        scale <- .nlmixr2_scale_name(problem$statistics[[target]])
+        if (is.character(scale)) scale else NA_character_
     }, character(1))
-    theta_parameters <- setdiff(names(problem$parameters), omega_parameters)
-    theta_ids <- stats::setNames(paste0("cp_fix_", seq_along(theta_parameters)), theta_parameters)
-    eta_ids <- stats::setNames(paste0("cp_eta_", seq_along(individual)), individual)
+    theta_parameters <- setdiff(names(problem$parameters), c(omega_parameters, .nlmixr2_correlation_parameters(problem)))
+    theta_ids <- stats::setNames(if (length(theta_parameters)) paste0("cp_fix_", seq_along(theta_parameters)) else character(), theta_parameters)
+    eta_ids <- stats::setNames(if (length(individual)) paste0("cp_eta_", seq_along(individual)) else character(), individual)
 
     ini <- vapply(theta_parameters, function(name) {
         .nlmixr2_theta_spec(theta_ids[[name]], problem$parameters[[name]], dimensions)
     }, character(1))
-    omega <- vapply(individual, function(target) {
-        parameter <- omega_parameters[[target]]
-        initial <- problem$parameters[[parameter]]$initial
-        variance <- .nlmixr2_solver_value(initial, dimensions)^2
-        paste0(eta_ids[[target]], " ~ ", .nlmixr2_number(variance))
-    }, character(1))
+    omega_spec <- .nlmixr2_omega(problem, dimensions, eta_ids)
+    omega <- omega_spec$source
 
     decode_lines <- vapply(theta_parameters, function(name) {
         spec <- problem$parameters[[name]]
@@ -289,7 +292,25 @@
             .nlmixr2_number(.to_dimensions_value(location, dimensions))
         }
         target_id <- executable$identifiers$parameters[[target]]
-        rhs <- if (inherits(distribution, "compphysiol_lognormal_distribution")) {
+        rhs <- if (inherits(distribution, "compphysiol_logitnormal_distribution")) {
+            if (is.character(distribution$lower) || is.character(distribution$upper))
+                stop("nlmixr2 logitnormal individual bounds must be fixed values.", call. = FALSE)
+            lo <- .nlmixr2_solver_value(distribution$lower, dimensions)
+            hi <- .nlmixr2_solver_value(distribution$upper, dimensions)
+            latent <- paste0("cp_latent_", target_id)
+            location <- paste0("log((",location_expr," - (",.nlmixr2_number(lo),")) / ((",
+                               .nlmixr2_number(hi),") - ",location_expr,"))")
+            if (is.character(distribution$median)) {
+                spec <- problem$parameters[[distribution$median]]
+                if (!is.null(spec) && spec$transform == "logit" &&
+                    isTRUE(all.equal(spec$lower, distribution$lower)) &&
+                    isTRUE(all.equal(spec$upper, distribution$upper)))
+                    location <- theta_ids[[distribution$median]]
+            }
+            prefix <- paste0(latent," = ",location," + ",eta_ids[[target]],";\n")
+            return(paste0(prefix,target_id," = ",.nlmixr2_number(lo)," + ",
+                          .nlmixr2_number(hi-lo)," * expit(",latent,");"))
+        } else if (inherits(distribution, "compphysiol_lognormal_distribution")) {
             paste0(location_expr, " * exp(", eta_ids[[target]], ")")
         } else paste0(location_expr, " + ", eta_ids[[target]])
         paste0(target_id, " = ", rhs, ";")
@@ -336,7 +357,7 @@
     list(model = model_function, source = source, data = data,
          executable = executable, artifact = artifact, dimensions = dimensions,
          theta_ids = theta_ids, eta_ids = eta_ids,
-         omega_parameters = omega_parameters, observation = observation,
+         omega_parameters = omega_parameters, correlation_parameters = omega_spec$correlations, observation = observation,
          log_likelihood_unit_jacobian =
              .nlmixr2_log_likelihood_unit_jacobian(problem, dimensions))
 }
@@ -430,8 +451,13 @@
     exported <- to_nlmixr2(problem, method = engine$method, dimensions = dimensions)
     constructor <- if (engine$method == "saem") nlmixr2est::saemControl else
         nlmixr2est::foceiControl
+    control <- exported$control
+    control[names(engine$control)] <- engine$control
+    if (engine$method == "saem" && length(exported$control) &&
+        !identical(control$handleUninformativeEtas, FALSE))
+        stop("Normal SAEM requires handleUninformativeEtas = FALSE.", call. = FALSE)
     raw <- nlmixr2est::nlmixr2(exported$model, exported$data, est = engine$method,
-        control = do.call(constructor, engine$control),
+        control = do.call(constructor, control),
         table = do.call(nlmixr2est::tableControl, engine$table), ...)
     result <- from_nlmixr2(raw, exported, likelihood = engine$likelihood,
                           likelihood_control = engine$likelihood_control)
@@ -442,14 +468,15 @@
 .nlmixr2_result <- function(problem, engine, raw, translated, likelihood_value = NULL) {
     theta <- raw$theta
     coefficients <- lapply(names(problem$parameters), function(name) {
-        omega_target <- names(translated$omega_parameters)[
-            translated$omega_parameters == name
-        ]
+        omega_target <- names(translated$omega_parameters)[which(translated$omega_parameters == name)]
         if (length(omega_target)) {
             eta <- translated$eta_ids[[omega_target[[1]]]]
             value <- sqrt(as.numeric(raw$omega[eta, eta]))
             spec <- problem$parameters[[name]]
             .nlmixr2_restore_value(value, spec, translated$dimensions)
+        } else if (name %in% names(translated$correlation_parameters)) {
+            pair <- translated$eta_ids[translated$correlation_parameters[[name]]]
+            raw$omega[pair[1],pair[2]] / sqrt(prod(diag(raw$omega)[pair]))
         } else {
             id <- translated$theta_ids[[name]]
             .nlmixr2_theta_decode(

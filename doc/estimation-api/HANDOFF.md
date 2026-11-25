@@ -221,6 +221,11 @@ Keep the routine suite fast. Conversion/compilation to nlmixr2 is expensive:
 
 ## Planned extensions
 
+The extensions below are now implemented within the restrictions documented in
+"Extension implementation status". The investigation notes retain the design
+context; the additive-normal heuristic issue has since been resolved as noted
+below.
+
 ### Broader SAEM random-effect distributions
 
 The current lognormal-only SAEM restriction describes the initial validated
@@ -288,8 +293,8 @@ Use small two-effect and structured-block native examples to establish the
 contract before implementation. Add independent multivariate Gaussian marginal
 likelihood references, unit-aware covariance/correlation round trips, and tests
 for fixed, estimated, zero, invalid, and singular correlation structures. Reuse
-converted fixtures to keep runtime bounded. Retain the diagonal-only rejection
-until the supported cases are validated; record unsupported cases precisely.
+converted fixtures to keep runtime bounded. Retain explicit rejection of unvalidated constraints and record unsupported
+cases precisely.
 
 This is planned follow-up work, not an expansion of the currently validated
 scope or a request for a time-based automation.
@@ -305,6 +310,32 @@ fixed, and some mixed fixed/free blocks, but fixed covariance is not fixed
 correlation. Unspecified correlations require enforced zeros, not zero initial
 values in a free block. Initially rejecting unverified fixed-rho/free-SD and
 singular structures is recommended; no new top-level scientific API is needed.
+
+### Extension implementation status
+
+Implemented normal, lognormal, and logit-normal individual effects through the
+nlmixr2 translation, including positive-definite omega blocks with estimated
+correlations and fixed marginal spreads. Fixed nonzero correlations are rejected
+for estimation, as agreed; simulation semantics are unchanged. Unspecified pairs
+within connected blocks are fixed zeros. Singular initialization, shared SD/rho
+parameters across entries, narrower correlation domains, symbolic logit-normal
+bounds, and logit-normal observation error remain unsupported.
+
+The additive-normal SAEM variance collapse was isolated to the native
+`handleUninformativeEtas` heuristic. With it disabled, the reference fit gives
+non-degenerate variance and plausible location/residual estimates. Normal-SAEM
+exports now include `control = list(handleUninformativeEtas = FALSE)`, the wrapper
+uses that default and rejects enabling the heuristic, and native import checks
+it. Native callers should pass `do.call(nlmixr2est::saemControl, exported$control)`.
+See `investigate-normal-saem-heuristic.R` and its report for the isolated probe.
+
+Import decodes correlations from named omega entries and maps available joint
+uncertainty through a covariance/variance Jacobian. Compatibility signatures now
+also compare fixed covariance values with numerical tolerance. Tests include
+independent multivariate Gaussian and latent logit-normal likelihoods, normal
+SAEM safeguards, correlated logit-normal SAEM wrapping, fixed spread round trips,
+zero patterns, positive definiteness, uncertainty gradients, and unit conversion.
+The likelihood-selection policy is unchanged.
 
 ## Existing implementation anchors
 

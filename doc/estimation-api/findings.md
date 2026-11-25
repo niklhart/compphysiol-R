@@ -785,3 +785,21 @@ stage support, with explicit capability errors. All other points above refine
 implementation/validation rather than require a new public scientific API.
 Independent multivariate likelihood checks, unit-aware round trips, and joint
 uncertainty tests are still required before production support is widened.
+
+
+## Additive-normal SAEM safeguard resolved during implementation
+
+The normal-variance-collapse probe was repeated with only
+`handleUninformativeEtas` changed. Under nlmixr2est 7.1.0, seed-7 data with eight
+subjects and four observations per subject, and SAEM seed 99 / 40 burn-in / 60
+EM iterations, the default heuristic returned location 3, sigma .464233, and
+variance 1e-6. Disabling it returned location 2.971967, sigma .0903116, and
+variance .2078103. This isolates the heuristic's effect in the native reference;
+it is not a general estimator-convergence guarantee.
+
+Reproduce using `Rscript doc/estimation-api/investigate-normal-saem-heuristic.R`;
+see [normal-saem-heuristic-output.txt](normal-saem-heuristic-output.txt).
+The implementation now requires this safeguard for additive-normal SAEM, exposes
+it in exported control defaults, and tests the wrapper/import requirement.
+Earlier recommendations to keep normal-SAEM entirely disabled are superseded by
+this verified control restriction.

@@ -20,13 +20,17 @@ A \code{compphysiol_nlmixr2_export} with \code{model}, \code{source}, and \code{
 The S3 export retains native inputs and the scientific and unit mappings needed
 for guarded import. Ordinary base R serialization is supported within a session
 environment; cross-version compatibility is not guaranteed.
+The \code{control} field contains required native control defaults. Normal SAEM
+execution requires \code{handleUninformativeEtas = FALSE}; import verifies it.
+Fixed nonzero correlations and singular covariance blocks are rejected.
+Unspecified correlations remain fixed zeros, not free initial values.
 }
 \examples{
 \dontrun{
 # problem uses the supported natural parameter domains for SAEM.
 exported <- to_nlmixr2(problem, method = "saem")
 fit <- nlmixr2est::nlmixr2(exported$model, exported$data, "saem",
-    control = nlmixr2est::saemControl())
+    control = do.call(nlmixr2est::saemControl, exported$control))
 result <- from_nlmixr2(fit, exported) # likelihood is NA
 sampled <- from_nlmixr2(fit, exported, likelihood = "impmap")
 # Equivalently, use the wrapper with explicit likelihood evaluation:

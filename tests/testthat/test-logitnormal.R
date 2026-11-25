@@ -76,7 +76,8 @@ test_that("logitnormal likelihood includes the Jacobian and rejects endpoints", 
     expect_equal(.estimation_statistical_parameter_names(statistical_model(
         F = logitnormal(median = "m", sdlogit = "s", lower = "lo", upper = "hi")
     )), c("m", "s", "lo", "hi"))
-    expect_error(.nlmixr2_validate_scope(list(statistics = statistical_model(F = d))), "logitnormal")
+    expect_error(.nlmixr2_validate_scope(list(statistics = statistical_model(
+        F = logitnormal(sdlogit = "s", level = "observation")))), "Logitnormal")
 })
 
 test_that("statistical resolution checks bounds and units without treating unit probes as medians", {
