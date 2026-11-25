@@ -1,0 +1,247 @@
+Date: 2026-11-25
+Revision: 2489d13bb48956cf397b6e13feb23783f56b6bca 
+nlmixr2est 7.1.0 
+rxode2 5.1.7.1 
+
+RUN: add positive_time FOCEi 
+
+RUN: add positive_time IMPMAP 
+  family        layout n_obs native_nobs exact_NLL focei_NLL   impObj imp_NLL_observation_constant
+1    add positive_time     6           8  10.74999  10.74999 10.47271                     10.74999
+  imp_NLL_native_count lognormal_Jacobian corrected_imp_NLL corrected_minus_exact
+1             12.58786                  0          10.74999          -1.12923e-11
+impLi:         [,1]
+[1,] 2.636035
+[2,] 2.600321
+
+RUN: add zero_time FOCEi 
+
+RUN: add zero_time IMPMAP 
+  family    layout n_obs native_nobs exact_NLL focei_NLL   impObj imp_NLL_observation_constant
+1    add zero_time     6           6  10.74999  10.74999 10.47271                     10.74999
+  imp_NLL_native_count lognormal_Jacobian corrected_imp_NLL corrected_minus_exact
+1             10.74999                  0          10.74999          -1.12923e-11
+impLi:         [,1]
+[1,] 2.636035
+[2,] 2.600321
+
+RUN: add event FOCEi 
+
+RUN: add event IMPMAP 
+  family layout n_obs native_nobs exact_NLL focei_NLL   impObj imp_NLL_observation_constant
+1    add  event     6           8  10.74999  10.74999 10.47271                     10.74999
+  imp_NLL_native_count lognormal_Jacobian corrected_imp_NLL corrected_minus_exact
+1             12.58786                  0          10.74999          -1.12923e-11
+impLi:         [,1]
+[1,] 2.636035
+[2,] 2.600321
+
+RUN: add missing FOCEi 
+
+RUN: add missing IMPMAP 
+  family  layout n_obs native_nobs exact_NLL focei_NLL   impObj imp_NLL_observation_constant
+1    add missing     5           8  8.935082  8.935082 8.680779                     8.935082
+  imp_NLL_native_count lognormal_Jacobian corrected_imp_NLL corrected_minus_exact
+1              11.6919                  0          8.935082         -7.220891e-12
+impLi:         [,1]
+[1,] 1.740069
+[2,] 2.600321
+
+RUN: add two_endpoints FOCEi 
+
+RUN: add two_endpoints IMPMAP 
+  family        layout n_obs native_nobs exact_NLL focei_NLL   impObj imp_NLL_observation_constant
+1    add two_endpoints     6           8  10.74999  10.74999 10.47271                     10.74999
+  imp_NLL_native_count lognormal_Jacobian corrected_imp_NLL corrected_minus_exact
+1             12.58786                  0          10.74999          -1.12923e-11
+impLi:         [,1]
+[1,] 2.636035
+[2,] 2.600321
+
+RUN: add scaled FOCEi 
+
+RUN: add scaled IMPMAP 
+  family layout n_obs native_nobs exact_NLL focei_NLL   impObj imp_NLL_observation_constant
+1    add scaled     6           8  52.19652  52.27147 93.36712                     52.19719
+  imp_NLL_native_count lognormal_Jacobian corrected_imp_NLL corrected_minus_exact
+1             54.03507                  0          52.19719          0.0006705765
+impLi:         [,1]
+[1,] 23.35892
+[2,] 23.32464
+
+RUN: prop positive_time FOCEi 
+
+RUN: prop positive_time IMPMAP 
+  family        layout n_obs native_nobs exact_NLL focei_NLL   impObj imp_NLL_observation_constant
+1   prop positive_time     6           8  10.67078  10.70972 10.31499                     10.67113
+  imp_NLL_native_count lognormal_Jacobian corrected_imp_NLL corrected_minus_exact
+1               12.509                  0          10.67113          0.0003437985
+impLi:         [,1]
+[1,] 2.657131
+[2,] 2.500364
+
+RUN: prop zero_time FOCEi 
+
+RUN: prop zero_time IMPMAP 
+  family    layout n_obs native_nobs exact_NLL focei_NLL   impObj imp_NLL_observation_constant
+1   prop zero_time     6           6  10.67078  10.70972 10.31499                     10.67113
+  imp_NLL_native_count lognormal_Jacobian corrected_imp_NLL corrected_minus_exact
+1             10.67113                  0          10.67113          0.0003437985
+impLi:         [,1]
+[1,] 2.657131
+[2,] 2.500364
+
+RUN: prop event FOCEi 
+
+RUN: prop event IMPMAP 
+  family layout n_obs native_nobs exact_NLL focei_NLL   impObj imp_NLL_observation_constant
+1   prop  event     6           8  10.67078  10.70972 10.31499                     10.67113
+  imp_NLL_native_count lognormal_Jacobian corrected_imp_NLL corrected_minus_exact
+1               12.509                  0          10.67113          0.0003437985
+impLi:         [,1]
+[1,] 2.657131
+[2,] 2.500364
+
+RUN: prop missing FOCEi 
+
+RUN: prop missing IMPMAP 
+  family  layout n_obs native_nobs exact_NLL focei_NLL   impObj imp_NLL_observation_constant
+1   prop missing     5           8   8.81298  8.870411 8.438136                     8.813761
+  imp_NLL_native_count lognormal_Jacobian corrected_imp_NLL corrected_minus_exact
+1             11.57058                  0          8.813761          0.0007811865
+impLi:         [,1]
+[1,] 1.718705
+[2,] 2.500364
+
+RUN: prop two_endpoints FOCEi 
+
+RUN: prop two_endpoints IMPMAP 
+  family        layout n_obs native_nobs exact_NLL focei_NLL   impObj imp_NLL_observation_constant
+1   prop two_endpoints     6           8  10.67078  10.70972 10.31499                     10.67113
+  imp_NLL_native_count lognormal_Jacobian corrected_imp_NLL corrected_minus_exact
+1               12.509                  0          10.67113          0.0003437985
+impLi:         [,1]
+[1,] 2.657131
+[2,] 2.500364
+
+RUN: prop scaled FOCEi 
+
+RUN: prop scaled IMPMAP 
+  family layout n_obs native_nobs exact_NLL focei_NLL   impObj imp_NLL_observation_constant
+1   prop scaled     6           8  52.11731  52.18764 93.21444                     52.12085
+  imp_NLL_native_count lognormal_Jacobian corrected_imp_NLL corrected_minus_exact
+1             53.95873                  0          52.12085           0.003538631
+impLi:         [,1]
+[1,] 23.38084
+[2,] 23.22638
+
+RUN: lnorm positive_time FOCEi 
+
+RUN: lnorm positive_time IMPMAP 
+  family        layout n_obs native_nobs exact_NLL focei_NLL    impObj imp_NLL_observation_constant
+1  lnorm positive_time     6           8  11.38129  11.38129 -15.54555                    -2.259144
+  imp_NLL_native_count lognormal_Jacobian corrected_imp_NLL corrected_minus_exact
+1           -0.4212668           13.64044          11.38129         -1.533067e-10
+impLi:          [,1]
+[1,] -3.857790
+[2,] -3.914985
+
+RUN: lnorm zero_time FOCEi 
+
+RUN: lnorm zero_time IMPMAP 
+  family    layout n_obs native_nobs exact_NLL focei_NLL    impObj imp_NLL_observation_constant
+1  lnorm zero_time     6           6  11.38129  11.38129 -15.54555                    -2.259144
+  imp_NLL_native_count lognormal_Jacobian corrected_imp_NLL corrected_minus_exact
+1            -2.259144           13.64044          11.38129         -1.533067e-10
+impLi:          [,1]
+[1,] -3.857790
+[2,] -3.914985
+
+RUN: lnorm event FOCEi 
+
+RUN: lnorm event IMPMAP 
+  family layout n_obs native_nobs exact_NLL focei_NLL    impObj imp_NLL_observation_constant
+1  lnorm  event     6           8  11.38129  11.38129 -15.54555                    -2.259144
+  imp_NLL_native_count lognormal_Jacobian corrected_imp_NLL corrected_minus_exact
+1           -0.4212668           13.64044          11.38129         -1.533067e-10
+impLi:          [,1]
+[1,] -3.857790
+[2,] -3.914985
+
+RUN: lnorm missing FOCEi 
+
+RUN: lnorm missing IMPMAP 
+  family  layout n_obs native_nobs exact_NLL focei_NLL    impObj imp_NLL_observation_constant
+1  lnorm missing     5           8  9.407863  9.407863 -12.85875                     -1.83468
+  imp_NLL_native_count lognormal_Jacobian corrected_imp_NLL corrected_minus_exact
+1            0.9221354           11.24254          9.407863         -1.056719e-10
+impLi:          [,1]
+[1,] -2.514387
+[2,] -3.914985
+
+RUN: lnorm two_endpoints FOCEi 
+
+RUN: lnorm two_endpoints IMPMAP 
+  family        layout n_obs native_nobs exact_NLL focei_NLL    impObj imp_NLL_observation_constant
+1  lnorm two_endpoints     6           8  11.38129  11.38129 -15.54555                    -2.259144
+  imp_NLL_native_count lognormal_Jacobian corrected_imp_NLL corrected_minus_exact
+1           -0.4212668           13.64044          11.38129         -1.533067e-10
+impLi:          [,1]
+[1,] -3.857790
+[2,] -3.914985
+
+RUN: lnorm scaled FOCEi 
+
+RUN: lnorm scaled IMPMAP 
+  family layout n_obs native_nobs exact_NLL focei_NLL    impObj imp_NLL_observation_constant
+1  lnorm scaled     6           8  52.82783  52.82783 -15.54555                    -2.259144
+  imp_NLL_native_count lognormal_Jacobian corrected_imp_NLL corrected_minus_exact
+1           -0.4212668           55.08697          52.82783          -1.52248e-10
+impLi:          [,1]
+[1,] -3.857790
+[2,] -3.914985
+
+RUN: mixed endpoints FOCEi 
+
+RUN: mixed endpoints IMPMAP 
+Mixed endpoints exact NLL: 8.103575 corrected sampling NLL: 8.103575 difference: -4.88992e-10 native nobs: 8 
+
+SUMMARY
+ family        layout n_obs native_nobs exact_NLL focei_NLL     impObj imp_NLL_observation_constant
+    add positive_time     6           8 10.749987 10.749987  10.472712                    10.749987
+    add     zero_time     6           6 10.749987 10.749987  10.472712                    10.749987
+    add         event     6           8 10.749987 10.749987  10.472712                    10.749987
+    add       missing     5           8  8.935082  8.935082   8.680779                     8.935082
+    add two_endpoints     6           8 10.749987 10.749987  10.472712                    10.749987
+    add        scaled     6           8 52.196519 52.271466  93.367117                    52.197189
+   prop positive_time     6           8 10.670782 10.709717  10.314990                    10.671126
+   prop     zero_time     6           6 10.670782 10.709717  10.314990                    10.671126
+   prop         event     6           8 10.670782 10.709717  10.314990                    10.671126
+   prop       missing     5           8  8.812980  8.870411   8.438136                     8.813761
+   prop two_endpoints     6           8 10.670782 10.709717  10.314990                    10.671126
+   prop        scaled     6           8 52.117314 52.187643  93.214443                    52.120853
+  lnorm positive_time     6           8 11.381294 11.381294 -15.545550                    -2.259144
+  lnorm     zero_time     6           6 11.381294 11.381294 -15.545550                    -2.259144
+  lnorm         event     6           8 11.381294 11.381294 -15.545550                    -2.259144
+  lnorm       missing     5           8  9.407863  9.407863 -12.858746                    -1.834680
+  lnorm two_endpoints     6           8 11.381294 11.381294 -15.545550                    -2.259144
+  lnorm        scaled     6           8 52.827826 52.827826 -15.545550                    -2.259144
+ imp_NLL_native_count lognormal_Jacobian corrected_imp_NLL corrected_minus_exact
+           12.5878643            0.00000         10.749987         -1.129230e-11
+           10.7499872            0.00000         10.749987         -1.129230e-11
+           12.5878643            0.00000         10.749987         -1.129230e-11
+           11.6918977            0.00000          8.935082         -7.220891e-12
+           12.5878643            0.00000         10.749987         -1.129230e-11
+           54.0350665            0.00000         52.197189          6.705765e-04
+           12.5090031            0.00000         10.671126          3.437985e-04
+           10.6711261            0.00000         10.671126          3.437985e-04
+           12.5090031            0.00000         10.671126          3.437985e-04
+           11.5705765            0.00000          8.813761          7.811865e-04
+           12.5090031            0.00000         10.671126          3.437985e-04
+           53.9587297            0.00000         52.120853          3.538631e-03
+           -0.4212668           13.64044         11.381294         -1.533067e-10
+           -2.2591439           13.64044         11.381294         -1.533067e-10
+           -0.4212668           13.64044         11.381294         -1.533067e-10
+            0.9221354           11.24254          9.407863         -1.056719e-10
+           -0.4212668           13.64044         11.381294         -1.533067e-10
+           -0.4212668           55.08697         52.827826         -1.522480e-10

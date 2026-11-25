@@ -426,3 +426,214 @@ identified likelihood is not proof that its numerical approximation is accurate
 or that all other parts of the fit satisfy the export/import contract. Keep
 those checks separate rather than treating method identification as approval
 of the whole result. Public API code and glossary remain unchanged.
+
+## Follow-up: normalization and SAEM isolation (2026-11-25)
+
+This follow-up separates density conventions from SAEM parameterization and
+prediction errors. The sampling normalization question is resolved for the
+exercised normal/additive, normal/proportional, and lognormal observation
+families under the standard controls. SAEM's residual translation and bounded
+prediction errors are isolated; a safe general finite-bound solution and the
+SAEM quadrature discrepancy remain unresolved.
+
+### Reproduction
+
+Run from the repository root:
+
+```sh
+Rscript doc/estimation-api/investigate-normalization.R
+Rscript doc/estimation-api/investigate-saem.R
+Rscript doc/estimation-api/investigate-saem.R --reference-only
+```
+
+Both scripts create fresh fits, catch and report individual probe errors, and
+write reports alongside themselves. No `/tmp` fit artifacts are required.
+Revision: `2489d13bb48956cf397b6e13feb23783f56b6bca`; nlmixr2est 7.1.0,
+rxode2 5.1.7.1, R 4.5.2. No package implementation was changed.
+
+### Importance-sampling normalization
+
+[normalization-output.txt](normalization-output.txt) uses a random-intercept
+model with fixed evaluation parameters and no ODE approximation. Additive
+normal and lognormal cases have independent analytic multivariate-normal
+marginal likelihoods (after transforming lognormal responses). Proportional
+normal cases use independent one-dimensional numerical integration.
+
+Each family was checked with positive observation times, observations beginning
+at zero, extra non-observation event records, one missing response, two same-family
+endpoints, and response values scaled by 1,000. A mixed normal/lognormal
+endpoint model was checked separately with an analytic joint likelihood.
+IMPMAP uses zero EM iterations, 10,000 samples, and seed 42.
+
+For these standard-control evaluations, the supported conversion is:
+
+```text
+sampling NLL in solver response units
+    = impObj / 2
+      + N_observed * log(2*pi) / 2
+      + sum(log(DV_solver)) over observed lognormal endpoints only
+```
+
+`N_observed` counts actual non-missing responses, excluding events and native
+inserted records. The endpoint-specific lognormal term restores the response
+transformation Jacobian. This is separate from the exported Jacobian converting
+solver response units back to the user's supplied units.
+
+| Case | Independent NLL | Corrected sampling NLL |
+| --- | ---: | ---: |
+| Additive normal, 6 observations | 10.749987 | 10.749987 |
+| Additive normal, 5 observed responses | 8.935082 | 8.935082 |
+| Proportional normal, 6 observations | 10.670782 | 10.671126 |
+| Lognormal, 6 observations | 11.381294 | 11.381294 |
+| Lognormal, 5 observed responses | 9.407863 | 9.407863 |
+| Mixed normal/lognormal endpoints | 8.103575 | 8.103575 |
+
+Analytic normal/lognormal agreement is approximately 1e-10 or better for the
+unscaled cases, including mixed endpoints. The proportional cases differ by
+about 0.00034--0.00078, consistent with the observed Monte Carlo approximation;
+no uncertainty estimate or exhaustive sampling-error study is claimed.
+
+**Why the native count is wrong for this conversion:** moving the same six
+responses from positive times to start at zero changes the native `nobs` from
+eight to six, without changing their likelihood. A missing response leaves the
+native count at eight although only five responses contribute. Using that
+count gives, for example, 12.587864 rather than 10.749987 in the six-response
+additive model. Therefore native `nobs` must not set the normalizing constant
+or the toolbox observation count.
+
+**Why counting observations alone is insufficient for lognormal data:** after
+adding the six normal constants, the raw sampling objective yields NLL
+-2.259144 on the log-response scale. Adding `sum(log(DV_solver)) = 13.64044`
+restores NLL 11.381294 on the response scale. Multiplying all responses and
+medians by 1,000 leaves that raw log-space objective unchanged; the Jacobian
+correctly increases NLL by `6 * log(1000)`. The mixed-endpoint check confirms
+that only the lognormal rows receive this term.
+
+The scaled additive and proportional checks have residual errors of about
+0.00067 and 0.00354 after correction. Even their native FOCEi evaluations show
+larger scale-related numerical approximation errors (about 0.075 and 0.070),
+so these are not exact invariance tests of the numerical backend. They support
+the conversion factors without establishing perfect numerical unit invariance.
+
+Implication: implement an explicit, tested normalization path for these verified
+families, using exported response/endpoint mappings. Do not reuse the native
+`setOfv()` sampling row uncritically: previous source inspection showed that
+it uses native `nobs` and does not add this endpoint-specific lognormal term.
+`auto` still follows a verifiable native *selection*, but native sampling values
+need this convention handling before becoming a compphysiol likelihood. If a
+selected native sampling row has no accessible sampling-evaluation metadata/raw
+objective sufficient to establish its convention, reject it rather than guess.
+
+These experiments do not establish normalization for arbitrary controls,
+censoring, other residual families, or mixtures beyond the exercised endpoint
+model. They also do not fix native AIC/BIC; those require separate treatment if
+exposed publicly.
+
+### SAEM: isolate residual coordinates and finite bounds
+
+[saem-isolation-output.txt](saem-isolation-output.txt) uses the same exported
+exponential-decay fixture as the initial exploration, SAEM seed 99, 100 burn-in
+and 200 EM iterations. Analytic state solutions provide independent PRED/IPRED
+checks; one-dimensional integration supplies the independent marginal NLL.
+Each successful fit is also reevaluated with zero outer FOCEi iterations.
+
+| Variant | Maximum PRED error | Residual helper consistent? | Interpretation |
+| --- | ---: | --- | --- |
+| Current export | 41.55 | No | Reproduces both problems |
+| Inline clearance as `exp(theta + eta)` only | 41.55 | No | Inlining does not fix either issue |
+| Declare residual SD directly only | 42.22 | Yes | Fixes residual representation, not bounded predictions |
+| Disable native bound transform only | about 0.00010 | No | Fixes clearance predictions, not residual representation |
+| Direct residual SD and unconstrained log-clearance | about 0.00010 | Yes | Consistent prediction representation in this fixture |
+| Direct residual SD and native bound transform disabled | about 0.00010 | Yes | Same fitted result here, but constraints need separate checks |
+
+**Residual coordinates:** the current export sends a transformed helper,
+`cp_stat_sigma = exp(cp_fix_2)`, to `add(cp_stat_sigma)`. Initial SAEM metadata
+introduces `rx.eta.cp_fix_2` and marks the theta as something other than a direct
+residual parameter. Declaring the native SD directly and using `add(cp_fix_2)`
+removes that auxiliary eta; the residual helper then equals the fitted SD in
+every individual's table. This changes backend coordinates, not the intended
+statistical model. A future exporter must retain an explicit mapping from this
+native SD coordinate to public parameter values and uncertainty; it cannot
+blindly apply the existing log-coordinate decoder.
+
+**Finite-bound predictions:** with lower transformed bound `L = log(0.001)`
+and reported fitted log-clearance theta, the wrong table value is exactly:
+
+```text
+exp(L + exp(theta_reported)) = 0.001145916
+```
+
+The correct public value is `exp(theta_reported) = 0.1362041`. This reproduces
+the extra bound transformation numerically, isolating the prediction-stage
+error. Zero-iteration FOCEi reevaluation preserves theta and omega and restores
+predictions with errors around 0.0005 and residual helpers at numerical precision.
+It is a verified way to rebuild predictions in this fixture, not proof that
+SAEM's parameter-estimation path handles every bound correctly.
+
+**Disabling the transform is unsafe for constraints:** imposing
+`0.18 <= CL_pop <= 0.21` and setting `boundedTransform = FALSE` returns
+CL_pop = 0.2234434, outside the declared interval. With the transform enabled,
+this tight-bound example instead fails to parse an internally generated
+`expit(...)` expression (`limits must be numeric`). Thus disabling native bound
+handling cannot be adopted as a general fix. Removing the bounds also changes
+the scientific estimation problem and is not an acceptable automatic repair.
+
+### SAEM likelihood accuracy remains unresolved
+
+Even the consistent direct-SD/unconstrained-log-clearance variant has a native
+quadrature discrepancy. Its independent marginal NLL is 2.552383; reevaluated
+FOCEi gives 2.548625. Requested quadrature refinements give:
+
+| Native quadrature request | NLL |
+| --- | ---: |
+| `gauss15_3` | 2.041791 |
+| `gauss61_5` | 2.018221 |
+
+The latter request warns that the grid is too large and uses 25 nodes, while
+still labelling the row `gauss61_5`. This refines the previous identification
+findings: the label identifies the selected calculation family/request, but
+cannot by itself establish the effective numerical settings. Preserve warnings
+and distinguish requested settings from verified effective settings in any
+annotation. Do not claim 61 nodes were actually used.
+
+A separate native-only Gaussian random-intercept reference (12 individuals,
+60 responses, direct mean and SD, no toolbox export or ODE) is recorded in
+[saem-reference-output.txt](saem-reference-output.txt). At the returned parameter
+values its analytic marginal NLL is 103.9289, matching FOCEi reevaluation, while
+three native quadrature requests return infinite NLL. The fitted random-effect
+variance collapsed near zero and the mean remained at its starting value, so
+this is not a successful estimator-convergence example. It does show that
+non-finite quadrature can also occur without the toolbox translation; finite
+likelihood checks remain necessary even with consistent method labels.
+
+The likelihood gap persists after removing the two identified representation
+problems and is not explained by simply increasing the requested grid. This
+follow-up has not established whether it is due to quadrature implementation,
+its use of SAEM's internal state, or another numerical approximation. Native
+quadrature should not yet be presented as independently validated for this
+translated fixture. The tiny two-individual example also does not establish
+estimator convergence or population-estimation accuracy.
+
+### Implementation assessment after this follow-up
+
+- **Ready to specify:** importance-sampling normalization for the exercised
+  observation families, with explicit observed-row counts and response/unit
+  Jacobians. Add independent-likelihood regression fixtures before exposing it.
+- **Concrete exporter change:** give residual scales direct native coordinates
+  and encode their public decoding/unit/uncertainty mapping explicitly.
+- **Verified limited SAEM path:** direct residual SD with natural unconstrained
+  log-clearance coordinates has consistent PRED/IPRED here. Restricting support
+  to verified parameterizations would be honest; silently dropping finite
+  constraints would not.
+- **Still needed for general finite-bound SAEM:** a constraint-preserving native
+  solution or an explicit bounded model reparameterization, with independent
+  tests. Rebuilding predictions can fix tables but cannot establish correct
+  constrained estimation.
+- **Still needed for SAEM likelihoods:** resolve quadrature behavior, or provide
+  a documented explicit FOCEi/importance-sampling evaluation path. Do not silently
+  replace a selected quadrature likelihood under `auto`.
+
+This investigation gives concrete implementation requirements and restrictions.
+It does not justify declaring all planned SAEM workflows supported yet. No
+additional user API decision is required to retain the agreed `auto` policy;
+the remaining questions are numerical/backend compatibility work.

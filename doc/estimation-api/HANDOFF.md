@@ -2,8 +2,8 @@
 
 Date: 2026-11-23
 Updated: 2026-11-25
-Status: Initial exploration and focused likelihood-selection investigation
-completed; implementation pending.
+Status: Initial exploration, likelihood-selection investigation, and a follow-up
+on normalization and SAEM representation issues completed; implementation pending.
 See [findings.md](findings.md) for evidence, proposed checks, and unresolved
 SAEM translation and likelihood-normalization issues.
 
@@ -113,6 +113,26 @@ estimator, SAEM translation, and prediction-table experiments are outside this
 focused step.
 
 ## Implementation sequence after exploration
+
+The normalization/SAEM follow-up is recorded in [findings.md](findings.md).
+Sampling normalization was verified against independent likelihoods for the
+exercised additive/proportional normal and lognormal endpoints: count actual
+non-missing responses, add normal constants, restore lognormal response
+Jacobians, then apply exported unit corrections. Native `nobs` is unsuitable
+for the constant and native sampling objective rows need convention checks.
+
+SAEM needs direct native residual-scale coordinates and corresponding public
+decoding mappings. The wrong bounded predictions reproduce an extra bound
+transformation. Disabling native transformations is unsafe: a tight-bound
+probe returned an out-of-bounds estimate. Zero-iteration FOCEi reevaluation
+restores predictions while preserving theta/omega in the fixture, but does
+not prove constrained estimation is valid. Finite-bound support and native
+SAEM quadrature accuracy remain unresolved. Do not silently drop bounds or
+substitute a different likelihood under `auto`.
+
+Native quadrature can cap the node count while retaining the requested count
+in its label. Annotate method identity separately from requested/effective
+settings and retain relevant warnings.
 
 1. Define permitted native changes and inspectable compatibility checks.
 2. Define explicit likelihood selection/provenance and verification that an

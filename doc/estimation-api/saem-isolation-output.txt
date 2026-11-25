@@ -1,0 +1,482 @@
+Date: 2026-11-25
+Revision: 2489d13bb48956cf397b6e13feb23783f56b6bca 
+nlmixr2est 7.1.0 
+rxode2 5.1.7.1 
+
+VARIANT SOURCE: original 
+ function() {
+ini({
+cp_fix_1 <- c(-6.9077552789821368e+00, -1.6094379124341003e+00, Inf)
+cp_fix_2 <- c(-6.9077552789821368e+00, 6.9314718055994529e-01, Inf)
+cp_eta_1 ~ 4.0000000000000008e-02
+})
+model({
+cp_stat_CL_pop = exp(cp_fix_1);
+cp_stat_sigma = exp(cp_fix_2);
+cp_par_CL = cp_stat_CL_pop * exp(cp_eta_1);
+cp_state_a_drug_Central(0) = (1e+02);
+d/dt(cp_state_a_drug_Central) = (-(cp_par_CL * (cp_state_a_drug_Central / 1e+00)));
+cp_obs_C = (cp_state_a_drug_Central / 1e+00);
+cp_obs_C ~ add(cp_stat_sigma);
+})
+} 
+
+RUN: original SAEM 
+ cp_fix_1  cp_fix_2 
+-1.993601 -2.421303 
+          cp_eta_1
+cp_eta_1 0.2526893
+initial metadata:
+  ntheta neta1 neta2                 name lower      est upper   fix label backTransform condition prior  err
+1      1    NA    NA rxBoundedTr.cp_fix_1  -Inf 1.667389   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA rxBoundedTr.cp_fix_2  -Inf 2.028267   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3     NA     1     1             cp_eta_1  -Inf 0.040000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+4     NA     2     2      rx.eta.cp_fix_2  -Inf 0.100000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+   variant    CL_pop     sigma     omega max_population_error max_individual_error max_sigma_helper_error
+1 original 0.1362041 0.0888058 0.2526893             41.54785             62.09295             0.08771322
+  ID TIME     PRED    IPRED cp_stat_CL_pop cp_stat_sigma   cp_par_CL
+1  1    1 99.88547 99.83225    0.001145916   0.001093163 0.001678892
+2  1    2 99.77108 99.66478    0.001145916   0.001093163 0.001678892
+3  1    4 99.54268 99.33069    0.001145916   0.001093163 0.001678892
+4  2    1 99.88547 99.79153    0.001145916   0.001092575 0.002086915
+5  2    2 99.77108 99.58349    0.001145916   0.001092575 0.002086915
+6  2    4 99.54268 99.16871    0.001145916   0.001092575 0.002086915
+
+RUN: original FOCEi reevaluation 
+reevaluation preserves theta: TRUE omega: TRUE 
+fresh_population_error      fresh_sigma_error 
+          4.503506e-04           1.942890e-16 
+Independent marginal NLL: 5.460664 
+Fresh FOCEi NLL: 5.455975 
+Double-bound-transform prediction for CL: 0.001145916 table value: 0.001145916 
+
+RUN: original SAEM logLik 
+'log Lik.' -53.2956 (df=4)
+               OBJF      AIC     BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+gauss3_1.6 91.88819 114.5912 114.909       -53.2956              NA              NA
+
+VARIANT SOURCE: boundedTransform_FALSE 
+ function() {
+ini({
+cp_fix_1 <- c(-6.9077552789821368e+00, -1.6094379124341003e+00, Inf)
+cp_fix_2 <- c(-6.9077552789821368e+00, 6.9314718055994529e-01, Inf)
+cp_eta_1 ~ 4.0000000000000008e-02
+})
+model({
+cp_stat_CL_pop = exp(cp_fix_1);
+cp_stat_sigma = exp(cp_fix_2);
+cp_par_CL = cp_stat_CL_pop * exp(cp_eta_1);
+cp_state_a_drug_Central(0) = (1e+02);
+d/dt(cp_state_a_drug_Central) = (-(cp_par_CL * (cp_state_a_drug_Central / 1e+00)));
+cp_obs_C = (cp_state_a_drug_Central / 1e+00);
+cp_obs_C ~ add(cp_stat_sigma);
+})
+} 
+
+RUN: boundedTransform_FALSE SAEM 
+ cp_fix_1  cp_fix_2 
+-1.435815 -2.587131 
+           cp_eta_1
+cp_eta_1 0.01621491
+initial metadata:
+  ntheta neta1 neta2                 name     lower       est upper   fix label backTransform condition prior
+1      1    NA    NA             cp_fix_1 -6.907755 -1.609438   Inf FALSE  <NA>          <NA>      <NA>  <NA>
+2      2    NA    NA rxBoundedTr.cp_fix_2      -Inf  2.028267   Inf FALSE  <NA>          <NA>      <NA>  <NA>
+3     NA     1     1             cp_eta_1      -Inf  0.040000   Inf FALSE  <NA>          <NA>        id  <NA>
+4     NA     2     2      rx.eta.cp_fix_2      -Inf  0.100000   Inf FALSE  <NA>          <NA>        id  <NA>
+   err
+1 <NA>
+2 <NA>
+3 <NA>
+4 <NA>
+                 variant    CL_pop     sigma      omega max_population_error max_individual_error
+1 boundedTransform_FALSE 0.2379213 0.0752356 0.01621491         9.668594e-05         9.857346e-05
+  max_sigma_helper_error
+1             0.07415817
+  ID TIME     PRED    IPRED cp_stat_CL_pop cp_stat_sigma cp_par_CL
+1  1    1 78.82657 81.89982      0.2379213   0.001078851 0.1996745
+2  1    2 62.13617 67.07571      0.2379213   0.001078851 0.1996745
+3  1    4 38.60902 44.99139      0.2379213   0.001078851 0.1996745
+4  2    1 78.82657 78.03532      0.2379213   0.001077432 0.2480099
+5  2    2 62.13617 60.89501      0.2379213   0.001077432 0.2480099
+6  2    4 38.60902 37.08205      0.2379213   0.001077432 0.2480099
+
+RUN: boundedTransform_FALSE FOCEi reevaluation 
+reevaluation preserves theta: TRUE omega: TRUE 
+fresh_population_error      fresh_sigma_error 
+          5.798706e-04           2.775558e-17 
+Independent marginal NLL: 2.916824 
+Fresh FOCEi NLL: 2.910504 
+
+RUN: boundedTransform_FALSE SAEM logLik 
+'log Lik.' -0.6898293 (df=4)
+                OBJF      AIC      BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+gauss3_1.6 -13.32336 9.379659 9.697425     -0.6898293              NA              NA
+
+VARIANT SOURCE: inline_clearance_only 
+ function() {
+ini({
+cp_fix_1 <- c(-6.9077552789821368e+00, -1.6094379124341003e+00, Inf)
+cp_fix_2 <- c(-6.9077552789821368e+00, 6.9314718055994529e-01, Inf)
+cp_eta_1 ~ 4.0000000000000008e-02
+})
+model({
+cp_stat_CL_pop = exp(cp_fix_1);
+cp_stat_sigma = exp(cp_fix_2);
+cp_par_CL = exp(cp_fix_1 + cp_eta_1);
+cp_state_a_drug_Central(0) = (1e+02);
+d/dt(cp_state_a_drug_Central) = (-(cp_par_CL * (cp_state_a_drug_Central / 1e+00)));
+cp_obs_C = (cp_state_a_drug_Central / 1e+00);
+cp_obs_C ~ add(cp_stat_sigma);
+})
+} 
+
+RUN: inline_clearance_only SAEM 
+ cp_fix_1  cp_fix_2 
+-1.993601 -2.421303 
+          cp_eta_1
+cp_eta_1 0.2526893
+initial metadata:
+  ntheta neta1 neta2                 name lower      est upper   fix label backTransform condition prior  err
+1      1    NA    NA rxBoundedTr.cp_fix_1  -Inf 1.667389   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA rxBoundedTr.cp_fix_2  -Inf 2.028267   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3     NA     1     1             cp_eta_1  -Inf 0.040000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+4     NA     2     2      rx.eta.cp_fix_2  -Inf 0.100000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+                variant    CL_pop     sigma     omega max_population_error max_individual_error
+1 inline_clearance_only 0.1362041 0.0888058 0.2526893             41.54785             62.09295
+  max_sigma_helper_error
+1             0.08771322
+  ID TIME     PRED    IPRED cp_stat_CL_pop cp_stat_sigma   cp_par_CL
+1  1    1 99.88547 99.83225    0.001145916   0.001093163 0.001678892
+2  1    2 99.77108 99.66478    0.001145916   0.001093163 0.001678892
+3  1    4 99.54268 99.33069    0.001145916   0.001093163 0.001678892
+4  2    1 99.88547 99.79153    0.001145916   0.001092575 0.002086915
+5  2    2 99.77108 99.58349    0.001145916   0.001092575 0.002086915
+6  2    4 99.54268 99.16871    0.001145916   0.001092575 0.002086915
+
+RUN: inline_clearance_only FOCEi reevaluation 
+reevaluation preserves theta: TRUE omega: TRUE 
+fresh_population_error      fresh_sigma_error 
+          4.503506e-04           1.942890e-16 
+Independent marginal NLL: 5.460664 
+Fresh FOCEi NLL: 5.455975 
+
+RUN: inline_clearance_only SAEM logLik 
+'log Lik.' -53.2956 (df=4)
+               OBJF      AIC     BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+gauss3_1.6 91.88819 114.5912 114.909       -53.2956              NA              NA
+
+VARIANT SOURCE: direct_residual_only 
+ function() {
+ini({
+cp_fix_1 <- c(-6.9077552789821368e+00, -1.6094379124341003e+00, Inf)
+cp_fix_2 <- c(0.001, 2, Inf)
+cp_eta_1 ~ 4.0000000000000008e-02
+})
+model({
+cp_stat_CL_pop = exp(cp_fix_1);
+cp_stat_sigma = cp_fix_2;
+cp_par_CL = cp_stat_CL_pop * exp(cp_eta_1);
+cp_state_a_drug_Central(0) = (1e+02);
+d/dt(cp_state_a_drug_Central) = (-(cp_par_CL * (cp_state_a_drug_Central / 1e+00)));
+cp_obs_C = (cp_state_a_drug_Central / 1e+00);
+cp_obs_C ~ add(cp_fix_2);
+})
+} 
+
+RUN: direct_residual_only SAEM 
+   cp_fix_1    cp_fix_2 
+-1.97224249  0.09058967 
+          cp_eta_1
+cp_eta_1 0.2318906
+initial metadata:
+  ntheta neta1 neta2                 name lower      est upper   fix label backTransform condition prior  err
+1      1    NA    NA rxBoundedTr.cp_fix_1  -Inf 1.667389   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA             cp_fix_2 0.001 2.000000   Inf FALSE  <NA>          <NA>  cp_obs_C  <NA>  add
+3     NA     1     1             cp_eta_1  -Inf 0.040000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+               variant    CL_pop      sigma     omega max_population_error max_individual_error
+1 direct_residual_only 0.1391445 0.09058967 0.2318906             42.22462             62.13277
+  max_sigma_helper_error
+1                      0
+  ID TIME     PRED    IPRED cp_stat_CL_pop cp_stat_sigma   cp_par_CL
+1  1    1 99.88514 99.83522     0.00114929    0.09058967 0.001649158
+2  1    2 99.77041 99.67071     0.00114929    0.09058967 0.001649158
+3  1    4 99.54134 99.34251     0.00114929    0.09058967 0.001649158
+4  2    1 99.88514 99.79519     0.00114929    0.09058967 0.002050238
+5  2    2 99.77041 99.59079     0.00114929    0.09058967 0.002050238
+6  2    4 99.54134 99.18326     0.00114929    0.09058967 0.002050238
+
+RUN: direct_residual_only FOCEi reevaluation 
+reevaluation preserves theta: TRUE omega: TRUE 
+fresh_population_error      fresh_sigma_error 
+          0.0004622897           0.0000000000 
+Independent marginal NLL: 5.369716 
+Fresh FOCEi NLL: 5.365193 
+
+RUN: direct_residual_only SAEM logLik 
+'log Lik.' -12.54783 (df=3)
+               OBJF      AIC      BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+gauss3_1.6 10.39265 31.09567 31.33399      -12.54783              NA              NA
+
+VARIANT SOURCE: direct_residual_inline_clearance 
+ function() {
+ini({
+cp_fix_1 <- c(-6.9077552789821368e+00, -1.6094379124341003e+00, Inf)
+cp_fix_2 <- c(0.001, 2, Inf)
+cp_eta_1 ~ 4.0000000000000008e-02
+})
+model({
+cp_stat_CL_pop = exp(cp_fix_1);
+cp_stat_sigma = cp_fix_2;
+cp_par_CL = exp(cp_fix_1 + cp_eta_1);
+cp_state_a_drug_Central(0) = (1e+02);
+d/dt(cp_state_a_drug_Central) = (-(cp_par_CL * (cp_state_a_drug_Central / 1e+00)));
+cp_obs_C = (cp_state_a_drug_Central / 1e+00);
+cp_obs_C ~ add(cp_fix_2);
+})
+} 
+
+RUN: direct_residual_inline_clearance SAEM 
+   cp_fix_1    cp_fix_2 
+-1.97224249  0.09058967 
+          cp_eta_1
+cp_eta_1 0.2318906
+initial metadata:
+  ntheta neta1 neta2                 name lower      est upper   fix label backTransform condition prior  err
+1      1    NA    NA rxBoundedTr.cp_fix_1  -Inf 1.667389   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA             cp_fix_2 0.001 2.000000   Inf FALSE  <NA>          <NA>  cp_obs_C  <NA>  add
+3     NA     1     1             cp_eta_1  -Inf 0.040000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+                           variant    CL_pop      sigma     omega max_population_error max_individual_error
+1 direct_residual_inline_clearance 0.1391445 0.09058967 0.2318906             42.22462             62.13277
+  max_sigma_helper_error
+1                      0
+  ID TIME     PRED    IPRED cp_stat_CL_pop cp_stat_sigma   cp_par_CL
+1  1    1 99.88514 99.83522     0.00114929    0.09058967 0.001649158
+2  1    2 99.77041 99.67071     0.00114929    0.09058967 0.001649158
+3  1    4 99.54134 99.34251     0.00114929    0.09058967 0.001649158
+4  2    1 99.88514 99.79519     0.00114929    0.09058967 0.002050238
+5  2    2 99.77041 99.59079     0.00114929    0.09058967 0.002050238
+6  2    4 99.54134 99.18326     0.00114929    0.09058967 0.002050238
+
+RUN: direct_residual_inline_clearance FOCEi reevaluation 
+reevaluation preserves theta: TRUE omega: TRUE 
+fresh_population_error      fresh_sigma_error 
+          0.0004622897           0.0000000000 
+Independent marginal NLL: 5.369716 
+Fresh FOCEi NLL: 5.365193 
+
+RUN: direct_residual_inline_clearance SAEM logLik 
+'log Lik.' -12.54783 (df=3)
+               OBJF      AIC      BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+gauss3_1.6 10.39265 31.09567 31.33399      -12.54783              NA              NA
+
+VARIANT SOURCE: direct_residual_unbounded_clearance 
+ function() {
+ini({
+cp_fix_1 <- -1.6094379124341003
+cp_fix_2 <- c(0.001, 2, Inf)
+cp_eta_1 ~ 4.0000000000000008e-02
+})
+model({
+cp_stat_CL_pop = exp(cp_fix_1);
+cp_stat_sigma = cp_fix_2;
+cp_par_CL = cp_stat_CL_pop * exp(cp_eta_1);
+cp_state_a_drug_Central(0) = (1e+02);
+d/dt(cp_state_a_drug_Central) = (-(cp_par_CL * (cp_state_a_drug_Central / 1e+00)));
+cp_obs_C = (cp_state_a_drug_Central / 1e+00);
+cp_obs_C ~ add(cp_fix_2);
+})
+} 
+
+RUN: direct_residual_unbounded_clearance SAEM 
+   cp_fix_1    cp_fix_2 
+-1.45773757  0.09838585 
+           cp_eta_1
+cp_eta_1 0.01373424
+initial metadata:
+  ntheta neta1 neta2     name lower       est upper   fix label backTransform condition prior  err
+1      1    NA    NA cp_fix_1  -Inf -1.609438   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA cp_fix_2 0.001  2.000000   Inf FALSE  <NA>          <NA>  cp_obs_C  <NA>  add
+3     NA     1     1 cp_eta_1  -Inf  0.040000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+                              variant    CL_pop      sigma      omega max_population_error
+1 direct_residual_unbounded_clearance 0.2327623 0.09838585 0.01373424         9.654778e-05
+  max_individual_error max_sigma_helper_error
+1         9.856714e-05                      0
+  ID TIME     PRED    IPRED cp_stat_CL_pop cp_stat_sigma cp_par_CL
+1  1    1 79.23429 81.88243      0.2327623    0.09838585 0.1998869
+2  1    2 62.78061 67.04723      0.2327623    0.09838585 0.1998869
+3  1    4 39.41401 44.95319      0.2327623    0.09838585 0.1998869
+4  2    1 79.23429 78.03766      0.2327623    0.09838585 0.2479799
+5  2    2 62.78061 60.89866      0.2327623    0.09838585 0.2479799
+6  2    4 39.41401 37.08650      0.2327623    0.09838585 0.2479799
+
+RUN: direct_residual_unbounded_clearance FOCEi reevaluation 
+reevaluation preserves theta: TRUE omega: TRUE 
+fresh_population_error      fresh_sigma_error 
+          5.585016e-04           2.775558e-17 
+Independent marginal NLL: 2.552383 
+Fresh FOCEi NLL: 2.548625 
+
+RUN: quadrature refinement gauss15_3 
+'log Lik.' -2.041791 (df=3)
+               OBJF      AIC      BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+gauss15_3 -10.61943 10.08358 10.32191      -2.041791              NA              NA
+
+RUN: quadrature refinement gauss61_5 
+WARNING: -2LL grid too large; used nnodesGq=25 
+'log Lik.' -2.018221 (df=3)
+               OBJF      AIC      BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+gauss61_5 -10.66658 10.03644 10.27477      -2.018221              NA              NA
+gauss15_3 -10.61943 10.08358 10.32191      -2.041791              NA              NA
+
+RUN: direct_residual_unbounded_clearance SAEM logLik 
+'log Lik.' -2.018221 (df=3)
+               OBJF      AIC      BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+gauss61_5 -10.66658 10.03644 10.27477      -2.018221              NA              NA
+gauss15_3 -10.61943 10.08358 10.32191      -2.041791              NA              NA
+
+VARIANT SOURCE: direct_residual_boundedTransform_FALSE 
+ function() {
+ini({
+cp_fix_1 <- c(-6.9077552789821368e+00, -1.6094379124341003e+00, Inf)
+cp_fix_2 <- c(0.001, 2, Inf)
+cp_eta_1 ~ 4.0000000000000008e-02
+})
+model({
+cp_stat_CL_pop = exp(cp_fix_1);
+cp_stat_sigma = cp_fix_2;
+cp_par_CL = cp_stat_CL_pop * exp(cp_eta_1);
+cp_state_a_drug_Central(0) = (1e+02);
+d/dt(cp_state_a_drug_Central) = (-(cp_par_CL * (cp_state_a_drug_Central / 1e+00)));
+cp_obs_C = (cp_state_a_drug_Central / 1e+00);
+cp_obs_C ~ add(cp_fix_2);
+})
+} 
+
+RUN: direct_residual_boundedTransform_FALSE SAEM 
+   cp_fix_1    cp_fix_2 
+-1.45773757  0.09838585 
+           cp_eta_1
+cp_eta_1 0.01373424
+initial metadata:
+  ntheta neta1 neta2     name     lower       est upper   fix label backTransform condition prior  err
+1      1    NA    NA cp_fix_1 -6.907755 -1.609438   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA cp_fix_2  0.001000  2.000000   Inf FALSE  <NA>          <NA>  cp_obs_C  <NA>  add
+3     NA     1     1 cp_eta_1      -Inf  0.040000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+                                 variant    CL_pop      sigma      omega max_population_error
+1 direct_residual_boundedTransform_FALSE 0.2327623 0.09838585 0.01373424         9.654778e-05
+  max_individual_error max_sigma_helper_error
+1         9.856714e-05                      0
+  ID TIME     PRED    IPRED cp_stat_CL_pop cp_stat_sigma cp_par_CL
+1  1    1 79.23429 81.88243      0.2327623    0.09838585 0.1998869
+2  1    2 62.78061 67.04723      0.2327623    0.09838585 0.1998869
+3  1    4 39.41401 44.95319      0.2327623    0.09838585 0.1998869
+4  2    1 79.23429 78.03766      0.2327623    0.09838585 0.2479799
+5  2    2 62.78061 60.89866      0.2327623    0.09838585 0.2479799
+6  2    4 39.41401 37.08650      0.2327623    0.09838585 0.2479799
+
+RUN: direct_residual_boundedTransform_FALSE FOCEi reevaluation 
+reevaluation preserves theta: TRUE omega: TRUE 
+fresh_population_error      fresh_sigma_error 
+          5.585016e-04           2.775558e-17 
+Independent marginal NLL: 2.552383 
+Fresh FOCEi NLL: 2.548625 
+
+RUN: direct_residual_boundedTransform_FALSE SAEM logLik 
+'log Lik.' -0.3588511 (df=3)
+                OBJF      AIC      BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+gauss3_1.6 -13.98531 6.717702 6.956027     -0.3588511              NA              NA
+
+VARIANT SOURCE: direct_residual_tight_bounds 
+ function() {
+ini({
+cp_fix_1 <- c(-1.7147984280919266, -1.6094379124341003, -1.5606477482646683)
+cp_fix_2 <- c(0.001, 2, Inf)
+cp_eta_1 ~ 4.0000000000000008e-02
+})
+model({
+cp_stat_CL_pop = exp(cp_fix_1);
+cp_stat_sigma = cp_fix_2;
+cp_par_CL = cp_stat_CL_pop * exp(cp_eta_1);
+cp_state_a_drug_Central(0) = (1e+02);
+d/dt(cp_state_a_drug_Central) = (-(cp_par_CL * (cp_state_a_drug_Central / 1e+00)));
+cp_obs_C = (cp_state_a_drug_Central / 1e+00);
+cp_obs_C ~ add(cp_fix_2);
+})
+} 
+
+RUN: direct_residual_tight_bounds SAEM 
+ERROR: syntax/parsing errors:
+syntax error 'expit(rxBoundedTr.cp_fix_1, -1.71479842809193, -1.56064774826467)': limits must be numeric 
+
+VARIANT SOURCE: direct_residual_tight_bounds_transform_FALSE 
+ function() {
+ini({
+cp_fix_1 <- c(-1.7147984280919266, -1.6094379124341003, -1.5606477482646683)
+cp_fix_2 <- c(0.001, 2, Inf)
+cp_eta_1 ~ 4.0000000000000008e-02
+})
+model({
+cp_stat_CL_pop = exp(cp_fix_1);
+cp_stat_sigma = cp_fix_2;
+cp_par_CL = cp_stat_CL_pop * exp(cp_eta_1);
+cp_state_a_drug_Central(0) = (1e+02);
+d/dt(cp_state_a_drug_Central) = (-(cp_par_CL * (cp_state_a_drug_Central / 1e+00)));
+cp_obs_C = (cp_state_a_drug_Central / 1e+00);
+cp_obs_C ~ add(cp_fix_2);
+})
+} 
+
+RUN: direct_residual_tight_bounds_transform_FALSE SAEM 
+  cp_fix_1   cp_fix_2 
+-1.4985973  0.1068558 
+           cp_eta_1
+cp_eta_1 0.01270245
+initial metadata:
+  ntheta neta1 neta2     name     lower       est     upper   fix label backTransform condition prior  err
+1      1    NA    NA cp_fix_1 -1.714798 -1.609438 -1.560648 FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA cp_fix_2  0.001000  2.000000       Inf FALSE  <NA>          <NA>  cp_obs_C  <NA>  add
+3     NA     1     1 cp_eta_1      -Inf  0.040000       Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+                                       variant    CL_pop     sigma      omega max_population_error
+1 direct_residual_tight_bounds_transform_FALSE 0.2234434 0.1068558 0.01270245         9.950433e-05
+  max_individual_error max_sigma_helper_error
+1         0.0001020003                      0
+  ID TIME     PRED    IPRED cp_stat_CL_pop cp_stat_sigma cp_par_CL
+1  1    1 79.97612 81.27834      0.2234434     0.1068558 0.2072918
+2  1    2 63.96168 66.06158      0.2234434     0.1068558 0.2072918
+3  1    4 40.91088 43.64121      0.2234434     0.1068558 0.2072918
+4  2    1 79.97612 77.36911      0.2234434     0.1068558 0.2565838
+5  2    2 63.96168 59.85968      0.2234434     0.1068558 0.2565838
+6  2    4 40.91088 35.83187      0.2234434     0.1068558 0.2565838
+
+RUN: direct_residual_tight_bounds_transform_FALSE FOCEi reevaluation 
+reevaluation preserves theta: TRUE omega: TRUE 
+fresh_population_error      fresh_sigma_error 
+          5.642918e-04           3.885781e-16 
+Independent marginal NLL: 2.456018 
+Fresh FOCEi NLL: 2.45274 
+
+RUN: direct_residual_tight_bounds_transform_FALSE SAEM logLik 
+'log Lik.' -17.86377 (df=3)
+               OBJF      AIC      BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+gauss3_1.6 21.02453 41.72755 41.96587      -17.86377              NA              NA
+
+SUMMARY
+                                      variant    CL_pop      sigma      omega max_population_error
+                                     original 0.1362041 0.08880580 0.25268933         4.154785e+01
+                       boundedTransform_FALSE 0.2379213 0.07523560 0.01621491         9.668594e-05
+                        inline_clearance_only 0.1362041 0.08880580 0.25268933         4.154785e+01
+                         direct_residual_only 0.1391445 0.09058967 0.23189060         4.222462e+01
+             direct_residual_inline_clearance 0.1391445 0.09058967 0.23189060         4.222462e+01
+          direct_residual_unbounded_clearance 0.2327623 0.09838585 0.01373424         9.654778e-05
+       direct_residual_boundedTransform_FALSE 0.2327623 0.09838585 0.01373424         9.654778e-05
+ direct_residual_tight_bounds_transform_FALSE 0.2234434 0.10685585 0.01270245         9.950433e-05
+ max_individual_error max_sigma_helper_error
+         6.209295e+01             0.08771322
+         9.857346e-05             0.07415817
+         6.209295e+01             0.08771322
+         6.213277e+01             0.00000000
+         6.213277e+01             0.00000000
+         9.856714e-05             0.00000000
+         9.856714e-05             0.00000000
+         1.020003e-04             0.00000000

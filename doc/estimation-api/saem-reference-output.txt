@@ -1,0 +1,33 @@
+Canonical native Gaussian random-intercept reference; nlmixr2est 7.1.0 
+     mu   sigma 
+9.00000 1.36781 
+      eta
+eta 1e-06
+Independent analytic marginal NLL: 103.9289 
+Requested likelihood: auto 
+'log Lik.' -Inf (df=3)
+           OBJF AIC BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+gauss3_1.6  Inf Inf Inf           -Inf              NA              NA
+Requested likelihood: gauss15_3 
+'log Lik.' -Inf (df=3)
+           OBJF AIC BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+gauss15_3   Inf Inf Inf           -Inf              NA              NA
+gauss3_1.6  Inf Inf Inf           -Inf              NA              NA
+Requested likelihood: gauss25_5 
+'log Lik.' -Inf (df=3)
+           OBJF AIC BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+gauss15_3   Inf Inf Inf           -Inf              NA              NA
+gauss3_1.6  Inf Inf Inf           -Inf              NA              NA
+gauss25_5   Inf Inf Inf           -Inf              NA              NA
+Requested likelihood: focei 
+'log Lik.' -103.929 (df=3)
+               OBJF     AIC     BIC Log-likelihood Condition#(Cov)
+gauss15_3       Inf     Inf     Inf           -Inf              NA
+gauss3_1.6      Inf     Inf     Inf           -Inf              NA
+gauss25_5       Inf     Inf     Inf           -Inf              NA
+FOCEi      97.58538 213.858 220.141       -103.929              NA
+           Condition#(Cor)
+gauss15_3               NA
+gauss3_1.6              NA
+gauss25_5               NA
+FOCEi                   NA
