@@ -2,8 +2,9 @@
 
 Date: 2026-11-23
 Updated: 2026-11-25
-Status: Initial exploration, likelihood-selection investigation, and a follow-up
-on normalization and SAEM representation issues completed; implementation pending.
+Status: Initial implementation and regression tests added. Public entry points
+are `to_nlmixr2()`, `from_nlmixr2()`, and `nlmixr2_engine()` with likelihood options.
+The verified capability restrictions below remain in force.
 The API decisions below are authoritative. See [findings.md](findings.md)
 for experimental evidence and remaining numerical/backend limitations; earlier
 policy recommendations in the findings are superseded by this handoff.
@@ -245,4 +246,7 @@ implement on `main`. Do not hand-edit generated `man/` or `NAMESPACE`, change
 tests first and broaden for shared unit, DSL, or model-generation changes.
 
 This handoff records the agreed direction. The initial experiments are now
-recorded in `findings.md`; no public API implementation has been completed.
+recorded in `findings.md`. Implementation is in `R/Nlmixr2Interop.R` and the
+existing estimation modules. Tests use lazy shared conversion/fit fixtures and
+independent analytic/numerical likelihood references. The full-suite run found
+a package-data timestamp failure in `test-sysdata.R`; no package data was regenerated.

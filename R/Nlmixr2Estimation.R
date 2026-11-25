@@ -427,17 +427,19 @@
 }
 
 .estimate_nlmixr2 <- function(problem, engine, dimensions = NULL, ...) {
-    translated <- .nlmixr2_prepare(problem, dimensions)
-    control <- do.call(nlmixr2est::foceiControl, engine$control)
-    table <- do.call(nlmixr2est::tableControl, engine$table)
-    raw <- nlmixr2est::nlmixr2(
-        translated$model, translated$data, est = engine$method,
-        control = control, table = table, ...
-    )
-    .nlmixr2_result(problem, engine, raw, translated)
+    exported <- to_nlmixr2(problem, method = engine$method, dimensions = dimensions)
+    constructor <- if (engine$method == "saem") nlmixr2est::saemControl else
+        nlmixr2est::foceiControl
+    raw <- nlmixr2est::nlmixr2(exported$model, exported$data, est = engine$method,
+        control = do.call(constructor, engine$control),
+        table = do.call(nlmixr2est::tableControl, engine$table), ...)
+    result <- from_nlmixr2(raw, exported, likelihood = engine$likelihood,
+                          likelihood_control = engine$likelihood_control)
+    result$engine <- engine
+    result
 }
 
-.nlmixr2_result <- function(problem, engine, raw, translated) {
+.nlmixr2_result <- function(problem, engine, raw, translated, likelihood_value = NULL) {
     theta <- raw$theta
     coefficients <- lapply(names(problem$parameters), function(name) {
         omega_target <- names(translated$omega_parameters)[
@@ -463,8 +465,9 @@
     uncertainty <- .nlmixr2_uncertainty(
         problem, raw, translated, coefficients
     )
-    neg_log_lik <- -as.numeric(stats::logLik(raw)) +
-        translated$log_likelihood_unit_jacobian
+    neg_log_lik <- if (is.null(likelihood_value)) {
+        -as.numeric(stats::logLik(raw)) + translated$log_likelihood_unit_jacobian
+    } else likelihood_value
     structure(list(
         coefficients = .new_parameters(coefficients),
         standard_errors = uncertainty$standard_errors,

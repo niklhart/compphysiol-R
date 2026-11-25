@@ -771,10 +771,28 @@ distinct from numerical ODE simulation, where the simulation type selects ODE
 semantics and a deSolve or rxode2 engine selects the interchangeable execution
 backend.
 
-The initial mixed-effects scope is FOCEi estimation with independent
-individual-level random effects. Correlated random effects remain part of the
-statistical-model vocabulary but are outside this first engine milestone, as
-is SAEM estimation. Standard deviations in normal and log-normal distribution
+The nlmixr2 engine supports FOCEi and a restricted SAEM scope with independent
+individual-level random effects. SAEM requires lognormal individual variability,
+directly estimated residual SDs, and verified natural parameter domains;
+unverified finite constraints are rejected. Correlated random effects and
+combined residual SD remain outside the current integration.
+
+Estimation and likelihood evaluation are separate operations. The `likelihood`
+engine option defaults to `"auto"`: plain FOCEi reports a FOCEi approximation,
+whereas plain SAEM reports a missing likelihood with a reason. Explicit
+`"focei"` or `"impmap"` evaluates the requested approximation at unchanged fitted
+population parameters. Likelihood method annotations are separate from the
+estimation algorithm. Native SAEM quadrature is currently unsupported.
+
+`to_nlmixr2()` produces an S3 export containing native model/data inputs and
+scientific, coordinate, identifier, and unit mappings. `from_nlmixr2()` checks
+compatibility before restoring a public result. Native IMPMAP workflows require
+an explicit likelihood choice and a preceding reference fit; `auto` rejects
+that ambiguity. Compare algorithms using the same explicitly selected likelihood
+calculation. Base R serialization is sufficient for saving exports, without a
+cross-version compatibility guarantee.
+
+Standard deviations in normal and log-normal distribution
 specifications retain their public standard-deviation scale. At the nlmixr2
 boundary, individual-level standard deviations are squared to form diagonal
 omega variances; fitted omega variances are square-rooted when translated back

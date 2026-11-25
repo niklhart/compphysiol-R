@@ -4,20 +4,31 @@
 \alias{nlmixr2_engine}
 \title{Configure the nlmixr2 estimation engine}
 \usage{
-nlmixr2_engine(method = "focei", control = list(), table = list())
+nlmixr2_engine(
+  method = "focei",
+  control = list(),
+  table = list(),
+  likelihood = "auto",
+  likelihood_control = list()
+)
 }
 \arguments{
-\item{method}{Estimation method. Currently only \code{"focei"} is supported.}
+\item{method}{Estimation method: \code{"focei"} or \code{"saem"}.}
 
-\item{control}{Named arguments passed to \code{\link[nlmixr2est:foceiControl]{nlmixr2est::foceiControl()}}.}
+\item{control}{Named arguments passed to the method-specific native control.}
 
 \item{table}{Named arguments passed to \code{\link[nlmixr2est:tableControl]{nlmixr2est::tableControl()}}.}
+
+\item{likelihood}{\code{"auto"}, \code{"focei"}, or \code{"impmap"}. Auto reports no likelihood
+for SAEM. Explicit evaluation preserves fitted population parameters.}
+
+\item{likelihood_control}{Named arguments for evaluation-only likelihood calculation.}
 }
 \value{
 A \code{compphysiol_nlmixr2_engine} object.
 }
 \description{
-The first nlmixr2 integration supports FOCEi with diagonal
+The nlmixr2 integration supports FOCEi and SAEM with diagonal
 individual-level variability. The engine owns ODE execution and mixed-effects
 estimation; it does not contain a separate simulation engine.
 }

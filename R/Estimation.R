@@ -302,19 +302,23 @@ optim_engine <- function(
 
 #' Configure the nlmixr2 estimation engine
 #'
-#' The first nlmixr2 integration supports FOCEi with diagonal
+#' The nlmixr2 integration supports FOCEi and SAEM with diagonal
 #' individual-level variability. The engine owns ODE execution and mixed-effects
 #' estimation; it does not contain a separate simulation engine.
 #'
-#' @param method Estimation method. Currently only `"focei"` is supported.
-#' @param control Named arguments passed to [nlmixr2est::foceiControl()].
+#' @param method Estimation method: `"focei"` or `"saem"`.
+#' @param control Named arguments passed to the method-specific native control.
+#' @param likelihood `"auto"`, `"focei"`, or `"impmap"`. Auto reports no likelihood
+#'   for SAEM. Explicit evaluation preserves fitted population parameters.
+#' @param likelihood_control Named arguments for evaluation-only likelihood calculation.
 #' @param table Named arguments passed to [nlmixr2est::tableControl()].
 #' @returns A `compphysiol_nlmixr2_engine` object.
 #' @export
-nlmixr2_engine <- function(method = "focei", control = list(), table = list()) {
+nlmixr2_engine <- function(method = "focei", control = list(), table = list(),
+                           likelihood = "auto", likelihood_control = list()) {
     if (!is.character(method) || length(method) != 1L || is.na(method) ||
-        !identical(tolower(method), "focei")) {
-        stop("The nlmixr2 engine currently supports only the FOCEi method.", call. = FALSE)
+        !tolower(method) %in% c("focei", "saem")) {
+        stop("The nlmixr2 engine currently supports FOCEi and SAEM methods.", call. = FALSE)
     }
     if (!is.list(control) || is.null(names(control)) && length(control)) {
         stop("nlmixr2 control must be a named list.", call. = FALSE)
@@ -323,7 +327,9 @@ nlmixr2_engine <- function(method = "focei", control = list(), table = list()) {
         stop("nlmixr2 table must be a named list.", call. = FALSE)
     }
     structure(
-        list(method = "focei", control = control, table = table),
+        list(method = tolower(method), control = control, table = table,
+             likelihood = match.arg(likelihood, c("auto", "focei", "impmap")),
+             likelihood_control = .nlmixr2_named_control(likelihood_control)),
         class = .compphysiol_class(
             "compphysiol_nlmixr2_engine",
             parents = c("compphysiol_estimation_engine", "compphysiol_engine")
