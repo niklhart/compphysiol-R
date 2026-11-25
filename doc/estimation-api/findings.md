@@ -285,3 +285,144 @@ importer, but not merely enabling SAEM in the current wrapper.
    covariance-structure edits, and no-random-effect SAEM were not validated.
 7. Add the agreed public documentation and glossary updates once those
    semantics are implemented. No glossary edits were made during exploration.
+
+## Follow-up: identifying the selected likelihood (2026-11-25)
+
+**Conclusion:** `auto` can follow native `logLik()` and identify its method for
+all four investigated workflows. Identification must happen *after* `logLik()`
+returns, and must cross-check the selected label against the matching objective
+row and likelihood value. The fitting algorithm is not the likelihood method.
+Multiple available objective rows are not themselves an ambiguity.
+
+### Reproduction and scope
+
+Run `Rscript doc/estimation-api/investigate-likelihood.R` from the repository
+root. It creates fresh fits and uses independent base-R serialized copies for
+selection experiments; it does not depend on the previous `/tmp` fit file.
+See [likelihood-selection-output.txt](likelihood-selection-output.txt) for
+before/after snapshots, repeated-call checks, explicit selection probes,
+errors, and installed implementation excerpts. Revision:
+`beeba95f075dea47962ae58cdc6c0495be99876b`; R 4.5.2,
+nlmixr2est 7.1.0, rxode2 5.1.7.1, compphysiol 0.5.4.9000.
+
+The fixed model, data, seeds, and fitting budgets are those of the initial
+exploration. The follow-up investigates selection metadata, not estimator
+accuracy, the SAEM translation concerns, or importance-sampling normalization.
+
+### Observed workflow decision table
+
+| Workflow | Before `logLik()` | After `logLik()` | Identification outcome |
+| --- | --- | --- | --- |
+| FOCEi fit | Finite cached likelihood; selected `focei`; row `FOCEi` | Unchanged | FOCEi |
+| SAEM fit, default quadrature settings and `logLik = FALSE` | NA likelihood/objective; placeholder row `lFOCEi`; label `foce` | Computes and selects `gauss3_1.6`; finite matching likelihood row | Gaussian quadrature, 3 nodes, nsd 1.6 |
+| FOCEi followed by IMPMAP E-only evaluation | Finite FOCEi likelihood and separate `impObj`; label `focei` | Unchanged | FOCEi, not importance sampling |
+| SAEM followed by IMPMAP E-only evaluation | Finite FOCEi likelihood and separate `impObj`; label `focei` | Unchanged | FOCEi, not importance sampling |
+
+In all four cases the second `logLik()` call returned an identical value and
+attributes. Both IMPMAP stages preserved theta and omega. Case-insensitive
+matching is needed for native labels such as `focei`, `FOCEi`, and `IMPMAP`.
+
+The SAEM label *before* materialization is not usable evidence of a computed
+likelihood. Reading only `getOfvType()` before `logLik()` would misidentify this
+case as FOCE. A single finite objective row after evaluation is corroborating
+evidence, but row order or the presence of `impObj` must not select the method.
+
+### Why SAEM can expose different likelihood methods
+
+Installed source establishes the control flow:
+
+1. `logLik.nlmixr2FitCore()` returns `object$logLik`; the corresponding data-fit
+   method delegates to the same accessor.
+2. The native metadata accessor calls `.nmObjEnsureObjective()` for likelihood,
+   objective, AIC, and BIC access. If a SAEM object's objective is NA, it requests
+   quadrature using configured `nnodesGq` and `nsdGq`, with defaults 3 and 1.6.
+3. One node is labelled `laplace<nsd>`; more nodes are labelled
+   `gauss<nodes>_<nsd>`. If this calculation fails, source explicitly falls back
+   to `setOfv(obj, "focei")`. That fallback branch was inspected, not triggered
+   in these runs.
+4. Explicit `setOfv()` can calculate/select another likelihood afterwards.
+
+A separate fresh SAEM fit configured with `nnodesGq = 1`, `nsdGq = 2`, and
+`logLik = FALSE` materialized `laplace2` on its first `logLik()` call; repeated
+access was stable and metadata agreed. Explicit selection of `laplace1.6`,
+`gauss5_2`, and back to `gauss3_1.6` also produced consistent labels and values.
+Thus quadrature settings and subsequent selection explain differing methods;
+there is no need to infer an undocumented choice from the word SAEM.
+
+A further eager-calculation probe (`logLik = TRUE`, one-node settings) failed
+during fit construction with an auxiliary `rx.eta.cp_fix_2` parameter not found
+in the model block. It yielded no fit to classify. This is another limitation
+of the current translated fixture/backend combination, not an identification
+ambiguity. Eager SAEM likelihood support remains unverified.
+
+### Explicit selection and the reproduced partial failure
+
+- On FOCEi fits, selecting IMPMAP adds/selects an `IMPMAP` row; switching back
+  to FOCEi works. Both states pass selected-label/likelihood-row agreement.
+- On the returned IMPMAP evaluation objects, explicit IMPMAP selection and
+  switching back to FOCEi work for both fitting origins. The selection helper
+  may perform a new sampling evaluation; it should not be assumed to reuse the
+  object's previously stored `impObj`.
+- On the original SAEM fit, `setOfv(fit, "impmap")` reproduces `unknown error`
+  and leaves a partially changed object. The selected label remains
+  `gauss3_1.6`, but the cached likelihood now matches the new IMPMAP row rather
+  than the quadrature row. The candidate consistency check rejects this state.
+  Subsequent explicit FOCEi selection restores internally consistent metadata
+  in this experiment.
+
+The failure is explained by installed source: `setOfv()` assigns objective and
+likelihood values, then calls `.setSaemExtra()` before assigning `ofvType`.
+`.setSaemExtra()` recognizes FOCEi/FOCE/FO and quadrature labels, but rejects
+IMPMAP with `unknown error`. The exception therefore occurs after the numerical
+selection changed but before the selected-method label changed. This is an
+ordering problem in the inspected native implementation, not uncertainty about
+which fitting algorithm ran.
+
+### Proposed identification rule for `auto`
+
+Operate on an independent fit copy so lazy calculation does not unexpectedly
+mutate the caller's object. These experiments used base R serialization for
+that purpose; no separate storage system is needed.
+
+1. Call native `logLik()` and require a finite scalar result. Preserve relevant
+   warnings/errors; a failed evaluation must not be silently accepted.
+2. Read `getOfvType()` and `objDf` *after* that call. Require a supported method
+   label and exactly one matching row, ignoring label case.
+3. Require a finite `Log-likelihood` entry in that row matching the returned
+   numerical likelihood within an explicit numerical tolerance. The probe uses
+   `1e-10`. As an additional implementation check, compare the selected cached
+   objective with the row's `OBJF` on the same native convention; do not compare
+   raw `OBJF` directly with `-2 * logLik()`.
+4. Annotate the compphysiol likelihood with its calculation family and native
+   label; retain node count/nsd when encoded in quadrature labels. Store fitting
+   method separately. Explicitly record that selection was automatic if useful
+   for provenance.
+
+| State after native likelihood access | Proposed action |
+| --- | --- |
+| Supported selected label, unique row, matching finite likelihood | Identify and use the selected evaluation, subject to normalization/support checks |
+| Several stored evaluations, but a consistent selected row | Same; no ambiguity error |
+| NA placeholder before lazy calculation | Evaluate first, then check the resulting state |
+| Missing/unknown label, absent or duplicate matching row, non-finite value | Fail with an identification error |
+| Label and likelihood row disagree, as in the partial SAEM failure | Fail; do not guess from another numerically matching row |
+| Supported label/value but unresolved likelihood normalization | Identification succeeds, but importing that likelihood remains unsupported |
+
+Only the standard workflow states and the native partial failure above were
+numerically exercised. Deliberately missing, duplicate, or unknown metadata
+cases are proposed rejection rules for implementation tests, not additional
+experiments claimed here.
+
+### Remaining work
+
+The likelihood-selection policy is now concrete enough to implement. No further
+user decision about `auto` is needed on the evidence gathered here. Public
+field/function names and precise metadata representation remain implementation
+choices.
+
+The initial unresolved issues still apply: importance-sampling normalization
+(and the native observation count), SAEM translation/prediction consistency,
+eager SAEM likelihood construction, and broader data/model coverage. A correctly
+identified likelihood is not proof that its numerical approximation is accurate
+or that all other parts of the fit satisfy the export/import contract. Keep
+those checks separate rather than treating method identification as approval
+of the whole result. Public API code and glossary remain unchanged.

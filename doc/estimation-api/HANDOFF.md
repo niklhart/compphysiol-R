@@ -1,8 +1,9 @@
 # nlmixr2 estimation API handoff
 
 Date: 2026-11-23
-Updated: 2026-11-24
-Status: Initial native-result exploration completed; implementation pending.
+Updated: 2026-11-25
+Status: Initial exploration and focused likelihood-selection investigation
+completed; implementation pending.
 See [findings.md](findings.md) for evidence, proposed checks, and unresolved
 SAEM translation and likelihood-normalization issues.
 
@@ -62,7 +63,7 @@ Use these observations to propose the compatibility contract and likelihood
 selection API. These are research outcomes, not questions awaiting the user.
 Separate verified observations from proposed rules and unresolved limitations.
 
-## Next investigation: identify the selected likelihood
+## Completed investigation: identify the selected likelihood
 
 Agreed direction: `likelihood = "auto"` follows the likelihood currently
 selected by native `logLik()`, provided its calculation method and value can be
@@ -71,8 +72,9 @@ not make selection ambiguous. Explicit selection should allow importing another
 supported evaluation. Always annotate the compphysiol result with the likelihood
 calculation method, separately from the parameter estimation algorithm.
 
-This investigation is pending. Use one fixed model and dataset and keep the
-scope limited to likelihood selection, identification, and consistency.
+Completed on 2026-11-25 using one fixed model and dataset. The script is
+`investigate-likelihood.R`; results and the decision table are in the follow-up
+section of [findings.md](findings.md). The investigation scope was:
 
 1. Inspect the installed implementations of `logLik()`, the selected-method
    accessor, the objective table, and `setOfv()`. Establish which fields are
@@ -94,10 +96,16 @@ scope limited to likelihood selection, identification, and consistency.
    and conditions under which `auto` must fail. Do not infer the likelihood
    calculation method solely from the estimation algorithm.
 
-Add a focused reproducible script and a short findings section. Success means
-being able to state for each supported workflow: `logLik()` returns this value,
-these fields establish its calculation method, and these conditions make that
-identification unreliable.
+Outcome: read the selected method after calling `logLik()`, require a unique
+matching objective-table row and matching finite likelihood, and annotate the
+result with that method. All four standard workflow probes passed this
+identification rule. The reproduced partial SAEM objective-selection failure
+was rejected because its label and likelihood row disagreed. SAEM can lazily
+calculate quadrature; inspected source falls back to FOCEi if that fails.
+
+The numerical normalization and SAEM translation issues remain unresolved.
+An additional eager SAEM likelihood probe failed during fit construction;
+it produced no result to identify. See the findings for these limits.
 
 Keep likelihood normalization as a separate unresolved question; an explicit
 method argument cannot bypass an unresolved numerical convention. Broader

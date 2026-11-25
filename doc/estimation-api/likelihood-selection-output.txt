@@ -1,0 +1,937 @@
+Investigation date: 2026-11-25
+Revision: beeba95f075dea47962ae58cdc6c0495be99876b 
+nlmixr2est 7.1.0 
+rxode2 5.1.7.1 
+compphysiol 0.5.4.9000 
+R version 4.5.2 (2025-10-31) 
+
+CALL: fresh FOCEi 
+
+CALL: fresh SAEM 
+
+SNAPSHOT: FOCEi before logLik 
+est :
+[1] "focei"
+ofvType :
+[1] "focei"
+objective :
+[1] -6.012793
+logLik :
+'log Lik.' -2.507234 (df=3)
+objDf :
+           OBJF      AIC      BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+FOCEi -6.012793 11.01447 10.38975      -2.507234        23.58343        15.57693
+impObj :
+NULL
+impEonly :
+NULL
+impIter :
+NULL
+
+CALL: logLik first 
+
+SNAPSHOT: FOCEi after first logLik 
+est :
+[1] "focei"
+ofvType :
+[1] "focei"
+objective :
+[1] -6.012793
+logLik :
+'log Lik.' -2.507234 (df=3)
+objDf :
+           OBJF      AIC      BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+FOCEi -6.012793 11.01447 10.38975      -2.507234        23.58343        15.57693
+impObj :
+NULL
+impEonly :
+NULL
+impIter :
+NULL
+
+CALL: logLik second 
+Repeated value identical: TRUE 
+Accessor selected method: focei 
+Candidate identification: type=focei; selected-row/value agreement=TRUE
+
+SNAPSHOT: SAEM before logLik 
+est :
+[1] "saem"
+ofvType :
+[1] "foce"
+objective :
+[1] NA
+logLik :
+'log Lik.' NA (df=4)
+objDf :
+       OBJF AIC BIC Log-likelihood
+lFOCEi   NA  NA  NA             NA
+impObj :
+NULL
+impEonly :
+NULL
+impIter :
+NULL
+
+CALL: logLik first 
+MESSAGE: Calculating -2LL by Gaussian quadrature (nnodes=3,nsd=1.6)
+ 
+
+SNAPSHOT: SAEM after first logLik 
+est :
+[1] "saem"
+ofvType :
+[1] "gauss3_1.6"
+objective :
+[1] 91.88819
+logLik :
+'log Lik.' -53.2956 (df=4)
+objDf :
+               OBJF      AIC     BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+gauss3_1.6 91.88819 114.5912 114.909       -53.2956              NA              NA
+impObj :
+NULL
+impEonly :
+NULL
+impIter :
+NULL
+
+CALL: logLik second 
+Repeated value identical: TRUE 
+Accessor selected method: gauss3_1.6 
+Candidate identification: type=gauss3_1.6; selected-row/value agreement=TRUE
+
+CALL: focei -> IMPMAP E-only 
+Theta preserved: TRUE Omega preserved: TRUE 
+
+SNAPSHOT: focei -> IMPMAP before logLik 
+est :
+[1] "impmap"
+ofvType :
+[1] "focei"
+objective :
+[1] -6.01279
+logLik :
+'log Lik.' -2.507236 (df=3)
+objDf :
+          OBJF      AIC      BIC Log-likelihood
+FOCEi -6.01279 11.01447 10.38975      -2.507236
+impObj :
+[1] -6.012262
+impEonly :
+[1] TRUE
+impIter :
+[1] 0
+
+CALL: logLik first 
+
+SNAPSHOT: focei -> IMPMAP after first logLik 
+est :
+[1] "impmap"
+ofvType :
+[1] "focei"
+objective :
+[1] -6.01279
+logLik :
+'log Lik.' -2.507236 (df=3)
+objDf :
+          OBJF      AIC      BIC Log-likelihood
+FOCEi -6.01279 11.01447 10.38975      -2.507236
+impObj :
+[1] -6.012262
+impEonly :
+[1] TRUE
+impIter :
+[1] 0
+
+CALL: logLik second 
+Repeated value identical: TRUE 
+Accessor selected method: focei 
+Candidate identification: type=focei; selected-row/value agreement=TRUE
+
+CALL: saem -> IMPMAP E-only 
+Theta preserved: TRUE Omega preserved: TRUE 
+
+SNAPSHOT: saem -> IMPMAP before logLik 
+est :
+[1] "impmap"
+ofvType :
+[1] "focei"
+objective :
+[1] -0.1153227
+logLik :
+'log Lik.' -5.45597 (df=3)
+objDf :
+            OBJF      AIC      BIC Log-likelihood
+FOCEi -0.1153227 16.91194 16.28722       -5.45597
+impObj :
+[1] -0.1147968
+impEonly :
+[1] TRUE
+impIter :
+[1] 0
+
+CALL: logLik first 
+
+SNAPSHOT: saem -> IMPMAP after first logLik 
+est :
+[1] "impmap"
+ofvType :
+[1] "focei"
+objective :
+[1] -0.1153227
+logLik :
+'log Lik.' -5.45597 (df=3)
+objDf :
+            OBJF      AIC      BIC Log-likelihood
+FOCEi -0.1153227 16.91194 16.28722       -5.45597
+impObj :
+[1] -0.1147968
+impEonly :
+[1] TRUE
+impIter :
+[1] 0
+
+CALL: logLik second 
+Repeated value identical: TRUE 
+Accessor selected method: focei 
+Candidate identification: type=focei; selected-row/value agreement=TRUE
+
+SNAPSHOT: focei before setOfv impmap 
+est :
+[1] "focei"
+ofvType :
+[1] "focei"
+objective :
+[1] -6.012793
+logLik :
+'log Lik.' -2.507234 (df=3)
+objDf :
+           OBJF      AIC      BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+FOCEi -6.012793 11.01447 10.38975      -2.507234        23.58343        15.57693
+impObj :
+NULL
+impEonly :
+NULL
+impIter :
+NULL
+
+CALL: setOfv focei impmap 
+
+SNAPSHOT: focei after setOfv impmap 
+est :
+[1] "focei"
+ofvType :
+[1] "IMPMAP"
+objective :
+[1] -6.011823
+logLik :
+'log Lik.' -4.345597 (df=3)
+objDf :
+            OBJF      AIC      BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+IMPMAP -6.011823 14.69119 14.92952      -4.345597        23.58343        15.57693
+FOCEi  -6.012793 11.01447 10.38975      -2.507234        23.58343        15.57693
+impObj :
+NULL
+impEonly :
+NULL
+impIter :
+NULL
+
+CALL: logLik after selection 
+Candidate identification: type=IMPMAP; selected-row/value agreement=TRUE
+
+SNAPSHOT: focei before setOfv focei 
+est :
+[1] "focei"
+ofvType :
+[1] "IMPMAP"
+objective :
+[1] -6.011823
+logLik :
+'log Lik.' -4.345597 (df=3)
+objDf :
+            OBJF      AIC      BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+IMPMAP -6.011823 14.69119 14.92952      -4.345597        23.58343        15.57693
+FOCEi  -6.012793 11.01447 10.38975      -2.507234        23.58343        15.57693
+impObj :
+NULL
+impEonly :
+NULL
+impIter :
+NULL
+
+CALL: setOfv focei focei 
+
+SNAPSHOT: focei after setOfv focei 
+est :
+[1] "focei"
+ofvType :
+[1] "focei"
+objective :
+[1] -6.012793
+logLik :
+'log Lik.' -2.507234 (df=3)
+objDf :
+            OBJF      AIC      BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+IMPMAP -6.011823 14.69119 14.92952      -4.345597        23.58343        15.57693
+FOCEi  -6.012793 11.01447 10.38975      -2.507234        23.58343        15.57693
+impObj :
+NULL
+impEonly :
+NULL
+impIter :
+NULL
+
+CALL: logLik after selection 
+Candidate identification: type=focei; selected-row/value agreement=TRUE
+
+SNAPSHOT: saem before setOfv impmap 
+est :
+[1] "saem"
+ofvType :
+[1] "gauss3_1.6"
+objective :
+[1] 91.88819
+logLik :
+'log Lik.' -53.2956 (df=4)
+objDf :
+               OBJF      AIC     BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+gauss3_1.6 91.88819 114.5912 114.909       -53.2956              NA              NA
+impObj :
+NULL
+impEonly :
+NULL
+impIter :
+NULL
+
+CALL: setOfv saem impmap 
+ERROR: unknown error 
+
+SNAPSHOT: saem after setOfv impmap 
+est :
+[1] "saem"
+ofvType :
+[1] "gauss3_1.6"
+objective :
+[1] -0.1143577
+logLik :
+'log Lik.' -7.294329 (df=4)
+objDf :
+                 OBJF       AIC       BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+IMPMAP     -0.1143577  22.58866  22.90642      -7.294329              NA              NA
+gauss3_1.6 91.8881863 114.59120 114.90897     -53.295601              NA              NA
+impObj :
+NULL
+impEonly :
+NULL
+impIter :
+NULL
+
+CALL: logLik after selection 
+Candidate identification: type=gauss3_1.6; selected-row/value agreement=FALSE
+
+SNAPSHOT: saem before setOfv focei 
+est :
+[1] "saem"
+ofvType :
+[1] "gauss3_1.6"
+objective :
+[1] -0.1143577
+logLik :
+'log Lik.' -7.294329 (df=4)
+objDf :
+                 OBJF       AIC       BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+IMPMAP     -0.1143577  22.58866  22.90642      -7.294329              NA              NA
+gauss3_1.6 91.8881863 114.59120 114.90897     -53.295601              NA              NA
+impObj :
+NULL
+impEonly :
+NULL
+impIter :
+NULL
+
+CALL: setOfv saem focei 
+
+SNAPSHOT: saem after setOfv focei 
+est :
+[1] "saem"
+ofvType :
+[1] "FOCEi"
+objective :
+[1] 0.009113951
+logLik :
+'log Lik.' -5.518188 (df=4)
+objDf :
+                   OBJF       AIC       BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+IMPMAP     -0.114357736  22.58866  22.90642      -7.294329              NA              NA
+gauss3_1.6 91.888186292 114.59120 114.90897     -53.295601              NA              NA
+FOCEi       0.009113951  17.03638  16.41165      -5.518188              NA              NA
+impObj :
+NULL
+impEonly :
+NULL
+impIter :
+NULL
+
+CALL: logLik after selection 
+Candidate identification: type=FOCEi; selected-row/value agreement=TRUE
+
+SNAPSHOT: focei_impmap before setOfv impmap 
+est :
+[1] "impmap"
+ofvType :
+[1] "focei"
+objective :
+[1] -6.01279
+logLik :
+'log Lik.' -2.507236 (df=3)
+objDf :
+          OBJF      AIC      BIC Log-likelihood
+FOCEi -6.01279 11.01447 10.38975      -2.507236
+impObj :
+[1] -6.012262
+impEonly :
+[1] TRUE
+impIter :
+[1] 0
+
+CALL: setOfv focei_impmap impmap 
+
+SNAPSHOT: focei_impmap after setOfv impmap 
+est :
+[1] "impmap"
+ofvType :
+[1] "IMPMAP"
+objective :
+[1] -6.011823
+logLik :
+'log Lik.' -4.345597 (df=3)
+objDf :
+            OBJF      AIC      BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+IMPMAP -6.011823 14.69119 14.92952      -4.345597              NA              NA
+FOCEi  -6.012790 11.01447 10.38975      -2.507236              NA              NA
+impObj :
+[1] -6.012262
+impEonly :
+[1] TRUE
+impIter :
+[1] 0
+
+CALL: logLik after selection 
+Candidate identification: type=IMPMAP; selected-row/value agreement=TRUE
+
+SNAPSHOT: focei_impmap before setOfv focei 
+est :
+[1] "impmap"
+ofvType :
+[1] "IMPMAP"
+objective :
+[1] -6.011823
+logLik :
+'log Lik.' -4.345597 (df=3)
+objDf :
+            OBJF      AIC      BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+IMPMAP -6.011823 14.69119 14.92952      -4.345597              NA              NA
+FOCEi  -6.012790 11.01447 10.38975      -2.507236              NA              NA
+impObj :
+[1] -6.012262
+impEonly :
+[1] TRUE
+impIter :
+[1] 0
+
+CALL: setOfv focei_impmap focei 
+
+SNAPSHOT: focei_impmap after setOfv focei 
+est :
+[1] "impmap"
+ofvType :
+[1] "focei"
+objective :
+[1] -6.01279
+logLik :
+'log Lik.' -2.507236 (df=3)
+objDf :
+            OBJF      AIC      BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+IMPMAP -6.011823 14.69119 14.92952      -4.345597              NA              NA
+FOCEi  -6.012790 11.01447 10.38975      -2.507236              NA              NA
+impObj :
+[1] -6.012262
+impEonly :
+[1] TRUE
+impIter :
+[1] 0
+
+CALL: logLik after selection 
+Candidate identification: type=focei; selected-row/value agreement=TRUE
+
+SNAPSHOT: saem_impmap before setOfv impmap 
+est :
+[1] "impmap"
+ofvType :
+[1] "focei"
+objective :
+[1] -0.1153227
+logLik :
+'log Lik.' -5.45597 (df=3)
+objDf :
+            OBJF      AIC      BIC Log-likelihood
+FOCEi -0.1153227 16.91194 16.28722       -5.45597
+impObj :
+[1] -0.1147968
+impEonly :
+[1] TRUE
+impIter :
+[1] 0
+
+CALL: setOfv saem_impmap impmap 
+
+SNAPSHOT: saem_impmap after setOfv impmap 
+est :
+[1] "impmap"
+ofvType :
+[1] "IMPMAP"
+objective :
+[1] -0.1143575
+logLik :
+'log Lik.' -7.29433 (df=3)
+objDf :
+             OBJF      AIC      BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+IMPMAP -0.1143575 20.58866 20.82698       -7.29433              NA              NA
+FOCEi  -0.1153227 16.91194 16.28722       -5.45597              NA              NA
+impObj :
+[1] -0.1147968
+impEonly :
+[1] TRUE
+impIter :
+[1] 0
+
+CALL: logLik after selection 
+Candidate identification: type=IMPMAP; selected-row/value agreement=TRUE
+
+SNAPSHOT: saem_impmap before setOfv focei 
+est :
+[1] "impmap"
+ofvType :
+[1] "IMPMAP"
+objective :
+[1] -0.1143575
+logLik :
+'log Lik.' -7.29433 (df=3)
+objDf :
+             OBJF      AIC      BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+IMPMAP -0.1143575 20.58866 20.82698       -7.29433              NA              NA
+FOCEi  -0.1153227 16.91194 16.28722       -5.45597              NA              NA
+impObj :
+[1] -0.1147968
+impEonly :
+[1] TRUE
+impIter :
+[1] 0
+
+CALL: setOfv saem_impmap focei 
+
+SNAPSHOT: saem_impmap after setOfv focei 
+est :
+[1] "impmap"
+ofvType :
+[1] "focei"
+objective :
+[1] -0.1153227
+logLik :
+'log Lik.' -5.45597 (df=3)
+objDf :
+             OBJF      AIC      BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+IMPMAP -0.1143575 20.58866 20.82698       -7.29433              NA              NA
+FOCEi  -0.1153227 16.91194 16.28722       -5.45597              NA              NA
+impObj :
+[1] -0.1147968
+impEonly :
+[1] TRUE
+impIter :
+[1] 0
+
+CALL: logLik after selection 
+Candidate identification: type=focei; selected-row/value agreement=TRUE
+
+CALL: SAEM setOfv laplace1.6 
+
+SNAPSHOT: SAEM selected laplace1.6 
+est :
+[1] "saem"
+ofvType :
+[1] "laplace1.6"
+objective :
+[1] 85.40074
+logLik :
+'log Lik.' -50.05188 (df=4)
+objDf :
+               OBJF      AIC      BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+laplace1.6 85.40074 108.1038 108.4215      -50.05188              NA              NA
+gauss3_1.6 91.88819 114.5912 114.9090      -53.29560              NA              NA
+impObj :
+NULL
+impEonly :
+NULL
+impIter :
+NULL
+
+CALL: logLik after quadrature selection 
+Candidate identification: type=laplace1.6; selected-row/value agreement=TRUE
+
+CALL: SAEM setOfv gauss5_2 
+MESSAGE: Calculating -2LL by Gaussian quadrature (nnodes=5,nsd=2)
+ 
+
+SNAPSHOT: SAEM selected gauss5_2 
+est :
+[1] "saem"
+ofvType :
+[1] "gauss5_2"
+objective :
+[1] 93.67333
+logLik :
+'log Lik.' -54.18818 (df=4)
+objDf :
+               OBJF      AIC      BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+laplace1.6 85.40074 108.1038 108.4215      -50.05188              NA              NA
+gauss3_1.6 91.88819 114.5912 114.9090      -53.29560              NA              NA
+gauss5_2   93.67333 116.3764 116.6941      -54.18818              NA              NA
+impObj :
+NULL
+impEonly :
+NULL
+impIter :
+NULL
+
+CALL: logLik after quadrature selection 
+Candidate identification: type=gauss5_2; selected-row/value agreement=TRUE
+
+CALL: SAEM setOfv gauss3_1.6 
+
+SNAPSHOT: SAEM selected gauss3_1.6 
+est :
+[1] "saem"
+ofvType :
+[1] "gauss3_1.6"
+objective :
+[1] 91.88819
+logLik :
+'log Lik.' -53.2956 (df=4)
+objDf :
+               OBJF      AIC      BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+laplace1.6 85.40074 108.1038 108.4215      -50.05188              NA              NA
+gauss3_1.6 91.88819 114.5912 114.9090      -53.29560              NA              NA
+gauss5_2   93.67333 116.3764 116.6941      -54.18818              NA              NA
+impObj :
+NULL
+impEonly :
+NULL
+impIter :
+NULL
+
+CALL: logLik after quadrature selection 
+Candidate identification: type=gauss3_1.6; selected-row/value agreement=TRUE
+
+CALL: SAEM one-node configured; logLik control FALSE 
+
+SNAPSHOT: SAEM one-node configured; logLik control FALSE before logLik 
+est :
+[1] "saem"
+ofvType :
+[1] "foce"
+objective :
+[1] NA
+logLik :
+'log Lik.' NA (df=4)
+objDf :
+       OBJF AIC BIC Log-likelihood
+lFOCEi   NA  NA  NA             NA
+impObj :
+NULL
+impEonly :
+NULL
+impIter :
+NULL
+
+CALL: logLik first 
+
+SNAPSHOT: SAEM one-node configured; logLik control FALSE after first logLik 
+est :
+[1] "saem"
+ofvType :
+[1] "laplace2"
+objective :
+[1] 83.6156
+logLik :
+'log Lik.' -49.15931 (df=4)
+objDf :
+            OBJF      AIC      BIC Log-likelihood Condition#(Cov) Condition#(Cor)
+laplace2 83.6156 106.3186 106.6364      -49.15931              NA              NA
+impObj :
+NULL
+impEonly :
+NULL
+impIter :
+NULL
+
+CALL: logLik second 
+Repeated value identical: TRUE 
+Accessor selected method: laplace2 
+Candidate identification: type=laplace2; selected-row/value agreement=TRUE
+
+CALL: SAEM one-node configured; logLik control TRUE 
+ERROR: syntax/parsing errors:
+the following parameter(s) were in the ini block but not in the model block: rx.eta.cp_fix_2 
+
+SOURCE EVIDENCE (installed version)
+
+FUNCTION: logLik.nlmixr2FitCore 
+function (object, ...) 
+{
+    object$logLik
+} 
+
+FUNCTION: logLik.nlmixr2FitData 
+function (object, ...) 
+{
+    .objName <- substitute(object)
+    .lst <- list(...)
+    if (!is.null(.lst$type)) {
+        .new <- setOfv(object, .lst$type)
+        .parent <- globalenv()
+        .bound <- do.call("c", lapply(ls(.parent, all.names = TRUE), 
+            function(.cur) {
+                if (.cur == .objName && identical(.parent[[.cur]]$env, 
+                  object$env)) {
+                  return(.cur)
+                }
+                NULL
+            }))
+        if (length(.bound) == 1) {
+            if (exists(.bound, envir = .parent)) {
+                assign(.bound, .new, envir = .parent)
+            }
+        }
+        get("logLik", .new$env)
+    }
+    else {
+        object$logLik
+    }
+} 
+
+FUNCTION: nmObjGet 
+function (x, ...) 
+{
+    if (!inherits(x, "nmObjGet")) {
+        stop("'", as.character(substitute(x)), "' is wrong type for 'nmObjGet'", 
+            call. = FALSE)
+    }
+    .arg <- class(x)[1]
+    if (any(.arg == c("logLik", "value", "obf", "ofv", "objf", 
+        "OBJF", "objective", "AIC", "BIC"))) {
+        .nmObjEnsureObjective(x[[1]])
+    }
+    if (.rstudioComplete()) {
+        .v <- as.character(utils::methods("nmObjGet"))
+        .cls <- .arg
+        .method <- paste0("nmObjGet.", .cls)
+        if (.method %in% .v) {
+            .rstudio <- attr(utils::getS3method("nmObjGet", .cls), 
+                "rstudio")
+            if (length(.rstudio) == 0) {
+                return(list("calculated value"))
+            }
+            else if (is.na(.rstudio)) {
+            }
+            else {
+                return(.rstudio)
+            }
+        }
+    }
+    UseMethod("nmObjGet")
+} 
+
+FUNCTION: .nmObjEnsureObjective 
+function (obj) 
+{
+    .env <- obj
+    if (!is.null(obj$saem)) {
+        .tmp <- obj$saem
+        .curObj <- get("objective", .env, inherits = FALSE)
+        if (is.na(.curObj)) {
+            .nnodes <- 3
+            .nsd <- 1.6
+            .ctl <- .env$control
+            if (inherits(.ctl, "saemControl")) {
+                .keep <- function(x) length(x) == 1L && is.numeric(x) && 
+                  is.finite(x)
+                if (.keep(.ctl$nnodesGq)) {
+                  .nnodes <- .ctl$nnodesGq
+                }
+                if (.keep(.ctl$nsdGq)) 
+                  .nsd <- .ctl$nsdGq
+            }
+            if (.nnodes == 1) {
+                .tmp <- try(setOfv(obj, paste0("laplace", .nsd)), 
+                  silent = TRUE)
+            }
+            else {
+                .tmp <- try(setOfv(obj, paste0("gauss", .nnodes, 
+                  "_", .nsd)), silent = TRUE)
+            }
+            if (inherits(.tmp, "try-error")) {
+                message("gaussian quadrature failed, changed to focei")
+                setOfv(obj, "focei")
+            }
+        }
+    }
+} 
+
+FUNCTION: getOfvType 
+function (x) 
+{
+    return(x$ofvType)
+} 
+
+FUNCTION: setOfv 
+function (x, type) 
+{
+    assertNlmixrFit(x)
+    .objDf <- x$objDf
+    .w <- which(tolower(row.names(.objDf)) == tolower(type))
+    if (length(.w) != 1) {
+        return(.setOfvAdd(x, type))
+    }
+    .env <- x$env
+    .objf <- .objDf[.w, "OBJF"]
+    .lik <- .objDf[.w, "Log-likelihood"]
+    attr(.lik, "df") <- attr(get("logLik", .env), "df")
+    attr(.lik, "nobs") <- attr(get("logLik", .env), "nobs")
+    class(.lik) <- "logLik"
+    .bic <- .objDf[.w, "BIC"]
+    .aic <- .objDf[.w, "AIC"]
+    assign("OBJF", .objf, .env)
+    assign("objf", .objf, .env)
+    assign("objective", .objf, .env)
+    assign("logLik", .lik, .env)
+    assign("AIC", .aic, .env)
+    assign("BIC", .bic, .env)
+    if (!is.null(x$saem)) {
+        .setSaemExtra(.env, type)
+    }
+    .env$ofvType <- type
+    invisible(x)
+} 
+
+FUNCTION: .setOfvAdd 
+function (x, type) 
+{
+    .type <- tolower(type)
+    if (any(.type == c("focei", "foce", "fo"))) {
+        return(.setOfvFo(x, .type))
+    }
+    if (any(.type == c("imp", "impmap"))) {
+        return(.setOfvImp(x, .type))
+    }
+    if (is.null(x$saem)) {
+        stop("cannot switch objective function to '", type, "' type", 
+            call. = FALSE)
+    }
+    .setOfvSaemQuad(x, type)
+} 
+
+FUNCTION: .setOfvImp 
+function (fit, type = c("imp", "impmap")) 
+{
+    .type <- match.arg(type)
+    .rn <- toupper(.type)
+    if (any(rownames(fit$objDf) == .rn)) {
+        return(invisible(fit))
+    }
+    nlmixrWithTiming(paste0(.type, "Lik"), {
+        .sigdig <- fit$foceiControl$sigdig
+        .ctl <- impmapControl(print = 0L, nIter = 0L, covMethod = "", 
+            calcTables = FALSE, compress = FALSE, sigdig = if (is.null(.sigdig)) 
+                3
+            else .sigdig)
+        .ctl$etaMat <- fit$etaMat
+        .newFit <- .nlmixr2PriorGateBypass(nlmixr2(fit, nlme::getData(fit), 
+            .type, control = .ctl))
+        .newEnv <- .newFit$env
+        .env <- fit$env
+        .df <- attr(get("logLik", .env), "df")
+        .nobs <- .env$nobs
+        .objf <- .newEnv$impObj
+        .m2ll <- .objf + .nobs * log(2 * pi)
+        .adj <- .env$adjObf
+        if (is.null(.adj)) {
+            .adj <- fit$foceiControl$adjObf
+        }
+        if (isFALSE(.adj)) {
+            .objf <- .m2ll
+        }
+        .tmp <- data.frame(OBJF = .objf, AIC = .m2ll + 2 * .df, 
+            BIC = .m2ll + log(.nobs) * .df, `Log-likelihood` = -.m2ll/2, 
+            check.names = FALSE)
+        nlmixrAddObjectiveFunctionDataFrame(fit, .tmp, .rn)
+        invisible(fit)
+    }, envir = fit)
+} 
+
+FUNCTION: .setSaemExtra 
+function (.env, type) 
+{
+    if (inherits(.env, "nlmixr2FitData")) {
+        .env <- .env$env
+    }
+    .ui <- .env$ui
+    .txt <- gsub("rxode2 +", "", .ui$modelDesc)
+    .txt <- ""
+    if (tolower(type) == "focei") {
+        .txt <- paste0(.txt, crayon::silver$italic("OBJF by FOCEi approximation"))
+    }
+    else if (tolower(type) == "foce") {
+        .txt <- paste0(.txt, crayon::silver$italic("OBJF by FOCE approximation"))
+    }
+    else if (tolower(type) == "fo") {
+        .txt <- paste0(.txt, crayon::silver$italic("OBJF by FO approximation"))
+    }
+    else if (type == "") {
+        .txt <- paste0(.txt, crayon::silver$italic("OBJF not calculated"))
+    }
+    else {
+        .reg <- rex::rex(start, "laplace", capture(.regNum), 
+            end)
+        .regG <- rex::rex(start, "gauss", capture(.regNum), "_", 
+            capture(.regNum), end)
+        if (regexpr(.reg, type, perl = TRUE) != -1) {
+            .nnode <- 1
+            .nsd <- as.numeric(sub(.reg, "\\1", type, perl = TRUE))
+        }
+        else if (regexpr(.regG, type, perl = TRUE) != -1) {
+            .nnode <- as.numeric(sub(.regG, "\\1", type, perl = TRUE))
+            .nsd <- as.numeric(sub(.regG, "\\2", type, perl = TRUE))
+        }
+        else {
+            stop("unknown error")
+        }
+        .txt <- paste0(.txt, crayon::silver$italic(sprintf("OBJF by %s", 
+            paste0(ifelse(.nnode == 1, "Lapalcian (n.sd=", sprintf("Gaussian Quadrature (n.nodes=%s, n.sd=", 
+                .nnode)), .nsd, ")"))))
+    }
+    .env$extra <- .txt
+    invisible()
+} 
+
+FUNCTION: .saemGetLikName 
+function (nnodesGq, nsdGq) 
+{
+    if (nnodesGq == 1) {
+        paste0("laplace", nsdGq)
+    }
+    else {
+        paste0("gauss", nnodesGq, "_", nsdGq)
+    }
+} 
