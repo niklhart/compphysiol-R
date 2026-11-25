@@ -637,3 +637,151 @@ This investigation gives concrete implementation requirements and restrictions.
 It does not justify declaring all planned SAEM workflows supported yet. No
 additional user API decision is required to retain the agreed `auto` policy;
 the remaining questions are numerical/backend compatibility work.
+
+## Planned-extension representation probes (2026-11-25)
+
+This is a small native representation experiment, not an implementation or
+validation of the extensions. Run from the repository root:
+
+```sh
+Rscript doc/estimation-api/investigate-extensions.R
+Rscript doc/estimation-api/investigate-extensions.R --fixed-zero-only
+```
+
+Reports: [extensions-output.txt](extensions-output.txt) and the targeted
+[extensions-fixed-zero-output.txt](extensions-fixed-zero-output.txt). The script
+uses eight subjects with four observations each, simulated under seed 251125;
+SAEM uses seed 99, 40 burn-in and 60 EM iterations. FOCEi marginal probes use
+zero outer iterations; IMPMAP uses zero EM iterations and 500 samples. The
+fixed-zero supplement reproduces the full run's block-data RNG stream.
+Environment: nlmixr2est 7.1.0, rxode2 5.1.7.1; revision
+`f38c9e44bb21c077a07d027bcc1e5023bd74566a`. All inputs are fresh native models,
+not exports accepted by the current production scope checks. No package API
+or glossary was changed in this follow-up.
+
+### Marginal distributions
+
+The three families share the same native shape: population location and residual
+SD in `theta`, normal latent variability in `omega`, and the marginal transform
+in model expressions. Direct residual SD coordinates were used throughout.
+
+| Marginal | Native expression | Public location decoding |
+| --- | --- | --- |
+| Normal | `individual = location + eta` | Mean = location |
+| Lognormal | `individual = exp(location + eta)` | Median = exp(location) |
+| Logit-normal on (2, 5) | `latent = location + eta; individual = 2 + 3 * expit(latent)` | Median = 2 + 3 * plogis(location) |
+
+Normal SD, sdlog, and sdlogit are all represented by the square root of the
+appropriate latent omega diagonal. Normal latent coordinates carry the target
+unit; transformed latent coordinates are dimensionless. Unit conversions were
+not numerically exercised in these native-only probes.
+
+FOCEi evaluation and short SAEM runs produced fits for each family. Their
+`finalUi$model` matched the parsed input, and PRED/IPRED agreed with the above
+expressions at returned theta/eta values to floating-point precision. E-only
+IMPMAP preserved theta and omega for all successful probes.
+
+Important limitations and observations:
+
+- The inline logit-normal expression parsed and ran but emitted a non-mu-reference
+  warning and had an empty `muRefDataFrame`. Splitting out `latent = location +
+  eta` produced the expected location/eta mapping and removed that warning.
+  Prefer that explicit latent assignment when implementing export.
+- The additive-normal SAEM run kept its location at the initial value and
+  collapsed omega from 0.09 to 1e-6 while increasing residual SD. This reproduces
+  the concern seen in the previous native Gaussian example. Its representation
+  and predictions are consistent, but these probes do not establish a reliable
+  fitting path. Diagnose this before removing the normal-SAEM guard.
+- Short stochastic runs and 500-sample evaluations do not establish convergence,
+  estimation accuracy, likelihood normalization, or uncertainty coverage.
+- Logit-normal individual variability is not logit-normal observation error.
+  Supporting the former does not authorize extending residual likelihood
+  families or adding observation-density Jacobians for individual transforms.
+  Integrate over the latent normal variables; retain the actual observation
+  density's convention.
+
+### Correlated omega representation
+
+The block models use lognormal random intercept/slope parameters to avoid
+confounding the covariance probes with the additive-normal fitting issue.
+A third positive random coefficient is included for structured-zero probes.
+
+The native lower-triangular initialization
+
+```r
+eta1 + eta2 ~ c(.25, .05, .04)
+```
+
+represents variances .25 and .04 and covariance .05, hence initial correlation
+.5. `iniDf` includes diagonal rows and a pair row `(eta1,eta2)`, with `neta1`,
+`neta2`, and per-entry `fix` flags. Returned `omega` is a named symmetric matrix.
+
+| Native specification | Observed behavior |
+| --- | --- |
+| All entries free | SAEM estimated a full block; fitted correlation about .722 |
+| `~ fix(.25, .05, .04)` | All covariance entries retained; correlation remained .5 |
+| `~ c(fix(.25), .05, fix(.04))` | Variances retained; covariance estimated at .0136575, correlation about .137 |
+| `~ c(.25, fix(.05), .04)` | Per-entry fixed flag parsed, but SAEM failed with `chol(): decomposition failed` |
+| Three-effect block with initial (1,3) covariance zero and free | Fitted (1,3) covariance .0431771; zero initialization did not enforce independence |
+| Three-effect block with `fix(0)` at (1,3) | SAEM and E-only IMPMAP ran; zero covariance retained to numerical tolerance |
+
+Successful block fits preserved parsed model expressions and exposed the final
+entry-wise constraints in `finalUi$iniDf`. IMPMAP preserved theta/omega.
+A singular two-effect matrix was accepted by the parser only; it was not fitted.
+Parser acceptance does not establish support for singular estimation problems.
+
+A fixed off-diagonal entry is a fixed covariance, not a fixed correlation when
+its marginal SDs are estimated. The failed fixed-covariance fit does not prove
+that every mixed fixed/free block is unsupported; the successful fixed-diagonal
+probe proves some mixed blocks work. It does require additional numerical
+validation before claiming general support.
+
+### API implications and recommended decisions
+
+**No new top-level export/import/wrapper option is needed for these families or
+correlations.** The existing statistical model already expresses their intended
+scientific semantics. Extend translator mappings and capability checks, keeping
+likelihood-selection policies unchanged.
+
+1. **Location coordinates are role-specific.** Normal population locations
+   need identity-capable native coordinates. Lognormal and logit-normal public
+   medians need their own latent-location decoding and uncertainty Jacobians,
+   distinct from an estimated parameter's public optimization transformation.
+   Preserve explicit bounds/units in the export; do not conflate distribution
+   bounds with native optimizer constraints. Normal-SAEM fitting remains a
+   technical prerequisite, not a new API choice.
+2. **Choose a conservative first covariance scope.** Recommend free positive-
+   definite blocks, fully fixed blocks, and fixed marginal SDs with estimated
+   correlations once their round trips are tested. Native covariance constraints
+   implement these cases directly. Fixed nonzero correlations with estimated
+   SDs require a verified constrained reparameterization (for example a latent
+   factor construction) or explicit rejection initially. Never substitute a
+   fixed covariance for the user's fixed correlation.
+3. **Unspecified zero correlations must remain fixed zeros.** No user choice is
+   needed: this is already part of `correlated()` semantics. Use appropriate
+   fixed entries or separate independent blocks, validate numerical zero
+   tolerances, and reject structures that cannot be preserved. A dense free
+   block initialized with zeros is not an equivalent export.
+4. **Estimation requires a defined covariance domain.** Recommend initially
+   requiring positive-definite blocks with nonzero marginal spreads. Population
+   sampling may continue accepting positive-semidefinite/singular structures.
+   Whether to add a rank-reduced estimation representation later is a scope
+   decision; singular parsing alone is insufficient. Honor declared correlation
+   bounds and shared correlation parameters, or reject those constraints until
+   their native representation is verified.
+5. **Import checks need semantic covariance mappings.** Map by eta identities,
+   not only numerical matrix positions. Preserve block structure and fixed/free
+   constraints. Decode rho as Omega_ij / sqrt(Omega_ii * Omega_jj); restore normal
+   SD units and latent transformed spreads correctly. Map available joint
+   uncertainty through the full Jacobian, retaining the distinction between IIV
+   correlations and correlations among estimates. Define missing uncertainty
+   and zero-variance behavior explicitly; rejecting undefined correlations is
+   safer than inventing zero.
+
+The main remaining user-facing scope choice is whether fixed-nonzero-rho/free-SD
+and singular structures must ship in the first extension or may initially be
+rejected. Recommendation: retain their existing statistical-model meaning and
+stage support, with explicit capability errors. All other points above refine
+implementation/validation rather than require a new public scientific API.
+Independent multivariate likelihood checks, unit-aware round trips, and joint
+uncertainty tests are still required before production support is widened.

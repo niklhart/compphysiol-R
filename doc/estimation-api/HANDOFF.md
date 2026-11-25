@@ -294,6 +294,18 @@ until the supported cases are validated; record unsupported cases precisely.
 This is planned follow-up work, not an expansion of the currently validated
 scope or a request for a time-based automation.
 
+### Representation experiment completed
+
+The native probes for both planned extensions are recorded in the
+"Planned-extension representation probes" section of [findings.md](findings.md),
+with `investigate-extensions.R` and its output reports. No production scope was
+expanded. The explicit latent assignment is promising for logit-normal export;
+additive-normal SAEM fitting still needs diagnosis. Native omega supports free,
+fixed, and some mixed fixed/free blocks, but fixed covariance is not fixed
+correlation. Unspecified correlations require enforced zeros, not zero initial
+values in a free block. Initially rejecting unverified fixed-rho/free-SD and
+singular structures is recommended; no new top-level scientific API is needed.
+
 ## Existing implementation anchors
 
 - `R/Estimation.R`: `nlmixr2_engine()`, `estimate()`, and public result contract.

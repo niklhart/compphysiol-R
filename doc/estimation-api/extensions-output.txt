@@ -1,0 +1,427 @@
+Date: 2026-11-25
+Revision: f38c9e44bb21c077a07d027bcc1e5023bd74566a 
+nlmixr2est 7.1.0 
+rxode2 5.1.7.1 
+
+SOURCE: normal 
+ function(){ini({location <- 3; sigma <- .1; eta ~ .09}); model({individual = location + eta; pred = individual; pred ~ add(sigma)})} 
+
+RUN: normal parse 
+  ntheta neta1 neta2     name lower  est upper   fix label backTransform condition prior  err
+1      1    NA    NA location  -Inf 3.00   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA    sigma     0 0.10   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+3     NA     1     1      eta  -Inf 0.09   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+     theta eta level
+1 location eta    id
+
+RUN: normal focei 
+theta:
+location    sigma 
+     3.0      0.1 
+omega:
+     eta
+eta 0.09
+initial parameter metadata:
+  ntheta neta1 neta2     name lower  est upper   fix label backTransform condition prior  err
+1      1    NA    NA location  -Inf 3.00   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA    sigma     0 0.10   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+3     NA     1     1      eta  -Inf 0.09   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+final parameter metadata:
+  ntheta neta1 neta2     name lower  est upper   fix label backTransform condition prior  err
+1      1    NA    NA location  -Inf 3.00   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA    sigma     0 0.10   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+3     NA     1     1      eta  -Inf 0.09   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+final model identical to input: TRUE 
+PRED/IPRED errors: 0 0 
+marginal median: 3 
+
+RUN: normal focei IMPMAP 
+evaluation preserves theta/omega: TRUE TRUE 
+
+RUN: normal saem 
+theta:
+ location     sigma 
+3.0000000 0.4292831 
+omega:
+      eta
+eta 1e-06
+initial parameter metadata:
+  ntheta neta1 neta2     name lower  est upper   fix label backTransform condition prior  err
+1      1    NA    NA location  -Inf 3.00   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA    sigma     0 0.10   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+3     NA     1     1      eta  -Inf 0.09   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+final parameter metadata:
+  ntheta neta1 neta2     name lower       est upper   fix label backTransform condition prior  err
+1      1    NA    NA location  -Inf 3.0000000   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA    sigma     0 0.4292831   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+3     NA     1     1      eta  -Inf 0.0000010   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+final model identical to input: TRUE 
+PRED/IPRED errors: 0 0 
+marginal median: 3 
+
+RUN: normal saem IMPMAP 
+evaluation preserves theta/omega: TRUE TRUE 
+
+SOURCE: lognormal 
+ function(){ini({location <- 1.0986122886681098; sigma <- .1; eta ~ .09}); model({individual = exp(location + eta); pred = individual; pred ~ add(sigma)})} 
+
+RUN: lognormal parse 
+  ntheta neta1 neta2     name lower      est upper   fix label backTransform condition prior  err
+1      1    NA    NA location  -Inf 1.098612   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA    sigma     0 0.100000   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+3     NA     1     1      eta  -Inf 0.090000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+     theta eta level
+1 location eta    id
+
+RUN: lognormal focei 
+theta:
+location    sigma 
+1.098612 0.100000 
+omega:
+     eta
+eta 0.09
+initial parameter metadata:
+  ntheta neta1 neta2     name lower      est upper   fix label backTransform condition prior  err
+1      1    NA    NA location  -Inf 1.098612   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA    sigma     0 0.100000   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+3     NA     1     1      eta  -Inf 0.090000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+final parameter metadata:
+  ntheta neta1 neta2     name lower      est upper   fix label backTransform condition prior  err
+1      1    NA    NA location  -Inf 1.098612   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA    sigma     0 0.100000   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+3     NA     1     1      eta  -Inf 0.090000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+final model identical to input: TRUE 
+PRED/IPRED errors: 0 0 
+marginal median: 3 
+
+RUN: lognormal focei IMPMAP 
+evaluation preserves theta/omega: TRUE TRUE 
+
+RUN: lognormal saem 
+theta:
+ location     sigma 
+1.3397449 0.1007957 
+omega:
+          eta
+eta 0.1167912
+initial parameter metadata:
+  ntheta neta1 neta2     name lower      est upper   fix label backTransform condition prior  err
+1      1    NA    NA location  -Inf 1.098612   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA    sigma     0 0.100000   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+3     NA     1     1      eta  -Inf 0.090000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+final parameter metadata:
+  ntheta neta1 neta2     name lower       est upper   fix label backTransform condition prior  err
+1      1    NA    NA location  -Inf 1.3397449   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA    sigma     0 0.1007957   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+3     NA     1     1      eta  -Inf 0.1167912   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+final model identical to input: TRUE 
+PRED/IPRED errors: 0 0 
+marginal median: 3.818069 
+
+RUN: lognormal saem IMPMAP 
+evaluation preserves theta/omega: TRUE TRUE 
+
+SOURCE: logitnormal 
+ function(){ini({location <- -0.69314718055994529; sigma <- .1; eta ~ .09}); model({individual = 2 + 3 * expit(location + eta); pred = individual; pred ~ add(sigma)})} 
+
+RUN: logitnormal parse 
+WARNING: some etas defaulted to non-mu referenced, possible parsing error: eta
+as a work-around try putting the mu-referenced expression on a simple line 
+  ntheta neta1 neta2     name lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA location  -Inf -0.6931472   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA    sigma     0  0.1000000   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+3     NA     1     1      eta  -Inf  0.0900000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+[1] eta   theta level
+<0 rows> (or 0-length row.names)
+
+RUN: logitnormal focei 
+WARNING: some etas defaulted to non-mu referenced, possible parsing error: eta
+as a work-around try putting the mu-referenced expression on a simple line 
+WARNING: some etas defaulted to non-mu referenced, possible parsing error: eta
+as a work-around try putting the mu-referenced expression on a simple line 
+theta:
+  location      sigma 
+-0.6931472  0.1000000 
+omega:
+     eta
+eta 0.09
+initial parameter metadata:
+  ntheta neta1 neta2     name lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA location  -Inf -0.6931472   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA    sigma     0  0.1000000   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+3     NA     1     1      eta  -Inf  0.0900000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+final parameter metadata:
+  ntheta neta1 neta2     name lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA location  -Inf -0.6931472   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA    sigma     0  0.1000000   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+3     NA     1     1      eta  -Inf  0.0900000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+final model identical to input: TRUE 
+PRED/IPRED errors: 4.440892e-16 4.440892e-16 
+marginal median: 3 
+
+RUN: logitnormal focei IMPMAP 
+WARNING: some etas defaulted to non-mu referenced, possible parsing error: eta
+as a work-around try putting the mu-referenced expression on a simple line 
+evaluation preserves theta/omega: TRUE TRUE 
+
+RUN: logitnormal saem 
+WARNING: some etas defaulted to non-mu referenced, possible parsing error: eta
+as a work-around try putting the mu-referenced expression on a simple line 
+WARNING: some etas defaulted to non-mu referenced, possible parsing error: eta
+as a work-around try putting the mu-referenced expression on a simple line 
+theta:
+  location      sigma 
+-0.6721486  0.1098636 
+omega:
+          eta
+eta 0.1454979
+initial parameter metadata:
+  ntheta neta1 neta2     name lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA location  -Inf -0.6931472   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA    sigma     0  0.1000000   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+3     NA     1     1      eta  -Inf  0.0900000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+final parameter metadata:
+  ntheta neta1 neta2     name lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA location  -Inf -0.6721486   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA    sigma     0  0.1098636   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+3     NA     1     1      eta  -Inf  0.1454979   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+final model identical to input: TRUE 
+PRED/IPRED errors: 0 0 
+marginal median: 3.014048 
+
+RUN: logitnormal saem IMPMAP 
+WARNING: some etas defaulted to non-mu referenced, possible parsing error: eta
+as a work-around try putting the mu-referenced expression on a simple line 
+evaluation preserves theta/omega: TRUE TRUE 
+
+SOURCE: logitnormal_split 
+ function(){ini({location <- -0.69314718055994529; sigma <- .1; eta ~ .09}); model({latent = location + eta; individual = 2 + 3 * expit(latent); pred = individual; pred ~ add(sigma)})} 
+
+RUN: logitnormal_split parse 
+  ntheta neta1 neta2     name lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA location  -Inf -0.6931472   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA    sigma     0  0.1000000   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+3     NA     1     1      eta  -Inf  0.0900000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+     theta eta level
+1 location eta    id
+
+RUN: logitnormal_split focei 
+theta:
+  location      sigma 
+-0.6931472  0.1000000 
+omega:
+     eta
+eta 0.09
+initial parameter metadata:
+  ntheta neta1 neta2     name lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA location  -Inf -0.6931472   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA    sigma     0  0.1000000   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+3     NA     1     1      eta  -Inf  0.0900000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+final parameter metadata:
+  ntheta neta1 neta2     name lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA location  -Inf -0.6931472   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA    sigma     0  0.1000000   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+3     NA     1     1      eta  -Inf  0.0900000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+final model identical to input: TRUE 
+PRED/IPRED errors: 4.440892e-16 0 
+marginal median: 3 
+
+RUN: logitnormal_split focei IMPMAP 
+evaluation preserves theta/omega: TRUE TRUE 
+
+RUN: logitnormal_split saem 
+theta:
+   location       sigma 
+-0.44739237  0.07451607 
+omega:
+          eta
+eta 0.0780736
+initial parameter metadata:
+  ntheta neta1 neta2     name lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA location  -Inf -0.6931472   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA    sigma     0  0.1000000   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+3     NA     1     1      eta  -Inf  0.0900000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+final parameter metadata:
+  ntheta neta1 neta2     name lower         est upper   fix label backTransform condition prior  err
+1      1    NA    NA location  -Inf -0.44739237   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA    sigma     0  0.07451607   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+3     NA     1     1      eta  -Inf  0.07807360   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+final model identical to input: TRUE 
+PRED/IPRED errors: 0 4.440892e-16 
+marginal median: 3.169943 
+
+RUN: logitnormal_split saem IMPMAP 
+evaluation preserves theta/omega: TRUE TRUE 
+
+BLOCK SOURCE: free 
+ function(){ini({location <- 1.0986122886681098; beta <- -0.6931471805599453; sigma <- .1;eta1 + eta2 ~ c(.25, .05, .04)}); model({intercept = exp(location + eta1); slope = exp(beta + eta2); pred = intercept + slope * TIME; pred ~ add(sigma)})} 
+
+RUN: free parse 
+  ntheta neta1 neta2        name lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA    location  -Inf  1.0986123   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA        beta  -Inf -0.6931472   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3      3    NA    NA       sigma     0  0.1000000   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+4     NA     1     1        eta1  -Inf  0.2500000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+5     NA     2     1 (eta1,eta2)  -Inf  0.0500000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+6     NA     2     2        eta2  -Inf  0.0400000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+
+RUN: free SAEM 
+  location       beta      sigma 
+ 0.9190120 -0.6824286  0.1107397 
+           eta1       eta2
+eta1 0.04045700 0.01937142
+eta2 0.01937142 0.01781075
+          eta1      eta2
+eta1 1.0000000 0.7216446
+eta2 0.7216446 1.0000000
+final parameter metadata:
+  ntheta neta1 neta2        name lower         est upper   fix label backTransform condition prior  err
+1      1    NA    NA    location  -Inf  0.91901204   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA        beta  -Inf -0.68242861   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3      3    NA    NA       sigma     0  0.11073971   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+4     NA     1     1        eta1  -Inf  0.04045700   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+5     NA     2     1 (eta1,eta2)  -Inf  0.01937142   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+6     NA     2     2        eta2  -Inf  0.01781075   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+final model identical to input: TRUE 
+
+RUN: free IMPMAP 
+evaluation preserves theta/omega: TRUE TRUE 
+
+BLOCK SOURCE: fixed_block 
+ function(){ini({location <- 1.0986122886681098; beta <- -0.6931471805599453; sigma <- .1;eta1 + eta2 ~ fix(.25, .05, .04)}); model({intercept = exp(location + eta1); slope = exp(beta + eta2); pred = intercept + slope * TIME; pred ~ add(sigma)})} 
+
+RUN: fixed_block parse 
+  ntheta neta1 neta2        name lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA    location  -Inf  1.0986123   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA        beta  -Inf -0.6931472   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3      3    NA    NA       sigma     0  0.1000000   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+4     NA     1     1        eta1  -Inf  0.2500000   Inf  TRUE  <NA>          <NA>        id  <NA> <NA>
+5     NA     2     1 (eta1,eta2)  -Inf  0.0500000   Inf  TRUE  <NA>          <NA>        id  <NA> <NA>
+6     NA     2     2        eta2  -Inf  0.0400000   Inf  TRUE  <NA>          <NA>        id  <NA> <NA>
+
+RUN: fixed_block SAEM 
+  location       beta      sigma 
+ 0.9136021 -0.6688848  0.1057904 
+     eta1 eta2
+eta1 0.25 0.05
+eta2 0.05 0.04
+     eta1 eta2
+eta1  1.0  0.5
+eta2  0.5  1.0
+final parameter metadata:
+  ntheta neta1 neta2        name lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA    location  -Inf  0.9136021   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA        beta  -Inf -0.6688848   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3      3    NA    NA       sigma     0  0.1057904   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+4     NA     1     1        eta1  -Inf  0.2500000   Inf  TRUE  <NA>          <NA>        id  <NA> <NA>
+5     NA     2     1 (eta1,eta2)  -Inf  0.0500000   Inf  TRUE  <NA>          <NA>        id  <NA> <NA>
+6     NA     2     2        eta2  -Inf  0.0400000   Inf  TRUE  <NA>          <NA>        id  <NA> <NA>
+final model identical to input: TRUE 
+
+RUN: fixed_block IMPMAP 
+evaluation preserves theta/omega: TRUE TRUE 
+
+BLOCK SOURCE: fixed_entry 
+ function(){ini({location <- 1.0986122886681098; beta <- -0.6931471805599453; sigma <- .1;eta1 + eta2 ~ c(.25, fix(.05), .04)}); model({intercept = exp(location + eta1); slope = exp(beta + eta2); pred = intercept + slope * TIME; pred ~ add(sigma)})} 
+
+RUN: fixed_entry parse 
+  ntheta neta1 neta2        name lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA    location  -Inf  1.0986123   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA        beta  -Inf -0.6931472   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3      3    NA    NA       sigma     0  0.1000000   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+4     NA     1     1        eta1  -Inf  0.2500000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+5     NA     2     1 (eta1,eta2)  -Inf  0.0500000   Inf  TRUE  <NA>          <NA>        id  <NA> <NA>
+6     NA     2     2        eta2  -Inf  0.0400000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+
+RUN: fixed_entry SAEM 
+ERROR: chol(): decomposition failed 
+
+BLOCK SOURCE: fixed_diagonal 
+ function(){ini({location <- 1.0986122886681098; beta <- -0.6931471805599453; sigma <- .1;eta1 + eta2 ~ c(fix(.25), .05, fix(.04))}); model({intercept = exp(location + eta1); slope = exp(beta + eta2); pred = intercept + slope * TIME; pred ~ add(sigma)})} 
+
+RUN: fixed_diagonal parse 
+  ntheta neta1 neta2        name lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA    location  -Inf  1.0986123   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA        beta  -Inf -0.6931472   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3      3    NA    NA       sigma     0  0.1000000   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+4     NA     1     1        eta1  -Inf  0.2500000   Inf  TRUE  <NA>          <NA>        id  <NA> <NA>
+5     NA     2     1 (eta1,eta2)  -Inf  0.0500000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+6     NA     2     2        eta2  -Inf  0.0400000   Inf  TRUE  <NA>          <NA>        id  <NA> <NA>
+
+RUN: fixed_diagonal SAEM 
+  location       beta      sigma 
+ 0.9088443 -0.6540145  0.1078248 
+          eta1      eta2
+eta1 0.2500000 0.0136575
+eta2 0.0136575 0.0400000
+         eta1     eta2
+eta1 1.000000 0.136575
+eta2 0.136575 1.000000
+final parameter metadata:
+  ntheta neta1 neta2        name lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA    location  -Inf  0.9088443   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA        beta  -Inf -0.6540145   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3      3    NA    NA       sigma     0  0.1078248   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+4     NA     1     1        eta1  -Inf  0.2500000   Inf  TRUE  <NA>          <NA>        id  <NA> <NA>
+5     NA     2     1 (eta1,eta2)  -Inf  0.0136575   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+6     NA     2     2        eta2  -Inf  0.0400000   Inf  TRUE  <NA>          <NA>        id  <NA> <NA>
+final model identical to input: TRUE 
+
+RUN: fixed_diagonal IMPMAP 
+evaluation preserves theta/omega: TRUE TRUE 
+
+BLOCK SOURCE: zero_pattern 
+ function(){ini({location <- 1.0986122886681098; beta <- -0.6931471805599453; sigma <- .1;gamma <- -2.302585092994046;eta1 + eta2 + eta3 ~ c(.25,.05,.04,0,.01,.09)}); model({intercept = exp(location + eta1); slope = exp(beta + eta2); quadratic = exp(gamma + eta3); pred = intercept + slope * TIME + quadratic * TIME * TIME; pred ~ add(sigma)})} 
+
+RUN: zero_pattern parse 
+   ntheta neta1 neta2        name lower        est upper   fix label backTransform condition prior  err
+1       1    NA    NA    location  -Inf  1.0986123   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2       2    NA    NA        beta  -Inf -0.6931472   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3       3    NA    NA       sigma     0  0.1000000   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+4       4    NA    NA       gamma  -Inf -2.3025851   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+5      NA     1     1        eta3  -Inf  0.0900000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+6      NA     2     1 (eta3,eta2)  -Inf  0.0100000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+7      NA     2     2        eta2  -Inf  0.0400000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+8      NA     3     1 (eta3,eta1)  -Inf  0.0000000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+9      NA     3     2 (eta2,eta1)  -Inf  0.0500000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+10     NA     3     3        eta1  -Inf  0.2500000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+
+RUN: zero_pattern SAEM 
+ location      beta     sigma     gamma 
+ 0.933428 -1.038709  0.121644 -2.634215 
+            eta1          eta2          eta3
+eta1 0.041581954  0.0075486065  0.0431771315
+eta2 0.007548606  0.0044672344 -0.0007736438
+eta3 0.043177131 -0.0007736438  0.0893590217
+          eta1        eta2        eta3
+eta1 1.0000000  0.55385358  0.70832429
+eta2 0.5538536  1.00000000 -0.03872153
+eta3 0.7083243 -0.03872153  1.00000000
+final parameter metadata:
+   ntheta neta1 neta2        name lower           est upper   fix label backTransform condition prior  err
+1       1    NA    NA    location  -Inf  0.9334279880   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2       2    NA    NA        beta  -Inf -1.0387090211   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3       3    NA    NA       sigma     0  0.1216440402   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+4       4    NA    NA       gamma  -Inf -2.6342147937   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+5      NA     1     1        eta1  -Inf  0.0415819545   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+6      NA     2     1 (eta1,eta2)  -Inf  0.0075486065   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+7      NA     2     2        eta2  -Inf  0.0044672344   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+8      NA     3     1 (eta1,eta3)  -Inf  0.0431771315   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+9      NA     3     2 (eta2,eta3)  -Inf -0.0007736438   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+10     NA     3     3        eta3  -Inf  0.0893590217   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+final model identical to input: TRUE 
+
+RUN: zero_pattern IMPMAP 
+evaluation preserves theta/omega: TRUE TRUE 
+
+BLOCK SOURCE: singular 
+ function(){ini({location <- 1.0986122886681098; beta <- -0.6931471805599453; sigma <- .1;eta1 + eta2 ~ c(.25,.1,.04)}); model({intercept = exp(location + eta1); slope = exp(beta + eta2); pred = intercept + slope * TIME; pred ~ add(sigma)})} 
+
+RUN: singular parse 
+  ntheta neta1 neta2        name lower        est upper   fix label backTransform condition prior  err
+1      1    NA    NA    location  -Inf  1.0986123   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2      2    NA    NA        beta  -Inf -0.6931472   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3      3    NA    NA       sigma     0  0.1000000   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+4     NA     1     1        eta1  -Inf  0.2500000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+5     NA     2     1 (eta1,eta2)  -Inf  0.1000000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+6     NA     2     2        eta2  -Inf  0.0400000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>

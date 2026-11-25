@@ -1,0 +1,48 @@
+Date: 2026-11-25
+Revision: f38c9e44bb21c077a07d027bcc1e5023bd74566a 
+nlmixr2est 7.1.0 
+rxode2 5.1.7.1 
+
+BLOCK SOURCE: zero_fixed 
+ function(){ini({location <- 1.0986122886681098; beta <- -0.6931471805599453; sigma <- .1;gamma <- -2.302585092994046;eta1 + eta2 + eta3 ~ c(.25,.05,.04,fix(0),.01,.09)}); model({intercept = exp(location + eta1); slope = exp(beta + eta2); quadratic = exp(gamma + eta3); pred = intercept + slope * TIME + quadratic * TIME * TIME; pred ~ add(sigma)})} 
+
+RUN: zero_fixed parse 
+   ntheta neta1 neta2        name lower        est upper   fix label backTransform condition prior  err
+1       1    NA    NA    location  -Inf  1.0986123   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2       2    NA    NA        beta  -Inf -0.6931472   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3       3    NA    NA       sigma     0  0.1000000   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+4       4    NA    NA       gamma  -Inf -2.3025851   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+5      NA     1     1        eta3  -Inf  0.0900000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+6      NA     2     1 (eta3,eta2)  -Inf  0.0100000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+7      NA     2     2        eta2  -Inf  0.0400000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+8      NA     3     1 (eta3,eta1)  -Inf  0.0000000   Inf  TRUE  <NA>          <NA>        id  <NA> <NA>
+9      NA     3     2 (eta2,eta1)  -Inf  0.0500000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+10     NA     3     3        eta1  -Inf  0.2500000   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+
+RUN: zero_fixed SAEM 
+  location       beta      sigma      gamma 
+ 0.9344222 -1.0585205  0.1238046 -2.5649831 
+             eta1        eta2         eta3
+eta1 4.296708e-02 0.010352544 3.717297e-12
+eta2 1.035254e-02 0.004915496 7.764130e-03
+eta3 3.717297e-12 0.007764130 3.216044e-02
+             eta1      eta2         eta3
+eta1 1.000000e+00 0.7123534 9.999962e-11
+eta2 7.123534e-01 1.0000000 6.175159e-01
+eta3 9.999962e-11 0.6175159 1.000000e+00
+final parameter metadata:
+   ntheta neta1 neta2        name lower           est upper   fix label backTransform condition prior  err
+1       1    NA    NA    location  -Inf  9.344222e-01   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+2       2    NA    NA        beta  -Inf -1.058521e+00   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+3       3    NA    NA       sigma     0  1.238046e-01   Inf FALSE  <NA>          <NA>      pred  <NA>  add
+4       4    NA    NA       gamma  -Inf -2.564983e+00   Inf FALSE  <NA>          <NA>      <NA>  <NA> <NA>
+5      NA     1     1        eta1  -Inf  4.296708e-02   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+6      NA     2     1 (eta1,eta2)  -Inf  1.035254e-02   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+7      NA     2     2        eta2  -Inf  4.915496e-03   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+8      NA     3     1 (eta1,eta3)  -Inf  3.717297e-12   Inf  TRUE  <NA>          <NA>        id  <NA> <NA>
+9      NA     3     2 (eta2,eta3)  -Inf  7.764130e-03   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+10     NA     3     3        eta3  -Inf  3.216044e-02   Inf FALSE  <NA>          <NA>        id  <NA> <NA>
+final model identical to input: TRUE 
+
+RUN: zero_fixed IMPMAP 
+evaluation preserves theta/omega: TRUE TRUE 
