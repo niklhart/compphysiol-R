@@ -165,6 +165,7 @@ scripts and reports are indexed in [findings.md](findings.md).
    unsupported constraints; incompatible edits; missing likelihood/covariance;
    required predictions; coordinate/uncertainty/unit restoration; and independent
    likelihood normalization, including mixed endpoints and missing responses.
+   Follow the independent-reference and runtime requirements below.
 7. Document the wrapper and native workflow examples, the quadrature and SAEM
    capability limits, and fair algorithm comparison. Update the glossary to
    distinguish estimation from likelihood evaluation and describe the export/
@@ -175,6 +176,47 @@ tolerances remain implementation choices. Cross-version persistence and
 arbitrary native model rewrites are not initial requirements. Existing research
 limitations must be reflected in capability checks rather than silently
 expanding the supported scope.
+
+## Likelihood reference tests and test runtime
+
+Compare calculated public likelihoods against independently established values,
+not only native `logLik()`, another toolbox execution path, or saved native
+output. Use the investigation's analytic Gaussian random-intercept marginal
+likelihoods, analytic lognormal cases with response Jacobians, and independent
+one-dimensional integration where no analytic reference is available. Reference
+calculations must not call the production likelihood/normalization helpers.
+
+- Evaluate references at the same population parameters as the native result;
+  distinguish normalization errors from estimation/convergence differences.
+- Cover additive normal, proportional normal, lognormal, and mixed endpoints,
+  actual contributing-response counts with missing responses/events, and unit
+  conversion. Explicitly verify normal constants, lognormal response Jacobians,
+  and the final public-unit likelihood convention.
+- Use exact or suitably tight checks for analytically exact cases. Use fixed
+  seeds and justified numerical/Monte Carlo tolerances for approximate
+  integration; do not require FOCEi to equal an exact marginal likelihood in
+  cases where its approximation is not exact. Include a small case where it is
+  exact so its normalization can be checked independently.
+
+Keep the routine suite fast. Conversion/compilation to nlmixr2 is expensive:
+
+- Use lazily initialized, test-run-scoped fixtures to reuse an already converted
+  model/export across tests with the same scientific structure and units.
+  Reuse fitted/evaluated results where independent assertions do not require a
+  new fit. Avoid conversion or fitting inside each assertion/test by default.
+- Copy mutable native fits before objective selection, lazy likelihood access,
+  or deliberate corruption. Shared setup must not create test-order dependence
+  or leak state between tests. Do not cache fits across package versions or
+  unrelated test runs.
+- Exercise validation, mapping, and ambiguity rules with lightweight fixtures
+  where possible. Keep a small set of real backend integration tests so mocks
+  do not replace execution and independent likelihood checks.
+- Prefer small analytic models, evaluation-only steps at fixed parameters, and
+  short seeded fits where fitting itself is under test. Do not repeat the full
+  exploratory algorithm/grid matrix in routine unit tests.
+- Measure focused test runtime and eliminate redundant conversion/compilation
+  before broad verification. Any additional expensive numerical study belongs
+  in a reproducible exploration script rather than every routine test run.
 
 ## Existing implementation anchors
 
