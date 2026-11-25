@@ -219,6 +219,37 @@ Keep the routine suite fast. Conversion/compilation to nlmixr2 is expensive:
   before broad verification. Any additional expensive numerical study belongs
   in a reproducible exploration script rather than every routine test run.
 
+## Planned extensions
+
+### Broader SAEM random-effect distributions
+
+The current lognormal-only SAEM restriction describes the initial validated
+integration scope, not a fundamental limitation of SAEM. Extend support in a
+follow-up after verifying native translation and numerical behavior:
+
+- Normal individual variability: use the existing additive normal translation,
+  `parameter = location + eta`, with normal latent eta. Investigate SAEM's
+  handling of location parameters and validate fitted coordinates, predictions,
+  uncertainty mappings, and explicit likelihood evaluation before relaxing the
+  capability check.
+- Logit-normal individual variability: extend the nlmixr2 translator, which
+  currently rejects this family for all methods. Transform a normal latent
+  variable into the declared interval, preserving the public median, sdlogit,
+  bounds, units, and any estimated-parameter coordinate mappings. Validate the
+  translation under FOCEi and SAEM rather than treating it as a SAEM-only change.
+
+Bounds on individual realizations in a logit-normal distribution belong to the
+statistical model. They are distinct from native optimizer bounds on estimated
+parameters. The observed finite-parameter-bound problems do not establish that
+logit-normal random effects are unsupported. Keep these capability checks and
+their error messages separate.
+
+For each extension, add small native execution and import/export tests plus
+independent likelihood references where feasible. Reuse converted fixtures and
+preserve the agreed likelihood-selection policy. Until validation passes,
+retain explicit restrictions and describe lognormal variability as the initial
+validated scope in documentation.
+
 ## Existing implementation anchors
 
 - `R/Estimation.R`: `nlmixr2_engine()`, `estimate()`, and public result contract.
@@ -233,7 +264,7 @@ Keep the routine suite fast. Conversion/compilation to nlmixr2 is expensive:
 - `vignettes/glossary.qmd`: conceptual source of truth, particularly estimation
   problems, statistical models, units, representations, and engines.
 
-Current restrictions include FOCEi-only configuration and translator limitations
+Current restrictions include the validated SAEM scope and translator limitations
 such as diagonal individual variability and unsupported combined residual SD.
 Distinguish translator support from algorithm-specific support when extending
 the implementation.
