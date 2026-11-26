@@ -1,8 +1,7 @@
-# compphysiol (development version)
-
-* Unified transport and reaction shorthand under `scheme`; reaction `formula` is deprecated. Transports accept compartment schemes with a separate molecule or molecule-qualified compartments.
+# compphysiol 0.5.5
 
 * Added generalized estimation API for nlmixr2, supporting SAEM, likelihood evaluation methods, and correlated random effects.
+* Unified transport and reaction shorthand under `scheme`; reaction `formula` is deprecated. Transports accept compartment schemes with a separate molecule or molecule-qualified compartments.
 
 # compphysiol 0.5.4
 
