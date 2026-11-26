@@ -24,7 +24,7 @@
         if (!all(localized[real_sides])) {
             stop("Both transport scheme compartments must specify a molecule.", call. = FALSE)
         }
-        molecules <- unique(na.omit(c(input$molec, output$molec)))
+        molecules <- unique(stats::na.omit(c(input$molec, output$molec)))
         if (length(molecules) != 1L) {
             stop("Transport schemes must preserve molecular identity.", call. = FALSE)
         }
