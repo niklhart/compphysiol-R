@@ -112,7 +112,7 @@ test_that("amount-rate reactions require amount-convertible participant states",
 test_that("ProcessModel simplifies elementary cross-compartment amount reaction rates", {
     model <- compartment_model() |>
         add_reaction(
-            formula = "L[plasma] + R[membrane] -> LR[membrane]",
+            scheme = "L[plasma] + R[membrane] -> LR[membrane]",
             scale_cmt = "membrane",
             const = "kon"
         ) |>

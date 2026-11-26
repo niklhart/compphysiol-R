@@ -1,3 +1,44 @@
+.parse_transport_scheme <- function(scheme, molec) {
+    if (!is.character(scheme) || length(scheme) != 1L || is.na(scheme) ||
+        lengths(regmatches(scheme, gregexpr("->", scheme, fixed = TRUE))) != 1L) {
+        stop("Transport scheme must be a character scalar containing exactly one '->'.", call. = FALSE)
+    }
+    sides <- trimws(strsplit(paste0(scheme, " "), "->", fixed = TRUE)[[1]])
+    parse_side <- function(x) {
+        if (x == "NULL") return(list(cmt = NA_character_, molec = NA_character_))
+        parts <- regmatches(x, regexec("^([[:alnum:]_.]+)(\\[([[:alnum:]_.]+)\\])?$", x))[[1]]
+        if (length(parts) == 0 || !.is_syntactic_model_name(parts[[2]])) {
+            stop("Transport scheme sides must be 'cmt', 'cmt[molec]', or 'NULL'.", call. = FALSE)
+        }
+        m <- if (length(parts) >= 4 && nzchar(parts[[4]])) parts[[4]] else NA_character_
+        if (!is.na(m) && !.is_syntactic_model_name(m)) {
+            stop("Transport scheme molecule names must be syntactic R names.", call. = FALSE)
+        }
+        list(cmt = parts[[2]], molec = m)
+    }
+    input <- parse_side(sides[[1]])
+    output <- parse_side(sides[[2]])
+    localized <- !is.na(c(input$molec, output$molec))
+    real_sides <- !is.na(c(input$cmt, output$cmt))
+    if (any(localized)) {
+        if (!all(localized[real_sides])) {
+            stop("Both transport scheme compartments must specify a molecule.", call. = FALSE)
+        }
+        molecules <- unique(na.omit(c(input$molec, output$molec)))
+        if (length(molecules) != 1L) {
+            stop("Transport schemes must preserve molecular identity.", call. = FALSE)
+        }
+        if (!missing(molec)) {
+            stop("Do not supply 'molec' with molecule-qualified transport schemes.", call. = FALSE)
+        }
+        molec <- molecules[[1]]
+    } else if (missing(molec) || !is.character(molec) ||
+               length(molec) == 0 || anyNA(molec) || any(!nzchar(molec))) {
+        stop("Unqualified transport schemes require a 'molec' argument.", call. = FALSE)
+    }
+    list(from = input$cmt, to = output$cmt, molec = molec)
+}
+
 #' Create a `compphysiol_transports` object
 #'
 #' compphysiol_transports represent mass/amount-preserving transports of molecules between two compartments in a compartment model.
@@ -10,6 +51,9 @@
 #' `k_ven_bon` for a transport from the venous blood (ven) to bone (bon). This allows for vector definition of multiple 
 #' transports with different compartments and/or molecules involved.
 #' 
+#' @param scheme Character transport scheme, either `"A -> B"` with `molec`,
+#'   or `"A[drug] -> B[drug]"`. Use `NULL` for a source or sink.
+#'   Mutually exclusive with `from` and `to`.
 #' @param from The name of the source compartment(s) (character vector or NULL for source compartments)
 #' @param to The name of the destination compartment(s) (character vector or NULL for sink compartments)
 #' @param molec The name of the molecule(s) being transferred (character vector, optional, default: all molecules)
@@ -26,6 +70,9 @@
 #'   Only applicable with `const`.
 #' @return A `compphysiol_transports` object
 #' @examples
+#' # Scheme syntax
+#' transports(scheme = "A -> B", molec = "drug", const = "k1")
+#' transports(scheme = "A[drug] -> B[drug]", const = "k1")
 #' # Linear transport
 #' f1 <- transports(from = "A", to = "B", const = "k1")   # rate will be k1 * a[A]
 #' # Concentration-based linear transport: rate will be Q * c[drug,A]
@@ -38,7 +85,17 @@
 #'   [modify_compartment_model] for the complete component map.
 #' @export
 transports <- function(from, to, molec = NA_character_, ..., rate = NULL, const = NULL,
-                       const_basis = c("amount", "concentration")) {
+                       const_basis = c("amount", "concentration"), scheme = NULL) {
+    if (!is.null(scheme)) {
+        if (!missing(from) || !missing(to)) {
+            stop("Argument 'scheme' cannot be used with 'from' or 'to'.", call. = FALSE)
+        }
+        parsed <- if (missing(molec)) .parse_transport_scheme(scheme) else
+            .parse_transport_scheme(scheme, molec)
+        from <- parsed$from
+        to <- parsed$to
+        molec <- parsed$molec
+    }
     if (!is.null(rate) && !missing(const_basis)) {
         stop("Argument 'const_basis' can only be used with 'const'.", call. = FALSE)
     }
@@ -220,7 +277,8 @@ add_transport <- function(
     molec = NA_character_,
     rate = NULL,
     const = NULL,
-    const_basis = c("amount", "concentration")
+    const_basis = c("amount", "concentration"),
+    scheme = NULL
 ) {
     UseMethod("add_transport")
 }
@@ -236,7 +294,8 @@ add_transport.compphysiol_compartment_model <- function(
     molec = NA_character_,
     rate = NULL,
     const = NULL,
-    const_basis = c("amount", "concentration")
+    const_basis = c("amount", "concentration"),
+    scheme = NULL
 ) {
     .check_class(model, "compphysiol_compartment_model")
 

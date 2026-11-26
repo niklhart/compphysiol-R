@@ -147,7 +147,7 @@ test_that("OdeModel pushes negation through reaction-rate products", {
         add_molecule(name = "A", cmt = "cmt1", type = "amount") |>
         add_molecule(name = "B", cmt = "cmt2", type = "amount") |>
         add_reaction(
-            formula = "A[cmt1] + B[cmt2] -> A[cmt1]",
+            scheme = "A[cmt1] + B[cmt2] -> A[cmt1]",
             const = "k",
             scale_cmt = "cmt1"
         )

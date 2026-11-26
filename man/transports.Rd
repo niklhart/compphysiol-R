@@ -11,7 +11,8 @@ transports(
   ...,
   rate = NULL,
   const = NULL,
-  const_basis = c("amount", "concentration")
+  const_basis = c("amount", "concentration"),
+  scheme = NULL
 )
 }
 \arguments{
@@ -35,6 +36,10 @@ Amount-based constants have units 1/time; concentration-based constants have
 units compartment size/time (usually volume/time). Concentration-based
 transports require a source compartment size when preparing the model.
 Only applicable with \code{const}.}
+
+\item{scheme}{Character transport scheme, either \code{"A -> B"} with \code{molec},
+or \code{"A[drug] -> B[drug]"}. Use \code{NULL} for a source or sink.
+Mutually exclusive with \code{from} and \code{to}.}
 }
 \value{
 A \code{compphysiol_transports} object
@@ -52,6 +57,9 @@ the source and destination compartment names and molecule names, respectively, e
 transports with different compartments and/or molecules involved.
 }
 \examples{
+# Scheme syntax
+transports(scheme = "A -> B", molec = "drug", const = "k1")
+transports(scheme = "A[drug] -> B[drug]", const = "k1")
 # Linear transport
 f1 <- transports(from = "A", to = "B", const = "k1")   # rate will be k1 * a[A]
 # Concentration-based linear transport: rate will be Q * c[drug,A]

@@ -55,7 +55,7 @@ test_that("wire preserves compound reaction constant expressions", {
     model <- compartment_model() |>
         add_compartment(name = "body", volume = 1) |>
         add_molecule(name = "TU", type = "amount", initial = "TU0") |>
-        add_reaction(formula = "TU -> NULL", const = "1 - eta_RTI") |>
+        add_reaction(scheme = "TU -> NULL", const = "1 - eta_RTI") |>
         wire()
 
     expect_equal(model$reactions$const[[1]], quote(1 - eta_RTI))

@@ -1,5 +1,7 @@
 # compphysiol (development version)
 
+* Unified transport and reaction shorthand under `scheme`; reaction `formula` is deprecated. Transports accept compartment schemes with a separate molecule or molecule-qualified compartments.
+
 * Added generalized estimation API for nlmixr2, supporting SAEM, likelihood evaluation methods, and correlated random effects.
 
 # compphysiol 0.5.4
@@ -123,7 +125,7 @@
 # compphysiol 0.3.3
 
 * added cross-compartment reactions (e.g., receptor-ligand interaction) 
-* introduced a reaction minilanguage (`formula = "A+B -> C"`), complementing the programmatic specification via `input`/`output`.
+* introduced a reaction minilanguage (`scheme = "A+B -> C"`), complementing the programmatic specification via `input`/`output`.
 
 # compphysiol 0.3.2
 

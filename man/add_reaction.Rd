@@ -14,6 +14,7 @@ add_reaction(
   cmt = NA_character_,
   scale_cmt = NA_character_,
   rate_type = NULL,
+  scheme = NULL,
   formula = NULL,
   rate = NULL,
   const = NULL
@@ -28,6 +29,7 @@ add_reaction(
   cmt = NA_character_,
   scale_cmt = NA_character_,
   rate_type = NULL,
+  scheme = NULL,
   formula = NULL,
   rate = NULL,
   const = NULL
@@ -59,9 +61,11 @@ to represent as an amount. Inferred where possible.}
 \code{"amount"}. Required with \code{rate}; optional with \code{const}, where it defaults
 to concentration for one involved compartment and amount for several.}
 
-\item{formula}{Character scalar or vector with reaction formulas such as \code{"A + B -> C"} or
+\item{scheme}{Character scalar or vector with reaction schemes such as \code{"A + B -> C"} or
 \code{"L[plasma] + R[membrane] -> LR[membrane]"}. If \code{output} is missing and \code{input}
-contains \verb{->}, \code{input} is interpreted as \code{formula}.}
+contains \verb{->}, \code{input} is interpreted as \code{scheme}.}
+
+\item{formula}{Deprecated alias for \code{scheme}.}
 
 \item{rate}{Character string representing an explicit reaction rate. Its
 representation is declared by \code{rate_type}.
@@ -92,12 +96,12 @@ e.g., \verb{k_\{cmt\}} will become \code{k_cytoplasm} for reactions in the cytop
 Replacement is only applied if the \code{cmt} argument is provided (otherwise, parameter names would change dynamically as compartments change).
 
 compphysiol_reactions can be specified either by separate \code{input} and \code{output}
-arguments or by a character reaction formula. The formula form is an
+arguments or by a character reaction scheme. The scheme form is an
 interactive shorthand for the same participant representation, for example
 \code{reactions("A + B -> C", cmt = "cyt", const = "k")}. Participants may be
-localized directly in the formula with \code{molec[cmt]}, as in
+localized directly in the scheme with \code{molec[cmt]}, as in
 \code{reactions("L[plasma] + R[membrane] -> LR[membrane]", scale_cmt = "membrane", const = "kon")}.
-If a formula participant has no compartment, \code{cmt} fills it when supplied;
+If a scheme participant has no compartment, \code{cmt} fills it when supplied;
 otherwise the participant keeps the same wildcard compartment meaning as the
 separate \code{input} and \code{output} character shorthand.
 

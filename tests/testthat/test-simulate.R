@@ -3,7 +3,7 @@ test_that("unit-aware output grids preserve observable time mappings", {
         add_compartment(name = "solution", volume = NA_real_) |>
         add_molecule(name = "X", cmt = "solution", initial = 1 [mol/L], type = "concentration") |>
         add_parameter(k = 0.001 [1/min]) |>
-        add_reaction(formula = "X -> NULL", cmt = "solution", const = "k") |>
+        add_reaction(scheme = "X -> NULL", cmt = "solution", const = "k") |>
         add_observable(X = c[X, solution])
 
     grids <- list(

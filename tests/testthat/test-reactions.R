@@ -165,14 +165,14 @@ test_that("Cross-compartment const reactions require an unambiguous scale", {
 })
 
 test_that("rate_type does not resolve an ambiguous mass-action scale", {
-    formula <- "R[mem] + L[pla] -> NULL"
+    scheme <- "R[mem] + L[pla] -> NULL"
 
     expect_error(
-        reactions(formula = formula, const = "k", rate_type = "amount"),
+        reactions(scheme = scheme, const = "k", rate_type = "amount"),
         "scale_cmt.*reactants occur in multiple compartments"
     )
     expect_error(
-        reactions(formula = formula, const = "k", rate_type = "concentration"),
+        reactions(scheme = scheme, const = "k", rate_type = "concentration"),
         "scale_cmt.*reactants occur in multiple compartments"
     )
 })
@@ -308,7 +308,7 @@ test_that("Reaction printing renders unit-bearing constants", {
     expect_output(print(r), "rate = 1 \\[1/h\\] \\* c\\[A, test\\]")
 })
 
-test_that("Character reaction formulas support positional input and cmt localization", {
+test_that("Character reaction schemes support positional input and cmt localization", {
     r <- reactions("A + B -> C", cmt = "cyt", const = "k")
 
     expect_reaction_participants(r, "input", c("A", "B"), c("cyt", "cyt"))
@@ -318,7 +318,7 @@ test_that("Character reaction formulas support positional input and cmt localiza
     expect_equal(r$rate[[1]], quote(k * c[A, cyt] * c[B, cyt]))
 })
 
-test_that("Character reaction formulas support localized cross-compartment participants", {
+test_that("Character reaction schemes support localized cross-compartment participants", {
     r <- reactions(
         "L[plasma] + R[membrane] -> LR[membrane]",
         scale_cmt = "membrane",
@@ -336,7 +336,7 @@ test_that("Character reaction formulas support localized cross-compartment parti
     expect_equal(r$rate[[1]], quote(kon * c[L, plasma] * a[R, membrane]))
 })
 
-test_that("Character reaction formulas fill unlocalized participants from cmt", {
+test_that("Character reaction schemes fill unlocalized participants from cmt", {
     r <- reactions("A + B[membrane] -> C", cmt = "cyt", scale_cmt = "cyt", const = "k")
 
     expect_reaction_participants(r, "input", c("A", "B"), c("cyt", "membrane"))
@@ -345,7 +345,7 @@ test_that("Character reaction formulas fill unlocalized participants from cmt", 
     expect_equal(r$rate[[1]], quote(k * a[A, cyt] * c[B, membrane]))
 })
 
-test_that("Character reaction formulas can be vectorized over formulas", {
+test_that("Character reaction schemes can be vectorized over schemes", {
     r <- reactions(c("A -> B", "B -> C"), const = c("k1", "k2"))
 
     expect_equal(length(r), 2)
@@ -357,7 +357,7 @@ test_that("Character reaction formulas can be vectorized over formulas", {
     expect_equal(r$rate[[2]], quote(k2 * c[B]))
 })
 
-test_that("Character reaction formulas can be vectorized over cmt", {
+test_that("Character reaction schemes can be vectorized over cmt", {
     r <- reactions("A -> B", cmt = c("cyt", "nuc"), const = "k{cmt}")
 
     expect_equal(length(r), 2)
@@ -369,7 +369,7 @@ test_that("Character reaction formulas can be vectorized over cmt", {
     expect_equal(r$rate[[2]], quote(knuc * c[A, nuc]))
 })
 
-test_that("Character reaction formulas normalize repeated participants", {
+test_that("Character reaction schemes normalize repeated participants", {
     r <- reactions("A[cyt] + A[cyt] -> B[cyt]", const = "k")
 
     expect_reaction_participants(r, "input", "A", "cyt", stoich = 2)
@@ -377,7 +377,7 @@ test_that("Character reaction formulas normalize repeated participants", {
     expect_equal(r$rate[[1]], quote(k * c[A, cyt] * c[A, cyt]))
 })
 
-test_that("Character reaction formulas support source and sink reactions", {
+test_that("Character reaction schemes support source and sink reactions", {
     synth <- reactions("NULL -> A[cyt]", const = "ksyn")
     deg <- reactions("A[cyt] -> NULL", const = "kdeg")
 
@@ -390,13 +390,13 @@ test_that("Character reaction formulas support source and sink reactions", {
     expect_equal(deg$rate[[1]], quote(kdeg * c[A, cyt]))
 })
 
-test_that("Character reaction formulas reject malformed formulas", {
+test_that("Character reaction schemes reject malformed schemes", {
     expect_error(
         reactions("A + -> C", const = "k"),
         "empty participant"
     )
     expect_error(
-        reactions(formula = "A => C", const = "k"),
+        reactions(scheme = "A => C", const = "k"),
         "->"
     )
     expect_error(
@@ -405,8 +405,8 @@ test_that("Character reaction formulas reject malformed formulas", {
     )
 })
 
-test_that("NSE reaction formulas are captured without assignment side effects", {
-    skip("NSE reaction formulas are not implemented yet.")
+test_that("NSE reaction schemes are captured without assignment side effects", {
+    skip("NSE reaction schemes are not implemented yet.")
 
     A <- 2
     B <- 3
@@ -419,8 +419,8 @@ test_that("NSE reaction formulas are captured without assignment side effects", 
     expect_equal(r$rate[[1]], quote(k * c[A]))
 })
 
-test_that("NSE reaction formulas support compartment-localized participants", {
-    skip("NSE reaction formulas are not implemented yet.")
+test_that("NSE reaction schemes support compartment-localized participants", {
+    skip("NSE reaction schemes are not implemented yet.")
 
     r <- reactions(
         L[plasma] + R[membrane] -> LR[membrane],
@@ -439,8 +439,8 @@ test_that("NSE reaction formulas support compartment-localized participants", {
     expect_equal(r$rate[[1]], quote(kon * c[L, plasma] * c[R, membrane]))
 })
 
-test_that("NSE reaction formulas use cmt to localize unqualified participants", {
-    skip("NSE reaction formulas are not implemented yet.")
+test_that("NSE reaction schemes use cmt to localize unqualified participants", {
+    skip("NSE reaction schemes are not implemented yet.")
 
     r <- reactions(A + B -> C, cmt = "cyt", const = "k")
 
@@ -450,8 +450,8 @@ test_that("NSE reaction formulas use cmt to localize unqualified participants", 
     expect_equal(r$rate[[1]], quote(k * c[A, cyt] * c[B, cyt]))
 })
 
-test_that("NSE reaction formulas can be vectorized over cmt", {
-    skip("NSE reaction formulas are not implemented yet.")
+test_that("NSE reaction schemes can be vectorized over cmt", {
+    skip("NSE reaction schemes are not implemented yet.")
 
     r <- reactions(A -> B, cmt = c("cyt", "nuc"), const = "k{cmt}")
 
@@ -464,8 +464,8 @@ test_that("NSE reaction formulas can be vectorized over cmt", {
     expect_equal(r$rate[[2]], quote(knuc * c[A, nuc]))
 })
 
-test_that("NSE reaction formulas normalize repeated participants", {
-    skip("NSE reaction formulas are not implemented yet.")
+test_that("NSE reaction schemes normalize repeated participants", {
+    skip("NSE reaction schemes are not implemented yet.")
 
     r <- reactions(A[cyt] + A[cyt] -> B[cyt], const = "k")
 
@@ -474,8 +474,8 @@ test_that("NSE reaction formulas normalize repeated participants", {
     expect_equal(r$rate[[1]], quote(k * c[A, cyt] * c[A, cyt]))
 })
 
-test_that("NSE reaction formulas support source and sink reactions", {
-    skip("NSE reaction formulas are not implemented yet.")
+test_that("NSE reaction schemes support source and sink reactions", {
+    skip("NSE reaction schemes are not implemented yet.")
 
     synth <- reactions(NULL -> A[cyt], const = "ksyn")
     deg <- reactions(A[cyt] -> NULL, const = "kdeg")
@@ -489,8 +489,8 @@ test_that("NSE reaction formulas support source and sink reactions", {
     expect_equal(deg$rate[[1]], quote(kdeg * c[A, cyt]))
 })
 
-test_that("NSE reaction formulas reject multiple formulas in one call", {
-    skip("NSE reaction formulas are not implemented yet.")
+test_that("NSE reaction schemes reject multiple schemes in one call", {
+    skip("NSE reaction schemes are not implemented yet.")
 
     expect_error(
         reactions(c(A -> B, B -> C), const = c("k1", "k2")),
@@ -498,8 +498,8 @@ test_that("NSE reaction formulas reject multiple formulas in one call", {
     )
 })
 
-test_that("NSE reaction formulas reject non-syntactic participant names", {
-    skip("NSE reaction formulas are not implemented yet.")
+test_that("NSE reaction schemes reject non-syntactic participant names", {
+    skip("NSE reaction schemes are not implemented yet.")
 
     expect_error(
         reactions(`IL-6`[plasma] -> IL6[plasma], const = "k"),
@@ -593,7 +593,7 @@ test_that("Reactions can be added to compartment models", {
     model <- compartment_model() |>
         add_reaction(input = "A", output = "B", const = "k1") |>
         add_reaction(input = "B", output = "C", rate_type = "concentration", rate = "k2 * c[B]") |>
-        add_reaction(formula = "C -> D", const = "k3")
+        add_reaction(scheme = "C -> D", const = "k3")
 
     expect_equal(length(model$reactions), 3)
     expect_reaction_participants(model$reactions[1], "input", "A", NA_character_)

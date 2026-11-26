@@ -14,7 +14,8 @@ add_transport(
   molec = NA_character_,
   rate = NULL,
   const = NULL,
-  const_basis = c("amount", "concentration")
+  const_basis = c("amount", "concentration"),
+  scheme = NULL
 )
 
 \method{add_transport}{compphysiol_compartment_model}(
@@ -26,7 +27,8 @@ add_transport(
   molec = NA_character_,
   rate = NULL,
   const = NULL,
-  const_basis = c("amount", "concentration")
+  const_basis = c("amount", "concentration"),
+  scheme = NULL
 )
 }
 \arguments{
@@ -54,6 +56,10 @@ Amount-based constants have units 1/time; concentration-based constants have
 units compartment size/time (usually volume/time). Concentration-based
 transports require a source compartment size when preparing the model.
 Only applicable with \code{const}.}
+
+\item{scheme}{Character transport scheme, either \code{"A -> B"} with \code{molec},
+or \code{"A[drug] -> B[drug]"}. Use \code{NULL} for a source or sink.
+Mutually exclusive with \code{from} and \code{to}.}
 }
 \value{
 The modified \code{compphysiol_compartment_model} object.

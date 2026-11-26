@@ -190,6 +190,10 @@ then attached back to toolbox-level simulation output where possible.
 A transport moves the same molecule from one compartment to another. It changes
 location but preserves molecular identity.
 
+Transport schemes use `inCmt -> outCmt` with a separate molecule argument, or
+`inCmt[molec] -> outCmt[molec]`. Separate `from` and `to` arguments also support
+vectorized construction. `NULL` denotes a source or sink in a scheme.
+
 In PBPK models, many physiological "flows" are represented as transports:
 blood flow from arterial blood to an organ, venous return from tissue to blood,
 or clearance from a compartment to a sink. A transport can be linear, through a
@@ -250,10 +254,10 @@ stoichiometric participants rather than vectorized creation of many unrelated
 reactions. Repeated participants represent stoichiometry, for example two
 copies of the same input molecule.
 
-Reaction formulas provide a compact character-string syntax for the same
+Reaction schemes provide a compact character-string syntax for the same
 participant structure, for example `A + B -> C` or
 `L[plasma] + R[membrane] -> LR[membrane]`. Unlocalized participants in a
-formula have the same wildcard or `cmt`-filled meaning as separate `input` and
+scheme have the same wildcard or `cmt`-filled meaning as separate `input` and
 `output` character arguments.
 
 Reaction rates can be represented as concentration-change rates or amount-change

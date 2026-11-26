@@ -199,7 +199,7 @@ print.compphysiol_states <- function(x, ...) {
         identical(make.names(x), x)
 }
 
-.parse_reaction_formula_side <- function(x, cmt = NA_character_) {
+.parse_reaction_scheme_side <- function(x, cmt = NA_character_) {
     x <- trimws(x)
     if (identical(x, "") || identical(x, "NULL")) {
         return(list(
@@ -210,7 +210,7 @@ print.compphysiol_states <- function(x, ...) {
 
     tokens <- trimws(strsplit(x, "+", fixed = TRUE)[[1]])
     if (grepl("^\\s*\\+|\\+\\s*$|\\+\\s*\\+", x) || any(!nzchar(tokens))) {
-        stop("Reaction formula contains an empty participant.", call. = FALSE)
+        stop("Reaction scheme contains an empty participant.", call. = FALSE)
     }
     if (any(tokens == "NULL")) {
         stop("'NULL' can only be used as an empty reaction side.", call. = FALSE)
@@ -224,14 +224,14 @@ print.compphysiol_states <- function(x, ...) {
         n_open <- count_fixed("[")
         n_close <- count_fixed("]")
         if (n_open != n_close || n_open > 1) {
-            stop("Reaction formula participants must be of the form 'molec' or 'molec[cmt]'.", call. = FALSE)
+            stop("Reaction scheme participants must be of the form 'molec' or 'molec[cmt]'.", call. = FALSE)
         }
 
         if (n_open == 1) {
             open <- regexpr("[", token, fixed = TRUE)[[1]]
             close <- regexpr("]", token, fixed = TRUE)[[1]]
             if (close != nchar(token)) {
-                stop("Reaction formula participants must be of the form 'molec' or 'molec[cmt]'.", call. = FALSE)
+                stop("Reaction scheme participants must be of the form 'molec' or 'molec[cmt]'.", call. = FALSE)
             }
             molec <- trimws(substr(token, 1, open - 1))
             cmt_i <- trimws(substr(token, open + 1, close - 1))
@@ -241,10 +241,10 @@ print.compphysiol_states <- function(x, ...) {
         }
 
         if (!.is_syntactic_model_name(molec)) {
-            stop("Reaction formula molecule names must be syntactic R names.", call. = FALSE)
+            stop("Reaction scheme molecule names must be syntactic R names.", call. = FALSE)
         }
         if (!is.na(cmt_i) && !.is_syntactic_model_name(cmt_i)) {
-            stop("Reaction formula compartment names must be syntactic R names.", call. = FALSE)
+            stop("Reaction scheme compartment names must be syntactic R names.", call. = FALSE)
         }
 
         list(molec = molec, cmt = cmt_i)
@@ -256,7 +256,7 @@ print.compphysiol_states <- function(x, ...) {
 
     if (has_localization) {
         if (length(cmt) > 1 && any(!is.na(cmt))) {
-            stop("Argument 'cmt' must be scalar when used to fill localized reaction formulas.", call. = FALSE)
+            stop("Argument 'cmt' must be scalar when used to fill localized reaction schemes.", call. = FALSE)
         }
         if (length(cmt) == 1 && !is.na(cmt)) {
             cmt_parsed[is.na(cmt_parsed)] <- cmt
@@ -273,18 +273,18 @@ print.compphysiol_states <- function(x, ...) {
     )
 }
 
-.parse_reaction_formula <- function(formula, cmt = NA_character_) {
-    if (!is.character(formula) || length(formula) != 1) {
-        stop("Reaction formula must be a character scalar.", call. = FALSE)
+.parse_reaction_scheme <- function(scheme, cmt = NA_character_) {
+    if (!is.character(scheme) || length(scheme) != 1) {
+        stop("Reaction scheme must be a character scalar.", call. = FALSE)
     }
 
-    parts <- strsplit(formula, "->", fixed = TRUE)[[1]]
+    parts <- strsplit(scheme, "->", fixed = TRUE)[[1]]
     if (length(parts) != 2) {
-        stop("Reaction formula must contain exactly one '->'.", call. = FALSE)
+        stop("Reaction scheme must contain exactly one '->'.", call. = FALSE)
     }
 
-    input <- .parse_reaction_formula_side(parts[[1]], cmt = cmt)
-    output <- .parse_reaction_formula_side(parts[[2]], cmt = cmt)
+    input <- .parse_reaction_scheme_side(parts[[1]], cmt = cmt)
+    output <- .parse_reaction_scheme_side(parts[[2]], cmt = cmt)
     uses_states <- input$has_localization || output$has_localization
 
     if (uses_states) {
@@ -303,7 +303,7 @@ print.compphysiol_states <- function(x, ...) {
     )
 }
 
-.reaction_formula_arg <- function(x, i) {
+.reaction_scheme_arg <- function(x, i) {
     if (is.null(x)) return(NULL)
     if (length(x) == 0) return(x)
     if (length(x) == 1) return(x)
@@ -339,9 +339,10 @@ print.compphysiol_states <- function(x, ...) {
 #' @param rate_type Representation of the reaction rate: `"concentration"` or
 #'   `"amount"`. Required with `rate`; optional with `const`, where it defaults
 #'   to concentration for one involved compartment and amount for several.
-#' @param formula Character scalar or vector with reaction formulas such as `"A + B -> C"` or
+#' @param formula Deprecated alias for `scheme`.
+#' @param scheme Character scalar or vector with reaction schemes such as `"A + B -> C"` or
 #'   `"L[plasma] + R[membrane] -> LR[membrane]"`. If `output` is missing and `input`
-#'   contains `->`, `input` is interpreted as `formula`.
+#'   contains `->`, `input` is interpreted as `scheme`.
 #' @param ... Errors if used, enforces `rate` and `const` to be specified as named arguments only, not positional.
 #' @param rate Character string representing an explicit reaction rate. Its
 #'   representation is declared by `rate_type`.
@@ -353,12 +354,12 @@ print.compphysiol_states <- function(x, ...) {
 #'   column of the resulting `compphysiol_reactions` object.
 #' @details
 #' compphysiol_reactions can be specified either by separate `input` and `output`
-#' arguments or by a character reaction formula. The formula form is an
+#' arguments or by a character reaction scheme. The scheme form is an
 #' interactive shorthand for the same participant representation, for example
 #' `reactions("A + B -> C", cmt = "cyt", const = "k")`. Participants may be
-#' localized directly in the formula with `molec[cmt]`, as in
+#' localized directly in the scheme with `molec[cmt]`, as in
 #' `reactions("L[plasma] + R[membrane] -> LR[membrane]", scale_cmt = "membrane", const = "kon")`.
-#' If a formula participant has no compartment, `cmt` fills it when supplied;
+#' If a scheme participant has no compartment, `cmt` fills it when supplied;
 #' otherwise the participant keeps the same wildcard compartment meaning as the
 #' separate `input` and `output` character shorthand.
 #'
@@ -392,15 +393,15 @@ print.compphysiol_states <- function(x, ...) {
 #' reactions(input = "A", output = "B", cmt = c("cytoplasm", "nucleus"), const = "kAB")
 #' # compphysiol_reactions in several compartments (different rate constants)
 #' reactions(input = "A", output = "B", cmt = c("cytoplasm", "nucleus"), const = "kAB_{cmt}")
-#' # Interactive character formula shorthand
+#' # Interactive character scheme shorthand
 #' reactions("A + B -> C", cmt = "cytoplasm", const = "kABC")
-#' # Cross-compartment formula with explicit reaction scaling compartment
+#' # Cross-compartment scheme with explicit reaction scaling compartment
 #' reactions(
 #'     "L[plasma] + R[membrane] -> LR[membrane]",
 #'     scale_cmt = "membrane",
 #'     const = "kon"
 #' )
-#' # Source and sink reactions in formula syntax
+#' # Source and sink reactions in scheme syntax
 #' reactions("NULL -> A[cytoplasm]", const = "ksyn")
 #' reactions("A[cytoplasm] -> NULL", const = "kdeg")
 #' 
@@ -414,8 +415,9 @@ reactions <- function(
     cmt = NA_character_,
     scale_cmt = NA_character_,
     rate_type = NULL,
-    formula = NULL,
+    scheme = NULL,
     ...,
+    formula = NULL,
     rate = NULL,
     const = NULL
 ) {
@@ -433,15 +435,23 @@ reactions <- function(
         envir = parent.frame(n = 1)
     )
 
+    if (!missing(formula)) {
+        warning("Argument 'formula' is deprecated; use 'scheme' instead.", call. = FALSE)
+        if (!missing(scheme)) {
+            stop("Arguments 'scheme' and 'formula' cannot be used together.", call. = FALSE)
+        }
+        scheme <- formula
+    }
+
     output_missing <- missing(output)
-    formula_missing <- missing(formula)
-    if (formula_missing &&
+    scheme_missing <- missing(scheme) && missing(formula)
+    if (scheme_missing &&
         output_missing &&
         is.character(input) &&
         any(grepl("->", input, fixed = TRUE))) {
-        formula <- input
+        scheme <- input
     }
-    formula_active <- !is.null(formula)
+    scheme_active <- !is.null(scheme)
 
     # Error if any additional positional arguments are provided (enforces named arguments for rate and const)
     if (length(list(...)) > 0) {
@@ -451,35 +461,35 @@ reactions <- function(
         )
     }
 
-    if (formula_active) {
+    if (scheme_active) {
         if (!output_missing) {
-            stop("Arguments 'formula' and 'output' cannot be used together.", call. = FALSE)
+            stop("Arguments 'scheme' and 'output' cannot be used together.", call. = FALSE)
         }
-        if (!is.character(formula)) {
-            stop("Reaction formula must be provided as a character string.", call. = FALSE)
+        if (!is.character(scheme)) {
+            stop("Reaction scheme must be provided as a character string.", call. = FALSE)
         }
 
-        if (length(formula) > 1) {
-            nFormula <- length(formula)
+        if (length(scheme) > 1) {
+            nScheme <- length(scheme)
             lengths <- c(length(cmt), length(scale_cmt), length(rate_type), length(rate), length(const))
-            if (!all(lengths %in% c(0, 1, nFormula))) {
-                stop("Formula, cmt, scale_cmt, rate_type, rate, and const must be scalar or have the same length.", call. = FALSE)
+            if (!all(lengths %in% c(0, 1, nScheme))) {
+                stop("Scheme, cmt, scale_cmt, rate_type, rate, and const must be scalar or have the same length.", call. = FALSE)
             }
 
-            out <- lapply(seq_len(nFormula), function(i) {
+            out <- lapply(seq_len(nScheme), function(i) {
                 reactions(
-                    formula = formula[[i]],
-                    cmt = .reaction_formula_arg(cmt, i),
-                    scale_cmt = .reaction_formula_arg(scale_cmt, i),
-                    rate_type = .reaction_formula_arg(rate_type, i),
-                    rate = .reaction_formula_arg(rate, i),
-                    const = .reaction_formula_arg(const, i)
+                    scheme = scheme[[i]],
+                    cmt = .reaction_scheme_arg(cmt, i),
+                    scale_cmt = .reaction_scheme_arg(scale_cmt, i),
+                    rate_type = .reaction_scheme_arg(rate_type, i),
+                    rate = .reaction_scheme_arg(rate, i),
+                    const = .reaction_scheme_arg(const, i)
                 )
             })
             return(do.call(what = "c", args = out) %||% reactions())
         }
 
-        parsed <- .parse_reaction_formula(formula, cmt = cmt)
+        parsed <- .parse_reaction_scheme(scheme, cmt = cmt)
         return(reactions(
             input = parsed$input,
             output = parsed$output,
@@ -708,6 +718,7 @@ add_reaction <- function(
     cmt = NA_character_,
     scale_cmt = NA_character_,
     rate_type = NULL,
+    scheme = NULL,
     formula = NULL,
     rate = NULL,
     const = NULL
@@ -726,6 +737,7 @@ add_reaction.compphysiol_compartment_model <- function(
     cmt = NA_character_,
     scale_cmt = NA_character_,
     rate_type = NULL,
+    scheme = NULL,
     formula = NULL,
     rate = NULL,
     const = NULL
