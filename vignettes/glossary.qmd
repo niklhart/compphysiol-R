@@ -190,8 +190,8 @@ then attached back to toolbox-level simulation output where possible.
 A transport moves the same molecule from one compartment to another. It changes
 location but preserves molecular identity.
 
-Transport schemes use `inCmt -> outCmt` with a separate molecule argument, or
-`inCmt[molec] -> outCmt[molec]`. Separate `from` and `to` arguments also support
+Transport schemes use `inCmt -> outCmt` with an optional separate molecule argument, or
+`inCmt[molec] -> outCmt[molec]`. Omitting the molecule argument means all molecules. Separate `from` and `to` arguments also support
 vectorized construction. `NULL` denotes a source or sink in a scheme.
 
 In PBPK models, many physiological "flows" are represented as transports:

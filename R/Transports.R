@@ -1,4 +1,4 @@
-.parse_transport_scheme <- function(scheme, molec) {
+.parse_transport_scheme <- function(scheme, molec = NA_character_) {
     if (!is.character(scheme) || length(scheme) != 1L || is.na(scheme) ||
         lengths(regmatches(scheme, gregexpr("->", scheme, fixed = TRUE))) != 1L) {
         stop("Transport scheme must be a character scalar containing exactly one '->'.", call. = FALSE)
@@ -32,9 +32,6 @@
             stop("Do not supply 'molec' with molecule-qualified transport schemes.", call. = FALSE)
         }
         molec <- molecules[[1]]
-    } else if (missing(molec) || !is.character(molec) ||
-               length(molec) == 0 || anyNA(molec) || any(!nzchar(molec))) {
-        stop("Unqualified transport schemes require a 'molec' argument.", call. = FALSE)
     }
     list(from = input$cmt, to = output$cmt, molec = molec)
 }
@@ -51,9 +48,10 @@
 #' `k_ven_bon` for a transport from the venous blood (ven) to bone (bon). This allows for vector definition of multiple 
 #' transports with different compartments and/or molecules involved.
 #' 
-#' @param scheme Character transport scheme, either `"A -> B"` with `molec`,
+#' @param scheme Character transport scheme, either `"A -> B"` with optional `molec`,
 #'   or `"A[drug] -> B[drug]"`. Use `NULL` for a source or sink.
-#'   Mutually exclusive with `from` and `to`.
+#'   Omitted `molec` means all molecules. Mutually exclusive with `from` and `to`.
+#'   If `to` is missing and `from` contains `->`, `from` is interpreted as `scheme`.
 #' @param from The name of the source compartment(s) (character vector or NULL for source compartments)
 #' @param to The name of the destination compartment(s) (character vector or NULL for sink compartments)
 #' @param molec The name of the molecule(s) being transferred (character vector, optional, default: all molecules)
@@ -71,6 +69,7 @@
 #' @return A `compphysiol_transports` object
 #' @examples
 #' # Scheme syntax
+#' transports("A -> B", const = 1)
 #' transports(scheme = "A -> B", molec = "drug", const = "k1")
 #' transports(scheme = "A[drug] -> B[drug]", const = "k1")
 #' # Linear transport
@@ -86,8 +85,11 @@
 #' @export
 transports <- function(from, to, molec = NA_character_, ..., rate = NULL, const = NULL,
                        const_basis = c("amount", "concentration"), scheme = NULL) {
+    positional_scheme <- missing(scheme) && missing(to) && !missing(from) &&
+        is.character(from) && any(grepl("->", from, fixed = TRUE))
+    if (positional_scheme) scheme <- from
     if (!is.null(scheme)) {
-        if (!missing(from) || !missing(to)) {
+        if (!positional_scheme && (!missing(from) || !missing(to))) {
             stop("Argument 'scheme' cannot be used with 'from' or 'to'.", call. = FALSE)
         }
         parsed <- if (missing(molec)) .parse_transport_scheme(scheme) else

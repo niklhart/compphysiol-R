@@ -57,9 +57,10 @@ units compartment size/time (usually volume/time). Concentration-based
 transports require a source compartment size when preparing the model.
 Only applicable with \code{const}.}
 
-\item{scheme}{Character transport scheme, either \code{"A -> B"} with \code{molec},
+\item{scheme}{Character transport scheme, either \code{"A -> B"} with optional \code{molec},
 or \code{"A[drug] -> B[drug]"}. Use \code{NULL} for a source or sink.
-Mutually exclusive with \code{from} and \code{to}.}
+Omitted \code{molec} means all molecules. Mutually exclusive with \code{from} and \code{to}.
+If \code{to} is missing and \code{from} contains \verb{->}, \code{from} is interpreted as \code{scheme}.}
 }
 \value{
 The modified \code{compphysiol_compartment_model} object.
