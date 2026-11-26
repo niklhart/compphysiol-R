@@ -25,6 +25,9 @@ Imports:
     units
 Description: Toolbox for computational physiology, in particular physiologically-based pharmacokinetic (PBPK) modeling.
 License: MIT + file LICENSE
+URL: https://github.com/niklhart/compphysiol-R
+BugReports: https://github.com/niklhart/compphysiol-R/issues
+SystemRequirements: Quarto command line tools
 Encoding: UTF-8
 LazyData: true
 Suggests: 
