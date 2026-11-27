@@ -1,5 +1,6 @@
-# compphysiol (development version)
+# compphysiol 0.5.6
 
+* Initial CRAN submission.
 * Added examples for `estimate()`, `to_nlmixr2()` and `from_nlmixr2()`; the
   `to_nlmixr2()` example is now self-contained.
 * Unit shorthand such as `5 [mg]` is now accepted wherever a unit-bearing value
