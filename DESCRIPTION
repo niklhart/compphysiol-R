@@ -23,7 +23,17 @@ Imports:
     expm,
     stats,
     units
-Description: Toolbox for computational physiology, in particular physiologically-based pharmacokinetic (PBPK) modeling.
+Description: Tools for building, simulating and estimating compartmental,
+    physiologically based pharmacokinetic/pharmacodynamic (PBPK/PD) and
+    systems biology models. Models are assembled from explicit components
+    (compartments, molecules, transports, reactions, equations, observables,
+    parameters and dosing) through a pipe-friendly interface with first-class
+    physical units based on 'units'. Models are translated into ordinary
+    differential equations and simulated efficiently with 'deSolve' or
+    'rxode2'; parameters can be estimated by maximum likelihood or, through
+    'nlmixr2est', with nonlinear mixed-effects methods. The package aims to
+    provide a flexible, modular framework for model building, simulation and
+    estimation while keeping the interface simple and intuitive.
 License: MIT + file LICENSE
 URL: https://github.com/niklhart/compphysiol-R
 BugReports: https://github.com/niklhart/compphysiol-R/issues
