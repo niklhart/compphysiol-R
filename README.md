@@ -9,14 +9,33 @@ coverage](https://codecov.io/gh/niklhart/compphysiol-R/graph/badge.svg)](https:/
 
 <!-- badges: end -->
 
-`compphysiol` is an R package for computations with physiology-based
-models, in particular physiologically-based pharmacokinetic (PBPK)
-models. It features a modular object-oriented design and an intuitive
-scripting language.
+`compphysiol` is an R package for building, simulating, and estimating
+compartmental, physiologically based pharmacokinetic/pharmacodynamic
+(PBPK/PD), and systems biology models.
+
+- **Modular models.** Models are assembled from explicit components,
+  such as compartments, molecules, transports, reactions, equations,
+  observables, parameters, and dosing, through a pipe-friendly
+  interface.
+- **Units throughout.** Physical quantities keep their units from model
+  definition to simulation output and estimates, with a concise
+  shorthand such as `100 [mg]`.
+- **Simulation backends.** Models are translated into ordinary
+  differential equations and simulated with `deSolve` (optionally as
+  compiled code) or `rxode2`.
+- **Estimation.** Parameters are estimated by maximum likelihood with
+  `stats::optim()` or, through `nlmixr2est`, with nonlinear
+  mixed-effects methods.
 
 ## Installation
 
-You can download the development version of the package on GitHub:
+Install the released version from CRAN:
+
+``` r
+install.packages("compphysiol")
+```
+
+Or the development version from GitHub:
 
 ``` r
 # install.packages("devtools")
@@ -28,90 +47,148 @@ devtools::install_github("niklhart/compphysiol-R")
 See `citation("compphysiol")` for how to cite this package in scientific
 work.
 
-## Usage
+## Building and simulating a model
 
 ``` r
 library(compphysiol)
 ```
 
-This example defines and simulates a two-compartment empirical PK model
-with unit-aware amounts, volumes, rate constants, and simulation times.
+This example defines a two-compartment pharmacokinetic model with
+first-order distribution and elimination. Volumes, amounts, and rate
+constants carry units.
 
 ``` r
-model <- multiCompModel(ncomp = 2, type = "micro", unit = "mg") |>
-    add_dosing(time = 0 [h], amount = 100 [mg], cmt = "cen") |>
-    wire(what = "molec")
+model <- compartment_model() |>
+    add_compartment(name = c("Central", "Peripheral"), volume = c(8, 20) [L]) |>
+    add_molecule(name = "drug", cmt = c("Central", "Peripheral"), initial = 0 [mg], type = "amount") |>
+    add_transport(from = "Central", to = "Peripheral", const = "kcp") |>
+    add_transport(from = "Peripheral", to = "Central", const = "kpc") |>
+    add_transport(from = "Central", to = NULL, const = "kel") |>
+    add_observable(C = c[drug, Central]) |>
+    add_parameter(kcp = 0.08 [1/h], kpc = 0.05 [1/h], kel = 0.15 [1/h])
 
-pars <- parameters(
-    kc0 = 0.15 [1/h],
-    kcp = 0.08 [1/h],
-    kpc = 0.05 [1/h],
-    Vcen = 8 [L],
-    Vper = 20 [L]
-)
+model
 ```
 
-> **Note** RStudio may currently flag expressions such as `100 [mg]` as
-> syntax errors even though they are valid R code and run correctly.
-> This also affects ordinary bracket calls outside `compphysiol`, such
-> as `1 [TRUE]`, so it is an RStudio diagnostics issue rather than a
-> package error. Current workarounds are switching diagnostics off for
-> affected files with `# !diagnostics off`, switching diagnostics off
-> globally in RStudio, or using another IDE.
+    Compartment model:
+     Compartments:
+      (1) Central (volume = 8 [L])
+      (2) Peripheral (volume = 20 [L])
+     Molecules:
+      (1) drug in Central, initial amount = 0 [mg]
+      (2) drug in Peripheral, initial amount = 0 [mg]
+     Transports:
+      (1) <all molec>: Central → Peripheral, amount rate = kcp * a[Central]
+      (2) <all molec>: Peripheral → Central, amount rate = kpc * a[Peripheral]
+      (3) <all molec>: Central → ∅, amount rate = kel * a[Central]
+     Reactions: (none)
+     Equations: (none)
+     Observables:
+      (1) C = c[drug, Central]
+     Parameters:
+      (1) kcp = 0.08 [1/h]
+      (2) kpc = 0.05 [1/h]
+      (3) kel = 0.15 [1/h]
+     Dosing: (none)
 
-Simulate the model over 24 hours:
+Simulate a 100 mg bolus dose over 24 hours. The observable `C` is
+returned with concentration units:
 
 ``` r
-sim <- simulate(
-    model,
-    time = seq(0, 24, by = 0.5) [h],
-    parameters = pars
-)
+sim <- model |>
+    add_dosing(time = 0 [h], amount = 100 [mg], cmt = "Central") |>
+    simulate(time = seq(0, 24, by = 0.5) [h])
 
-head(sim$states)
+concentrations <- as_observables_long(sim)
+head(concentrations)
 ```
 
-         time    a_drug_cen     a_drug_per
-    1 0.0 [h]  0.00000 [mg]  0.000000 [mg]
-    2 0.5 [h] 89.18255 [mg]  3.731456 [mg]
-    3 1.0 [h] 79.62230 [mg]  6.968900 [mg]
-    4 1.5 [h] 71.17173 [mg]  9.771207 [mg]
-    5 2.0 [h] 63.70065 [mg] 12.190323 [mg]
-    6 2.5 [h] 57.09416 [mg] 14.272075 [mg]
+         time observable            value
+    1 0.0 [h]          C 12.500000 [mg/L]
+    2 0.5 [h]          C 11.147819 [mg/L]
+    3 1.0 [h]          C  9.952788 [mg/L]
+    4 1.5 [h]          C  8.896466 [mg/L]
+    5 2.0 [h]          C  7.962581 [mg/L]
+    6 2.5 [h]          C  7.136770 [mg/L]
 
-``` r
-head(sim$observables)
-```
-
-         time             Ccen
-    1 0.0 [h]  0.000000 [mg/L]
-    2 0.5 [h] 11.147819 [mg/L]
-    3 1.0 [h]  9.952788 [mg/L]
-    4 1.5 [h]  8.896466 [mg/L]
-    5 2.0 [h]  7.962581 [mg/L]
-    6 2.5 [h]  7.136770 [mg/L]
-
-The returned state and observable tables keep their units. If `ggplot2`,
-`reshape2`, and `units` are installed, they can be plotted directly:
+With `ggplot2` and `units` attached, unit-aware output can be plotted
+directly:
 
 ``` r
 library(ggplot2)
 library(units)
 
-states_long <- reshape2::melt(
-    sim$states,
-    id.vars = "time",
-    variable.name = "state",
-    value.name = "amount"
-)
-
-ggplot(states_long, aes(x = time, y = amount)) +
+ggplot(concentrations, aes(x = time, y = value)) +
     geom_line(linewidth = 0.8) +
-    facet_wrap(vars(state), scales = "free_y") +
-    labs(x = "Time", y = "Amount")
+    labs(x = "Time", y = "Concentration")
 ```
 
-![](README_files/figure-commonmark/unnamed-chunk-5-1.png)
+![](README_files/figure-commonmark/concentration-plot-1.png)
+
+## Estimating parameters
+
+An experiment combines a dosing protocol with observed data. Together
+with the model, the parameters to estimate, and a statistical model for
+the observations, it defines an estimation problem:
+
+``` r
+study <- experiment(
+    dosing = dosing(time = 0 [h], amount = 100 [mg], cmt = "Central"),
+    observations = observation_data(
+        time = c(1, 2, 4, 8, 12, 24) [h],
+        observable = "C",
+        value = c(9.47, 8.08, 4.85, 2.76, 1.39, 0.54) [mg/L]
+    )
+)
+
+problem <- estimation_problem(
+    model = model,
+    experiments = study,
+    parameters = c(
+        kel = parameter_spec(0.1 [1/h], transform = "log"),
+        sigma = parameter_spec(1 [mg/L], transform = "log")
+    ),
+    statistics = statistical_model(C = normal(sd = "sigma"))
+)
+
+fit <- estimate(problem, engine = optim_engine())
+coef(fit)
+```
+
+     Parameters:
+      (1) kel = 0.1530393 [1/h]
+      (2) sigma = 0.2769618 [mg/L]
+
+``` r
+standard_errors(fit)
+```
+
+     Parameters:
+      (1) kel = 0.007919458 [1/h]
+      (2) sigma = 0.07995197 [mg/L]
+
+The same problem definition is used with other estimation engines, for
+example `nlmixr2_engine()` for population models with individual-level
+variability.
+
+## Learn more
+
+The package vignettes cover the main workflows in more detail:
+
+- `vignette("simulation-plotting", package = "compphysiol")`: simulating
+  models and plotting unit-aware output.
+- `vignette("estimation", package = "compphysiol")`: maximum-likelihood
+  estimation of a unit-aware model.
+- `vignette("population-modelling", package = "compphysiol")`: nonlinear
+  mixed-effects modelling with `nlmixr2`.
+- `vignette("covariate-modelling", package = "compphysiol")`: covariate
+  models, from nonlinear regression to mixed effects.
+- `vignette("glossary", package = "compphysiol")`: the modelling
+  vocabulary used throughout the package.
+
+> **Note** RStudio versions before 2026.11.0+203 may flag the unit
+> shorthand, e.g. `100 [mg]`, as a syntax error, although it is valid R
+> code. Please update RStudio if you see this diagnostic.
 
 ## AI Agent Guidance
 
