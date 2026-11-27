@@ -84,17 +84,7 @@
 #' @param method Target fitting method, `"focei"` or `"saem"`.
 #' @param dimensions Solver unit dimensions.
 #' @return A `compphysiol_nlmixr2_export` with `model`, `source`, and `data`.
-#' @examples
-#' \dontrun{
-#' # problem uses the supported natural parameter domains for SAEM.
-#' exported <- to_nlmixr2(problem, method = "saem")
-#' fit <- nlmixr2est::nlmixr2(exported$model, exported$data, "saem",
-#'     control = do.call(nlmixr2est::saemControl, exported$control))
-#' result <- from_nlmixr2(fit, exported) # likelihood is NA
-#' sampled <- from_nlmixr2(fit, exported, likelihood = "impmap")
-#' # Equivalently, use the wrapper with explicit likelihood evaluation:
-#' result <- estimate(problem, nlmixr2_engine("saem", likelihood = "impmap"))
-#' }
+#' @template nlmixr2-saem-example
 #' @export
 to_nlmixr2 <- function(problem, method = c("focei", "saem"), dimensions = NULL) {
     .check_class(problem, "compphysiol_estimation_problem")
@@ -165,6 +155,7 @@ to_nlmixr2 <- function(problem, method = c("focei", "saem"), dimensions = NULL) 
 #' @param reference_fit Preceding native fit, required for importing an IMPMAP stage.
 #' @param likelihood_control Controls for an explicitly requested evaluation.
 #' @return An estimation result with likelihood method and estimation provenance.
+#' @template nlmixr2-saem-example
 #' @export
 from_nlmixr2 <- function(fit, exported, likelihood = c("auto", "focei", "impmap"),
                          reference_fit = NULL, likelihood_control = list()) {

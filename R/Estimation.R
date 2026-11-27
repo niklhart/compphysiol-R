@@ -521,7 +521,39 @@ print.compphysiol_estimation_problem <- function(x, ...) {
 #' @param object A `compphysiol_estimation_problem`.
 #' @param ... Additional method arguments.
 #' @returns A [compphysiol_estimation_result] object.
-#' @seealso [compphysiol_estimation_result]
+#' @seealso [compphysiol_estimation_result]; [to_nlmixr2()] for a
+#'   mixed-effects example with [nlmixr2_engine()].
+#' @examples
+#' # One-compartment model with first-order elimination
+#' model <- compartment_model() |>
+#'     add_compartment(name = "Central", volume = 1 [L]) |>
+#'     add_molecule(name = "drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+#'     add_transport(from = "Central", to = NULL, molec = "drug", const = "k") |>
+#'     add_observable(C = c[drug, Central]) |>
+#'     add_parameter(k = 0.2 [1/h])
+#'
+#' # One individual with observed concentrations
+#' study <- experiment(
+#'     observations = observation_data(
+#'         time = c(1, 2, 4) [h], observable = "C", value = c(82, 68, 45) [mg/L]
+#'     ),
+#'     name = "individual_1"
+#' )
+#'
+#' problem <- estimation_problem(
+#'     model = model,
+#'     experiments = study,
+#'     parameters = c(
+#'         k = parameter_spec(initial = 0.1 [1/h], transform = "log"),
+#'         sigma = parameter_spec(initial = 1 [mg/L], transform = "log")
+#'     ),
+#'     statistics = statistical_model(C = normal(sd = "sigma"))
+#' )
+#'
+#' # Maximum-likelihood estimation with stats::optim()
+#' fit <- estimate(problem, engine = optim_engine(method = "L-BFGS-B"))
+#' coef(fit)
+#' fit$neg_log_lik
 #' @export
 estimate <- function(object, ...) UseMethod("estimate")
 
