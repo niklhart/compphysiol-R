@@ -7,13 +7,18 @@ This is a new submission.
 * local macOS (aarch64-apple-darwin20), R 4.5.2
 * GitHub Actions: macOS-latest (release), windows-latest (release),
   ubuntu-latest (devel, release, oldrel-1)
-* <!-- TODO: win-builder (devel) -->
+* win-builder: Windows Server 2022, R-devel
 
 ## R CMD check results
 
 0 errors | 0 warnings | 1 note
 
 * This is a new submission.
+
+  Possibly misspelled words in DESCRIPTION: "PBPK", "pharmacokinetic",
+  "pharmacodynamic", and "observables" are correctly spelled technical terms
+  (PBPK abbreviates "physiologically based pharmacokinetic"; observables are
+  the model outputs compared with measurements).
 
 ## References
 

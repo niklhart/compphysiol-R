@@ -23,7 +23,7 @@ A fully wired model is safe from any potentially unintended side effects when ex
 }
 \details{
 If molecules / compartments have been defined in the model, then any transport or reaction that references the wildcard name
-"\if{html}{\out{<all molec>}}" / "\if{html}{\out{<all cmt>}}" will be updated to reference all defined molecules / compartments, respectively
+\code{"<all molec>"} / \code{"<all cmt>"} will be updated to reference all defined molecules / compartments, respectively
 (note that this may increase the number of molecules, transports and reactions in the model).
 If no compartments or molecules have been defined, then a single dummy name ("molec" or "cmt") will be used
 to replace the wildcard, with a message printed to the console to inform the user.

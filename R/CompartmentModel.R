@@ -70,7 +70,7 @@ print.compphysiol_compartment_model <- function(x, ...) {
 #' `wire()` is also called before ODE generation to replace any remaining wildcards with the full set of molecule or compartment names.
 #' 
 #' If molecules / compartments have been defined in the model, then any transport or reaction that references the wildcard name 
-#' "<all molec>" / "<all cmt>" will be updated to reference all defined molecules / compartments, respectively 
+#' `"<all molec>"` / `"<all cmt>"` will be updated to reference all defined molecules / compartments, respectively 
 #' (note that this may increase the number of molecules, transports and reactions in the model).
 #' If no compartments or molecules have been defined, then a single dummy name ("molec" or "cmt") will be used 
 #' to replace the wildcard, with a message printed to the console to inform the user. 
