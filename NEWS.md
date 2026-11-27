@@ -14,6 +14,10 @@
   preparing it again for every objective evaluation.
 * Fixed optim estimation with `deSolve_engine(compiled = TRUE)` failing for
   experiments containing infusions.
+* Simulating or estimating with experiments now warns when the model defines
+  dosing but an experiment does not specify any, because model dosing is not
+  used for experiments. Use `dosing = dosing()` to state an experiment without
+  doses deliberately.
 * `make_depot()` is now exported. It requires a wired model and gives an
   informative error when an infusion's molecule or compartment is unresolved.
 

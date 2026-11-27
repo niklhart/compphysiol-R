@@ -66,6 +66,7 @@
         unknown <- setdiff(e$observations$observable, names(model$observables))
         if (length(unknown)) stop("Unknown observable(s): ", paste(unknown, collapse = ", "), call. = FALSE)
     }
+    .warn_unspecified_experiment_dosing(object, experiments)
     prepared_doses <- NULL
     if (inherits(object, "compphysiol_compartment_model") && length(experiments)) {
         depot <- .simulation_experiment_depot_template(object, experiments)
@@ -133,6 +134,39 @@
     })
     names(out) <- names(experiments)
     if (multiple) .simulation_bind_experiment_results(out, experiment) else out[[1]]
+}
+
+.model_has_dosing <- function(model) {
+    if (inherits(model, c("compphysiol_desolve_compiled_model", "compphysiol_rxode2_model"))) {
+        model <- model$ode_model
+    }
+    if (inherits(model, "compphysiol_compartment_model")) return(length(model$doses) > 0L)
+    !is.null(model$dosing) && NROW(model$dosing) > 0L
+}
+
+# Model dosing is replaced by experiment dosing. Warn when this silently leaves
+# experiments without doses because they did not specify dosing at all; an
+# explicit `dosing = dosing()` states that no doses are intended.
+.warn_unspecified_experiment_dosing <- function(model, experiments) {
+    if (!.model_has_dosing(model)) return(invisible(FALSE))
+    unspecified <- which(vapply(
+        experiments, function(e) .dosing_is_unspecified(e$dosing), logical(1)
+    ))
+    if (!length(unspecified)) return(invisible(FALSE))
+    labels <- names(experiments)[unspecified]
+    if (is.null(labels)) labels <- rep("", length(unspecified))
+    labels <- ifelse(is.na(labels) | !nzchar(labels), paste0("#", unspecified), labels)
+    warning(
+        "The model defines dosing, but ",
+        if (length(experiments) == 1L) "the experiment does" else
+            paste0("experiment(s) ", paste(labels, collapse = ", "), " do"),
+        " not specify dosing. Model dosing is not used for experiments, so ",
+        "these are simulated without doses. Specify the dosing in the ",
+        "experiments, or use `dosing = dosing()` to simulate without doses ",
+        "deliberately.",
+        call. = FALSE
+    )
+    invisible(TRUE)
 }
 
 .simulation_experiment_depot_template <- function(object, experiments) {

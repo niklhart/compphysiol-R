@@ -61,7 +61,7 @@ test_that("simulation predictions plug into another experiment as observation da
 test_that("experiment collections bind results with identifiers", {
     m <- output_test_model() |> add_dosing(time = 0 [h], amount = 999 [mg])
     schedule <- observation_schedule(c(0, 1) [h], "A")
-    a <- experiment(observations = schedule)
+    a <- experiment(observations = schedule, dosing = dosing())
     b <- experiment(observations = schedule, dosing = dosing(time = 0 [h], amount = 10 [mg]))
     out <- simulate(m, experiment = c(control = a, treated = b))
     expect_s3_class(out, "compphysiol_simulation_result")
@@ -133,7 +133,7 @@ test_that("experiment collections prepare inactive infusion structures", {
     schedule <- observation_schedule(c(0, 1, 2) [h], "A")
     a <- experiment(observations = schedule,
         dosing = dosing(time = 0 [h], amount = 10 [mg], duration = 1 [h], cmt = "Central"))
-    b <- experiment(observations = schedule)
+    b <- experiment(observations = schedule, dosing = dosing())
     out <- simulate(m, experiment = c(infusion = a, control = b))
     expect_true(any(grepl("Depot", names(out$states))))
     infusion <- out$observables[out$observables$experiment == "infusion", ]
@@ -270,7 +270,7 @@ test_that("compiled experiments retain defaults and do not modify direct dosing"
     m$molecules <- molecules("drug", cmt = "Central", initial = "initial", type = "amount")
     m <- m |> add_parameter(initial = 100 [mg]) |> add_dosing(time = 0 [h], amount = 20 [mg])
     compiled <- to_compiled_ode_model(m)
-    e <- experiment(observations = observation_schedule(c(0, 1) [h], "A"))
+    e <- experiment(observations = observation_schedule(c(0, 1) [h], "A"), dosing = dosing())
     first <- simulate(compiled, experiment = e)
     expect_equal(simulate(compiled, experiment = e)$observables, first$observables)
     direct <- simulate(compiled, time = c(0, 1) [h])

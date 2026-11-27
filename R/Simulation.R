@@ -158,6 +158,9 @@ rxode2_engine <- function(...) {
 #'   to `time`, `unit`, and `parameters`. Currently supported for the ODE route
 #'   and ODE, compiled deSolve, and rxode2 model inputs. Known parameters override model
 #'   defaults; experiment dosing replaces model dosing, including when empty.
+#'   If the model defines dosing and an experiment does not specify any (see
+#'   [experiment()]), a warning is given; use `dosing = dosing()` in the
+#'   experiment to simulate it without doses deliberately.
 #'   Simulation starts at the experiment's initial time and evaluates only its
 #'   scheduled observable-time pairs. Each experiment is one independent
 #'   individual simulation unit. Collections return one simulation result, with

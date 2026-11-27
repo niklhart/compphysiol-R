@@ -42,7 +42,11 @@ individual and experimental values, including constant or time-dependent
 covariates. \code{NULL} creates
 an empty parameter collection.}
 
-\item{dosing}{A \link[=dosing]{compphysiol_dosing} object. \code{NULL} creates an empty dosing schedule.}
+\item{dosing}{A \link[=dosing]{compphysiol_dosing} object. \code{NULL} (the default)
+means that the experiment does not specify dosing: it has no doses, and
+because model dosing is not used for experiments, simulation or estimation
+with a model that defines its own dosing gives a warning. Use
+\code{dosing = dosing()} to specify an experiment without doses deliberately.}
 
 \item{observations}{An \link[=observation_schedule]{compphysiol_observation_schedule} or
 \link[=observation_data]{compphysiol_observation_data}. \code{NULL} creates an empty schedule.}

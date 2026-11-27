@@ -358,3 +358,63 @@ test_that("matching dosing targets require compatible amount units", {
     expect_no_error(c(a, infusion))
     expect_identical(c(a, b)[2], b)
 })
+
+test_that("unspecified experiment dosing warns only when model dosing would be ignored", {
+    model <- compartment_model() |>
+        add_compartment(name = "Central", volume = 1 [L]) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 0 [mg], type = "amount") |>
+        add_transport(from = "Central", to = NULL, const = "k") |>
+        add_observable(C = c[drug, Central]) |>
+        add_parameter(k = 0.1 [1/h])
+    dosed <- model |> add_dosing(time = 0 [h], amount = 100 [mg], cmt = "Central")
+    obs <- observation_schedule(time = c(0, 2) [h], observable = "C")
+    own_dose <- dosing(time = 0 [h], amount = 10 [mg], cmt = "Central")
+
+    expect_warning(simulate(dosed, experiment = experiment(observations = obs)),
+                   "does not specify dosing")
+    expect_warning(
+        simulate(dosed, experiment = c(a = experiment(observations = obs, dosing = own_dose),
+                                       b = experiment(observations = obs))),
+        "experiment\\(s\\) b do not specify dosing"
+    )
+    expect_warning(simulate(to_ode_model(dosed), experiment = experiment(observations = obs)),
+                   "does not specify dosing")
+
+    expect_no_warning(simulate(dosed, experiment = experiment(observations = obs, dosing = dosing())))
+    expect_no_warning(simulate(dosed, experiment = experiment(observations = obs, dosing = own_dose)))
+    expect_no_warning(simulate(model, experiment = experiment(observations = obs)))
+    expect_no_warning(simulate(dosed, experiment = experiment(observations = obs) |> add_dosing(own_dose)))
+})
+
+test_that("unspecified and explicitly empty dosing are homogeneous", {
+    studies <- c(a = experiment(), b = experiment(dosing = dosing()))
+    expect_true(compphysiol:::.experiments_component_homogeneity(studies)[["dosing"]])
+})
+
+test_that("estimation warns once about unspecified experiment dosing", {
+    model <- compartment_model() |>
+        add_compartment(name = "Central", volume = 1 [L]) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+        add_transport(from = "Central", to = NULL, const = "k") |>
+        add_observable(C = c[drug, Central]) |>
+        add_dosing(time = 1 [h], amount = 10 [mg], cmt = "Central")
+    study <- experiment(observations = observation_data(
+        time = c(1, 2, 4) [h], observable = "C", value = c(82, 68, 45) [mg/L]
+    ))
+    specs <- c(k = parameter_spec(0.1 [1/h], transform = "log"),
+               sigma = parameter_spec(1 [mg/L], transform = "log"))
+    statistics <- statistical_model(C = normal(sd = "sigma"))
+
+    problem <- expect_no_warning(estimation_problem(model, study, specs, statistics))
+    # One warning for the whole fit, not one per objective evaluation.
+    warnings <- character()
+    withCallingHandlers(
+        estimate(problem, optim_engine(hessian = FALSE)),
+        warning = function(w) {
+            warnings <<- c(warnings, conditionMessage(w))
+            invokeRestart("muffleWarning")
+        }
+    )
+    expect_length(warnings, 1L)
+    expect_match(warnings, "does not specify dosing")
+})

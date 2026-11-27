@@ -30,7 +30,11 @@
 #'   individual and experimental values, including constant or time-dependent
 #'   covariates. `NULL` creates
 #'   an empty parameter collection.
-#' @param dosing A [compphysiol_dosing][dosing()] object. `NULL` creates an empty dosing schedule.
+#' @param dosing A [compphysiol_dosing][dosing()] object. `NULL` (the default)
+#'   means that the experiment does not specify dosing: it has no doses, and
+#'   because model dosing is not used for experiments, simulation or estimation
+#'   with a model that defines its own dosing gives a warning. Use
+#'   `dosing = dosing()` to specify an experiment without doses deliberately.
 #' @param observations An [compphysiol_observation_schedule][observation_schedule()] or
 #'   [compphysiol_observation_data][observation_data()]. `NULL` creates an empty schedule.
 #' @param start Initial time, a finite numeric scalar, optionally with units.
@@ -66,7 +70,7 @@ experiment <- function(
 ) {
     start <- .process_nse_arg(substitute(start), envir = parent.frame())
     if (is.null(parameters)) parameters <- parameters()
-    if (is.null(dosing)) dosing <- dosing()
+    if (is.null(dosing)) dosing <- .unspecified_dosing()
     if (is.null(observations)) observations <- observation_schedule()
     .check_class(parameters, "compphysiol_parameters")
     .check_class(dosing, "compphysiol_dosing")
@@ -101,6 +105,24 @@ experiment <- function(
 }
 
 .new_experiment <- function(x) {
+    x
+}
+
+# An experiment created without `dosing` carries an empty schedule marked as
+# unspecified. It behaves like `dosing()`, but lets simulation and estimation
+# warn when a model's own dosing is silently not used for that experiment.
+.unspecified_dosing <- function() {
+    x <- dosing()
+    attr(x, "compphysiol_unspecified") <- TRUE
+    x
+}
+
+.dosing_is_unspecified <- function(x) {
+    isTRUE(attr(x, "compphysiol_unspecified")) && length(x) == 0L
+}
+
+.dosing_without_marker <- function(x) {
+    attr(x, "compphysiol_unspecified") <- NULL
     x
 }
 

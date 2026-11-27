@@ -55,7 +55,7 @@
         start = identical(x$start, y$start),
         parameter_schema = .parameters_schema_identical(x$parameters, y$parameters),
         parameters = identical(x$parameters, y$parameters),
-        dosing = identical(x$dosing, y$dosing),
+        dosing = identical(.dosing_without_marker(x$dosing), .dosing_without_marker(y$dosing)),
         observation_plan = identical(x$observations$time, y$observations$time) &&
             identical(x$observations$observable, y$observations$observable),
         observations = identical(x$observations, y$observations),

@@ -624,6 +624,7 @@ estimate.compphysiol_estimation_problem <- function(
     ...
 ) {
     .check_class(engine, "compphysiol_estimation_engine")
+    object$experiments <- .estimation_specify_experiment_dosing(object)
     if (inherits(engine, "compphysiol_optim_engine")) {
         return(.estimate_optim(object, engine, dimensions = dimensions, ...))
     }
@@ -631,6 +632,22 @@ estimate.compphysiol_estimation_problem <- function(
         return(.estimate_nlmixr2(object, engine, dimensions = dimensions, ...))
     }
     stop("Unsupported estimation engine: ", class(engine)[1], ".", call. = FALSE)
+}
+
+# Warn once about experiments that do not specify dosing while the model does,
+# then treat their dosing as deliberately empty so that the repeated
+# simulations during estimation do not warn again.
+.estimation_specify_experiment_dosing <- function(problem) {
+    experiments <- problem$experiments
+    entries <- .experiments_elements(experiments)
+    .warn_unspecified_experiment_dosing(problem$model, entries)
+    unspecified <- vapply(entries, function(e) .dosing_is_unspecified(e$dosing), logical(1))
+    if (!any(unspecified)) return(experiments)
+    entries <- lapply(entries, function(e) {
+        e$dosing <- .dosing_without_marker(e$dosing)
+        e
+    })
+    .new_experiments(entries, .experiments_component_homogeneity(experiments))
 }
 
 .optim_parameter_overlay_plan <- function(experiments, runtime_names) {

@@ -616,8 +616,11 @@ experiment.
 
 Current support covers construction, printing, and ODE simulation.
 An experiment supplies the complete dosing schedule, replacing model-attached
-dosing even when the experiment schedule is empty. Its known parameters override
-model defaults. Simulation starts at the initial time and evaluates only the
+dosing even when the experiment schedule is empty. Because an experiment
+created without `dosing` would then silently receive no doses, simulation and
+estimation warn when the model defines dosing and an experiment does not
+specify any; `dosing = dosing()` states an empty schedule deliberately. Its
+known parameters override model defaults. Simulation starts at the initial time and evaluates only the
 scheduled observable-time pairs. Stored observation values do not affect
 simulation. Collection simulation returns one simulation result. For multiple
 entries, its tables carry an experiment identifier; length-one output omits
