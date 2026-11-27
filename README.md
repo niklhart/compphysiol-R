@@ -123,7 +123,7 @@ ggplot(concentrations, aes(x = time, y = value)) +
     labs(x = "Time", y = "Concentration")
 ```
 
-![](README_files/figure-commonmark/concentration-plot-1.png)
+![](man/figures/README-concentration-plot-1.png)
 
 ## Estimating parameters
 

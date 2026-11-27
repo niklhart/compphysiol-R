@@ -12,7 +12,6 @@
 ^doc$
 ^Meta$
 ^AGENTS.md$
-^README_files$
 ^cran-comments\.md$
 ^man-roxygen$
 ^\.Rprofile$
