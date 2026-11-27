@@ -7,10 +7,11 @@
 interpolate(time, value, method = c("linear", "locf"))
 }
 \arguments{
-\item{time}{Unique finite numeric times, optionally with compatible units.}
+\item{time}{Unique finite numeric times, optionally with compatible units.
+Supports unit shorthand such as \code{c(0, 24) [h]}.}
 
 \item{value}{Finite numeric values of the same length as \code{time}, optionally
-with compatible units.}
+with compatible units. Supports unit shorthand such as \code{c(70, 72) [kg]}.}
 
 \item{method}{Interpolation method: \code{"linear"} or \code{"locf"} (last
 observation carried forward).}
@@ -32,10 +33,7 @@ the last scheduled time.
 }
 \examples{
 # Body weight increasing linearly over one day
-bw <- interpolate(
-    time = units::set_units(c(0, 24), "h"),
-    value = units::set_units(c(70, 72), "kg")
-)
+bw <- interpolate(time = c(0, 24) [h], value = c(70, 72) [kg])
 parameters(BW = bw)
 
 # A step function: each value holds until the next time point

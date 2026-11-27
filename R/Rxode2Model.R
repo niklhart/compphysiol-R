@@ -513,6 +513,7 @@ simulate.compphysiol_rxode2_model <- function(
     ode <- object$ode_model
     attr(ode, "observation_schedule") <- attr(object, "observation_schedule")
     attr(ode, "experiment_dosing") <- attr(object, "experiment_dosing")
+    parameters <- .process_nse_arg(substitute(parameters), envir = parent.frame())
     time <- .process_nse_arg(substitute(time), envir = parent.frame())
     time <- .simulation_apply_time_unit(time, unit)
     .simulation_validate_time(time)

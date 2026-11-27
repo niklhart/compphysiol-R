@@ -121,3 +121,19 @@ test_that("parameter alignment preserves positional and scalar naming semantics"
     expect_error(replace_parameters(expanded, parameter_sets(a = parameters(), b = parameters())),
                  "identifiers")
 })
+
+test_that("attach_observation_values and observation columns accept unit shorthand", {
+    study <- experiment(observations = observation_schedule(
+        time = c(1, 2) [h], observable = "C", dose = 5 [mg]
+    ))
+    expect_equal(as.list(study)[[1]]$observations$dose, units::set_units(c(5, 5), "mg"))
+
+    attached <- study |> attach_observation_values(c(82, 68) [mg/L])
+    expect_equal(
+        as.list(attached)[[1]]$observations$value,
+        units::set_units(c(82, 68), "mg/L")
+    )
+
+    data <- observation_data(time = 1 [h], observable = "C", value = 1 [mg/L], dose = 5 [mg])
+    expect_equal(data$dose, units::set_units(5, "mg"))
+})

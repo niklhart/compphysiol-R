@@ -8,7 +8,8 @@
 #' @param observable Nonempty observable names. A scalar is recycled over
 #'   `time`.
 #' @param ... For `observation_schedule()`, additional columns with one value per
-#'   schedule row. Unused by `[`.
+#'   schedule row. Unit-bearing columns support unit shorthand such as
+#'   `dose = 5 [mg]`. Unused by `[`.
 #' @param x For `[`, a `compphysiol_observation_schedule` or
 #'   `compphysiol_observation_data` object.
 #' @param i,j For `[`, row and column indices.
@@ -26,7 +27,7 @@
 #' @export
 observation_schedule <- function(time = numeric(), observable = character(), ...) {
     time <- .process_nse_arg(substitute(time), envir = parent.frame())
-    dots <- list(...)
+    dots <- .observation_process_dots(substitute(list(...)), parent.frame())
     .observation_check_dots(dots)
     n <- max(c(length(time), length(observable), lengths(dots)), 0L)
     time <- .observation_recycle(time, n, "time")
@@ -46,6 +47,12 @@ observation_schedule <- function(time = numeric(), observable = character(), ...
     if (length(x) == n) return(x)
     if (length(x) == 1L) return(rep(x, n))
     stop("Observation ", label, " must have length 1 or match the number of rows.", call. = FALSE)
+}
+
+# Evaluate additional columns, resolving unit shorthand such as `5 [mg]`.
+.observation_process_dots <- function(dots_call, envir) {
+    exprs <- as.list(dots_call)[-1L]
+    lapply(exprs, .process_nse_arg, envir = envir)
 }
 
 .observation_check_dots <- function(x) {
@@ -93,7 +100,10 @@ observation_schedule <- function(time = numeric(), observable = character(), ...
 #'
 #' @inheritParams observation_schedule
 #' @param value Numeric observable values, including `units` or `mixed_units`
-#'   values. A scalar is recycled over the rows.
+#'   values. A scalar is recycled over the rows. Supports unit shorthand such as
+#'   `c(8, 6, 3) [mg/L]`.
+#' @param ... Additional columns with one value per row. Unit-bearing columns
+#'   support unit shorthand such as `dose = 5 [mg]`.
 #' @returns A `compphysiol_observation_data` data frame. It also inherits from
 #'   `compphysiol_observation_schedule`.
 #' @examples
@@ -109,7 +119,7 @@ observation_schedule <- function(time = numeric(), observable = character(), ...
 observation_data <- function(time = numeric(), observable = character(), value = numeric(), ...) {
     time <- .process_nse_arg(substitute(time), envir = parent.frame())
     value <- .process_nse_arg(substitute(value), envir = parent.frame())
-    dots <- list(...)
+    dots <- .observation_process_dots(substitute(list(...)), parent.frame())
     .observation_check_dots(dots)
     n <- max(c(length(time), length(observable), length(value), lengths(dots)), 0L)
     time <- .observation_recycle(time, n, "time")

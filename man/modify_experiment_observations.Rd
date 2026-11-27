@@ -22,7 +22,8 @@ attach_observation_values(object, values)
 \item{observations}{A schedule, observation data, bound observation object,
 or callback.}
 
-\item{values}{A value vector, corresponding observation data, or callback.}
+\item{values}{A value vector, corresponding observation data, or callback.
+Value vectors support unit shorthand such as \code{c(82, 68) [mg/L]}.}
 }
 \value{
 A \code{compphysiol_experiments} object.
@@ -46,7 +47,7 @@ study <- experiment(observations = observation_schedule(
 ))
 
 # Turn the schedule into observation data by attaching measured values
-attach_observation_values(study, units::set_units(c(82, 68, 45), "mg/L"))
+attach_observation_values(study, c(82, 68, 45) [mg/L])
 
 # Replace the observations with a denser prediction grid
 replace_observations(study, observation_schedule(

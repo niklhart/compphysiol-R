@@ -202,6 +202,7 @@ replace_dosing.compphysiol_experiments <- function(
 #' @param observations A schedule, observation data, bound observation object,
 #'   or callback.
 #' @param values A value vector, corresponding observation data, or callback.
+#'   Value vectors support unit shorthand such as `c(82, 68) [mg/L]`.
 #' @returns A `compphysiol_experiments` object.
 #' @examples
 #' study <- experiment(observations = observation_schedule(
@@ -209,7 +210,7 @@ replace_dosing.compphysiol_experiments <- function(
 #' ))
 #'
 #' # Turn the schedule into observation data by attaching measured values
-#' attach_observation_values(study, units::set_units(c(82, 68, 45), "mg/L"))
+#' attach_observation_values(study, c(82, 68, 45) [mg/L])
 #'
 #' # Replace the observations with a denser prediction grid
 #' replace_observations(study, observation_schedule(
@@ -264,6 +265,7 @@ attach_observation_values <- function(object, values) UseMethod("attach_observat
 #' @rdname modify_experiment_observations
 #' @export
 attach_observation_values.compphysiol_experiments <- function(object, values) {
+    values <- .process_nse_arg(substitute(values), envir = parent.frame())
     bound <- if (is.function(values)) NULL else .split_bound_observations(values)
     aligned <- if (is.null(bound)) NULL else .align_bound_observations(object, bound)
     entries <- .experiments_elements(object)

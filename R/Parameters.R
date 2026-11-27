@@ -22,7 +22,7 @@
 #'   `compphysiol_parameters` objects to combine; unused by the other methods.
 #' @param name Optional parameter names (if not using named arguments).
 #' @param value For `parameters()`, optional parameter values (if not using named
-#'   arguments). For `x[i] <- value`, another `compphysiol_parameters` object with
+#'   arguments), one per name. Supports unit shorthand such as `c(1, 2) [L]`. For `x[i] <- value`, another `compphysiol_parameters` object with
 #'   the new values, or `NULL` to delete the selected entries.
 #' @param unit Optional parameter units (if not using named arguments).
 #' @param x For methods, a `compphysiol_parameters` object.
@@ -43,6 +43,7 @@ parameters <- function(..., name = NULL, value = NULL, unit = NULL) {
 
     # Non-standard evaluation to capture parameter names and values
     args <- eval(substitute(alist(...)))
+    value <- .process_nse_arg(substitute(value), envir = parent.frame())
 
     if (length(args) > 0) {
         if (!is.null(name) || !is.null(value) || !is.null(unit)) {
@@ -58,9 +59,12 @@ parameters <- function(..., name = NULL, value = NULL, unit = NULL) {
         if (length(unit) == 1) unit <- rep(unit, length(value))
         value <- if (!is.null(unit)) {
                 Map(function(v, u) if (u != "") units::set_units(v, u, mode = "standard") else v, value, unit)
+            } else if (is.list(value)) {
+                value
             } else {
-                list(value)
-            } 
+                # One entry per name; `[` keeps units on each element.
+                lapply(seq_along(value), function(i) value[i])
+            }
         value <- setNames(value, nm = name)
     }
 
@@ -160,7 +164,8 @@ parameters <- function(..., name = NULL, value = NULL, unit = NULL) {
 #'   have units (e.g., `A = 2 [m]`). Values are evaluated from left to right and
 #'   may refer to parameters defined earlier in the same call. The name `t` is
 #'   reserved for current model time.
-#' @param value Optional parameter values (if not using named arguments).
+#' @param value Optional parameter values (if not using named arguments), one
+#'   per name. Supports unit shorthand such as `c(1, 2) [L]`.
 #' @param param A [parameters()] object, a [parameter_sets()] collection for
 #'   experiments, or a callback returning one parameters object. Constructed
 #'   from the other inputs if omitted.

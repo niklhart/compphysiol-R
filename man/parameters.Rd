@@ -34,7 +34,7 @@ call. The name \code{t} is reserved for current model time. For \code{c()},
 \item{name}{Optional parameter names (if not using named arguments).}
 
 \item{value}{For \code{parameters()}, optional parameter values (if not using named
-arguments). For \code{x[i] <- value}, another \code{compphysiol_parameters} object with
+arguments), one per name. Supports unit shorthand such as \code{c(1, 2) [L]}. For \code{x[i] <- value}, another \code{compphysiol_parameters} object with
 the new values, or \code{NULL} to delete the selected entries.}
 
 \item{unit}{Optional parameter units (if not using named arguments).}

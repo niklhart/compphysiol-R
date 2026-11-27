@@ -1239,3 +1239,27 @@ test_that("deSolve solver options reach authored, lowered and compiled simulatio
                        engine = deSolve_engine(compiled = TRUE, method = "euler"))
     expect_equal(result$states$a_drug_Central, c(100, 80, 64))
 })
+
+test_that("simulate accepts unit shorthand in a parameters list for all model forms", {
+    model <- compartment_model() |>
+        add_compartment(name = "Central", volume = 1 [L]) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+        add_transport(from = "Central", to = NULL, molec = "drug", const = "k") |>
+        add_parameter(k = 0.1 [1/h])
+    reference <- simulate(model, time = c(0, 1) [h],
+        parameters = parameters(k = 0.2 [1/h]))$states
+
+    expect_equal(simulate(model, time = c(0, 1) [h],
+        parameters = list(k = 0.2 [1/h]))$states, reference)
+    expect_equal(simulate(to_ode_model(model), time = c(0, 1) [h],
+        parameters = list(k = 0.2 [1/h]))$states, reference)
+    expect_equal(simulate(to_analytical_model(model), time = c(0, 1) [h],
+        parameters = list(k = 0.2 [1/h]))$states, reference, tolerance = 1e-6)
+    expect_equal(simulate(to_compiled_ode_model(model), time = c(0, 1) [h],
+        parameters = list(k = 0.2 [1/h]))$states, reference, tolerance = 1e-6)
+
+    skip_if_not_installed("rxode2")
+    expect_equal(simulate(to_ode_model(model), time = c(0, 1) [h],
+        parameters = list(k = 0.2 [1/h]), engine = rxode2_engine())$states,
+        reference, tolerance = 1e-6)
+})

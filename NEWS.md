@@ -2,6 +2,13 @@
 
 * Added examples for `estimate()`, `to_nlmixr2()` and `from_nlmixr2()`; the
   `to_nlmixr2()` example is now self-contained.
+* Unit shorthand such as `5 [mg]` is now accepted wherever a unit-bearing value
+  can be passed, including `interpolate()`, `attach_observation_values()`, the
+  `value` argument of `parameters()` and the parameter modification functions,
+  additional columns of `observation_schedule()` and `observation_data()`, and
+  parameter lists passed to `simulate()`.
+* Fixed `parameters(name = , value = )` failing for more than one parameter
+  when no `unit` was given.
 
 # compphysiol 0.5.5
 

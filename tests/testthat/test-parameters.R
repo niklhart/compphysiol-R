@@ -92,3 +92,15 @@ test_that("Parameter replacement works correctly", {
     expect_equal(p[["C"]], units::set_units(5, "m"))
     expect_error(p["C"] <- list(D = 1), "Parameters")
 })
+
+test_that("name/value construction accepts unit shorthand and several values", {
+    p <- parameters(name = c("a", "b"), value = c(1, 2) [L])
+    expect_equal(names(p), c("a", "b"))
+    expect_equal(p[["b"]], units::set_units(2, "L"))
+
+    unitless <- parameters(name = c("a", "b"), value = c(1, 2))
+    expect_equal(unclass(unitless), list(a = 1, b = 2))
+
+    model <- compartment_model() |> add_parameter(name = "V", value = 3 [L])
+    expect_equal(model$parameters[["V"]], units::set_units(3, "L"))
+})

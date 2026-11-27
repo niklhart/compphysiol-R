@@ -113,7 +113,8 @@ shorthand, e.g. \code{seq(0, 24) [h]}.}
 \item{unit}{Optional time unit used when \code{time} is numeric without units.}
 
 \item{parameters}{Runtime parameter values, as a named list or
-\link[=parameters]{compphysiol_parameters} object, overriding model defaults.}
+\link[=parameters]{compphysiol_parameters} object, overriding model defaults.
+List entries support unit shorthand such as \code{list(k = 0.2 [1/h])}.}
 
 \item{dimensions}{Named list of unit dimensions defining the numerical scale
 used at the solver boundary. These dimensions affect the scale of solver

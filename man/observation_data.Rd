@@ -18,10 +18,11 @@ observation_data(
 \code{time}.}
 
 \item{value}{Numeric observable values, including \code{units} or \code{mixed_units}
-values. A scalar is recycled over the rows.}
+values. A scalar is recycled over the rows. Supports unit shorthand such as
+\code{c(8, 6, 3) [mg/L]}.}
 
-\item{...}{For \code{observation_schedule()}, additional columns with one value per
-schedule row. Unused by \code{[}.}
+\item{...}{Additional columns with one value per row. Unit-bearing columns
+support unit shorthand such as \code{dose = 5 [mg]}.}
 }
 \value{
 A \code{compphysiol_observation_data} data frame. It also inherits from

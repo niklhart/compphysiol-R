@@ -206,3 +206,12 @@ test_that("compiled backend interpolation contracts are validated", {
         "must use one interpolation method"
     )
 })
+
+test_that("interpolate accepts unit shorthand for time and value", {
+    shorthand <- interpolate(time = c(0, 24) [h], value = c(70, 72) [kg])
+    explicit <- interpolate(
+        time = units::set_units(c(0, 24), "h"),
+        value = units::set_units(c(70, 72), "kg")
+    )
+    expect_equal(shorthand, explicit)
+})

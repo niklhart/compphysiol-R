@@ -46,7 +46,8 @@ reserved for current model time.}
 
 \item{name}{Optional parameter names (if not using named arguments).}
 
-\item{value}{Optional parameter values (if not using named arguments).}
+\item{value}{Optional parameter values (if not using named arguments), one
+per name. Supports unit shorthand such as \code{c(1, 2) [L]}.}
 
 \item{unit}{Optional parameter units (if not using named arguments).}
 }

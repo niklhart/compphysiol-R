@@ -10,24 +10,24 @@
 #' the last scheduled time.
 #'
 #' @param time Unique finite numeric times, optionally with compatible units.
+#'   Supports unit shorthand such as `c(0, 24) [h]`.
 #' @param value Finite numeric values of the same length as `time`, optionally
-#'   with compatible units.
+#'   with compatible units. Supports unit shorthand such as `c(70, 72) [kg]`.
 #' @param method Interpolation method: `"linear"` or `"locf"` (last
 #'   observation carried forward).
 #' @returns A structured time-dependent parameter value for use in
 #'   [parameters()].
 #' @examples
 #' # Body weight increasing linearly over one day
-#' bw <- interpolate(
-#'     time = units::set_units(c(0, 24), "h"),
-#'     value = units::set_units(c(70, 72), "kg")
-#' )
+#' bw <- interpolate(time = c(0, 24) [h], value = c(70, 72) [kg])
 #' parameters(BW = bw)
 #'
 #' # A step function: each value holds until the next time point
 #' interpolate(time = c(0, 12, 24), value = c(1, 2, 3), method = "locf")
 #' @export
 interpolate <- function(time, value, method = c("linear", "locf")) {
+    time <- .process_nse_arg(substitute(time), envir = parent.frame())
+    value <- .process_nse_arg(substitute(value), envir = parent.frame())
     method <- match.arg(method)
     if (!is.numeric(time) || !is.null(dim(time)) || !length(time)) {
         stop("'time' must be a nonempty numeric vector.", call. = FALSE)

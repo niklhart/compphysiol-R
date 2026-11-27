@@ -133,6 +133,7 @@ rxode2_engine <- function(...) {
 #' @param unit Optional time unit used when `time` is numeric without units.
 #' @param parameters Runtime parameter values, as a named list or
 #'   [compphysiol_parameters][parameters()] object, overriding model defaults.
+#'   List entries support unit shorthand such as `list(k = 0.2 [1/h])`.
 #' @param dimensions Named list of unit dimensions defining the numerical scale
 #'   used at the solver boundary. These dimensions affect the scale of solver
 #'   tolerances such as `atol`.
@@ -272,6 +273,7 @@ simulate.compphysiol_compartment_model <- function(
         stop("engine is only supported for simulation_type = 'ode'.", call. = FALSE)
     }
 
+    parameters <- .process_nse_arg(substitute(parameters), envir = parent.frame())
     time <- .process_nse_arg(substitute(time), envir = parent.frame())
     partition <- .process_nse_arg(substitute(partition), envir = parent.frame())
     time <- .simulation_apply_time_unit(time, unit)
@@ -420,6 +422,10 @@ simulate.compphysiol_ode_model <- function(
         return(.simulate_experiments(object, experiment, dimensions = dimensions, engine = engine, ...))
     }
 
+    # Resolve unit shorthand here; the rxode2 branch and the backend receive values.
+    time <- .process_nse_arg(substitute(time), envir = parent.frame())
+    parameters <- .process_nse_arg(substitute(parameters), envir = parent.frame())
+
     if (inherits(engine, "compphysiol_rxode2_engine")) {
         supplied <- .simulation_parameters_object(parameters)
         supplied_profiles <- vapply(unclass(supplied), .is_interpolation, logical(1))
@@ -491,6 +497,7 @@ simulate.compphysiol_desolve_compiled_model <- function(
     attr(ode_model, "prepared_solver_time") <- attr(object, "prepared_solver_time")
     .check_class(ode_model, "compphysiol_ode_model")
 
+    parameters <- .process_nse_arg(substitute(parameters), envir = parent.frame())
     time <- .process_nse_arg(substitute(time), envir = parent.frame())
     time <- .simulation_apply_time_unit(time, unit)
     .simulation_validate_time(time)
@@ -575,6 +582,7 @@ simulate.compphysiol_analytical_model <- function(
         stop("Experiment simulation currently supports ODE models only.", call. = FALSE)
     }
 
+    parameters <- .process_nse_arg(substitute(parameters), envir = parent.frame())
     time <- .process_nse_arg(substitute(time), envir = parent.frame())
     time <- .simulation_apply_time_unit(time, unit)
     .simulation_validate_time(time)
@@ -646,6 +654,7 @@ simulate.compphysiol_stochastic_model <- function(
     }
 
     simulation_type <- match.arg(simulation_type)
+    parameters <- .process_nse_arg(substitute(parameters), envir = parent.frame())
     time <- .process_nse_arg(substitute(time), envir = parent.frame())
     partition <- .process_nse_arg(substitute(partition), envir = parent.frame())
     time <- .simulation_apply_time_unit(time, unit)

@@ -16,7 +16,8 @@ observation_schedule(time = numeric(), observable = character(), ...)
 \code{time}.}
 
 \item{...}{For \code{observation_schedule()}, additional columns with one value per
-schedule row. Unused by \code{[}.}
+schedule row. Unit-bearing columns support unit shorthand such as
+\code{dose = 5 [mg]}. Unused by \code{[}.}
 
 \item{x}{For \code{[}, a \code{compphysiol_observation_schedule} or
 \code{compphysiol_observation_data} object.}
