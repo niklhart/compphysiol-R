@@ -16,3 +16,15 @@ A \code{compphysiol_rxode2_engine} object.
 \description{
 Use this engine with \link[=simulation]{simulate()} for numerical ODE simulation.
 }
+\examples{
+\dontshow{if (requireNamespace("rxode2", quietly = TRUE)) withAutoprint(\{ # examplesIf}
+model <- compartment_model() |>
+    add_compartment(name = "Central", volume = 1) |>
+    add_molecule(name = "drug", cmt = "Central", initial = 100, type = "amount") |>
+    add_transport(from = "Central", to = NULL, const = "k") |>
+    add_parameter(k = 0.1)
+# Solver options are passed on to rxode2::rxSolve()
+engine <- rxode2_engine(atol = 1e-8, rtol = 1e-8)
+simulate(model, time = c(0, 1, 2, 4, 8), engine = engine)$states
+\dontshow{\}) # examplesIf}
+}

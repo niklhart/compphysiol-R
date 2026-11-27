@@ -41,3 +41,16 @@ Describe one parameter to estimate
 \item \code{print(compphysiol_parameter_spec)}: Print a summary; returns \code{x} invisibly.
 
 }}
+\examples{
+# A positive rate constant, estimated on the log scale
+parameter_spec(initial = 0.1 [1/h], transform = "log")
+
+# A fraction, estimated on the logit scale between explicit bounds
+parameter_spec(initial = 0.5, lower = 0, upper = 1, transform = "logit")
+
+# Specifications are combined with c() into a named collection
+c(
+    k = parameter_spec(0.1 [1/h], transform = "log"),
+    sigma = parameter_spec(1 [mg/L], lower = 0 [mg/L])
+)
+}

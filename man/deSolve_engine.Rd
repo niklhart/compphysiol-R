@@ -20,3 +20,14 @@ A \code{compphysiol_desolve_engine} object.
 Use this engine with \link[=simulation]{simulate()} or as the \code{simulation} argument of
 \code{\link[=optim_engine]{optim_engine()}} to configure model preparation and numerical integration.
 }
+\examples{
+model <- compartment_model() |>
+    add_compartment(name = "Central", volume = 1) |>
+    add_molecule(name = "drug", cmt = "Central", initial = 100, type = "amount") |>
+    add_transport(from = "Central", to = NULL, const = "k") |>
+    add_parameter(k = 0.1)
+
+# Solver options are passed on to deSolve::ode()
+engine <- deSolve_engine(method = "lsoda", rtol = 1e-6, atol = 1e-6)
+simulate(model, time = c(0, 1, 2, 4, 8), engine = engine)$states
+}

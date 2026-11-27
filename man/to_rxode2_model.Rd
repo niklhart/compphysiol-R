@@ -20,6 +20,17 @@ solver-neutral ODE representation. Compilation is cached on first use,
 because unit-aware source generation needs the solver dimensions selected at
 the simulation boundary.
 }
+\examples{
+\dontshow{if (requireNamespace("rxode2", quietly = TRUE)) withAutoprint(\{ # examplesIf}
+model <- compartment_model() |>
+    add_compartment(name = "Central", volume = 1) |>
+    add_molecule(name = "drug", cmt = "Central", initial = 100, type = "amount") |>
+    add_transport(from = "Central", to = NULL, const = "k") |>
+    add_parameter(k = 0.1)
+rx <- to_rxode2_model(model)
+simulate(rx, time = c(0, 1, 2, 4, 8))$states
+\dontshow{\}) # examplesIf}
+}
 \seealso{
 \link[=simulation]{simulate()} for running the returned model.
 }

@@ -30,3 +30,15 @@ A \code{compphysiol_optim_engine} object.
 \description{
 Configure the stats optim estimation engine
 }
+\examples{
+# Default: L-BFGS-B with a numerical Hessian for standard errors
+optim_engine()
+
+# Nelder-Mead with more iterations, tighter ODE tolerances, and no Hessian
+optim_engine(
+    method = "Nelder-Mead",
+    control = list(maxit = 1000),
+    simulation = deSolve_engine(rtol = 1e-8, atol = 1e-8),
+    hessian = FALSE
+)
+}

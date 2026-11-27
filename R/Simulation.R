@@ -8,6 +8,16 @@
 #'   `rtol`, and `atol`. Both tolerances default to `1e-10`. Model, parameter,
 #'   initial-value, event, and compiled-code arguments are managed by compphysiol.
 #' @returns A `compphysiol_desolve_engine` object.
+#' @examples
+#' model <- compartment_model() |>
+#'     add_compartment(name = "Central", volume = 1) |>
+#'     add_molecule(name = "drug", cmt = "Central", initial = 100, type = "amount") |>
+#'     add_transport(from = "Central", to = NULL, const = "k") |>
+#'     add_parameter(k = 0.1)
+#'
+#' # Solver options are passed on to deSolve::ode()
+#' engine <- deSolve_engine(method = "lsoda", rtol = 1e-6, atol = 1e-6)
+#' simulate(model, time = c(0, 1, 2, 4, 8), engine = engine)$states
 #' @export
 deSolve_engine <- function(compiled = FALSE, ...) {
     if (!is.logical(compiled) || length(compiled) != 1L || is.na(compiled)) {
@@ -44,6 +54,15 @@ deSolve_engine <- function(compiled = FALSE, ...) {
 #' @param ... Named arguments passed to [rxode2::rxSolve()]. Model, parameter,
 #'   initial-value, event, and return-type arguments are managed by compphysiol.
 #' @returns A `compphysiol_rxode2_engine` object.
+#' @examplesIf requireNamespace("rxode2", quietly = TRUE)
+#' model <- compartment_model() |>
+#'     add_compartment(name = "Central", volume = 1) |>
+#'     add_molecule(name = "drug", cmt = "Central", initial = 100, type = "amount") |>
+#'     add_transport(from = "Central", to = NULL, const = "k") |>
+#'     add_parameter(k = 0.1)
+#' # Solver options are passed on to rxode2::rxSolve()
+#' engine <- rxode2_engine(atol = 1e-8, rtol = 1e-8)
+#' simulate(model, time = c(0, 1, 2, 4, 8), engine = engine)$states
 #' @export
 rxode2_engine <- function(...) {
     args <- list(...)

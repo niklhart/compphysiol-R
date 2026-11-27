@@ -7,6 +7,15 @@
 #' 
 #' @param x For `print()`, a `compphysiol_compartment_model` object.
 #' @param ... Unused.
+#' @examples
+#' # One-compartment model with first-order elimination
+#' model <- compartment_model() |>
+#'     add_compartment(name = "Central", volume = 10 [L]) |>
+#'     add_molecule(name = "drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+#'     add_transport(from = "Central", to = NULL, molec = "drug", const = "k") |>
+#'     add_observable(C = c[drug, Central]) |>
+#'     add_parameter(k = 0.1 [1/h])
+#' model
 #' @seealso [simulate()][simulation] for running the model.
 #' @returns A new `compphysiol_compartment_model` object.
 #' @seealso [modify_compartment_model] for a map of constructors and modifying
@@ -405,6 +414,13 @@ wire <- function(model, what = c("molec", "cmt")) {
 #'   only the type of initial specified in the molecule definition can be calculated.
 #' @returns A named list of state initial values, where the names are in the format
 #'   `"a[molec,cmt]"` for amount states or `"c[molec,cmt]"` for concentration states.
+#' @examples
+#' model <- compartment_model() |>
+#'     add_compartment(name = "Central", volume = 2 [L]) |>
+#'     add_molecule(name = "drug", cmt = "Central", initial = 10 [mg/L])
+#'
+#' initials(model)                    # amounts, where volumes are known
+#' initials(model, type = "c[] only") # concentrations as specified
 #' @export
 initials <- function(model, type = c("a[] or c[]", "c[] or a[]", "a[] only", "c[] only")) {
     # input checking

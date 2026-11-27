@@ -159,3 +159,9 @@ These predicates provide a stable, readable alternative to spelling package
 class names in calls to \code{\link[=inherits]{inherits()}}. Each predicate corresponds to the S3
 class obtained by adding the \code{compphysiol_} prefix to the predicate suffix.
 }
+\examples{
+is_compartment_model(compartment_model())
+is_parameters(parameters(k = 1))
+is_engine(optim_engine())
+is_model(data.frame())
+}

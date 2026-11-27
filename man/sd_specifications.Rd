@@ -27,3 +27,10 @@ distribution depends on its resolved mean. A proportional standard deviation
 is \code{coefficient * abs(mean)}. The combined convention is initially
 \code{constant + proportional * abs(mean)}.
 }
+\examples{
+# Proportional error: sd = cv * |prediction|
+statistical_model(C = normal(sd = proportional("cv")))
+
+# Combined error: sd = sd_add + cv * |prediction|
+statistical_model(C = normal(sd = combined(constant = "sd_add", proportional = "cv")))
+}

@@ -11,6 +11,15 @@
 #'   data frame with `time`, `observable`, and `value` columns, and optionally
 #'   `rep`.
 #' @returns A `compphysiol_observation_data` object containing observable predictions.
+#' @examples
+#' model <- compartment_model() |>
+#'     add_compartment(name = "Central", volume = 1) |>
+#'     add_molecule(name = "drug", cmt = "Central", initial = 100, type = "amount") |>
+#'     add_transport(from = "Central", to = NULL, const = "k") |>
+#'     add_observable(C = c[drug, Central]) |>
+#'     add_parameter(k = 0.1)
+#' sim <- simulate(model, time = c(0, 1, 2, 4))
+#' as_observables_long(sim)
 #' @seealso [simulate()][simulation] for producing state and observable trajectories.
 #' @export
 as_observables_long <- function(x) {

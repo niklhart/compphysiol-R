@@ -28,6 +28,7 @@
 #' @param duration Infusion duration (positive numeric scalar or vector, optional)
 #' @param x For methods, a `compphysiol_dosing` object.
 #' @param i For subsetting methods, indices or names of the dosing events.
+#' @param dose For `is_bolus()` and `is_infusion()`, a `compphysiol_dosing` object.
 #' @return A `compphysiol_dosing` object
 #' @examples
 #' # Bolus of 100 at t=0
@@ -39,6 +40,14 @@
 #' # Vectorized dosing examples
 #' dosing(time = c(0, 24, 48), amount = 100, cmt = "Central")
 #' dosing(time = c(0, 24), amount = c(50, 60), rate = 10, cmt = "Central")
+#'
+#' # Identify boluses and infusions in a combined schedule
+#' doses <- c(
+#'     dosing(time = 0, amount = 100, cmt = "Central"),
+#'     dosing(time = 12, amount = 100, duration = 1, cmt = "Central")
+#' )
+#' is_bolus(doses)
+#' is_infusion(doses)
 #' @seealso [modify_dosing] for adding dosing to models or adding and replacing
 #'   dosing in experiments.
 #' @export
@@ -277,18 +286,14 @@ replace_dosing.compphysiol_compartment_model <- function(
     model
 }
 
-#' Check which dosing events are boluses.
-#' @param dose A `compphysiol_dosing` object
-#' @return A logical vector in which the i-th entry is `TRUE` if the i-th dosing is a bolus and `FALSE` otherwise
+#' @describeIn dosing Which dosing events are boluses, as a logical vector.
 #' @export
 is_bolus <- function(dose) {
     .check_class(dose, "compphysiol_dosing")
     .dosing_is_na_col(dose$rate) & is.na(dose$duration)
 }
 
-#' Check which dosing events are infusions.
-#' @param dose A `compphysiol_dosing` object
-#' @return A logical vector in which the i-th entry is `TRUE` if the i-th dosing is an infusion and `FALSE` otherwise
+#' @describeIn dosing Which dosing events are infusions, as a logical vector.
 #' @export
 is_infusion <- function(dose) {
     .check_class(dose, "compphysiol_dosing")

@@ -35,3 +35,10 @@ require a law such as \code{Q * (c_plasma - c_tissue / Kp)}. The exchange cleara
 has units volume/time for volumetric compartments and need not represent a
 literal fluid flow; it can also represent a permeability-surface area product.
 }
+\examples{
+# Diffusive exchange between plasma and tissue with a shared clearance Q
+compartment_model() |>
+    add_compartment(name = c("plasma", "tissue"), volume = c(3, 10) [L]) |>
+    add_molecule(name = "drug", cmt = "plasma", initial = 100 [mg], type = "amount") |>
+    add_passive_exchange(between = c("plasma", "tissue"), molec = "drug", clearance = "Q")
+}

@@ -28,6 +28,16 @@ This function initializes an empty model that can then be built up by adding the
 \item \code{print(compphysiol_compartment_model)}: Print a summary; returns \code{x} invisibly.
 
 }}
+\examples{
+# One-compartment model with first-order elimination
+model <- compartment_model() |>
+    add_compartment(name = "Central", volume = 10 [L]) |>
+    add_molecule(name = "drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+    add_transport(from = "Central", to = NULL, molec = "drug", const = "k") |>
+    add_observable(C = c[drug, Central]) |>
+    add_parameter(k = 0.1 [1/h])
+model
+}
 \seealso{
 \link[=simulation]{simulate()} for running the model.
 

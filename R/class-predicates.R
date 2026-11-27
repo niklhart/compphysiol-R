@@ -6,6 +6,11 @@
 #'
 #' @param x An object to test.
 #' @returns A single `TRUE` or `FALSE` value.
+#' @examples
+#' is_compartment_model(compartment_model())
+#' is_parameters(parameters(k = 1))
+#' is_engine(optim_engine())
+#' is_model(data.frame())
 #' @name class_predicates
 NULL
 

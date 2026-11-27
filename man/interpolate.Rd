@@ -30,3 +30,14 @@ Times are sorted together with their values. Evaluation before the first
 scheduled time is an error, while the final value is carried forward after
 the last scheduled time.
 }
+\examples{
+# Body weight increasing linearly over one day
+bw <- interpolate(
+    time = units::set_units(c(0, 24), "h"),
+    value = units::set_units(c(70, 72), "kg")
+)
+parameters(BW = bw)
+
+# A step function: each value holds until the next time point
+interpolate(time = c(0, 12, 24), value = c(1, 2, 3), method = "locf")
+}

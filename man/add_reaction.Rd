@@ -40,9 +40,8 @@ add_reaction(
 
 \item{react}{A \code{compphysiol_reactions} object. Constructed from the other inputs if not provided.}
 
-\item{...}{For \code{reactions()}, errors if used: it enforces \code{rate} and \code{const} to
-be specified as named arguments only, not positional. For \code{c()},
-\code{compphysiol_reactions} objects to combine; unused by the other methods.}
+\item{...}{Errors if used, enforces \code{rate} and \code{const} to be specified as
+named arguments only, not positional.}
 
 \item{input}{Character vector or \code{compphysiol_states} object representing the input of the reaction, e.g. \code{c("A", "B")}
 for a reaction where one molecule of \code{A} and one molecule of \code{B} are consumed.
@@ -122,6 +121,21 @@ otherwise it is required regardless of \code{rate_type}. Cross-compartment \code
 reactions default to amount rates, while same-compartment reactions default
 to concentration rates. Amount-rate reactions require all participant states
 to be convertible to amounts during ODE export.
+}
+\examples{
+model <- compartment_model() |>
+    add_compartment(name = "cyt", volume = 1 [L]) |>
+    add_molecule(name = c("L", "R", "LR"), cmt = "cyt")
+
+# Mass-action binding, specified by input and output
+model |>
+    add_reaction(input = c("L", "R"), output = "LR", cmt = "cyt", const = "kon")
+
+# The same reaction using the scheme shorthand, plus an explicit dissociation rate
+model |>
+    add_reaction(scheme = "L + R -> LR", cmt = "cyt", const = "kon") |>
+    add_reaction(input = "LR", output = c("L", "R"), cmt = "cyt",
+                 rate = "koff * c[LR, cyt]", rate_type = "concentration")
 }
 \seealso{
 \code{\link[=reactions]{reactions()}} for construction and \link{modify_compartment_model} for

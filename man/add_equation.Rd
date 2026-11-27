@@ -14,9 +14,8 @@ add_equation(model, eq, ..., name = character(0), expr = character(0))
 
 \item{eq}{A \code{compphysiol_equations} object. Constructed from the other inputs if not provided.}
 
-\item{...}{For \code{equations()}, name-expression pairs defining the equations. The
-expressions can be provided as character strings or as R calls. For \code{c()},
-\code{compphysiol_equations} objects to combine; unused by the other methods.}
+\item{...}{Name-expression pairs defining the equations. The expressions can
+be provided as character strings or as R calls.}
 
 \item{name}{Name of the equation(s), character scalar or vector}
 

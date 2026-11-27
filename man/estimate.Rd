@@ -4,6 +4,8 @@
 \alias{estimate}
 \alias{estimate.compphysiol_estimation_problem}
 \alias{print.compphysiol_estimation_result}
+\alias{coef.compphysiol_estimation_result}
+\alias{fitted.compphysiol_estimation_result}
 \title{Estimate model parameters}
 \usage{
 estimate(object, ...)
@@ -11,17 +13,28 @@ estimate(object, ...)
 \method{estimate}{compphysiol_estimation_problem}(object, engine = optim_engine(), dimensions = NULL, ...)
 
 \method{print}{compphysiol_estimation_result}(x, ...)
+
+\method{coef}{compphysiol_estimation_result}(object, ...)
+
+\method{fitted}{compphysiol_estimation_result}(object, type = NULL, ...)
 }
 \arguments{
-\item{object}{A \code{compphysiol_estimation_problem}.}
+\item{object}{For \code{estimate()}, a \code{compphysiol_estimation_problem}. For
+\code{coef()} and \code{fitted()}, a \code{compphysiol_estimation_result}.}
 
-\item{...}{Additional method arguments; unused by \code{print()}.}
+\item{...}{Additional method arguments; unused by \code{print()}, \code{coef()}, and
+\code{fitted()}.}
 
 \item{engine}{An estimation engine, \code{\link[=optim_engine]{optim_engine()}} or \code{\link[=nlmixr2_engine]{nlmixr2_engine()}}.}
 
 \item{dimensions}{Optional solver-facing unit dimensions passed to simulation.}
 
 \item{x}{For \code{print()}, a \code{compphysiol_estimation_result} object.}
+
+\item{type}{For \code{fitted()}, the prediction type: \code{"PRED"} for population
+predictions or \code{"IPRED"} for individual predictions. Leave as \code{NULL} when
+the result has only one prediction level. For a population-only nlmixr2
+result, all three forms return the same sole prediction table.}
 }
 \value{
 A \link{compphysiol_estimation_result} object.
@@ -32,6 +45,13 @@ Estimate model parameters
 \section{Functions}{
 \itemize{
 \item \code{print(compphysiol_estimation_result)}: Print an estimation result; returns \code{x} invisibly.
+
+\item \code{coef(compphysiol_estimation_result)}: Estimated coefficients as a \code{compphysiol_parameters}
+object, in the units in which the parameters were declared.
+
+\item \code{fitted(compphysiol_estimation_result)}: Fitted observable values as unit-aware
+\code{compphysiol_observation_data} in estimation-row order. The \code{experiment}
+column is a factor whose levels preserve experiment-collection order.
 
 }}
 \examples{
@@ -65,6 +85,7 @@ problem <- estimation_problem(
 fit <- estimate(problem, engine = optim_engine(method = "L-BFGS-B"))
 coef(fit)
 fit$neg_log_lik
+fitted(fit)
 }
 \seealso{
 \link{compphysiol_estimation_result}; \code{\link[=to_nlmixr2]{to_nlmixr2()}} for a

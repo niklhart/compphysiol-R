@@ -40,6 +40,19 @@ Attachment callbacks may return a value vector or corresponding observation
 data. Attachment preserves schedule rows, duplicates, units, and additional
 metadata, and validates rowwise correspondence.
 }
+\examples{
+study <- experiment(observations = observation_schedule(
+    time = c(1, 2, 4) [h], observable = "C"
+))
+
+# Turn the schedule into observation data by attaching measured values
+attach_observation_values(study, units::set_units(c(82, 68, 45), "mg/L"))
+
+# Replace the observations with a denser prediction grid
+replace_observations(study, observation_schedule(
+    time = c(0, 2, 4, 6, 8) [h], observable = "C"
+))
+}
 \seealso{
 \code{\link[=observation_schedule]{observation_schedule()}} and \code{\link[=observation_data]{observation_data()}} for construction;
 \code{\link[=observations]{observations()}} for collecting observations; \link{modify_experiments} for

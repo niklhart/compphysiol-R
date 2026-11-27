@@ -254,6 +254,8 @@ transports <- function(from, to, molec = NA_character_, ..., rate = NULL, const 
 #' @inherit transports description details
 #' @param model A `compphysiol_compartment_model` object.
 #' @inheritParams transports
+#' @param ... Unused, enforces `rate` and `const` to be specified as named
+#'   arguments only, not positional.
 #' @param trans A `compphysiol_transports` object. Constructed from the other inputs if not provided.
 #' @returns The modified `compphysiol_compartment_model` object.
 #' @examples
@@ -477,6 +479,12 @@ passive_exchange <- function(between, molec = NA_character_, clearance) {
 #' @inherit passive_exchange description details params
 #' @param model A `compphysiol_compartment_model` object.
 #' @returns The modified model.
+#' @examples
+#' # Diffusive exchange between plasma and tissue with a shared clearance Q
+#' compartment_model() |>
+#'     add_compartment(name = c("plasma", "tissue"), volume = c(3, 10) [L]) |>
+#'     add_molecule(name = "drug", cmt = "plasma", initial = 100 [mg], type = "amount") |>
+#'     add_passive_exchange(between = c("plasma", "tissue"), molec = "drug", clearance = "Q")
 #' @export
 add_passive_exchange <- function(model, between, molec = NA_character_, clearance) {
     .check_class(model, "compphysiol_compartment_model")

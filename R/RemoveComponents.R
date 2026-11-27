@@ -191,6 +191,14 @@ remove_dosing.compphysiol_experiments <- function(object, i) {
 #' @param ... Unused.
 #' @param value `NULL`, or non-NULL list replacement for equations and observables.
 #' @returns The component with selected entries removed.
+#' @examples
+#' cmts <- compartments(c("A", "B", "C"))
+#' cmts["B"] <- NULL
+#' cmts
+#'
+#' eqs <- equations(x = "a + b", y = "2 * x")
+#' eqs["y"] <- NULL
+#' eqs
 #' @name delete_component_entries
 NULL
 

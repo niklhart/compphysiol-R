@@ -39,3 +39,24 @@ Create an engine-neutral estimation problem
 \item \code{print(compphysiol_estimation_problem)}: Print a summary; returns \code{x} invisibly.
 
 }}
+\examples{
+model <- compartment_model() |>
+    add_compartment(name = "Central", volume = 1 [L]) |>
+    add_molecule(name = "drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+    add_transport(from = "Central", to = NULL, molec = "drug", const = "k") |>
+    add_observable(C = c[drug, Central])
+
+study <- experiment(observations = observation_data(
+    time = c(1, 2, 4) [h], observable = "C", value = c(82, 68, 45) [mg/L]
+))
+
+estimation_problem(
+    model = model,
+    experiments = study,
+    parameters = c(
+        k = parameter_spec(initial = 0.1 [1/h], transform = "log"),
+        sigma = parameter_spec(initial = 1 [mg/L], transform = "log")
+    ),
+    statistics = statistical_model(C = normal(sd = "sigma"))
+)
+}

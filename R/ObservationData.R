@@ -155,6 +155,11 @@ observation_data <- function(time = numeric(), observable = character(), value =
 #'
 #' @param x A `compphysiol_observation_schedule` or `compphysiol_observation_data` object.
 #' @returns A `compphysiol_observation_schedule` without the `value` column.
+#' @examples
+#' observed <- observation_data(
+#'     time = c(1, 2, 4) [h], observable = "C", value = c(82, 68, 45) [mg/L]
+#' )
+#' as_observation_schedule(observed)
 #' @export
 as_observation_schedule <- function(x) {
     if (!inherits(x, "compphysiol_observation_schedule")) {

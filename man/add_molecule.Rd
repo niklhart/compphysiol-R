@@ -68,6 +68,17 @@ A molecule can be defined for a specific compartment through \code{cmt}, or for
 all compartments by leaving \code{cmt} unspecified. The latter creates a compact
 wildcard definition that is resolved by \code{\link[=wire]{wire()}} before ODE generation.
 }
+\examples{
+# A drug with an initial amount in one compartment
+compartment_model() |>
+    add_compartment(name = c("Central", "Peripheral"), volume = 1 [L]) |>
+    add_molecule(name = "drug", cmt = "Central", initial = 100 [mg], type = "amount")
+
+# Molecules present in all compartments; the wildcard is resolved by wire()
+compartment_model() |>
+    add_compartment(name = c("cyt", "nuc"), volume = 1 [L]) |>
+    add_molecule(name = c("A", "B"), initial = 1 [nmol/L])
+}
 \seealso{
 \code{\link[=molecules]{molecules()}} for construction and \link{modify_compartment_model} for
 other model components.

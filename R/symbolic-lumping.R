@@ -74,7 +74,7 @@ symbolic_lumping <- function(M, partitioning = list(), refstate = .get_default_r
 #'   Install Ryacas package to use this feature.
 #' @returns A named list of expressions representing the lumping conditions. Names are compartment names and
 #'   expressions are in terms of the reference state and rate constants.
-#' @examples 
+#' @examplesIf requireNamespace("Ryacas", quietly = TRUE)
 #' # Example: Pilari/Huisinga (2010) lumping conditions for PBPK 12-compartment model
 #' M <- sMD_PBPK_12CMT_wellstirred()
 #' res <- get_lumping_conditions(M, refstate = "ven", simplify = "Ryacas")

@@ -7,6 +7,20 @@
 #' @param molec Character vector of molecule names.
 #' @param cmt Character vector of compartment names.
 #' @return A `compphysiol_states` object.
+#' @examples
+#' # Molecule-compartment pairs
+#' state(molec = c("L", "R"), cmt = c("plasma", "membrane"))
+#'
+#' # States localize the participants of a cross-compartment reaction
+#' compartment_model() |>
+#'     add_compartment(name = c("plasma", "membrane")) |>
+#'     add_molecule(name = "L", cmt = "plasma") |>
+#'     add_molecule(name = c("R", "LR"), cmt = "membrane") |>
+#'     add_reaction(
+#'         input = state(molec = c("L", "R"), cmt = c("plasma", "membrane")),
+#'         output = state(molec = "LR", cmt = "membrane"),
+#'         scale_cmt = "membrane", const = "kon"
+#'     )
 #' @seealso [inspect] for printing, structure inspection, and component access.
 #' @export
 state <- function(..., molec, cmt) {
@@ -708,8 +722,24 @@ reactions <- function(
 #' @inherit reactions description details
 #' @param model A `compphysiol_compartment_model` object.
 #' @inheritParams reactions
+#' @param ... Errors if used, enforces `rate` and `const` to be specified as
+#'   named arguments only, not positional.
 #' @param react A `compphysiol_reactions` object. Constructed from the other inputs if not provided.
 #' @returns The modified `compphysiol_compartment_model` object.
+#' @examples
+#' model <- compartment_model() |>
+#'     add_compartment(name = "cyt", volume = 1 [L]) |>
+#'     add_molecule(name = c("L", "R", "LR"), cmt = "cyt")
+#'
+#' # Mass-action binding, specified by input and output
+#' model |>
+#'     add_reaction(input = c("L", "R"), output = "LR", cmt = "cyt", const = "kon")
+#'
+#' # The same reaction using the scheme shorthand, plus an explicit dissociation rate
+#' model |>
+#'     add_reaction(scheme = "L + R -> LR", cmt = "cyt", const = "kon") |>
+#'     add_reaction(input = "LR", output = c("L", "R"), cmt = "cyt",
+#'                  rate = "koff * c[LR, cyt]", rate_type = "concentration")
 #' @seealso [reactions()] for construction and [modify_compartment_model] for
 #'   other model components.
 #' @export

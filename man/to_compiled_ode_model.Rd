@@ -30,6 +30,19 @@ the parameter interface, and output metadata for reuse in subsequent runs.
 \item \code{print(compphysiol_desolve_compiled_model)}: Print a summary; returns \code{x} invisibly.
 
 }}
+\examples{
+\donttest{
+model <- compartment_model() |>
+    add_compartment(name = "Central", volume = 1) |>
+    add_molecule(name = "drug", cmt = "Central", initial = 100, type = "amount") |>
+    add_transport(from = "Central", to = NULL, const = "k") |>
+    add_parameter(k = 0.1)
+# Compiling requires a C compiler; code is generated and loaded on first use
+compiled <- to_compiled_ode_model(model)
+compiled
+simulate(compiled, time = c(0, 1, 2, 4, 8))$states
+}
+}
 \seealso{
 \link[=simulation]{simulate()} for running the returned model.
 }

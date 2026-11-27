@@ -11,6 +11,18 @@
 #' @param x For `print()`, a `compphysiol_parameter_spec` object.
 #' @param ... Unused.
 #' @returns A `compphysiol_parameter_spec` object.
+#' @examples
+#' # A positive rate constant, estimated on the log scale
+#' parameter_spec(initial = 0.1 [1/h], transform = "log")
+#'
+#' # A fraction, estimated on the logit scale between explicit bounds
+#' parameter_spec(initial = 0.5, lower = 0, upper = 1, transform = "logit")
+#'
+#' # Specifications are combined with c() into a named collection
+#' c(
+#'     k = parameter_spec(0.1 [1/h], transform = "log"),
+#'     sigma = parameter_spec(1 [mg/L], lower = 0 [mg/L])
+#' )
 #' @export
 parameter_spec <- function(
     initial,
@@ -262,6 +274,17 @@ print.compphysiol_parameter_specs <- function(x, ...) {
 #' @param hessian Whether to calculate a numerical Hessian at the fitted
 #'   coordinates and normalize its inverse as parameter uncertainty.
 #' @returns A `compphysiol_optim_engine` object.
+#' @examples
+#' # Default: L-BFGS-B with a numerical Hessian for standard errors
+#' optim_engine()
+#'
+#' # Nelder-Mead with more iterations, tighter ODE tolerances, and no Hessian
+#' optim_engine(
+#'     method = "Nelder-Mead",
+#'     control = list(maxit = 1000),
+#'     simulation = deSolve_engine(rtol = 1e-8, atol = 1e-8),
+#'     hessian = FALSE
+#' )
 #' @export
 optim_engine <- function(
     method = "L-BFGS-B",
@@ -304,6 +327,16 @@ optim_engine <- function(
 #' @param likelihood_control Named arguments for evaluation-only likelihood calculation.
 #' @param table Named arguments passed to [nlmixr2est::tableControl()].
 #' @returns A `compphysiol_nlmixr2_engine` object.
+#' @examples
+#' # FOCEi with default settings
+#' nlmixr2_engine()
+#'
+#' # SAEM with a fixed seed and explicit likelihood evaluation by importance sampling
+#' nlmixr2_engine(
+#'     method = "saem",
+#'     control = list(seed = 42L, print = 0L),
+#'     likelihood = "impmap"
+#' )
 #' @export
 nlmixr2_engine <- function(method = "focei", control = list(), table = list(),
                            likelihood = "auto", likelihood_control = list()) {
@@ -343,6 +376,26 @@ nlmixr2_engine <- function(method = "focei", control = list(), table = list(),
 #' @param x For `print()`, a `compphysiol_estimation_problem` object.
 #' @param ... Unused.
 #' @returns A `compphysiol_estimation_problem` object.
+#' @examples
+#' model <- compartment_model() |>
+#'     add_compartment(name = "Central", volume = 1 [L]) |>
+#'     add_molecule(name = "drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+#'     add_transport(from = "Central", to = NULL, molec = "drug", const = "k") |>
+#'     add_observable(C = c[drug, Central])
+#'
+#' study <- experiment(observations = observation_data(
+#'     time = c(1, 2, 4) [h], observable = "C", value = c(82, 68, 45) [mg/L]
+#' ))
+#'
+#' estimation_problem(
+#'     model = model,
+#'     experiments = study,
+#'     parameters = c(
+#'         k = parameter_spec(initial = 0.1 [1/h], transform = "log"),
+#'         sigma = parameter_spec(initial = 1 [mg/L], transform = "log")
+#'     ),
+#'     statistics = statistical_model(C = normal(sd = "sigma"))
+#' )
 #' @export
 estimation_problem <- function(model, experiments, parameters, statistics) {
     supported <- c(
@@ -507,8 +560,14 @@ print.compphysiol_estimation_problem <- function(x, ...) {
 
 #' Estimate model parameters
 #'
-#' @param object A `compphysiol_estimation_problem`.
-#' @param ... Additional method arguments; unused by `print()`.
+#' @param object For `estimate()`, a `compphysiol_estimation_problem`. For
+#'   `coef()` and `fitted()`, a `compphysiol_estimation_result`.
+#' @param ... Additional method arguments; unused by `print()`, `coef()`, and
+#'   `fitted()`.
+#' @param type For `fitted()`, the prediction type: `"PRED"` for population
+#'   predictions or `"IPRED"` for individual predictions. Leave as `NULL` when
+#'   the result has only one prediction level. For a population-only nlmixr2
+#'   result, all three forms return the same sole prediction table.
 #' @param x For `print()`, a `compphysiol_estimation_result` object.
 #' @returns A [compphysiol_estimation_result] object.
 #' @seealso [compphysiol_estimation_result]; [to_nlmixr2()] for a
@@ -544,6 +603,7 @@ print.compphysiol_estimation_problem <- function(x, ...) {
 #' fit <- estimate(problem, engine = optim_engine(method = "L-BFGS-B"))
 #' coef(fit)
 #' fit$neg_log_lik
+#' fitted(fit)
 #' @export
 estimate <- function(object, ...) UseMethod("estimate")
 
@@ -1189,10 +1249,8 @@ print.compphysiol_estimation_result <- function(x, ...) {
     log(sd) + 0.5 * log(2 * pi) + 0.5 * ((observed - predicted) / sd)^2
 }
 
-#' Extract estimated coefficients
-#' @param object A `compphysiol_estimation_result`.
-#' @param ... Unused.
-#' @returns Estimated coefficients as a `compphysiol_parameters` object.
+#' @describeIn estimate Estimated coefficients as a `compphysiol_parameters`
+#'   object, in the units in which the parameters were declared.
 #' @export
 coef.compphysiol_estimation_result <- function(object, ...) object$coefficients
 
@@ -1239,6 +1297,28 @@ coef.compphysiol_estimation_result <- function(object, ...) object$coefficients
 #' @returns `standard_errors()` returns a `compphysiol_parameters` object.
 #'   `estimate_correlations()` returns a numeric matrix. Entries are `NA` where
 #'   uncertainty was not requested or could not be calculated.
+#' @examples
+#' model <- compartment_model() |>
+#'     add_compartment(name = "Central", volume = 1 [L]) |>
+#'     add_molecule(name = "drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+#'     add_transport(from = "Central", to = NULL, molec = "drug", const = "k") |>
+#'     add_observable(C = c[drug, Central])
+#'
+#' problem <- estimation_problem(
+#'     model = model,
+#'     experiments = experiment(observations = observation_data(
+#'         time = c(1, 2, 4, 8) [h], observable = "C", value = c(82, 68, 45, 20) [mg/L]
+#'     )),
+#'     parameters = c(
+#'         k = parameter_spec(initial = 0.1 [1/h], transform = "log"),
+#'         sigma = parameter_spec(initial = 1 [mg/L], transform = "log")
+#'     ),
+#'     statistics = statistical_model(C = normal(sd = "sigma"))
+#' )
+#' fit <- estimate(problem, engine = optim_engine())
+#'
+#' standard_errors(fit)        # same units as coef(fit)
+#' estimate_correlations(fit)  # unitless
 #' @name estimation_uncertainty
 NULL
 
@@ -1262,16 +1342,9 @@ estimate_correlations.compphysiol_estimation_result <- function(object, ...) {
     object$estimate_correlations
 }
 
-#' Extract fitted observable values
-#' @param object A `compphysiol_estimation_result`.
-#' @param type Prediction type: `"PRED"` for population predictions or
-#'   `"IPRED"` for individual predictions. Leave as `NULL` when the result has
-#'   only one prediction level. For a population-only nlmixr2 result, all three
-#'   forms return the same sole prediction table.
-#' @param ... Unused.
-#' @returns Unit-aware `compphysiol_observation_data` of fitted values in
-#'   estimation-row order. The `experiment` column is a factor whose levels
-#'   preserve experiment-collection order.
+#' @describeIn estimate Fitted observable values as unit-aware
+#'   `compphysiol_observation_data` in estimation-row order. The `experiment`
+#'   column is a factor whose levels preserve experiment-collection order.
 #' @export
 fitted.compphysiol_estimation_result <- function(object, type = NULL, ...) {
     if (inherits(object$engine, "compphysiol_optim_engine")) {

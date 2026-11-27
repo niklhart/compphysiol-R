@@ -39,17 +39,14 @@ replace_parameters(object, param, ..., name = NULL, value = NULL, unit = NULL)
 experiments, or a callback returning one parameters object. Constructed
 from the other inputs if omitted.}
 
-\item{...}{For \code{parameters()}, parameter values as name-value pairs, where
-values can optionally have units (e.g., \code{A = 2 [m]}). Values are evaluated
-from left to right and may refer to parameters defined earlier in the same
-call. The name \code{t} is reserved for current model time. For \code{c()},
-\code{compphysiol_parameters} objects to combine; unused by the other methods.}
+\item{...}{Parameter values as name-value pairs, where values can optionally
+have units (e.g., \code{A = 2 [m]}). Values are evaluated from left to right and
+may refer to parameters defined earlier in the same call. The name \code{t} is
+reserved for current model time.}
 
 \item{name}{Optional parameter names (if not using named arguments).}
 
-\item{value}{For \code{parameters()}, optional parameter values (if not using named
-arguments). For \code{x[i] <- value}, another \code{compphysiol_parameters} object with
-the new values, or \code{NULL} to delete the selected entries.}
+\item{value}{Optional parameter values (if not using named arguments).}
 
 \item{unit}{Optional parameter units (if not using named arguments).}
 }
@@ -77,6 +74,22 @@ alignment; expansion uses the non-scalar collection's names, while otherwise
 experiment names are retained. Other length mismatches are rejected.
 A callback is invoked once
 per target and receives its current parameters.
+}
+\examples{
+model <- compartment_model() |>
+    add_parameter(k = 0.1 [1/h], V = 5 [L])
+
+# Overlay replaces matching names, adds new ones, and deletes with NULL
+model |>
+    overlay_parameter(k = 0.2 [1/h], CL = 1 [L/h], V = NULL)
+
+# Experiment parameters: broadcast one set, or align one set per experiment
+studies <- c(a = experiment(), b = experiment())
+add_parameter(studies, BW = 70 [kg])
+add_parameter(studies, parameter_sets(
+    a = parameters(BW = 70 [kg]),
+    b = parameters(BW = 85 [kg])
+))
 }
 \seealso{
 \code{\link[=parameters]{parameters()}} and \code{\link[=parameter_sets]{parameter_sets()}} for construction;

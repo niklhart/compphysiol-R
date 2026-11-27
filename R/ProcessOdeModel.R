@@ -8,6 +8,15 @@
 #' @param x For `print()`, a `compphysiol_process_model` object.
 #' @param ... Unused.
 #' @returns A `compphysiol_process_model` object.
+#' @examples
+#' model <- compartment_model() |>
+#'     add_compartment(name = c("cen", "per"), volume = 1) |>
+#'     add_molecule(name = "drug", cmt = c("cen", "per"), initial = c(100, 0), type = "amount") |>
+#'     add_transport(from = "cen", to = "per", const = "k12") |>
+#'     add_transport(from = "per", to = "cen", const = "k21") |>
+#'     add_transport(from = "cen", to = NULL, const = "k10") |>
+#'     add_parameter(k12 = 0.5, k21 = 0.2, k10 = 0.1)
+#' to_process_model(model)
 #' @export
 to_process_model <- function(model) {
     UseMethod("to_process_model")
@@ -191,6 +200,17 @@ to_process_model.compphysiol_compartment_model <- function(model) {
 #' @param x For `print()`, a `compphysiol_ode_model` object.
 #' @param ... Unused.
 #' @returns A `compphysiol_ode_model` object.
+#' @examples
+#' model <- compartment_model() |>
+#'     add_compartment(name = c("cen", "per"), volume = 1) |>
+#'     add_molecule(name = "drug", cmt = c("cen", "per"), initial = c(100, 0), type = "amount") |>
+#'     add_transport(from = "cen", to = "per", const = "k12") |>
+#'     add_transport(from = "per", to = "cen", const = "k21") |>
+#'     add_transport(from = "cen", to = NULL, const = "k10") |>
+#'     add_parameter(k12 = 0.5, k21 = 0.2, k10 = 0.1)
+#' ode <- to_ode_model(model)
+#' ode
+#' simulate(ode, time = c(0, 1, 2, 4, 8))$states
 #' @seealso [simulate()][simulation] for running the returned model.
 #' @export
 to_ode_model <- function(model) {
@@ -247,6 +267,18 @@ to_ode_model.compphysiol_process_model <- function(model) {
 #' @param x For `print()`, a `compphysiol_desolve_compiled_model` object.
 #' @param ... Unused.
 #' @returns A `compphysiol_desolve_compiled_model` object.
+#' @examples
+#' \donttest{
+#' model <- compartment_model() |>
+#'     add_compartment(name = "Central", volume = 1) |>
+#'     add_molecule(name = "drug", cmt = "Central", initial = 100, type = "amount") |>
+#'     add_transport(from = "Central", to = NULL, const = "k") |>
+#'     add_parameter(k = 0.1)
+#' # Compiling requires a C compiler; code is generated and loaded on first use
+#' compiled <- to_compiled_ode_model(model)
+#' compiled
+#' simulate(compiled, time = c(0, 1, 2, 4, 8))$states
+#' }
 #' @seealso [simulate()][simulation] for running the returned model.
 #' @export
 to_compiled_ode_model <- function(model) {
@@ -304,6 +336,17 @@ to_compiled_ode_model.compphysiol_ode_model <- function(model) {
 #' @param x For `print()`, a `compphysiol_analytical_model` object.
 #' @param ... Unused.
 #' @returns A `compphysiol_analytical_model` object.
+#' @examples
+#' model <- compartment_model() |>
+#'     add_compartment(name = c("cen", "per"), volume = 1) |>
+#'     add_molecule(name = "drug", cmt = c("cen", "per"), initial = c(100, 0), type = "amount") |>
+#'     add_transport(from = "cen", to = "per", const = "k12") |>
+#'     add_transport(from = "per", to = "cen", const = "k21") |>
+#'     add_transport(from = "cen", to = NULL, const = "k10") |>
+#'     add_parameter(k12 = 0.5, k21 = 0.2, k10 = 0.1)
+#' analytical <- to_analytical_model(model)
+#' analytical
+#' simulate(analytical, time = c(0, 1, 2, 4, 8))$states
 #' @seealso [simulate()][simulation] for running the returned model.
 #' @export
 to_analytical_model <- function(model) {
@@ -368,6 +411,17 @@ to_analytical_model.compphysiol_process_model <- function(model) {
 #' @param x For `print()`, a `compphysiol_stochastic_model` object.
 #' @param ... Unused.
 #' @returns A `compphysiol_stochastic_model` object.
+#' @examples
+#' # Conversion of molecule A to B, simulated as a jump process with integer counts
+#' model <- compartment_model() |>
+#'     add_compartment(name = "cell", volume = 1) |>
+#'     add_molecule(name = "A", cmt = "cell", initial = 50, type = "amount") |>
+#'     add_molecule(name = "B", cmt = "cell", initial = 0, type = "amount") |>
+#'     add_reaction(input = "A", output = "B", cmt = "cell", const = "k") |>
+#'     add_parameter(k = 0.1)
+#' stochastic <- to_stochastic_model(model)
+#' stochastic
+#' simulate(stochastic, nsim = 2, seed = 1, time = c(0, 5, 10))$states
 #' @seealso [simulate()][simulation] for running the returned model.
 #' @export
 to_stochastic_model <- function(model) {

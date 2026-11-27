@@ -32,3 +32,14 @@ The nlmixr2 integration supports FOCEi and SAEM with diagonal
 individual-level variability. The engine owns ODE execution and mixed-effects
 estimation; it does not contain a separate simulation engine.
 }
+\examples{
+# FOCEi with default settings
+nlmixr2_engine()
+
+# SAEM with a fixed seed and explicit likelihood evaluation by importance sampling
+nlmixr2_engine(
+    method = "saem",
+    control = list(seed = 42L, print = 0L),
+    likelihood = "impmap"
+)
+}

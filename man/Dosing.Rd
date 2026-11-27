@@ -2,6 +2,8 @@
 % Please edit documentation in R/Dosing.R
 \name{dosing}
 \alias{dosing}
+\alias{is_bolus}
+\alias{is_infusion}
 \alias{length.compphysiol_dosing}
 \alias{print.compphysiol_dosing}
 \alias{[.compphysiol_dosing}
@@ -20,6 +22,10 @@ dosing(
   rate = NULL,
   duration = NULL
 )
+
+is_bolus(dose)
+
+is_infusion(dose)
 
 \method{length}{compphysiol_dosing}(x)
 
@@ -53,6 +59,8 @@ infusion dosing to be specified as named arguments only, not positional. For
 \item{rate}{Infusion rate (non-negative numeric scalar or vector, optional)}
 
 \item{duration}{Infusion duration (positive numeric scalar or vector, optional)}
+
+\item{dose}{For \code{is_bolus()} and \code{is_infusion()}, a \code{compphysiol_dosing} object.}
 
 \item{x}{For methods, a \code{compphysiol_dosing} object.}
 
@@ -94,6 +102,13 @@ The \code{rate} and \code{duration} argument must be specified as named argument
 \item \code{as.data.frame(compphysiol_dosing)}: Convert to a data frame.
 
 }}
+\section{Functions}{
+\itemize{
+\item \code{is_bolus()}: Which dosing events are boluses, as a logical vector.
+
+\item \code{is_infusion()}: Which dosing events are infusions, as a logical vector.
+
+}}
 \examples{
 # Bolus of 100 at t=0
 dosing(time = 0, amount = 100, cmt = "Central")
@@ -104,6 +119,14 @@ dosing(time = 0, amount = 50, rate = 10, cmt = "Central")
 # Vectorized dosing examples
 dosing(time = c(0, 24, 48), amount = 100, cmt = "Central")
 dosing(time = c(0, 24), amount = c(50, 60), rate = 10, cmt = "Central")
+
+# Identify boluses and infusions in a combined schedule
+doses <- c(
+    dosing(time = 0, amount = 100, cmt = "Central"),
+    dosing(time = 12, amount = 100, duration = 1, cmt = "Central")
+)
+is_bolus(doses)
+is_infusion(doses)
 }
 \seealso{
 \link{modify_dosing} for adding dosing to models or adding and replacing

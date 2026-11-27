@@ -136,6 +136,16 @@ molecules <- function(name = character(0), cmt = NULL, initial = 0, unit = NULL,
 #' @param ... Unused. Its position requires the constructor arguments that
 #'   follow it to be supplied by name rather than position.
 #' @returns The modified `compphysiol_compartment_model` object.
+#' @examples
+#' # A drug with an initial amount in one compartment
+#' compartment_model() |>
+#'     add_compartment(name = c("Central", "Peripheral"), volume = 1 [L]) |>
+#'     add_molecule(name = "drug", cmt = "Central", initial = 100 [mg], type = "amount")
+#'
+#' # Molecules present in all compartments; the wildcard is resolved by wire()
+#' compartment_model() |>
+#'     add_compartment(name = c("cyt", "nuc"), volume = 1 [L]) |>
+#'     add_molecule(name = c("A", "B"), initial = 1 [nmol/L])
 #' @seealso [molecules()] for construction and [modify_compartment_model] for
 #'   other model components.
 #' @export

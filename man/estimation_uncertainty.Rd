@@ -64,3 +64,26 @@ reconstruct a covariance matrix as
 describe sampling uncertainty among fitted parameters and are distinct from
 correlations between individual random effects in a statistical model.
 }
+\examples{
+model <- compartment_model() |>
+    add_compartment(name = "Central", volume = 1 [L]) |>
+    add_molecule(name = "drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+    add_transport(from = "Central", to = NULL, molec = "drug", const = "k") |>
+    add_observable(C = c[drug, Central])
+
+problem <- estimation_problem(
+    model = model,
+    experiments = experiment(observations = observation_data(
+        time = c(1, 2, 4, 8) [h], observable = "C", value = c(82, 68, 45, 20) [mg/L]
+    )),
+    parameters = c(
+        k = parameter_spec(initial = 0.1 [1/h], transform = "log"),
+        sigma = parameter_spec(initial = 1 [mg/L], transform = "log")
+    ),
+    statistics = statistical_model(C = normal(sd = "sigma"))
+)
+fit <- estimate(problem, engine = optim_engine())
+
+standard_errors(fit)        # same units as coef(fit)
+estimate_correlations(fit)  # unitless
+}

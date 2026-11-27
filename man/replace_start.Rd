@@ -20,6 +20,13 @@ A \code{compphysiol_experiments} object.
 \description{
 Replace experiment start times
 }
+\examples{
+studies <- c(
+    a = experiment(start = 0 [h]),
+    b = experiment(start = 0 [h])
+)
+replace_start(studies, 2 [h])
+}
 \seealso{
 \code{\link[=experiment]{experiment()}} for setting the initial start and
 \link{modify_experiments} for other modifiable experiment components.

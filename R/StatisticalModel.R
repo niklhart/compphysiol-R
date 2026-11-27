@@ -30,6 +30,12 @@
 #'   units.
 #' @param proportional Name or fixed scalar value of a dimensionless component.
 #' @returns A standard-deviation specification for use in [normal()].
+#' @examples
+#' # Proportional error: sd = cv * |prediction|
+#' statistical_model(C = normal(sd = proportional("cv")))
+#'
+#' # Combined error: sd = sd_add + cv * |prediction|
+#' statistical_model(C = normal(sd = combined(constant = "sd_add", proportional = "cv")))
 #' @name sd_specifications
 NULL
 

@@ -33,6 +33,18 @@ elementary propensities from their \code{const} and input-state metadata. Explic
 \item \code{print(compphysiol_stochastic_model)}: Print a summary; returns \code{x} invisibly.
 
 }}
+\examples{
+# Conversion of molecule A to B, simulated as a jump process with integer counts
+model <- compartment_model() |>
+    add_compartment(name = "cell", volume = 1) |>
+    add_molecule(name = "A", cmt = "cell", initial = 50, type = "amount") |>
+    add_molecule(name = "B", cmt = "cell", initial = 0, type = "amount") |>
+    add_reaction(input = "A", output = "B", cmt = "cell", const = "k") |>
+    add_parameter(k = 0.1)
+stochastic <- to_stochastic_model(model)
+stochastic
+simulate(stochastic, nsim = 2, seed = 1, time = c(0, 5, 10))$states
+}
 \seealso{
 \link[=simulation]{simulate()} for running the returned model.
 }

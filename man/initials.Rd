@@ -23,3 +23,11 @@ A named list of state initial values, where the names are in the format
 \description{
 Extract the initial states (with names) from a \code{compphysiol_compartment_model} object
 }
+\examples{
+model <- compartment_model() |>
+    add_compartment(name = "Central", volume = 2 [L]) |>
+    add_molecule(name = "drug", cmt = "Central", initial = 10 [mg/L])
+
+initials(model)                    # amounts, where volumes are known
+initials(model, type = "c[] only") # concentrations as specified
+}

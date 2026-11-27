@@ -203,6 +203,18 @@ replace_dosing.compphysiol_experiments <- function(
 #'   or callback.
 #' @param values A value vector, corresponding observation data, or callback.
 #' @returns A `compphysiol_experiments` object.
+#' @examples
+#' study <- experiment(observations = observation_schedule(
+#'     time = c(1, 2, 4) [h], observable = "C"
+#' ))
+#'
+#' # Turn the schedule into observation data by attaching measured values
+#' attach_observation_values(study, units::set_units(c(82, 68, 45), "mg/L"))
+#'
+#' # Replace the observations with a denser prediction grid
+#' replace_observations(study, observation_schedule(
+#'     time = c(0, 2, 4, 6, 8) [h], observable = "C"
+#' ))
 #' @seealso [observation_schedule()] and [observation_data()] for construction;
 #'   [observations()] for collecting observations; [modify_experiments] for
 #'   other modifiable experiment components.
@@ -268,6 +280,12 @@ attach_observation_values.compphysiol_experiments <- function(object, values) {
 #' @param object A `compphysiol_experiments` object.
 #' @param start A finite numeric scalar, optionally with units, or a callback.
 #' @returns A `compphysiol_experiments` object.
+#' @examples
+#' studies <- c(
+#'     a = experiment(start = 0 [h]),
+#'     b = experiment(start = 0 [h])
+#' )
+#' replace_start(studies, 2 [h])
 #' @seealso [experiment()] for setting the initial start and
 #'   [modify_experiments] for other modifiable experiment components.
 #' @export

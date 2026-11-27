@@ -15,3 +15,9 @@ A \code{compphysiol_observation_schedule} without the \code{value} column.
 \description{
 Extract the schedule from observation data
 }
+\examples{
+observed <- observation_data(
+    time = c(1, 2, 4) [h], observable = "C", value = c(82, 68, 45) [mg/L]
+)
+as_observation_schedule(observed)
+}

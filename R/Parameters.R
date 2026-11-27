@@ -156,10 +156,30 @@ parameters <- function(..., name = NULL, value = NULL, unit = NULL) {
 #' @param object A `compphysiol_compartment_model` or
 #'   `compphysiol_experiments` object.
 #' @inheritParams parameters
+#' @param ... Parameter values as name-value pairs, where values can optionally
+#'   have units (e.g., `A = 2 [m]`). Values are evaluated from left to right and
+#'   may refer to parameters defined earlier in the same call. The name `t` is
+#'   reserved for current model time.
+#' @param value Optional parameter values (if not using named arguments).
 #' @param param A [parameters()] object, a [parameter_sets()] collection for
 #'   experiments, or a callback returning one parameters object. Constructed
 #'   from the other inputs if omitted.
 #' @returns The modified object.
+#' @examples
+#' model <- compartment_model() |>
+#'     add_parameter(k = 0.1 [1/h], V = 5 [L])
+#'
+#' # Overlay replaces matching names, adds new ones, and deletes with NULL
+#' model |>
+#'     overlay_parameter(k = 0.2 [1/h], CL = 1 [L/h], V = NULL)
+#'
+#' # Experiment parameters: broadcast one set, or align one set per experiment
+#' studies <- c(a = experiment(), b = experiment())
+#' add_parameter(studies, BW = 70 [kg])
+#' add_parameter(studies, parameter_sets(
+#'     a = parameters(BW = 70 [kg]),
+#'     b = parameters(BW = 85 [kg])
+#' ))
 #' @seealso [parameters()] and [parameter_sets()] for construction;
 #'   [modify_compartment_model] and [modify_experiments] for other modifiable
 #'   components.

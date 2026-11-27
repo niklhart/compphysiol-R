@@ -117,6 +117,8 @@ equations <- function(..., name = character(0), expr = character(0)) {
 #' @inherit equations description details
 #' @param model A `compphysiol_compartment_model` object.
 #' @inheritParams equations
+#' @param ... Name-expression pairs defining the equations. The expressions can
+#'   be provided as character strings or as R calls.
 #' @param eq A `compphysiol_equations` object. Constructed from the other inputs if not provided.
 #' @returns The modified `compphysiol_compartment_model` object.
 #' @examples

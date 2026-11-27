@@ -44,3 +44,12 @@ structure. Index rules are the same as \link{remove_components}. Equation and
 observable components also retain ordinary list replacement for non-NULL
 values. Other methods on this page support deletion only.
 }
+\examples{
+cmts <- compartments(c("A", "B", "C"))
+cmts["B"] <- NULL
+cmts
+
+eqs <- equations(x = "a + b", y = "2 * x")
+eqs["y"] <- NULL
+eqs
+}

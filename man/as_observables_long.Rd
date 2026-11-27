@@ -23,6 +23,16 @@ Experiment schedule order and duplicate observation rows are retained.
 Both helpers accept an observable table directly, allowing filtering before
 reshaping without modifying the simulation result.
 }
+\examples{
+model <- compartment_model() |>
+    add_compartment(name = "Central", volume = 1) |>
+    add_molecule(name = "drug", cmt = "Central", initial = 100, type = "amount") |>
+    add_transport(from = "Central", to = NULL, const = "k") |>
+    add_observable(C = c[drug, Central]) |>
+    add_parameter(k = 0.1)
+sim <- simulate(model, time = c(0, 1, 2, 4))
+as_observables_long(sim)
+}
 \seealso{
 \link[=simulation]{simulate()} for producing state and observable trajectories.
 }

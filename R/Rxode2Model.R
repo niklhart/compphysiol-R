@@ -8,6 +8,14 @@
 #' @param model A compphysiol compartment, process, or ODE model.
 #' @param ... Reserved for future use.
 #' @returns A `compphysiol_rxode2_model` object.
+#' @examplesIf requireNamespace("rxode2", quietly = TRUE)
+#' model <- compartment_model() |>
+#'     add_compartment(name = "Central", volume = 1) |>
+#'     add_molecule(name = "drug", cmt = "Central", initial = 100, type = "amount") |>
+#'     add_transport(from = "Central", to = NULL, const = "k") |>
+#'     add_parameter(k = 0.1)
+#' rx <- to_rxode2_model(model)
+#' simulate(rx, time = c(0, 1, 2, 4, 8))$states
 #' @seealso [simulate()][simulation] for running the returned model.
 #' @export
 to_rxode2_model <- function(model, ...) UseMethod("to_rxode2_model")

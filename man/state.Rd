@@ -20,6 +20,21 @@ A \code{compphysiol_states} object.
 \code{compphysiol_states} represent molecule-compartment pairs. In reactions, repeated states
 are interpreted as stoichiometric multiplicity during reaction construction.
 }
+\examples{
+# Molecule-compartment pairs
+state(molec = c("L", "R"), cmt = c("plasma", "membrane"))
+
+# States localize the participants of a cross-compartment reaction
+compartment_model() |>
+    add_compartment(name = c("plasma", "membrane")) |>
+    add_molecule(name = "L", cmt = "plasma") |>
+    add_molecule(name = c("R", "LR"), cmt = "membrane") |>
+    add_reaction(
+        input = state(molec = c("L", "R"), cmt = c("plasma", "membrane")),
+        output = state(molec = "LR", cmt = "membrane"),
+        scale_cmt = "membrane", const = "kon"
+    )
+}
 \seealso{
 \link{inspect} for printing, structure inspection, and component access.
 }

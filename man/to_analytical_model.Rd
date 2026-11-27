@@ -33,6 +33,18 @@ entries are rejected for now.
 \item \code{print(compphysiol_analytical_model)}: Print a summary; returns \code{x} invisibly.
 
 }}
+\examples{
+model <- compartment_model() |>
+    add_compartment(name = c("cen", "per"), volume = 1) |>
+    add_molecule(name = "drug", cmt = c("cen", "per"), initial = c(100, 0), type = "amount") |>
+    add_transport(from = "cen", to = "per", const = "k12") |>
+    add_transport(from = "per", to = "cen", const = "k21") |>
+    add_transport(from = "cen", to = NULL, const = "k10") |>
+    add_parameter(k12 = 0.5, k21 = 0.2, k10 = 0.1)
+analytical <- to_analytical_model(model)
+analytical
+simulate(analytical, time = c(0, 1, 2, 4, 8))$states
+}
 \seealso{
 \link[=simulation]{simulate()} for running the returned model.
 }
