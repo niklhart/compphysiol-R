@@ -2,6 +2,11 @@
 % Please edit documentation in R/Dosing.R
 \name{dosing}
 \alias{dosing}
+\alias{length.compphysiol_dosing}
+\alias{print.compphysiol_dosing}
+\alias{[.compphysiol_dosing}
+\alias{c.compphysiol_dosing}
+\alias{as.data.frame.compphysiol_dosing}
 \title{Create a \code{compphysiol_dosing} object}
 \usage{
 dosing(
@@ -15,6 +20,16 @@ dosing(
   rate = NULL,
   duration = NULL
 )
+
+\method{length}{compphysiol_dosing}(x)
+
+\method{print}{compphysiol_dosing}(x, ...)
+
+\method{[}{compphysiol_dosing}(x, i, ...)
+
+\method{c}{compphysiol_dosing}(...)
+
+\method{as.data.frame}{compphysiol_dosing}(x, ...)
 }
 \arguments{
 \item{time}{compphysiol_dosing time(s) (numeric scalar or vector)}
@@ -31,12 +46,17 @@ If only a single molecule is present in the model, this can be omitted.}
 \item{cmt}{Compartment name (character scalar). If only a single compartment is present in the model,
 this can be omitted.}
 
-\item{...}{Unused, enforces \code{rate} and \code{duration} for infusion dosing to be specified
-as named arguments only, not positional}
+\item{...}{For \code{dosing()}, unused: it enforces \code{rate} and \code{duration} for
+infusion dosing to be specified as named arguments only, not positional. For
+\code{c()}, \code{compphysiol_dosing} objects to combine; unused by the other methods.}
 
 \item{rate}{Infusion rate (non-negative numeric scalar or vector, optional)}
 
 \item{duration}{Infusion duration (positive numeric scalar or vector, optional)}
+
+\item{x}{For methods, a \code{compphysiol_dosing} object.}
+
+\item{i}{For subsetting methods, indices or names of the dosing events.}
 }
 \value{
 A \code{compphysiol_dosing} object
@@ -61,6 +81,19 @@ The missing quantity is derived automatically:
 The \code{rate} and \code{duration} argument must be specified as named arguments, not positional, to avoid any ambiguity.
 }
 }
+\section{Methods (by generic)}{
+\itemize{
+\item \code{length(compphysiol_dosing)}: Number of dosing events.
+
+\item \code{print(compphysiol_dosing)}: Print a summary; returns \code{x} invisibly.
+
+\item \code{[}: Subset by row index.
+
+\item \code{c(compphysiol_dosing)}: Combine several objects into one; the dosing events are sorted by time.
+
+\item \code{as.data.frame(compphysiol_dosing)}: Convert to a data frame.
+
+}}
 \examples{
 # Bolus of 100 at t=0
 dosing(time = 0, amount = 100, cmt = "Central")

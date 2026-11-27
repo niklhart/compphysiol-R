@@ -306,9 +306,11 @@ correlated <- function(...) {
 #' as unresolved structural parameters or model observables when the statistical
 #' model is resolved against a dynamic model by downstream statistical workflows.
 #'
-#' @param ... Named distribution specifications created by [normal()] or
-#'   [lognormal()] or [logitnormal()], plus optional unnamed specifications created by
-#'   `correlated()`.
+#' @param ... For `statistical_model()`, named distribution specifications created
+#'   by [normal()] or [lognormal()] or [logitnormal()], plus optional unnamed
+#'   specifications created by `correlated()`. Unused by the methods.
+#' @param x For methods, a `compphysiol_statistical_model` object.
+#' @param i For `[`, indices or names of random quantities to retain.
 #' @returns A `compphysiol_statistical_model` object.
 #' @examples
 #' model <- statistical_model(
@@ -376,12 +378,7 @@ statistical_model <- function(...) {
     attr(x, "correlations", exact = TRUE) %||% list()
 }
 
-#' Subset a statistical model
-#'
-#' @param x A `compphysiol_statistical_model` object.
-#' @param i Indices or names of random quantities to retain.
-#' @param ... Unused.
-#' @returns A `compphysiol_statistical_model` object.
+#' @describeIn statistical_model Subset by index or name of the random quantities.
 #' @export
 `[.compphysiol_statistical_model` <- function(x, i, ...) {
     distributions <- unclass(x)
@@ -671,11 +668,7 @@ statistical_model <- function(...) {
     .statistical_format_value_spec(x)
 }
 
-#' Print a statistical model
-#'
-#' @param x A `compphysiol_statistical_model` object.
-#' @param ... Unused.
-#' @returns `x`, invisibly.
+#' @describeIn statistical_model Print a summary; returns `x` invisibly.
 #' @export
 print.compphysiol_statistical_model <- function(x, ...) {
     if (!length(x)) {

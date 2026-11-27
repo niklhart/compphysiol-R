@@ -3,20 +3,25 @@
 \name{estimate}
 \alias{estimate}
 \alias{estimate.compphysiol_estimation_problem}
+\alias{print.compphysiol_estimation_result}
 \title{Estimate model parameters}
 \usage{
 estimate(object, ...)
 
 \method{estimate}{compphysiol_estimation_problem}(object, engine = optim_engine(), dimensions = NULL, ...)
+
+\method{print}{compphysiol_estimation_result}(x, ...)
 }
 \arguments{
 \item{object}{A \code{compphysiol_estimation_problem}.}
 
-\item{...}{Additional method arguments.}
+\item{...}{Additional method arguments; unused by \code{print()}.}
 
 \item{engine}{An estimation engine, \code{\link[=optim_engine]{optim_engine()}} or \code{\link[=nlmixr2_engine]{nlmixr2_engine()}}.}
 
 \item{dimensions}{Optional solver-facing unit dimensions passed to simulation.}
+
+\item{x}{For \code{print()}, a \code{compphysiol_estimation_result} object.}
 }
 \value{
 A \link{compphysiol_estimation_result} object.
@@ -24,6 +29,11 @@ A \link{compphysiol_estimation_result} object.
 \description{
 Estimate model parameters
 }
+\section{Functions}{
+\itemize{
+\item \code{print(compphysiol_estimation_result)}: Print an estimation result; returns \code{x} invisibly.
+
+}}
 \examples{
 # One-compartment model with first-order elimination
 model <- compartment_model() |>

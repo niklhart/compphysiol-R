@@ -2,13 +2,42 @@
 % Please edit documentation in R/ParameterSets.R
 \name{parameter_sets}
 \alias{parameter_sets}
+\alias{[.compphysiol_parameter_sets}
+\alias{[[.compphysiol_parameter_sets}
+\alias{[[<-.compphysiol_parameter_sets}
+\alias{[<-.compphysiol_parameter_sets}
+\alias{c.compphysiol_parameter_sets}
+\alias{print.compphysiol_parameter_sets}
 \title{Collect realized parameter sets}
 \usage{
 parameter_sets(...)
+
+\method{[}{compphysiol_parameter_sets}(x, i, ...)
+
+\method{[[}{compphysiol_parameter_sets}(x, i, ..., exact = TRUE)
+
+\method{[[}{compphysiol_parameter_sets}(x, i, ...) <- value
+
+\method{[}{compphysiol_parameter_sets}(x, i, ...) <- value
+
+\method{c}{compphysiol_parameter_sets}(...)
+
+\method{print}{compphysiol_parameter_sets}(x, ...)
 }
 \arguments{
-\item{...}{\link[=parameters]{compphysiol_parameters} objects, optionally named. For a list
-of parameter sets, use \code{do.call(parameter_sets, x)}.}
+\item{...}{For \code{parameter_sets()}, \link[=parameters]{compphysiol_parameters}
+objects, optionally named. For a list of parameter sets, use
+\code{do.call(parameter_sets, x)}. For \code{c()}, \code{compphysiol_parameter_sets} objects
+to combine; unused by the other methods.}
+
+\item{x}{For methods, a \code{compphysiol_parameter_sets} object.}
+
+\item{i}{For subsetting methods, indices or names of the parameter sets.}
+
+\item{exact}{Whether character indices must match exactly, as for lists.}
+
+\item{value}{For \verb{[[<-}, a \link[=parameters]{compphysiol_parameters} object or
+\code{NULL}; for \verb{[<-}, a \code{compphysiol_parameter_sets} collection.}
 }
 \value{
 A \code{compphysiol_parameter_sets} object.
@@ -31,6 +60,21 @@ whether all elements have identical parameter names, order, value types,
 classes, dimensions, lengths, and units. It does not compare parameter values
 or record how those values were generated.
 }
+\section{Methods (by generic)}{
+\itemize{
+\item \code{[}: Subset by numeric, logical, or character indices.
+
+\item \code{[[}: Extract one parameter set as a \code{compphysiol_parameters} object; an unknown name returns \code{NULL}, as for lists.
+
+\item \code{`[[`(compphysiol_parameter_sets) <- value}: Replace one parameter set, or remove it by assigning \code{NULL}. Collection validity is re-established.
+
+\item \code{`[`(compphysiol_parameter_sets) <- value}: Replace parameter sets with those of another \code{compphysiol_parameter_sets} collection.
+
+\item \code{c(compphysiol_parameter_sets)}: Combine collections, preserving order and names.
+
+\item \code{print(compphysiol_parameter_sets)}: Print a summary; returns \code{x} invisibly.
+
+}}
 \examples{
 population <- parameter_sets(
     individual_1 = parameters(BW = 65 [kg], sex = "female"),

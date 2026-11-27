@@ -36,7 +36,9 @@ add_transport(
 
 \item{trans}{A \code{compphysiol_transports} object. Constructed from the other inputs if not provided.}
 
-\item{...}{Unused, enforces \code{rate} and \code{const} to be specified as named arguments only, not positional}
+\item{...}{For \code{transports()}, unused: it enforces \code{rate} and \code{const} to be
+specified as named arguments only, not positional. For \code{c()},
+\code{compphysiol_transports} objects to combine; unused by the other methods.}
 
 \item{from}{The name of the source compartment(s) (character vector or NULL for source compartments)}
 

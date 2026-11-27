@@ -2,9 +2,30 @@
 % Please edit documentation in R/Compartments.R
 \name{compartments}
 \alias{compartments}
+\alias{as.data.frame.compphysiol_compartments}
+\alias{length.compphysiol_compartments}
+\alias{names.compphysiol_compartments}
+\alias{print.compphysiol_compartments}
+\alias{c.compphysiol_compartments}
+\alias{[.compphysiol_compartments}
+\alias{[[.compphysiol_compartments}
 \title{Create a \code{compphysiol_compartments} object}
 \usage{
 compartments(name = character(0), volume = "V{name}", unit = NULL)
+
+\method{as.data.frame}{compphysiol_compartments}(x, ...)
+
+\method{length}{compphysiol_compartments}(x)
+
+\method{names}{compphysiol_compartments}(x)
+
+\method{print}{compphysiol_compartments}(x, ...)
+
+\method{c}{compphysiol_compartments}(...)
+
+\method{[}{compphysiol_compartments}(x, i, ...)
+
+\method{[[}{compphysiol_compartments}(x, i, ...)
 }
 \arguments{
 \item{name}{Compartment name(s), character scalar or vector. Names beginning
@@ -20,6 +41,13 @@ Can be a single value (applied to all compartments) or a vector of values corres
 \item{unit}{Unit for the compartment volume(s) (optional, default: \code{NULL}). If specified,
 it can be a single unit (applied to all volumes) or a vector of units corresponding to each volume.
 The \code{unit} argument is ignored (with a warning) if the \code{volume} argument is not numeric.}
+
+\item{x}{For methods, a \code{compphysiol_compartments} object.}
+
+\item{...}{For \code{c()}, \code{compphysiol_compartments} objects to combine; unused by
+the other methods.}
+
+\item{i}{For subsetting methods, indices or names of the compartments.}
 }
 \value{
 A \code{compphysiol_compartments} object
@@ -27,6 +55,23 @@ A \code{compphysiol_compartments} object
 \description{
 compphysiol_compartments represent model compartments with names and fixed or parametrized volumes.
 }
+\section{Methods (by generic)}{
+\itemize{
+\item \code{as.data.frame(compphysiol_compartments)}: Convert to a data frame.
+
+\item \code{length(compphysiol_compartments)}: Number of compartments.
+
+\item \code{names(compphysiol_compartments)}: Names of the compartments.
+
+\item \code{print(compphysiol_compartments)}: Print a summary; returns \code{x} invisibly.
+
+\item \code{c(compphysiol_compartments)}: Combine several objects into one.
+
+\item \code{[}: Subset by index or name.
+
+\item \code{[[}: Not supported; always errors. Use \code{[} with a scalar name or index instead.
+
+}}
 \examples{
 compartments(c("adi","bon"))
 compartments('adi', volume = "Vadi")

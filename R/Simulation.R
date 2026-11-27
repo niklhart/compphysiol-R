@@ -143,6 +143,7 @@ rxode2_engine <- function(...) {
 #' @param ... For ODE simulation, supply solver options through
 #'   [deSolve_engine()] or [rxode2_engine()] instead. For hybrid simulation, additional arguments
 #'   are passed to [deSolve::ode()].
+#' @param x For `print()`, a `compphysiol_simulation_result` object.
 #' @returns A `compphysiol_simulation_result` with rectangular `states` and long-format
 #'   `observables` (`time`, `observable`, `value`, plus `rep` for stochastic
 #'   replicates). Direct `time` input requests all observables at every output
@@ -914,13 +915,7 @@ simulate.compphysiol_stochastic_model <- function(
     out
 }
 
-#' Print a simulation result
-#'
-#' See [simulate()][simulation] for result components and output conventions.
-#'
-#' @param x A `compphysiol_simulation_result` object.
-#' @param ... Additional arguments, currently ignored.
-#' @returns The `compphysiol_simulation_result` object, invisibly.
+#' @describeIn simulation Print a simulation result; returns `x` invisibly.
 #' @export
 print.compphysiol_simulation_result <- function(x, ...) {
     has_experiments <- "experiment" %in% names(x$states)

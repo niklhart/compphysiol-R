@@ -2,12 +2,19 @@
 % Please edit documentation in R/ProcessOdeModel.R
 \name{to_process_model}
 \alias{to_process_model}
+\alias{print.compphysiol_process_model}
 \title{Create a process model representation}
 \usage{
 to_process_model(model)
+
+\method{print}{compphysiol_process_model}(x, ...)
 }
 \arguments{
 \item{model}{A \code{compphysiol_compartment_model} object.}
+
+\item{x}{For \code{print()}, a \code{compphysiol_process_model} object.}
+
+\item{...}{Unused.}
 }
 \value{
 A \code{compphysiol_process_model} object.
@@ -17,3 +24,8 @@ A \code{compphysiol_process_model} object.
 representation with explicit states, process rates, and process
 stoichiometry.
 }
+\section{Functions}{
+\itemize{
+\item \code{print(compphysiol_process_model)}: Print a summary; returns \code{x} invisibly.
+
+}}

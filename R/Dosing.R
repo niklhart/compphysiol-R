@@ -21,10 +21,13 @@
 #'   If only a single molecule is present in the model, this can be omitted.
 #' @param cmt Compartment name (character scalar). If only a single compartment is present in the model, 
 #'   this can be omitted.
-#' @param ... Unused, enforces `rate` and `duration` for infusion dosing to be specified 
-#'   as named arguments only, not positional
+#' @param ... For `dosing()`, unused: it enforces `rate` and `duration` for
+#'   infusion dosing to be specified as named arguments only, not positional. For
+#'   `c()`, `compphysiol_dosing` objects to combine; unused by the other methods.
 #' @param rate Infusion rate (non-negative numeric scalar or vector, optional)
 #' @param duration Infusion duration (positive numeric scalar or vector, optional)
+#' @param x For methods, a `compphysiol_dosing` object.
+#' @param i For subsetting methods, indices or names of the dosing events.
 #' @return A `compphysiol_dosing` object
 #' @examples
 #' # Bolus of 100 at t=0
@@ -292,24 +295,13 @@ is_infusion <- function(dose) {
     !is_bolus(dose)
 }
 
-#' Length of a `compphysiol_dosing` object
-#' 
-#' Returns the number of dosing events in a `compphysiol_dosing` object.
-#' 
-#' @param x A `compphysiol_dosing` object
-#' @return The number of dosing events (number of rows in the data frame)
+#' @describeIn dosing Number of dosing events.
 #' @export
 length.compphysiol_dosing <- function(x) {
     nrow(as.data.frame(x))
 }
 
-#' Print a `compphysiol_dosing` object
-#' 
-#' Pretty-prints a `compphysiol_dosing` object.
-#' 
-#' @param x A `compphysiol_dosing` object
-#' @param ... ignored
-#' @return The `compphysiol_dosing` object (invisibly)
+#' @describeIn dosing Print a summary; returns `x` invisibly.
 #' @export
 print.compphysiol_dosing <- function(x, ...) {
 
@@ -368,14 +360,7 @@ print.compphysiol_dosing <- function(x, ...) {
     invisible(x)
 }
 
-#' Subset a `compphysiol_dosing` object
-#' 
-#' Allows subsetting a `compphysiol_dosing` object while preserving its class.
-#' 
-#' @param x A `compphysiol_dosing` object
-#' @param i Row indices to subset
-#' @param ... ignored
-#' @return A subsetted `compphysiol_dosing` object
+#' @describeIn dosing Subset by row index.
 #' @export
 `[.compphysiol_dosing` <- function(x, i, ...) {
     if (!missing(i)) .check_subset_index(i)
@@ -383,13 +368,7 @@ print.compphysiol_dosing <- function(x, ...) {
     .new_dosing(x_subset)
 }
 
-#' Combine multiple `compphysiol_dosing` objects into one
-#' 
-#' Combines multiple `compphysiol_dosing` objects by row-binding their data.
-#' The resulting `compphysiol_dosing` object will contain all dosing events from the inputs, sorted by time.
-#' 
-#' @param ... One or more `compphysiol_dosing` objects to combine.
-#' @return A single `compphysiol_dosing` object containing all dosing events from the inputs, sorted by time.
+#' @describeIn dosing Combine several objects into one; the dosing events are sorted by time.
 #' @export
 c.compphysiol_dosing <- function(...) {
     objs <- list(...)
@@ -407,14 +386,7 @@ c.compphysiol_dosing <- function(...) {
     .new_dosing(combined_df)
 }
 
-#' Convert a `compphysiol_dosing` object to a data frame
-#' 
-#' This method allows a `compphysiol_dosing` object to be treated as a data frame for operations 
-#' like subsetting and combining, while preserving the `compphysiol_dosing` class.
-#' 
-#' @param x A `compphysiol_dosing` object
-#' @param ... ignored
-#' @return A data frame representation of the `compphysiol_dosing` object
+#' @describeIn dosing Convert to a data frame.
 #' @export
 as.data.frame.compphysiol_dosing <- function(x, ...) {
     class(x) <- "data.frame"

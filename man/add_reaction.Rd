@@ -40,7 +40,9 @@ add_reaction(
 
 \item{react}{A \code{compphysiol_reactions} object. Constructed from the other inputs if not provided.}
 
-\item{...}{Errors if used, enforces \code{rate} and \code{const} to be specified as named arguments only, not positional.}
+\item{...}{For \code{reactions()}, errors if used: it enforces \code{rate} and \code{const} to
+be specified as named arguments only, not positional. For \code{c()},
+\code{compphysiol_reactions} objects to combine; unused by the other methods.}
 
 \item{input}{Character vector or \code{compphysiol_states} object representing the input of the reaction, e.g. \code{c("A", "B")}
 for a reaction where one molecule of \code{A} and one molecule of \code{B} are consumed.

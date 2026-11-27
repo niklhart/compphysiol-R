@@ -8,6 +8,8 @@
 #' @param transform Internal optimizer transformation: `"identity"`, `"log"`,
 #'   or `"logit"`. Log transforms require a positive initial value. Logit
 #'   transforms require finite lower and upper bounds.
+#' @param x For `print()`, a `compphysiol_parameter_spec` object.
+#' @param ... Unused.
 #' @returns A `compphysiol_parameter_spec` object.
 #' @export
 parameter_spec <- function(
@@ -67,11 +69,7 @@ parameter_spec <- function(
     units::set_units(value, units::deparse_unit(initial), mode = "standard")
 }
 
-#' Print an estimated-parameter specification
-#'
-#' @param x A `compphysiol_parameter_spec` object.
-#' @param ... Unused.
-#' @returns `x`, invisibly.
+#' @describeIn parameter_spec Print a summary; returns `x` invisibly.
 #' @export
 print.compphysiol_parameter_spec <- function(x, ...) {
     unit <- if (inherits(x$initial, "units")) units::deparse_unit(x$initial) else NULL
@@ -124,11 +122,13 @@ print.compphysiol_parameter_spec <- function(x, ...) {
 #' specifications and collections can also be combined with `c()`.
 #'
 #' @param ... For `parameter_specs()`, named initial values or explicit
-#'   [parameter_spec()] objects. For `c()`, named `compphysiol_parameter_spec`
-#'   or `compphysiol_parameter_specs` objects.
+#'   [parameter_spec()] objects. For `c()`, named `compphysiol_parameter_spec` or
+#'   `compphysiol_parameter_specs` objects. Unused by the other methods.
 #' @param transform Shared transform for raw initial values: `"identity"`,
 #'   `"log"`, or `"logit"`. Explicit specifications override this value.
 #' @param recursive Unused.
+#' @param x For methods, a `compphysiol_parameter_specs` object.
+#' @param i For subsetting methods, indices or names of the specifications.
 #' @returns A `compphysiol_parameter_specs` collection.
 #' @name parameter_specs
 #' @examples
@@ -209,12 +209,7 @@ c.compphysiol_parameter_specs <- function(..., recursive = FALSE) {
     ))
 }
 
-#' Subset parameter-estimation specifications
-#'
-#' @param x A `compphysiol_parameter_specs` collection.
-#' @param i Indices or names of specifications to retain.
-#' @param ... Unused.
-#' @returns A `compphysiol_parameter_specs` collection.
+#' @describeIn parameter_specs Subset by index or name.
 #' @export
 `[.compphysiol_parameter_specs` <- function(x, i, ...) {
     if (missing(i)) return(x)
@@ -226,11 +221,7 @@ c.compphysiol_parameter_specs <- function(..., recursive = FALSE) {
     .new_parameter_specs(out)
 }
 
-#' Print parameter-estimation specifications
-#'
-#' @param x A `compphysiol_parameter_specs` collection.
-#' @param ... Unused.
-#' @returns `x`, invisibly.
+#' @describeIn parameter_specs Print a summary; returns `x` invisibly.
 #' @export
 print.compphysiol_parameter_specs <- function(x, ...) {
     if (!length(x)) {
@@ -349,6 +340,8 @@ nlmixr2_engine <- function(method = "focei", control = list(), table = list(),
 #'   into a `compphysiol_parameter_specs` collection.
 #' @param statistics A [compphysiol_statistical_model][statistical_model()] describing the
 #'   distributions of observed and individual-level quantities.
+#' @param x For `print()`, a `compphysiol_estimation_problem` object.
+#' @param ... Unused.
 #' @returns A `compphysiol_estimation_problem` object.
 #' @export
 estimation_problem <- function(model, experiments, parameters, statistics) {
@@ -487,11 +480,7 @@ estimation_problem <- function(model, experiments, parameters, statistics) {
     unique(c(specs[vapply(specs, is.character, logical(1))], correlation_specs))
 }
 
-#' Print an estimation problem
-#'
-#' @param x A `compphysiol_estimation_problem` object.
-#' @param ... Unused.
-#' @returns `x`, invisibly.
+#' @describeIn estimation_problem Print a summary; returns `x` invisibly.
 #' @export
 print.compphysiol_estimation_problem <- function(x, ...) {
     observations <- sum(vapply(
@@ -519,7 +508,8 @@ print.compphysiol_estimation_problem <- function(x, ...) {
 #' Estimate model parameters
 #'
 #' @param object A `compphysiol_estimation_problem`.
-#' @param ... Additional method arguments.
+#' @param ... Additional method arguments; unused by `print()`.
+#' @param x For `print()`, a `compphysiol_estimation_result` object.
 #' @returns A [compphysiol_estimation_result] object.
 #' @seealso [compphysiol_estimation_result]; [to_nlmixr2()] for a
 #'   mixed-effects example with [nlmixr2_engine()].
@@ -750,11 +740,7 @@ estimate.compphysiol_estimation_problem <- function(
 #' @seealso [estimate()], [optim_engine()], [nlmixr2_engine()]
 NULL
 
-#' Print an estimation result
-#'
-#' @param x A `compphysiol_estimation_result` object.
-#' @param ... Unused.
-#' @returns `x`, invisibly.
+#' @describeIn estimate Print an estimation result; returns `x` invisibly.
 #' @export
 print.compphysiol_estimation_result <- function(x, ...) {
     cat("Estimation result:\n")

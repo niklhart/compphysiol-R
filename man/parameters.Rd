@@ -2,21 +2,46 @@
 % Please edit documentation in R/Parameters.R
 \name{parameters}
 \alias{parameters}
+\alias{names.compphysiol_parameters}
+\alias{[.compphysiol_parameters}
+\alias{[<-.compphysiol_parameters}
+\alias{c.compphysiol_parameters}
+\alias{print.compphysiol_parameters}
+\alias{unlist.compphysiol_parameters}
 \title{\code{compphysiol_parameters} class.}
 \usage{
 parameters(..., name = NULL, value = NULL, unit = NULL)
+
+\method{names}{compphysiol_parameters}(x)
+
+\method{[}{compphysiol_parameters}(x, i, ...)
+
+\method{[}{compphysiol_parameters}(x, i) <- value
+
+\method{c}{compphysiol_parameters}(...)
+
+\method{print}{compphysiol_parameters}(x, ...)
+
+\method{unlist}{compphysiol_parameters}(x, ...)
 }
 \arguments{
-\item{...}{Parameter values as name-value pairs, where values can optionally have units (e.g., \code{A = 2 [m]}).
-Values are evaluated from left to right and may refer to parameters
-defined earlier in the same call. The name \code{t} is reserved for current
-model time.}
+\item{...}{For \code{parameters()}, parameter values as name-value pairs, where
+values can optionally have units (e.g., \code{A = 2 [m]}). Values are evaluated
+from left to right and may refer to parameters defined earlier in the same
+call. The name \code{t} is reserved for current model time. For \code{c()},
+\code{compphysiol_parameters} objects to combine; unused by the other methods.}
 
 \item{name}{Optional parameter names (if not using named arguments).}
 
-\item{value}{Optional parameter values (if not using named arguments).}
+\item{value}{For \code{parameters()}, optional parameter values (if not using named
+arguments). For \code{x[i] <- value}, another \code{compphysiol_parameters} object with
+the new values, or \code{NULL} to delete the selected entries.}
 
 \item{unit}{Optional parameter units (if not using named arguments).}
+
+\item{x}{For methods, a \code{compphysiol_parameters} object.}
+
+\item{i}{For subsetting methods, indices or names of the parameters.}
 }
 \value{
 A \code{compphysiol_parameters} object containing the specified parameters.
@@ -37,6 +62,21 @@ This allows for a more concise syntax when specifying parameters with units.
 \code{value} is a numeric vector of parameter values, and \code{unit} is an optional character vector of units).
 }
 }
+\section{Methods (by generic)}{
+\itemize{
+\item \code{names(compphysiol_parameters)}: Names of the parameters.
+
+\item \code{[}: Subset by index or name.
+
+\item \code{`[`(compphysiol_parameters) <- value}: Replace selected parameters, or delete them by assigning \code{NULL}.
+
+\item \code{c(compphysiol_parameters)}: Combine several objects into one.
+
+\item \code{print(compphysiol_parameters)}: Print a summary; returns \code{x} invisibly.
+
+\item \code{unlist(compphysiol_parameters)}: Flatten vector-valued parameters into a flat \code{compphysiol_parameters} object (experimental).
+
+}}
 \examples{
 # Specification using name/value/unit vectors (programmatic use)
 parameters(name = c("A", "B"), value = c(2, 3), unit = c("", "m"))

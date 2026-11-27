@@ -4,6 +4,8 @@
 \alias{parameter_specs}
 \alias{c.compphysiol_parameter_spec}
 \alias{c.compphysiol_parameter_specs}
+\alias{[.compphysiol_parameter_specs}
+\alias{print.compphysiol_parameter_specs}
 \title{Construct parameter-estimation specifications}
 \usage{
 parameter_specs(..., transform = c("identity", "log", "logit"))
@@ -11,16 +13,24 @@ parameter_specs(..., transform = c("identity", "log", "logit"))
 \method{c}{compphysiol_parameter_spec}(..., recursive = FALSE)
 
 \method{c}{compphysiol_parameter_specs}(..., recursive = FALSE)
+
+\method{[}{compphysiol_parameter_specs}(x, i, ...)
+
+\method{print}{compphysiol_parameter_specs}(x, ...)
 }
 \arguments{
 \item{...}{For \code{parameter_specs()}, named initial values or explicit
-\code{\link[=parameter_spec]{parameter_spec()}} objects. For \code{c()}, named \code{compphysiol_parameter_spec}
-or \code{compphysiol_parameter_specs} objects.}
+\code{\link[=parameter_spec]{parameter_spec()}} objects. For \code{c()}, named \code{compphysiol_parameter_spec} or
+\code{compphysiol_parameter_specs} objects. Unused by the other methods.}
 
 \item{transform}{Shared transform for raw initial values: \code{"identity"},
 \code{"log"}, or \code{"logit"}. Explicit specifications override this value.}
 
 \item{recursive}{Unused.}
+
+\item{x}{For methods, a \code{compphysiol_parameter_specs} object.}
+
+\item{i}{For subsetting methods, indices or names of the specifications.}
 }
 \value{
 A \code{compphysiol_parameter_specs} collection.
@@ -31,6 +41,13 @@ complete \code{\link[=parameter_spec]{parameter_spec()}} objects. Raw values use
 explicit specifications retain their own transform and bounds. Existing
 specifications and collections can also be combined with \code{c()}.
 }
+\section{Methods (by generic)}{
+\itemize{
+\item \code{[}: Subset by index or name.
+
+\item \code{print(compphysiol_parameter_specs)}: Print a summary; returns \code{x} invisibly.
+
+}}
 \examples{
 parameter_specs(CL = 1 [L/h], V = 10 [L], transform = "log")
 parameter_specs(

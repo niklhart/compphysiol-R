@@ -13,6 +13,10 @@
 #' @param unit Unit for the compartment volume(s) (optional, default: `NULL`). If specified,
 #'   it can be a single unit (applied to all volumes) or a vector of units corresponding to each volume.
 #'   The `unit` argument is ignored (with a warning) if the `volume` argument is not numeric.
+#' @param x For methods, a `compphysiol_compartments` object.
+#' @param i For subsetting methods, indices or names of the compartments.
+#' @param ... For `c()`, `compphysiol_compartments` objects to combine; unused by
+#'   the other methods.
 #' @return A `compphysiol_compartments` object
 #' @examples
 #' compartments(c("adi","bon"))
@@ -167,43 +171,25 @@ add_compartment.compphysiol_compartment_model <- function(
     model
 }
 
-#' Convert a `compphysiol_compartments` object to a data frame
-#'
-#' @param x A `compphysiol_compartments` object
-#' @param ... Additional arguments (not used)
-#' @return A data frame representation of the `compphysiol_compartments` object
+#' @describeIn compartments Convert to a data frame.
 #' @export
 as.data.frame.compphysiol_compartments <- function(x, ...) {
     class(x) <- "data.frame"
     x
 }
 
-#' Length of a `compphysiol_compartments` object
-#' 
-#' Returns the number of compartments in a `compphysiol_compartments` object.
-#' @param x A `compphysiol_compartments` object
-#' @return The number of compartments
+#' @describeIn compartments Number of compartments.
 #' @export
 length.compphysiol_compartments <- function(x) {
     nrow(as.data.frame(x))
 }
 
-#' Names of compartments in a `compphysiol_compartments` object
-#' 
-#' Returns the names of compartments in a `compphysiol_compartments` object.
-#' @param x A `compphysiol_compartments` object
-#' @return A character vector of compartment names
+#' @describeIn compartments Names of the compartments.
 #' @export
 names.compphysiol_compartments <- function(x) x$name
 
 
-#' Print a `compphysiol_compartments` object
-#' 
-#' Pretty-prints a `compphysiol_compartments` object.
-#' 
-#' @param x A `compphysiol_compartments` object.
-#' @param ... ignored
-#' @return The `compphysiol_compartments` object (invisibly).
+#' @describeIn compartments Print a summary; returns `x` invisibly.
 #' @export
 print.compphysiol_compartments <- function(x, ...) {
 
@@ -221,10 +207,7 @@ print.compphysiol_compartments <- function(x, ...) {
     invisible(x)
 }
 
-#' Combine multiple `compphysiol_compartments` objects into one
-#'
-#' @param ... Multiple `compphysiol_compartments` objects to combine
-#' @return A combined `compphysiol_compartments` object
+#' @describeIn compartments Combine several objects into one.
 #' @export
 c.compphysiol_compartments <- function(...) {
     x <- .combine_df_like(...)
@@ -232,26 +215,12 @@ c.compphysiol_compartments <- function(...) {
     .new_compartments(x)
 }
 
-#' Subset a `compphysiol_compartments` object
-#'
-#' @param x A `compphysiol_compartments` object
-#' @param i Index or name(s) of compartments to subset
-#' @param ... Additional arguments (not used)
-#' @return A subsetted `compphysiol_compartments` object
+#' @describeIn compartments Subset by index or name.
 #' @export
 `[.compphysiol_compartments` <- function(x, i, ...) {
     .new_compartments(.subset_df_like(x, i, byname = TRUE, unique = TRUE))
 }
 
-#' Extraction method for `compphysiol_compartments` class
-#'
-#' This method is intentionally not implemented to prevent direct element access,
-#' which could lead to confusion given the internal data frame-like structure of `compphysiol_compartments` objects.
-#' Instead, users should use subsetting with `[` and a scalar name/index to access specific compartments.
-#'
-#' @param x A `compphysiol_compartments` object
-#' @param i Row index to access
-#' @param ... Additional arguments (not used)
-#' @return Nothing (errors)
+#' @describeIn compartments Not supported; always errors. Use `[` with a scalar name or index instead.
 #' @export
 `[[.compphysiol_compartments` <- function(x, i, ...) .extract_df_like(x, i)

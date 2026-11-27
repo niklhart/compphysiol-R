@@ -5,6 +5,8 @@
 #' observables defined as functions of the states and parameters, parameters, and dosing events. 
 #' This function initializes an empty model that can then be built up by adding these components using the `add_*` functions.
 #' 
+#' @param x For `print()`, a `compphysiol_compartment_model` object.
+#' @param ... Unused.
 #' @seealso [simulate()][simulation] for running the model.
 #' @returns A new `compphysiol_compartment_model` object.
 #' @seealso [modify_compartment_model] for a map of constructors and modifying
@@ -34,12 +36,7 @@ compartment_model <- function() {
     )
 }
 
-#' Print method for `compphysiol_compartment_model` class
-#' 
-#' Pretty-prints a `compphysiol_compartment_model` object.
-#' @param x A `compphysiol_compartment_model` object.
-#' @param ... ignored
-#' @returns The `compphysiol_compartment_model` object (invisibly).
+#' @describeIn compartment_model Print a summary; returns `x` invisibly.
 #' @export
 print.compphysiol_compartment_model <- function(x, ...) {
     cat("Compartment model:\n")

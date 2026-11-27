@@ -2,9 +2,12 @@
 % Please edit documentation in R/ObservationData.R
 \name{observation_schedule}
 \alias{observation_schedule}
+\alias{[.compphysiol_observation_schedule}
 \title{Describe observable evaluation points}
 \usage{
 observation_schedule(time = numeric(), observable = character(), ...)
+
+\method{[}{compphysiol_observation_schedule}(x, i, j, ..., drop = FALSE)
 }
 \arguments{
 \item{time}{Finite numeric observation times, optionally with time units.}
@@ -12,7 +15,15 @@ observation_schedule(time = numeric(), observable = character(), ...)
 \item{observable}{Nonempty observable names. A scalar is recycled over
 \code{time}.}
 
-\item{...}{Additional columns with one value per schedule row.}
+\item{...}{For \code{observation_schedule()}, additional columns with one value per
+schedule row. Unused by \code{[}.}
+
+\item{x}{For \code{[}, a \code{compphysiol_observation_schedule} or
+\code{compphysiol_observation_data} object.}
+
+\item{i, j}{For \code{[}, row and column indices.}
+
+\item{drop}{For \code{[}, whether to simplify the result.}
 }
 \value{
 A \code{compphysiol_observation_schedule} data frame.
@@ -22,6 +33,11 @@ An observation schedule identifies the times and named model observables to
 evaluate. It contains no observed or predicted values. Row order, duplicate
 rows, and additional columns are preserved.
 }
+\section{Methods (by generic)}{
+\itemize{
+\item \code{[}: Subset observation schedules and data. Row subsets retain their class. Column subsets retain \code{compphysiol_observation_data} when all three canonical columns remain, retain \code{compphysiol_observation_schedule} when \code{time} and \code{observable} remain, and otherwise return an ordinary data frame or vector according to data-frame subsetting rules.
+
+}}
 \examples{
 observation_schedule(
     time = c(1, 2, 4) [h],

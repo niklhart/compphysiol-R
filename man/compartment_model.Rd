@@ -2,9 +2,17 @@
 % Please edit documentation in R/CompartmentModel.R
 \name{compartment_model}
 \alias{compartment_model}
+\alias{print.compphysiol_compartment_model}
 \title{Create a \code{compphysiol_compartment_model} object}
 \usage{
 compartment_model()
+
+\method{print}{compphysiol_compartment_model}(x, ...)
+}
+\arguments{
+\item{x}{For \code{print()}, a \code{compphysiol_compartment_model} object.}
+
+\item{...}{Unused.}
 }
 \value{
 A new \code{compphysiol_compartment_model} object.
@@ -15,6 +23,11 @@ reactions between molecules, equations defining auxiliary variables,
 observables defined as functions of the states and parameters, parameters, and dosing events.
 This function initializes an empty model that can then be built up by adding these components using the \verb{add_*} functions.
 }
+\section{Methods (by generic)}{
+\itemize{
+\item \code{print(compphysiol_compartment_model)}: Print a summary; returns \code{x} invisibly.
+
+}}
 \seealso{
 \link[=simulation]{simulate()} for running the model.
 

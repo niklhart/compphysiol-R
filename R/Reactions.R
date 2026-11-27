@@ -343,7 +343,9 @@ print.compphysiol_states <- function(x, ...) {
 #' @param scheme Character scalar or vector with reaction schemes such as `"A + B -> C"` or
 #'   `"L[plasma] + R[membrane] -> LR[membrane]"`. If `output` is missing and `input`
 #'   contains `->`, `input` is interpreted as `scheme`.
-#' @param ... Errors if used, enforces `rate` and `const` to be specified as named arguments only, not positional.
+#' @param ... For `reactions()`, errors if used: it enforces `rate` and `const` to
+#'   be specified as named arguments only, not positional. For `c()`,
+#'   `compphysiol_reactions` objects to combine; unused by the other methods.
 #' @param rate Character string representing an explicit reaction rate. Its
 #'   representation is declared by `rate_type`.
 #'   Use `c[A]` to refer to the concentration of molecule A, and `a[A]` to refer to its amount.
@@ -352,6 +354,8 @@ print.compphysiol_states <- function(x, ...) {
 #'   Formally, this corresponds to `rate = const * c[input[1]] * c[input[2]] * ...`. 
 #'   In addition, the information that the reaction is elementary is encoded in the `type` 
 #'   column of the resulting `compphysiol_reactions` object.
+#' @param x For methods, a `compphysiol_reactions` object.
+#' @param i For subsetting methods, indices or names of the reactions.
 #' @details
 #' compphysiol_reactions can be specified either by separate `input` and `output`
 #' arguments or by a character reaction scheme. The scheme form is an
@@ -760,65 +764,36 @@ add_reaction.compphysiol_compartment_model <- function(
     model
 }
 
-#' Convert a `compphysiol_reactions` object to a data frame
-#'
-#' @param x A `compphysiol_reactions` object
-#' @param ... Additional arguments (not used)
-#' @return A data frame representation of the `compphysiol_reactions` object
+#' @describeIn reactions Convert to a data frame.
 #' @export
 as.data.frame.compphysiol_reactions <- function(x, ...) {
     class(x) <- "data.frame"
     x
 }
 
-#' Length of a `compphysiol_reactions` object
-#'
-#' @param x A `compphysiol_reactions` object
-#' @return The number of reactions in the object
+#' @describeIn reactions Number of reactions.
 #' @export
 length.compphysiol_reactions <- function(x) {
     nrow(as.data.frame(x))
 }
 
-#' Combine multiple `compphysiol_reactions` objects into one
-#'
-#' @param ... Multiple `compphysiol_reactions` objects to combine
-#' @return A combined `compphysiol_reactions` object
+#' @describeIn reactions Combine several objects into one.
 #' @export
 c.compphysiol_reactions <- function(...) {
     .new_reactions(.combine_df_like(...))
 }
 
-#' Subset a `compphysiol_reactions` object
-#' 
-#' Allows subsetting a `compphysiol_reactions` object while preserving its class.
-#' @param x A `compphysiol_reactions` object
-#' @param i Row indices to subset
-#' @param ... Additional arguments (not used)
-#' @return A subsetted `compphysiol_reactions` object
+#' @describeIn reactions Subset by row index.
 #' @export
 `[.compphysiol_reactions` <- function(x, i, ...) {
     .new_reactions(.subset_df_like(x, i, byname = FALSE))
 }
 
-#' Extraction method for `compphysiol_reactions` class
-#'
-#' This method is intentionally not implemented to prevent direct element access,
-#' which could lead to confusion given the internal data frame-like structure of `compphysiol_reactions` objects.
-#' Instead, users should use subsetting with `[` and a scalar name/index to access specific reactions.
-#'
-#' @param x A `compphysiol_reactions` object
-#' @param i Row index to access
-#' @param ... Additional arguments (not used)
-#' @return Nothing (errors)
+#' @describeIn reactions Not supported; always errors. Use `[` with a scalar name or index instead.
 #' @export
 `[[.compphysiol_reactions` <- function(x, i, ...) .extract_df_like(x, i)
 
-#' Print a `compphysiol_reactions` object
-#'
-#' @param x A `compphysiol_reactions` object
-#' @param ... Additional arguments (not used)
-#' @return The `compphysiol_reactions` object (invisible)
+#' @describeIn reactions Print a summary; returns `x` invisibly.
 #' @export
 print.compphysiol_reactions = function(x, ...) {
 
@@ -877,10 +852,6 @@ print.compphysiol_reactions = function(x, ...) {
     invisible(x)
 }
 
-#' Convert a `compphysiol_reactions` object to a list of lists, where each inner list represents a reaction with its properties
-#' 
-#' @param x A `compphysiol_reactions` object
-#' @param ... Additional arguments (not used)
-#' @return A list of lists, where each inner list represents a reaction with its properties
+#' @describeIn reactions Convert to a list of lists, one per reaction, holding its properties.
 #' @export
 as.list.compphysiol_reactions <- function(x, ...) .listify_df_like(x)

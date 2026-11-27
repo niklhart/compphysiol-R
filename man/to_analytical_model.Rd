@@ -2,12 +2,19 @@
 % Please edit documentation in R/ProcessOdeModel.R
 \name{to_analytical_model}
 \alias{to_analytical_model}
+\alias{print.compphysiol_analytical_model}
 \title{Create an analytical model representation}
 \usage{
 to_analytical_model(model)
+
+\method{print}{compphysiol_analytical_model}(x, ...)
 }
 \arguments{
 \item{model}{A \code{compphysiol_compartment_model} or \code{compphysiol_process_model} object.}
+
+\item{x}{For \code{print()}, a \code{compphysiol_analytical_model} object.}
+
+\item{...}{Unused.}
 }
 \value{
 A \code{compphysiol_analytical_model} object.
@@ -21,6 +28,11 @@ The first implementation supports homogeneous first-order linear systems.
 The constant source term \code{b} is part of the representation, but nonzero
 entries are rejected for now.
 }
+\section{Functions}{
+\itemize{
+\item \code{print(compphysiol_analytical_model)}: Print a summary; returns \code{x} invisibly.
+
+}}
 \seealso{
 \link[=simulation]{simulate()} for running the returned model.
 }

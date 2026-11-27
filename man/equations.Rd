@@ -2,17 +2,35 @@
 % Please edit documentation in R/equations.R
 \name{equations}
 \alias{equations}
+\alias{names.compphysiol_equations}
+\alias{print.compphysiol_equations}
+\alias{[.compphysiol_equations}
+\alias{c.compphysiol_equations}
 \title{Create a \code{compphysiol_equations} object}
 \usage{
 equations(..., name = character(0), expr = character(0))
+
+\method{names}{compphysiol_equations}(x)
+
+\method{print}{compphysiol_equations}(x, ...)
+
+\method{[}{compphysiol_equations}(x, i, ...)
+
+\method{c}{compphysiol_equations}(...)
 }
 \arguments{
-\item{...}{Name-expression pairs defining the equations. The expressions can be provided as character strings or as R calls.}
+\item{...}{For \code{equations()}, name-expression pairs defining the equations. The
+expressions can be provided as character strings or as R calls. For \code{c()},
+\code{compphysiol_equations} objects to combine; unused by the other methods.}
 
 \item{name}{Name of the equation(s), character scalar or vector}
 
 \item{expr}{Expression(s) for the equation(s), as character scalar/vector or as R call / lists of R calls.
 Expressions may contain parameters that are added to the model's parameters list, as well as compartment states (not compartment names!)}
+
+\item{x}{For methods, a \code{compphysiol_equations} object.}
+
+\item{i}{For subsetting methods, indices or names of the equations.}
 }
 \value{
 A \code{compphysiol_equations} object
@@ -32,6 +50,17 @@ compphysiol_observables and equations are very similar, but there are two key di
 \item compphysiol_equations can be used in the definitions of transports, while observables cannot.
 }
 }
+\section{Methods (by generic)}{
+\itemize{
+\item \code{names(compphysiol_equations)}: Names of the equations.
+
+\item \code{print(compphysiol_equations)}: Print a summary; returns \code{x} invisibly.
+
+\item \code{[}: Subset by index or name.
+
+\item \code{c(compphysiol_equations)}: Combine several objects into one.
+
+}}
 \examples{
 ## Interactive path with name-expression pairs
 equations(co = Qadi + Qbon + Qhea + Qkid + Qliv + Qmus + Qski)

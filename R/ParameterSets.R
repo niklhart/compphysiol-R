@@ -16,8 +16,15 @@
 #' classes, dimensions, lengths, and units. It does not compare parameter values
 #' or record how those values were generated.
 #'
-#' @param ... [compphysiol_parameters][parameters()] objects, optionally named. For a list
-#'   of parameter sets, use `do.call(parameter_sets, x)`.
+#' @param ... For `parameter_sets()`, [compphysiol_parameters][parameters()]
+#'   objects, optionally named. For a list of parameter sets, use
+#'   `do.call(parameter_sets, x)`. For `c()`, `compphysiol_parameter_sets` objects
+#'   to combine; unused by the other methods.
+#' @param x For methods, a `compphysiol_parameter_sets` object.
+#' @param i For subsetting methods, indices or names of the parameter sets.
+#' @param exact Whether character indices must match exactly, as for lists.
+#' @param value For `[[<-`, a [compphysiol_parameters][parameters()] object or
+#'   `NULL`; for `[<-`, a `compphysiol_parameter_sets` collection.
 #' @returns A `compphysiol_parameter_sets` object.
 #' @examples
 #' population <- parameter_sets(
@@ -125,12 +132,7 @@ parameter_sets <- function(...) {
     invisible(NULL)
 }
 
-#' Subset realized parameter sets
-#'
-#' @param x A `compphysiol_parameter_sets` object.
-#' @param i Numeric, logical, or character indices.
-#' @param ... Unused.
-#' @returns A `compphysiol_parameter_sets` object.
+#' @describeIn parameter_sets Subset by numeric, logical, or character indices.
 #' @export
 `[.compphysiol_parameter_sets` <- function(x, i, ...) {
     if (missing(i)) return(x)
@@ -142,29 +144,14 @@ parameter_sets <- function(...) {
     .new_parameter_sets(out)
 }
 
-#' Extract one realized parameter set
-#'
-#' @param x A `compphysiol_parameter_sets` object.
-#' @param i Index or name of one parameter set.
-#' @param ... Unused.
-#' @param exact Whether character indices must match exactly, as for lists.
-#' @returns A `compphysiol_parameters` object; an unknown name returns `NULL`, as for lists.
+#' @describeIn parameter_sets Extract one parameter set as a `compphysiol_parameters` object; an unknown name returns `NULL`, as for lists.
 #' @export
 `[[.compphysiol_parameter_sets` <- function(x, i, ..., exact = TRUE) {
     if (length(i) != 1L) stop("Select a single parameter set with [[.", call. = FALSE)
     .parameter_sets_elements(x)[[i, exact = exact]]
 }
 
-#' Replace realized parameter sets
-#'
-#' Replacement re-establishes collection validity and refreshes schema
-#' homogeneity metadata.
-#' @param x A `compphysiol_parameter_sets` collection.
-#' @param i Replacement index.
-#' @param ... Unused.
-#' @param value For `[[<-`, a [compphysiol_parameters][parameters()] object or
-#'   `NULL`; for `[<-`, a `compphysiol_parameter_sets` collection.
-#' @returns The modified `compphysiol_parameter_sets` collection.
+#' @describeIn parameter_sets Replace one parameter set, or remove it by assigning `NULL`. Collection validity is re-established.
 #' @export
 `[[<-.compphysiol_parameter_sets` <- function(x, i, ..., value) {
     if (!is.null(value)) .check_class(value, "compphysiol_parameters")
@@ -173,7 +160,7 @@ parameter_sets <- function(...) {
     .parameter_sets_validate_result(out)
 }
 
-#' @rdname sub-subset-.compphysiol_parameter_sets
+#' @describeIn parameter_sets Replace parameter sets with those of another `compphysiol_parameter_sets` collection.
 #' @export
 `[<-.compphysiol_parameter_sets` <- function(x, i, ..., value) {
     .check_class(value, "compphysiol_parameter_sets")
@@ -189,10 +176,7 @@ parameter_sets <- function(...) {
     .new_parameter_sets(x)
 }
 
-#' Combine realized parameter-set collections
-#'
-#' @param ... `compphysiol_parameter_sets` objects to combine.
-#' @returns A `compphysiol_parameter_sets` object, preserving order and names.
+#' @describeIn parameter_sets Combine collections, preserving order and names.
 #' @export
 c.compphysiol_parameter_sets <- function(...) {
     objects <- list(...)
@@ -219,11 +203,7 @@ c.compphysiol_parameter_sets <- function(...) {
     }, logical(1)))
 }
 
-#' Print realized parameter sets
-#'
-#' @param x A `compphysiol_parameter_sets` object.
-#' @param ... Unused.
-#' @returns `x`, invisibly.
+#' @describeIn parameter_sets Print a summary; returns `x` invisibly.
 #' @export
 print.compphysiol_parameter_sets <- function(x, ...) {
     if (!length(x)) {

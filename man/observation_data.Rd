@@ -20,7 +20,8 @@ observation_data(
 \item{value}{Numeric observable values, including \code{units} or \code{mixed_units}
 values. A scalar is recycled over the rows.}
 
-\item{...}{Additional columns with one value per schedule row.}
+\item{...}{For \code{observation_schedule()}, additional columns with one value per
+schedule row. Unused by \code{[}.}
 }
 \value{
 A \code{compphysiol_observation_data} data frame. It also inherits from

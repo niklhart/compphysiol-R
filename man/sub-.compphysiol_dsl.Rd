@@ -20,3 +20,4 @@ from the evaluation environment.
 \description{
 Subsetting expressions of the form \code{a[molec,cmt]} and \code{c[molec,cmt]}
 }
+\keyword{internal}

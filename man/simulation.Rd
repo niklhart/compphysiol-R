@@ -9,6 +9,7 @@
 \alias{simulate.compphysiol_desolve_compiled_model}
 \alias{simulate.compphysiol_analytical_model}
 \alias{simulate.compphysiol_stochastic_model}
+\alias{print.compphysiol_simulation_result}
 \title{Simulate compartment models and lowered model representations}
 \usage{
 \method{simulate}{compphysiol_compartment_model}(
@@ -94,6 +95,8 @@
   ...,
   experiment = NULL
 )
+
+\method{print}{compphysiol_simulation_result}(x, ...)
 }
 \arguments{
 \item{object}{A compartment model or one of the lowered representations listed
@@ -148,6 +151,8 @@ Simulation starts at the experiment's initial time and evaluates only its
 scheduled observable-time pairs. Each experiment is one independent
 individual simulation unit. Collections return one simulation result, with
 experiment names serving as individual identifiers when combining runs.}
+
+\item{x}{For \code{print()}, a \code{compphysiol_simulation_result} object.}
 }
 \value{
 A \code{compphysiol_simulation_result} with rectangular \code{states} and long-format
@@ -183,6 +188,11 @@ tolerances such as \code{atol} are interpreted. For example, if amounts are
 converted to kilograms internally, an \code{atol} value is applied on the kilogram
 scale even if results are displayed back in milligrams.
 }
+\section{Functions}{
+\itemize{
+\item \code{print(compphysiol_simulation_result)}: Print a simulation result; returns \code{x} invisibly.
+
+}}
 \section{Supported inputs}{
 \tabular{ll}{
    Input class \tab Execution and restrictions \cr

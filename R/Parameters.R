@@ -15,13 +15,18 @@
 #' 3. Via the `name`, `value`, and `unit` arguments (where `name` is a character vector of parameter names, 
 #' `value` is a numeric vector of parameter values, and `unit` is an optional character vector of units).
 #'
-#' @param ... Parameter values as name-value pairs, where values can optionally have units (e.g., `A = 2 [m]`).
-#'   Values are evaluated from left to right and may refer to parameters
-#'   defined earlier in the same call. The name `t` is reserved for current
-#'   model time.
+#' @param ... For `parameters()`, parameter values as name-value pairs, where
+#'   values can optionally have units (e.g., `A = 2 [m]`). Values are evaluated
+#'   from left to right and may refer to parameters defined earlier in the same
+#'   call. The name `t` is reserved for current model time. For `c()`,
+#'   `compphysiol_parameters` objects to combine; unused by the other methods.
 #' @param name Optional parameter names (if not using named arguments).
-#' @param value Optional parameter values (if not using named arguments).
+#' @param value For `parameters()`, optional parameter values (if not using named
+#'   arguments). For `x[i] <- value`, another `compphysiol_parameters` object with
+#'   the new values, or `NULL` to delete the selected entries.
 #' @param unit Optional parameter units (if not using named arguments).
+#' @param x For methods, a `compphysiol_parameters` object.
+#' @param i For subsetting methods, indices or names of the parameters.
 #' @returns A `compphysiol_parameters` object containing the specified parameters.
 #' @examples
 #' # Specification using name/value/unit vectors (programmatic use)
@@ -265,17 +270,11 @@ replace_parameters.compphysiol_compartment_model <- function(
 }
 
 
-#' Names of parameters in a `compphysiol_parameters` object
-#' @param x A `compphysiol_parameters` object
-#' @returns The names of the parameters
+#' @describeIn parameters Names of the parameters.
 #' @export
 names.compphysiol_parameters <- function(x) names(unclass(x))
 
-#' Subset a `compphysiol_parameters` object
-#' @param x A `compphysiol_parameters` object
-#' @param i Indices or names of the parameters to subset
-#' @param ... Additional arguments (not used)
-#' @returns A subset of the `compphysiol_parameters` object
+#' @describeIn parameters Subset by index or name.
 #' @export
 `[.compphysiol_parameters` <- function(x, i, ...) {
     if (missing(i)) return(x)
@@ -283,12 +282,7 @@ names.compphysiol_parameters <- function(x) names(unclass(x))
     .new_parameters(unclass(x)[i])
 }
 
-#' Replace parts of a `compphysiol_parameters` object
-#' @param x A `compphysiol_parameters` object
-#' @param i Indices or names of the parameters to replace
-#' @param value Another `compphysiol_parameters` object with the new values to insert,
-#'   or `NULL` to delete selected entries.
-#' @returns The modified `compphysiol_parameters` object
+#' @describeIn parameters Replace selected parameters, or delete them by assigning `NULL`.
 #' @export
 `[<-.compphysiol_parameters` <- function(x, i, value) {
     if (is.null(value)) return(.remove_component_entries(x, i))
@@ -301,9 +295,7 @@ names.compphysiol_parameters <- function(x) names(unclass(x))
     .new_parameters(x)
 }
 
-#' Combine multiple `compphysiol_parameters` objects into one
-#' @param ... `compphysiol_parameters` objects to combine
-#' @returns A combined `compphysiol_parameters` object
+#' @describeIn parameters Combine several objects into one.
 #' @export
 c.compphysiol_parameters <- function(...) {
     params_list <- list(...)
@@ -317,10 +309,7 @@ c.compphysiol_parameters <- function(...) {
     .new_parameters(params)
 }
 
-#' Print a `compphysiol_parameters` object
-#' @param x A `compphysiol_parameters` object
-#' @param ... Additional arguments (not used)
-#' @returns The `compphysiol_parameters` object (invisible)
+#' @describeIn parameters Print a summary; returns `x` invisibly.
 #' @export
 print.compphysiol_parameters <- function(x, ...) {
     if (length(x) > 0) {
@@ -340,13 +329,7 @@ print.compphysiol_parameters <- function(x, ...) {
     invisible(x)
 }
 
-#' Unlist a `compphysiol_parameters` object (experimental).
-#' 
-#' compphysiol_parameters may be scalars or vectors, but for some purposes it may be desirable to unlist them into a flat `compphysiol_parameters` object.
-#' 
-#' @param x A `compphysiol_parameters` object
-#' @param ... Additional arguments (not used)
-#' @returns An unlisted `compphysiol_parameters` object
+#' @describeIn parameters Flatten vector-valued parameters into a flat `compphysiol_parameters` object (experimental).
 #' @method unlist compphysiol_parameters
 #' @export
 unlist.compphysiol_parameters <- function(x, ...) {

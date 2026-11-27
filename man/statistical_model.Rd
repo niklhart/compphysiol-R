@@ -2,14 +2,24 @@
 % Please edit documentation in R/StatisticalModel.R
 \name{statistical_model}
 \alias{statistical_model}
+\alias{[.compphysiol_statistical_model}
+\alias{print.compphysiol_statistical_model}
 \title{Construct a statistical model}
 \usage{
 statistical_model(...)
+
+\method{[}{compphysiol_statistical_model}(x, i, ...)
+
+\method{print}{compphysiol_statistical_model}(x, ...)
 }
 \arguments{
-\item{...}{Named distribution specifications created by \code{\link[=normal]{normal()}} or
-\code{\link[=lognormal]{lognormal()}} or \code{\link[=logitnormal]{logitnormal()}}, plus optional unnamed specifications created by
-\code{correlated()}.}
+\item{...}{For \code{statistical_model()}, named distribution specifications created
+by \code{\link[=normal]{normal()}} or \code{\link[=lognormal]{lognormal()}} or \code{\link[=logitnormal]{logitnormal()}}, plus optional unnamed
+specifications created by \code{correlated()}. Unused by the methods.}
+
+\item{x}{For methods, a \code{compphysiol_statistical_model} object.}
+
+\item{i}{For \code{[}, indices or names of random quantities to retain.}
 }
 \value{
 A \code{compphysiol_statistical_model} object.
@@ -19,6 +29,13 @@ The left-hand-side name identifies the random quantity. Targets are resolved
 as unresolved structural parameters or model observables when the statistical
 model is resolved against a dynamic model by downstream statistical workflows.
 }
+\section{Methods (by generic)}{
+\itemize{
+\item \code{[}: Subset by index or name of the random quantities.
+
+\item \code{print(compphysiol_statistical_model)}: Print a summary; returns \code{x} invisibly.
+
+}}
 \examples{
 model <- statistical_model(
     CL = normal(mean = "CL_pop", sd = proportional("omega_CL")),

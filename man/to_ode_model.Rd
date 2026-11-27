@@ -2,12 +2,19 @@
 % Please edit documentation in R/ProcessOdeModel.R
 \name{to_ode_model}
 \alias{to_ode_model}
+\alias{print.compphysiol_ode_model}
 \title{Create an ODE model representation}
 \usage{
 to_ode_model(model)
+
+\method{print}{compphysiol_ode_model}(x, ...)
 }
 \arguments{
 \item{model}{A \code{compphysiol_compartment_model} or \code{compphysiol_process_model} object.}
+
+\item{x}{For \code{print()}, a \code{compphysiol_ode_model} object.}
+
+\item{...}{Unused.}
 }
 \value{
 A \code{compphysiol_ode_model} object.
@@ -16,6 +23,11 @@ A \code{compphysiol_ode_model} object.
 \code{to_ode_model()} lowers a \code{compphysiol_compartment_model} or \code{compphysiol_process_model} to a
 solver-neutral ODE representation with indexed one-dimensional states.
 }
+\section{Functions}{
+\itemize{
+\item \code{print(compphysiol_ode_model)}: Print a summary; returns \code{x} invisibly.
+
+}}
 \seealso{
 \link[=simulation]{simulate()} for running the returned model.
 }

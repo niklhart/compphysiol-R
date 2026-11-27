@@ -142,13 +142,7 @@
     invisible(NULL)
 }
 
-#' Subset a collection of experiments
-#'
-#' Missing or unknown indices that would introduce missing elements are rejected.
-#' @param x A `compphysiol_experiments` object.
-#' @param i Numeric, logical, or character indices.
-#' @param ... Unused.
-#' @returns A `compphysiol_experiments` object.
+#' @describeIn experiment Subset a collection by numeric, logical, or character indices. Indices that would introduce missing experiments are rejected.
 #' @export
 `[.compphysiol_experiments` <- function(x, i, ...) {
     if (missing(i)) return(x)
@@ -160,34 +154,21 @@
     .new_experiments(out, .experiments_compute_component_homogeneity(out))
 }
 
-#' Direct experiment extraction is not supported
-#' @param x A `compphysiol_experiments` object.
-#' @param i Index or name of a single experiment.
-#' @param ... Unused.
-#' @param exact Whether character indices must match exactly, as for lists.
-#' @returns This method always errors. Use `[` to retain the public collection class.
+#' @describeIn experiment Not supported; always errors. Use `[` to retain the collection class.
 #' @export
 `[[.compphysiol_experiments` <- function(x, i, ..., exact = TRUE) {
     stop("Experiment extraction with [[ is not supported; use [ to retain the experiments collection, or as.list(x) to inspect entries (see ?inspect).",
          call. = FALSE)
 }
 
-#' Replace experiments in a collection
-#'
-#' Replacement re-establishes collection validity and refreshes component
-#' homogeneity metadata.
-#' @param x A `compphysiol_experiments` collection.
-#' @param i Replacement index.
-#' @param ... Unused.
-#' @param value For `[<-`, a `compphysiol_experiments` collection.
-#' @returns The modified `compphysiol_experiments` collection.
+#' @describeIn experiment Not supported; always errors. Use `[<-` with a `compphysiol_experiments` collection.
 #' @export
 `[[<-.compphysiol_experiments` <- function(x, i, ..., value) {
     stop("Experiment replacement with [[<- is not supported; use [<- with an experiments collection.",
          call. = FALSE)
 }
 
-#' @rdname sub-subset-.compphysiol_experiments
+#' @describeIn experiment Replace experiments with those of another `compphysiol_experiments` collection. Collection validity and component homogeneity metadata are re-established.
 #' @export
 `[<-.compphysiol_experiments` <- function(x, i, ..., value) {
     .check_class(value, "compphysiol_experiments")
@@ -222,8 +203,16 @@
     x
 }
 
-#' @param ... For `c()`, `compphysiol_experiments` objects to combine.
+#' @param ... For `c()`, `compphysiol_experiments` objects to combine. For
+#'   `str()`, further arguments passed to [utils::str()]. Unused by the other
+#'   methods.
 #' @param recursive Unused.
+#' @param x For methods, a `compphysiol_experiments` collection.
+#' @param object For `str()`, a `compphysiol_experiments` collection.
+#' @param i For subsetting and replacement methods, indices or names of
+#'   experiments.
+#' @param exact Whether character indices must match exactly, as for lists.
+#' @param value For `[<-`, a `compphysiol_experiments` collection.
 #' @rdname experiment
 #' @export
 c.compphysiol_experiments <- function(..., recursive = FALSE) {
@@ -318,31 +307,19 @@ observations <- function(x) {
     if (all(data)) .new_observation_data(out) else .new_observation_schedule(out)
 }
 
-#' Inspect a collection of experiments
-#'
-#' Printing a collection summarizes its entries. Use `x[i]` to print the full
-#' details of one experiment, or `as.list(x)` to access the entries as ordinary
-#' lists with parameters, dosing, observations, and start components.
-#' @param x A `compphysiol_experiments` object.
-#' @param object A `compphysiol_experiments` object.
-#' @param ... Further arguments passed to `str()` for structure inspection.
-#' @returns `as.list()` returns a named or unnamed list of experiment entries.
-#'   `str()` returns `NULL`, invisibly.
+#' @describeIn experiment Convert a collection to a list of experiment entries, each an ordinary list with parameters, dosing, observations, and start components.
 #' @export
 as.list.compphysiol_experiments <- function(x, ...) {
     .experiments_elements(x)
 }
 
-#' @rdname as.list.compphysiol_experiments
+#' @describeIn experiment Display the structure of a collection; returns `NULL` invisibly.
 #' @export
 str.compphysiol_experiments <- function(object, ...) {
     .str_components(object, ...)
 }
 
-#' Print a collection of experiments
-#' @param x A `compphysiol_experiments` object.
-#' @param ... Unused.
-#' @returns `x`, invisibly.
+#' @describeIn experiment Print a summary of a collection; returns `x` invisibly. Use `x[i]` to print the full details of one experiment.
 #' @export
 print.compphysiol_experiments <- function(x, ...) {
     if (!length(x)) {

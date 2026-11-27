@@ -2,9 +2,12 @@
 % Please edit documentation in R/Estimation.R
 \name{estimation_problem}
 \alias{estimation_problem}
+\alias{print.compphysiol_estimation_problem}
 \title{Create an engine-neutral estimation problem}
 \usage{
 estimation_problem(model, experiments, parameters, statistics)
+
+\method{print}{compphysiol_estimation_problem}(x, ...)
 }
 \arguments{
 \item{model}{A \code{compphysiol_compartment_model}, \code{compphysiol_process_model}, \code{compphysiol_ode_model}, or
@@ -20,6 +23,10 @@ into a \code{compphysiol_parameter_specs} collection.}
 
 \item{statistics}{A \link[=statistical_model]{compphysiol_statistical_model} describing the
 distributions of observed and individual-level quantities.}
+
+\item{x}{For \code{print()}, a \code{compphysiol_estimation_problem} object.}
+
+\item{...}{Unused.}
 }
 \value{
 A \code{compphysiol_estimation_problem} object.
@@ -27,3 +34,8 @@ A \code{compphysiol_estimation_problem} object.
 \description{
 Create an engine-neutral estimation problem
 }
+\section{Methods (by generic)}{
+\itemize{
+\item \code{print(compphysiol_estimation_problem)}: Print a summary; returns \code{x} invisibly.
+
+}}

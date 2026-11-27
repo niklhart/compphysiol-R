@@ -2,6 +2,13 @@
 % Please edit documentation in R/Reactions.R
 \name{reactions}
 \alias{reactions}
+\alias{as.data.frame.compphysiol_reactions}
+\alias{length.compphysiol_reactions}
+\alias{c.compphysiol_reactions}
+\alias{[.compphysiol_reactions}
+\alias{[[.compphysiol_reactions}
+\alias{print.compphysiol_reactions}
+\alias{as.list.compphysiol_reactions}
 \title{Create a \code{compphysiol_reactions} object}
 \usage{
 reactions(
@@ -16,6 +23,20 @@ reactions(
   rate = NULL,
   const = NULL
 )
+
+\method{as.data.frame}{compphysiol_reactions}(x, ...)
+
+\method{length}{compphysiol_reactions}(x)
+
+\method{c}{compphysiol_reactions}(...)
+
+\method{[}{compphysiol_reactions}(x, i, ...)
+
+\method{[[}{compphysiol_reactions}(x, i, ...)
+
+\method{print}{compphysiol_reactions}(x, ...)
+
+\method{as.list}{compphysiol_reactions}(x, ...)
 }
 \arguments{
 \item{input}{Character vector or \code{compphysiol_states} object representing the input of the reaction, e.g. \code{c("A", "B")}
@@ -41,7 +62,9 @@ to concentration for one involved compartment and amount for several.}
 \code{"L[plasma] + R[membrane] -> LR[membrane]"}. If \code{output} is missing and \code{input}
 contains \verb{->}, \code{input} is interpreted as \code{scheme}.}
 
-\item{...}{Errors if used, enforces \code{rate} and \code{const} to be specified as named arguments only, not positional.}
+\item{...}{For \code{reactions()}, errors if used: it enforces \code{rate} and \code{const} to
+be specified as named arguments only, not positional. For \code{c()},
+\code{compphysiol_reactions} objects to combine; unused by the other methods.}
 
 \item{formula}{Deprecated alias for \code{scheme}.}
 
@@ -54,6 +77,10 @@ call, numeric, or unit-bearing value).
 Formally, this corresponds to \code{rate = const * c[input[1]] * c[input[2]] * ...}.
 In addition, the information that the reaction is elementary is encoded in the \code{type}
 column of the resulting \code{compphysiol_reactions} object.}
+
+\item{x}{For methods, a \code{compphysiol_reactions} object.}
+
+\item{i}{For subsetting methods, indices or names of the reactions.}
 }
 \value{
 A \code{compphysiol_reactions} object containing the reaction information.
@@ -99,6 +126,23 @@ reactions default to amount rates, while same-compartment reactions default
 to concentration rates. Amount-rate reactions require all participant states
 to be convertible to amounts during ODE export.
 }
+\section{Methods (by generic)}{
+\itemize{
+\item \code{as.data.frame(compphysiol_reactions)}: Convert to a data frame.
+
+\item \code{length(compphysiol_reactions)}: Number of reactions.
+
+\item \code{c(compphysiol_reactions)}: Combine several objects into one.
+
+\item \code{[}: Subset by row index.
+
+\item \code{[[}: Not supported; always errors. Use \code{[} with a scalar name or index instead.
+
+\item \code{print(compphysiol_reactions)}: Print a summary; returns \code{x} invisibly.
+
+\item \code{as.list(compphysiol_reactions)}: Convert to a list of lists, one per reaction, holding its properties.
+
+}}
 \examples{
 # empty `compphysiol_reactions` object
 reactions()

@@ -2,12 +2,19 @@
 % Please edit documentation in R/ProcessOdeModel.R
 \name{to_stochastic_model}
 \alias{to_stochastic_model}
+\alias{print.compphysiol_stochastic_model}
 \title{Create a stochastic model representation}
 \usage{
 to_stochastic_model(model)
+
+\method{print}{compphysiol_stochastic_model}(x, ...)
 }
 \arguments{
 \item{model}{A \code{compphysiol_compartment_model} or \code{compphysiol_process_model} object.}
+
+\item{x}{For \code{print()}, a \code{compphysiol_stochastic_model} object.}
+
+\item{...}{Unused.}
 }
 \value{
 A \code{compphysiol_stochastic_model} object.
@@ -21,6 +28,11 @@ The first implementation supports models whose processes can be rendered as
 elementary propensities from their \code{const} and input-state metadata. Explicit
 \code{rate = ...} processes and dosing are rejected.
 }
+\section{Functions}{
+\itemize{
+\item \code{print(compphysiol_stochastic_model)}: Print a summary; returns \code{x} invisibly.
+
+}}
 \seealso{
 \link[=simulation]{simulate()} for running the returned model.
 }

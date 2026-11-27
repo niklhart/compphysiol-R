@@ -3,13 +3,7 @@
     "compiled"
 }
 
-#' Print method for `compphysiol_desolve_compiled_model` class
-#'
-#' Pretty-prints the compiled model status, compact ODE model shape, and frozen
-#' parameter interface.
-#' @param x A `compphysiol_desolve_compiled_model` object.
-#' @param ... ignored
-#' @returns The `compphysiol_desolve_compiled_model` object (invisibly).
+#' @describeIn to_compiled_ode_model Print a summary; returns `x` invisibly.
 #' @export
 print.compphysiol_desolve_compiled_model <- function(x, ...) {
     ode_model <- x$ode_model

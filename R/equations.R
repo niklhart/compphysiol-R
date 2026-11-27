@@ -12,10 +12,14 @@
 #' 1. compphysiol_observables are evaluated from simulation output, while equations are evaluated inside model expressions.
 #' 2. compphysiol_equations can be used in the definitions of transports, while observables cannot.
 #' 
-#' @param ... Name-expression pairs defining the equations. The expressions can be provided as character strings or as R calls. 
+#' @param ... For `equations()`, name-expression pairs defining the equations. The
+#'   expressions can be provided as character strings or as R calls. For `c()`,
+#'   `compphysiol_equations` objects to combine; unused by the other methods.
 #' @param name Name of the equation(s), character scalar or vector
 #' @param expr Expression(s) for the equation(s), as character scalar/vector or as R call / lists of R calls.
 #'   Expressions may contain parameters that are added to the model's parameters list, as well as compartment states (not compartment names!)
+#' @param x For methods, a `compphysiol_equations` object.
+#' @param i For subsetting methods, indices or names of the equations.
 #' @returns A `compphysiol_equations` object
 #' @examples
 #' ## Interactive path with name-expression pairs
@@ -155,16 +159,11 @@ add_equation.compphysiol_compartment_model <- function(
     return(model)
 }
 
-#' Names of equations in a `compphysiol_equations` object
-#' @param x A `compphysiol_equations` object
-#' @returns The names of the equations
+#' @describeIn equations Names of the equations.
 #' @export
 names.compphysiol_equations <- function(x) names(unclass(x))
 
-#' Print a `compphysiol_equations` object
-#' @param x A `compphysiol_equations` object
-#' @param ... Additional arguments (not used)
-#' @returns The `compphysiol_equations` object (invisible)
+#' @describeIn equations Print a summary; returns `x` invisibly.
 #' @export
 print.compphysiol_equations <- function(x, ...) {
 
@@ -184,11 +183,7 @@ print.compphysiol_equations <- function(x, ...) {
     invisible(x)
 }
 
-#' Subset a `compphysiol_equations` object
-#' @param x A `compphysiol_equations` object
-#' @param i Indices or names of the equations to subset
-#' @param ... Additional arguments (not used)
-#' @returns A subset of the `compphysiol_equations` object
+#' @describeIn equations Subset by index or name.
 #' @export
 `[.compphysiol_equations` <- function(x, i, ...) {
     if (missing(i)) return(x)
@@ -196,9 +191,7 @@ print.compphysiol_equations <- function(x, ...) {
     .new_equations(unclass(x)[i])
 }
 
-#' Combine multiple `compphysiol_equations` objects
-#' @param ... `compphysiol_equations` objects to combine
-#' @returns A combined `compphysiol_equations` object
+#' @describeIn equations Combine several objects into one.
 #' @export
 c.compphysiol_equations <- function(...) {
     eq_list <- list(...)

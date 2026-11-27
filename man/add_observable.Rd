@@ -30,7 +30,10 @@ add_observable(
 
 \item{obs}{A \code{compphysiol_observables} object. Constructed from the other inputs if not provided.}
 
-\item{...}{Name-expression pairs defining the observables. The expressions can be provided as character strings or as R calls.}
+\item{...}{For \code{observables()}, name-expression pairs defining the observables.
+The expressions can be provided as character strings or as R calls. For
+\code{c()}, \code{compphysiol_observables} objects to combine; unused by the other
+methods.}
 
 \item{name}{Name of the observable(s), character scalar or vector}
 

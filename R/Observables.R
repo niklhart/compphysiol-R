@@ -20,7 +20,10 @@
 #' If both `cmt` and `molec` are provided, the substitution is performed for both, and all possible combinations of `cmt` 
 #' and `molec` are generated for the names and expressions of the observables.
 #' 
-#' @param ... Name-expression pairs defining the observables. The expressions can be provided as character strings or as R calls. 
+#' @param ... For `observables()`, name-expression pairs defining the observables.
+#'   The expressions can be provided as character strings or as R calls. For
+#'   `c()`, `compphysiol_observables` objects to combine; unused by the other
+#'   methods.
 #' @param name Name of the observable(s), character scalar or vector
 #' @param expr Expression(s) for the observable(s), as character scalar/vector or as R call / lists of R calls.
 #'   Expressions may contain parameters that are added to the model's parameters list, as well as amount or concentration references to molecule-in-compartment pairs.
@@ -28,6 +31,8 @@
 #'  Used for automatic generation of common observables like concentrations and amounts.
 #' @param molec Optional character vector specifying the molecule(s) associated with the observable(s). 
 #'  Used for automatic generation of common observables like concentrations and amounts.
+#' @param x For methods, a `compphysiol_observables` object.
+#' @param i For subsetting methods, indices or names of the observables.
 #' @returns A `compphysiol_observables` object
 #' @examples
 #' # Interactive path with name-expression pairs
@@ -174,16 +179,11 @@ add_observable.compphysiol_compartment_model <- function(
 }
 
 
-#' Names of observables in a `compphysiol_observables` object
-#' @param x A `compphysiol_observables` object
-#' @returns The names of the observables
+#' @describeIn observables Names of the observables.
 #' @export
 names.compphysiol_observables <- function(x) names(unclass(x))
 
-#' Print a `compphysiol_observables` object
-#' @param x A `compphysiol_observables` object
-#' @param ... Additional arguments (not used)
-#' @returns The `compphysiol_observables` object (invisible)
+#' @describeIn observables Print a summary; returns `x` invisibly.
 #' @export
 print.compphysiol_observables <- function(x, ...) {
 
@@ -203,11 +203,7 @@ print.compphysiol_observables <- function(x, ...) {
     invisible(x)
 }
 
-#' Subset a `compphysiol_observables` object
-#' @param x A `compphysiol_observables` object
-#' @param i Indices or names of the observables to subset
-#' @param ... Additional arguments (not used)
-#' @returns A subset of the `compphysiol_observables` object
+#' @describeIn observables Subset by index or name.
 #' @export
 `[.compphysiol_observables` <- function(x, i, ...) {
     if (missing(i)) return(x)
@@ -215,9 +211,7 @@ print.compphysiol_observables <- function(x, ...) {
     .new_observables(unclass(x)[i])
 }
 
-#' Combine multiple `compphysiol_observables` objects into one
-#' @param ... `compphysiol_observables` objects to combine
-#' @returns A combined `compphysiol_observables` object
+#' @describeIn observables Combine several objects into one.
 #' @export
 c.compphysiol_observables <- function(...) {
     obs_list <- list(...)

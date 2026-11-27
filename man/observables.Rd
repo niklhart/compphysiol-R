@@ -2,6 +2,10 @@
 % Please edit documentation in R/Observables.R
 \name{observables}
 \alias{observables}
+\alias{names.compphysiol_observables}
+\alias{print.compphysiol_observables}
+\alias{[.compphysiol_observables}
+\alias{c.compphysiol_observables}
 \title{Create a \code{compphysiol_observables} object}
 \usage{
 observables(
@@ -11,9 +15,20 @@ observables(
   cmt = NULL,
   molec = NULL
 )
+
+\method{names}{compphysiol_observables}(x)
+
+\method{print}{compphysiol_observables}(x, ...)
+
+\method{[}{compphysiol_observables}(x, i, ...)
+
+\method{c}{compphysiol_observables}(...)
 }
 \arguments{
-\item{...}{Name-expression pairs defining the observables. The expressions can be provided as character strings or as R calls.}
+\item{...}{For \code{observables()}, name-expression pairs defining the observables.
+The expressions can be provided as character strings or as R calls. For
+\code{c()}, \code{compphysiol_observables} objects to combine; unused by the other
+methods.}
 
 \item{name}{Name of the observable(s), character scalar or vector}
 
@@ -25,6 +40,10 @@ Used for automatic generation of common observables like concentrations and amou
 
 \item{molec}{Optional character vector specifying the molecule(s) associated with the observable(s).
 Used for automatic generation of common observables like concentrations and amounts.}
+
+\item{x}{For methods, a \code{compphysiol_observables} object.}
+
+\item{i}{For subsetting methods, indices or names of the observables.}
 }
 \value{
 A \code{compphysiol_observables} object
@@ -51,6 +70,17 @@ They substitute \code{{cmt}} and \code{{molec}} in the names and expressions of 
 If both \code{cmt} and \code{molec} are provided, the substitution is performed for both, and all possible combinations of \code{cmt}
 and \code{molec} are generated for the names and expressions of the observables.
 }
+\section{Methods (by generic)}{
+\itemize{
+\item \code{names(compphysiol_observables)}: Names of the observables.
+
+\item \code{print(compphysiol_observables)}: Print a summary; returns \code{x} invisibly.
+
+\item \code{[}: Subset by index or name.
+
+\item \code{c(compphysiol_observables)}: Combine several objects into one.
+
+}}
 \examples{
 # Interactive path with name-expression pairs
 observables(

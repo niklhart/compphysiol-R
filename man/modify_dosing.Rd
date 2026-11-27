@@ -102,8 +102,9 @@ replace_dosing(
 or callback returning one dosing object. Constructed from
 the other inputs if omitted.}
 
-\item{...}{Unused, enforces \code{rate} and \code{duration} for infusion dosing to be specified
-as named arguments only, not positional}
+\item{...}{For \code{dosing()}, unused: it enforces \code{rate} and \code{duration} for
+infusion dosing to be specified as named arguments only, not positional. For
+\code{c()}, \code{compphysiol_dosing} objects to combine; unused by the other methods.}
 
 \item{time}{compphysiol_dosing time(s) (numeric scalar or vector)}
 

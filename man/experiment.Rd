@@ -2,7 +2,14 @@
 % Please edit documentation in R/Experiment.R, R/Experiments.R
 \name{experiment}
 \alias{experiment}
+\alias{[.compphysiol_experiments}
+\alias{[[.compphysiol_experiments}
+\alias{[[<-.compphysiol_experiments}
+\alias{[<-.compphysiol_experiments}
 \alias{c.compphysiol_experiments}
+\alias{as.list.compphysiol_experiments}
+\alias{str.compphysiol_experiments}
+\alias{print.compphysiol_experiments}
 \title{Describe an experiment}
 \usage{
 experiment(
@@ -13,7 +20,21 @@ experiment(
   name = NULL
 )
 
+\method{[}{compphysiol_experiments}(x, i, ...)
+
+\method{[[}{compphysiol_experiments}(x, i, ..., exact = TRUE)
+
+\method{[[}{compphysiol_experiments}(x, i, ...) <- value
+
+\method{[}{compphysiol_experiments}(x, i, ...) <- value
+
 \method{c}{compphysiol_experiments}(..., recursive = FALSE)
+
+\method{as.list}{compphysiol_experiments}(x, ...)
+
+\method{str}{compphysiol_experiments}(object, ...)
+
+\method{print}{compphysiol_experiments}(x, ...)
 }
 \arguments{
 \item{parameters}{A \link[=parameters]{compphysiol_parameters} object containing known
@@ -38,9 +59,22 @@ still produce an error.}
 scalar and cannot be a positive whole number, which is reserved for
 transient positional identifiers.}
 
-\item{...}{For \code{c()}, \code{compphysiol_experiments} objects to combine.}
+\item{x}{For methods, a \code{compphysiol_experiments} collection.}
+
+\item{i}{For subsetting and replacement methods, indices or names of
+experiments.}
+
+\item{...}{For \code{c()}, \code{compphysiol_experiments} objects to combine. For
+\code{str()}, further arguments passed to \code{\link[utils:str]{utils::str()}}. Unused by the other
+methods.}
+
+\item{exact}{Whether character indices must match exactly, as for lists.}
+
+\item{value}{For \verb{[<-}, a \code{compphysiol_experiments} collection.}
 
 \item{recursive}{Unused.}
+
+\item{object}{For \code{str()}, a \code{compphysiol_experiments} collection.}
 }
 \value{
 \code{experiment()} returns a length-one \code{compphysiol_experiments}
@@ -74,6 +108,23 @@ or units convertible to time.
 Compatible units need not be identical. Doses and observations cannot precede
 \code{start}. Empty observations do not impose a time unit.
 }
+\section{Functions}{
+\itemize{
+\item \code{[}: Subset a collection by numeric, logical, or character indices. Indices that would introduce missing experiments are rejected.
+
+\item \code{[[}: Not supported; always errors. Use \code{[} to retain the collection class.
+
+\item \code{`[[`(compphysiol_experiments) <- value}: Not supported; always errors. Use \verb{[<-} with a \code{compphysiol_experiments} collection.
+
+\item \code{`[`(compphysiol_experiments) <- value}: Replace experiments with those of another \code{compphysiol_experiments} collection. Collection validity and component homogeneity metadata are re-established.
+
+\item \code{as.list(compphysiol_experiments)}: Convert a collection to a list of experiment entries, each an ordinary list with parameters, dosing, observations, and start components.
+
+\item \code{str(compphysiol_experiments)}: Display the structure of a collection; returns \code{NULL} invisibly.
+
+\item \code{print(compphysiol_experiments)}: Print a summary of a collection; returns \code{x} invisibly. Use \code{x[i]} to print the full details of one experiment.
+
+}}
 \examples{
 e <- experiment(
     parameters = parameters(BW = 70 [kg]),

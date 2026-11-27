@@ -23,6 +23,10 @@
 #'   Compartments with time-dependent volumes are represented using amount
 #'   states. A concentration initial is converted using the volume at the first
 #'   simulation time.
+#' @param x For methods, a `compphysiol_molecules` object.
+#' @param i For subsetting methods, indices or names of the molecules.
+#' @param ... For `c()`, `compphysiol_molecules` objects to combine; unused by the
+#'   other methods.
 #' @return A `compphysiol_molecules` object containing the compartment and initial condition
 #'   information for each molecule.
 #' @examples 
@@ -178,10 +182,7 @@ add_molecule.compphysiol_compartment_model <- function(
     model
 }
 
-#' Combine multiple `compphysiol_molecules` objects into one
-#'
-#' @param ... Multiple `compphysiol_molecules` objects to combine
-#' @return A combined `compphysiol_molecules` object
+#' @describeIn molecules Combine several objects into one.
 #' @export
 c.compphysiol_molecules <- function(...) {
     out <- .combine_df_like(...)
@@ -189,48 +190,24 @@ c.compphysiol_molecules <- function(...) {
     .new_molecules(out)
 }
 
-#' Subset a `compphysiol_molecules` object
-#'
-#' @param x A `compphysiol_molecules` object
-#' @param i Index or name(s) of molecules to subset
-#' @param ... Additional arguments (not used)
-#' @return A subsetted `compphysiol_molecules` object
+#' @describeIn molecules Subset by index or name.
 #' @export
 `[.compphysiol_molecules` <- function(x, i, ...) {
     .new_molecules(.subset_df_like(x, i, byname = TRUE, unique = TRUE))
 }
 
-#' Extraction method for `compphysiol_molecules` class
-#'
-#' This method is intentionally not implemented to prevent direct element access,
-#' which could lead to confusion given the internal data frame-like structure of `compphysiol_molecules` objects.
-#' Instead, users should use subsetting with `[` and a scalar name/index to access specific molecules.
-#'
-#' @param x A `compphysiol_molecules` object
-#' @param i Row index to access
-#' @param ... Additional arguments (not used)
-#' @return Nothing (errors)
+#' @describeIn molecules Not supported; always errors. Use `[` with a scalar name or index instead.
 #' @export
 `[[.compphysiol_molecules` <- function(x, i, ...) .extract_df_like(x, i)
 
-#' Convert a `compphysiol_molecules` object to a data frame
-#'
-#' @param x A `compphysiol_molecules` object
-#' @param ... Additional arguments (not used)
-#' @return A data frame representation of the `compphysiol_molecules` object
+#' @describeIn molecules Convert to a data frame.
 #' @export
 as.data.frame.compphysiol_molecules <- function(x, ...) {
     class(x) <- "data.frame"
     x
 }
 
-#' Print method for `compphysiol_molecules` class
-#' 
-#' Pretty-prints a `compphysiol_molecules` object.
-#' 
-#' @param x A `compphysiol_molecules` object
-#' @param ... Additional arguments (not used)
-#' @return The `compphysiol_molecules` object (invisible)
+#' @describeIn molecules Print a summary; returns `x` invisibly.
 #' @export
 print.compphysiol_molecules <- function(x, ...) {
 
@@ -257,31 +234,19 @@ print.compphysiol_molecules <- function(x, ...) {
     invisible(x)
 }
 
-#' Names of molecules in a `compphysiol_molecules` object
-#'
-#' @param x A `compphysiol_molecules` object
-#' @param ... Additional arguments (not used)
-#' @return A character vector of molecule names
+#' @describeIn molecules Names of the molecules.
 #' @export
 names.compphysiol_molecules <- function(x, ...) {
     x$name
 }
 
-#' Length of a `compphysiol_molecules` object
-#'
-#' @param x A `compphysiol_molecules` object
-#' @param ... Additional arguments (not used)
-#' @return The number of molecules in the object
+#' @describeIn molecules Number of molecules.
 #' @export
 length.compphysiol_molecules <- function(x, ...) {
     nrow(as.data.frame(x))
 }
 
-#' Convert a `compphysiol_molecules` object to a list of lists, where each inner list represents a molecule with its properties
-#' 
-#' @param x A `compphysiol_molecules` object
-#' @param ... Additional arguments (not used)
-#' @return A list of lists, where each inner list represents a molecule with its properties
+#' @describeIn molecules Convert to a list of lists, one per molecule, holding its properties.
 #' @export
 as.list.compphysiol_molecules <- function(x, ...) .listify_df_like(x)
 

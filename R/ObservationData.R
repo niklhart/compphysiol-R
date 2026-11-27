@@ -7,7 +7,12 @@
 #' @param time Finite numeric observation times, optionally with time units.
 #' @param observable Nonempty observable names. A scalar is recycled over
 #'   `time`.
-#' @param ... Additional columns with one value per schedule row.
+#' @param ... For `observation_schedule()`, additional columns with one value per
+#'   schedule row. Unused by `[`.
+#' @param x For `[`, a `compphysiol_observation_schedule` or
+#'   `compphysiol_observation_data` object.
+#' @param i,j For `[`, row and column indices.
+#' @param drop For `[`, whether to simplify the result.
 #' @returns A `compphysiol_observation_schedule` data frame.
 #' @examples
 #' observation_schedule(
@@ -129,19 +134,7 @@ observation_data <- function(time = numeric(), observable = character(), value =
     x
 }
 
-#' Subset observation schedules and data
-#'
-#' Row subsets retain their class. Column subsets retain `compphysiol_observation_data` when
-#' all three canonical columns remain, retain `compphysiol_observation_schedule` when `time`
-#' and `observable` remain, and otherwise return an ordinary data frame or
-#' vector according to data-frame subsetting rules.
-#'
-#' @param x A `compphysiol_observation_schedule` or `compphysiol_observation_data`.
-#' @param i,j Row and column indices.
-#' @param drop Whether to simplify the result.
-#' @param ... Unused.
-#' @returns An observation object with its class restored when the required
-#'   columns remain.
+#' @describeIn observation_schedule Subset observation schedules and data. Row subsets retain their class. Column subsets retain `compphysiol_observation_data` when all three canonical columns remain, retain `compphysiol_observation_schedule` when `time` and `observable` remain, and otherwise return an ordinary data frame or vector according to data-frame subsetting rules.
 #' @export
 `[.compphysiol_observation_schedule` <- function(x, i, j, ..., drop = FALSE) {
     if (!missing(i)) .check_subset_index(i)

@@ -2,6 +2,7 @@
 % Please edit documentation in R/Estimation.R
 \name{parameter_spec}
 \alias{parameter_spec}
+\alias{print.compphysiol_parameter_spec}
 \title{Describe one parameter to estimate}
 \usage{
 parameter_spec(
@@ -10,6 +11,8 @@ parameter_spec(
   upper = NULL,
   transform = c("identity", "log", "logit")
 )
+
+\method{print}{compphysiol_parameter_spec}(x, ...)
 }
 \arguments{
 \item{initial}{Finite numeric scalar initial estimate, optionally with units.}
@@ -22,6 +25,10 @@ Explicit finite bounds must use units compatible with \code{initial}.}
 \item{transform}{Internal optimizer transformation: \code{"identity"}, \code{"log"},
 or \code{"logit"}. Log transforms require a positive initial value. Logit
 transforms require finite lower and upper bounds.}
+
+\item{x}{For \code{print()}, a \code{compphysiol_parameter_spec} object.}
+
+\item{...}{Unused.}
 }
 \value{
 A \code{compphysiol_parameter_spec} object.
@@ -29,3 +36,8 @@ A \code{compphysiol_parameter_spec} object.
 \description{
 Describe one parameter to estimate
 }
+\section{Methods (by generic)}{
+\itemize{
+\item \code{print(compphysiol_parameter_spec)}: Print a summary; returns \code{x} invisibly.
+
+}}

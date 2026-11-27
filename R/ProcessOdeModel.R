@@ -5,6 +5,8 @@
 #' stoichiometry.
 #'
 #' @param model A `compphysiol_compartment_model` object.
+#' @param x For `print()`, a `compphysiol_process_model` object.
+#' @param ... Unused.
 #' @returns A `compphysiol_process_model` object.
 #' @export
 to_process_model <- function(model) {
@@ -186,6 +188,8 @@ to_process_model.compphysiol_compartment_model <- function(model) {
 #' solver-neutral ODE representation with indexed one-dimensional states.
 #'
 #' @param model A `compphysiol_compartment_model` or `compphysiol_process_model` object.
+#' @param x For `print()`, a `compphysiol_ode_model` object.
+#' @param ... Unused.
 #' @returns A `compphysiol_ode_model` object.
 #' @seealso [simulate()][simulation] for running the returned model.
 #' @export
@@ -240,6 +244,8 @@ to_ode_model.compphysiol_process_model <- function(model) {
 #' the parameter interface, and output metadata for reuse in subsequent runs.
 #'
 #' @param model A `compphysiol_compartment_model`, `compphysiol_process_model`, or `compphysiol_ode_model` object.
+#' @param x For `print()`, a `compphysiol_desolve_compiled_model` object.
+#' @param ... Unused.
 #' @returns A `compphysiol_desolve_compiled_model` object.
 #' @seealso [simulate()][simulation] for running the returned model.
 #' @export
@@ -295,6 +301,8 @@ to_compiled_ode_model.compphysiol_ode_model <- function(model) {
 #' entries are rejected for now.
 #'
 #' @param model A `compphysiol_compartment_model` or `compphysiol_process_model` object.
+#' @param x For `print()`, a `compphysiol_analytical_model` object.
+#' @param ... Unused.
 #' @returns A `compphysiol_analytical_model` object.
 #' @seealso [simulate()][simulation] for running the returned model.
 #' @export
@@ -357,6 +365,8 @@ to_analytical_model.compphysiol_process_model <- function(model) {
 #' `rate = ...` processes and dosing are rejected.
 #'
 #' @param model A `compphysiol_compartment_model` or `compphysiol_process_model` object.
+#' @param x For `print()`, a `compphysiol_stochastic_model` object.
+#' @param ... Unused.
 #' @returns A `compphysiol_stochastic_model` object.
 #' @seealso [simulate()][simulation] for running the returned model.
 #' @export
@@ -414,12 +424,7 @@ to_stochastic_model.compphysiol_process_model <- function(model) {
     )
 }
 
-#' Print method for `compphysiol_process_model` class
-#'
-#' Pretty-prints a `compphysiol_process_model` object using DSL state names.
-#' @param x A `compphysiol_process_model` object.
-#' @param ... ignored
-#' @returns The `compphysiol_process_model` object (invisibly).
+#' @describeIn to_process_model Print a summary; returns `x` invisibly.
 #' @export
 print.compphysiol_process_model <- function(x, ...) {
     cat("Process model:\n")
@@ -499,12 +504,7 @@ print.compphysiol_process_model <- function(x, ...) {
     invisible(x)
 }
 
-#' Print method for `compphysiol_stochastic_model` class
-#'
-#' Pretty-prints a `compphysiol_stochastic_model` object using DSL state names.
-#' @param x A `compphysiol_stochastic_model` object.
-#' @param ... ignored
-#' @returns The `compphysiol_stochastic_model` object (invisibly).
+#' @describeIn to_stochastic_model Print a summary; returns `x` invisibly.
 #' @export
 print.compphysiol_stochastic_model <- function(x, ...) {
     cat("Stochastic model:\n")
@@ -570,13 +570,7 @@ print.compphysiol_stochastic_model <- function(x, ...) {
     invisible(x)
 }
 
-#' Print method for `compphysiol_analytical_model` class
-#'
-#' Pretty-prints a `compphysiol_analytical_model` object using state indices in the linear
-#' system and DSL state names in the state list.
-#' @param x A `compphysiol_analytical_model` object.
-#' @param ... ignored
-#' @returns The `compphysiol_analytical_model` object (invisibly).
+#' @describeIn to_analytical_model Print a summary; returns `x` invisibly.
 #' @export
 print.compphysiol_analytical_model <- function(x, ...) {
     cat("Analytical model:\n")
@@ -646,12 +640,7 @@ print.compphysiol_analytical_model <- function(x, ...) {
     invisible(x)
 }
 
-#' Print method for `compphysiol_ode_model` class
-#'
-#' Pretty-prints a `compphysiol_ode_model` object using DSL state names.
-#' @param x A `compphysiol_ode_model` object.
-#' @param ... ignored
-#' @returns The `compphysiol_ode_model` object (invisibly).
+#' @describeIn to_ode_model Print a summary; returns `x` invisibly.
 #' @export
 print.compphysiol_ode_model <- function(x, ...) {
     cat("ODE model:\n")

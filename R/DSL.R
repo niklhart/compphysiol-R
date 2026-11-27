@@ -12,6 +12,7 @@
 #' @param cmt A compartment name (symbol)
 #' @returns The corresponding value `a[molec,cmt]` or `c[molec,cmt]` retrieved
 #'   from the evaluation environment.
+#' @keywords internal
 #' @export
 `[.compphysiol_dsl` <- function(x, molec, cmt) {
 

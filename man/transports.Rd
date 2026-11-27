@@ -2,6 +2,13 @@
 % Please edit documentation in R/Transports.R
 \name{transports}
 \alias{transports}
+\alias{print.compphysiol_transports}
+\alias{length.compphysiol_transports}
+\alias{as.data.frame.compphysiol_transports}
+\alias{as.list.compphysiol_transports}
+\alias{[.compphysiol_transports}
+\alias{c.compphysiol_transports}
+\alias{[[.compphysiol_transports}
 \title{Create a \code{compphysiol_transports} object}
 \usage{
 transports(
@@ -14,6 +21,20 @@ transports(
   const_basis = c("amount", "concentration"),
   scheme = NULL
 )
+
+\method{print}{compphysiol_transports}(x, ...)
+
+\method{length}{compphysiol_transports}(x)
+
+\method{as.data.frame}{compphysiol_transports}(x, ...)
+
+\method{as.list}{compphysiol_transports}(x, ...)
+
+\method{[}{compphysiol_transports}(x, i, ...)
+
+\method{c}{compphysiol_transports}(...)
+
+\method{[[}{compphysiol_transports}(x, i, ...)
 }
 \arguments{
 \item{from}{The name of the source compartment(s) (character vector or NULL for source compartments)}
@@ -22,7 +43,9 @@ transports(
 
 \item{molec}{The name of the molecule(s) being transferred (character vector, optional, default: all molecules)}
 
-\item{...}{Unused, enforces \code{rate} and \code{const} to be specified as named arguments only, not positional}
+\item{...}{For \code{transports()}, unused: it enforces \code{rate} and \code{const} to be
+specified as named arguments only, not positional. For \code{c()},
+\code{compphysiol_transports} objects to combine; unused by the other methods.}
 
 \item{rate}{The amount-change transport rate (character or call, optional,
 mutually exclusive with \code{const})}
@@ -41,6 +64,10 @@ Only applicable with \code{const}.}
 or \code{"A[drug] -> B[drug]"}. Use \code{NULL} for a source or sink.
 Omitted \code{molec} means all molecules. Mutually exclusive with \code{from} and \code{to}.
 If \code{to} is missing and \code{from} contains \verb{->}, \code{from} is interpreted as \code{scheme}.}
+
+\item{x}{For methods, a \code{compphysiol_transports} object.}
+
+\item{i}{For subsetting methods, indices or names of the transports.}
 }
 \value{
 A \code{compphysiol_transports} object
@@ -57,6 +84,23 @@ the source and destination compartment names and molecule names, respectively, e
 \code{k_ven_bon} for a transport from the venous blood (ven) to bone (bon). This allows for vector definition of multiple
 transports with different compartments and/or molecules involved.
 }
+\section{Methods (by generic)}{
+\itemize{
+\item \code{print(compphysiol_transports)}: Print a summary; returns \code{x} invisibly.
+
+\item \code{length(compphysiol_transports)}: Number of transports.
+
+\item \code{as.data.frame(compphysiol_transports)}: Convert to a data frame.
+
+\item \code{as.list(compphysiol_transports)}: Convert to a list of ordinary component lists, one per transport, with \code{from}, \code{to}, \code{molec}, \code{rate}, \code{const}, \code{type}, and \code{const_basis} components. Expressions and constants are unwrapped from their list columns; an unused constant remains \code{NULL}.
+
+\item \code{[}: Subset by row index.
+
+\item \code{c(compphysiol_transports)}: Combine several objects into one.
+
+\item \code{[[}: Not supported; always errors. Use \code{[} to retain the collection class, or \code{as.list()} to inspect ordinary component lists.
+
+}}
 \examples{
 # Scheme syntax
 transports("A -> B", const = 1)

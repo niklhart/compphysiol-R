@@ -55,7 +55,9 @@
 #' @param from The name of the source compartment(s) (character vector or NULL for source compartments)
 #' @param to The name of the destination compartment(s) (character vector or NULL for sink compartments)
 #' @param molec The name of the molecule(s) being transferred (character vector, optional, default: all molecules)
-#' @param ... Unused, enforces `rate` and `const` to be specified as named arguments only, not positional
+#' @param ... For `transports()`, unused: it enforces `rate` and `const` to be
+#'   specified as named arguments only, not positional. For `c()`,
+#'   `compphysiol_transports` objects to combine; unused by the other methods.
 #' @param rate The amount-change transport rate (character or call, optional,
 #'   mutually exclusive with `const`)
 #' @param const Rate constant for first-order transports (character, call, numeric,
@@ -66,6 +68,8 @@
 #'   units compartment size/time (usually volume/time). Concentration-based
 #'   transports require a source compartment size when preparing the model.
 #'   Only applicable with `const`.
+#' @param x For methods, a `compphysiol_transports` object.
+#' @param i For subsetting methods, indices or names of the transports.
 #' @return A `compphysiol_transports` object
 #' @examples
 #' # Scheme syntax
@@ -317,11 +321,7 @@ add_transport.compphysiol_compartment_model <- function(
 }
 
 
-#' Print a `compphysiol_transports` object
-#'
-#' @param x A `compphysiol_transports` object
-#' @param ... Additional arguments (not used)
-#' @return The `compphysiol_transports` object (invisible)
+#' @describeIn transports Print a summary; returns `x` invisibly.
 #' @export
 print.compphysiol_transports = function(x, ...) {
 
@@ -357,36 +357,20 @@ print.compphysiol_transports = function(x, ...) {
 }
 
 
-#' Length of a `compphysiol_transports` object
-#' 
-#' @param x A `compphysiol_transports` object
-#' @return The number of transports in the object
+#' @describeIn transports Number of transports.
 #' @export
 length.compphysiol_transports <- function(x) {
     nrow(as.data.frame(x))
 }
 
-#' Convert a `compphysiol_transports` object to a data frame
-#' 
-#' @param x A `compphysiol_transports` object
-#' @param ... Additional arguments (not used)
-#' @return A data frame representation of the `compphysiol_transports` object
+#' @describeIn transports Convert to a data frame.
 #' @export
 as.data.frame.compphysiol_transports <- function(x, ...) {
     class(x) <- "data.frame"
     x
 }
 
-#' Convert transports to ordinary component lists
-#'
-#' Each entry is an ordinary list with `from`, `to`, `molec`, `rate`, `const`,
-#' `type`, and `const_basis` components. Expressions and constants are unwrapped
-#' from their list columns; an unused constant remains `NULL`.
-#'
-#' @param x A `compphysiol_transports` object.
-#' @param ... Unused.
-#' @returns A list of component lists, one per transport.
-#' @seealso [inspect] for structure inspection and component access.
+#' @describeIn transports Convert to a list of ordinary component lists, one per transport, with `from`, `to`, `molec`, `rate`, `const`, `type`, and `const_basis` components. Expressions and constants are unwrapped from their list columns; an unused constant remains `NULL`.
 #' @export
 as.list.compphysiol_transports <- function(x, ...) {
     do.call(
@@ -399,34 +383,19 @@ as.list.compphysiol_transports <- function(x, ...) {
     )
 }
 
-#' Subset a `compphysiol_transports` object
-#' 
-#' @param x A `compphysiol_transports` object
-#' @param i Row indices to subset
-#' @param ... Additional arguments (not used)
-#' @return A subsetted `compphysiol_transports` object
+#' @describeIn transports Subset by row index.
 #' @export
 `[.compphysiol_transports` <- function(x, i, ...) {
     .new_transports(.subset_df_like(x, i, byname = FALSE))
 }
 
-#' Combine multiple `compphysiol_transports` objects into one
-#' 
-#' @param ... Multiple `compphysiol_transports` objects to combine
-#' @return A combined `compphysiol_transports` object
+#' @describeIn transports Combine several objects into one.
 #' @export
 c.compphysiol_transports <- function(...) {
     .new_transports(.combine_df_like(...))
 }
 
-#' Direct transport extraction is not supported
-#'
-#' @param x A `compphysiol_transports` object.
-#' @param i Row index to access.
-#' @param ... Unused.
-#' @returns This method always errors. Use `[` to retain the collection class,
-#'   or `as.list()` to inspect ordinary component lists.
-#' @seealso [inspect] for structure inspection and component access.
+#' @describeIn transports Not supported; always errors. Use `[` to retain the collection class, or `as.list()` to inspect ordinary component lists.
 #' @export
 `[[.compphysiol_transports` <- function(x, i, ...) .extract_df_like(x, i)
 

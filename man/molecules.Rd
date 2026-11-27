@@ -2,6 +2,14 @@
 % Please edit documentation in R/Molecules.R
 \name{molecules}
 \alias{molecules}
+\alias{c.compphysiol_molecules}
+\alias{[.compphysiol_molecules}
+\alias{[[.compphysiol_molecules}
+\alias{as.data.frame.compphysiol_molecules}
+\alias{print.compphysiol_molecules}
+\alias{names.compphysiol_molecules}
+\alias{length.compphysiol_molecules}
+\alias{as.list.compphysiol_molecules}
 \title{Create a \code{compphysiol_molecules} object}
 \usage{
 molecules(
@@ -11,6 +19,22 @@ molecules(
   unit = NULL,
   type = c("concentration", "amount")
 )
+
+\method{c}{compphysiol_molecules}(...)
+
+\method{[}{compphysiol_molecules}(x, i, ...)
+
+\method{[[}{compphysiol_molecules}(x, i, ...)
+
+\method{as.data.frame}{compphysiol_molecules}(x, ...)
+
+\method{print}{compphysiol_molecules}(x, ...)
+
+\method{names}{compphysiol_molecules}(x, ...)
+
+\method{length}{compphysiol_molecules}(x, ...)
+
+\method{as.list}{compphysiol_molecules}(x, ...)
 }
 \arguments{
 \item{name}{Molecule name(s), character scalar or vector}
@@ -32,6 +56,13 @@ and \code{unit}.}
 Compartments with time-dependent volumes are represented using amount
 states. A concentration initial is converted using the volume at the first
 simulation time.}
+
+\item{...}{For \code{c()}, \code{compphysiol_molecules} objects to combine; unused by the
+other methods.}
+
+\item{x}{For methods, a \code{compphysiol_molecules} object.}
+
+\item{i}{For subsetting methods, indices or names of the molecules.}
 }
 \value{
 A \code{compphysiol_molecules} object containing the compartment and initial condition
@@ -47,6 +78,25 @@ A molecule can be defined for a specific compartment through \code{cmt}, or for
 all compartments by leaving \code{cmt} unspecified. The latter creates a compact
 wildcard definition that is resolved by \code{\link[=wire]{wire()}} before ODE generation.
 }
+\section{Methods (by generic)}{
+\itemize{
+\item \code{c(compphysiol_molecules)}: Combine several objects into one.
+
+\item \code{[}: Subset by index or name.
+
+\item \code{[[}: Not supported; always errors. Use \code{[} with a scalar name or index instead.
+
+\item \code{as.data.frame(compphysiol_molecules)}: Convert to a data frame.
+
+\item \code{print(compphysiol_molecules)}: Print a summary; returns \code{x} invisibly.
+
+\item \code{names(compphysiol_molecules)}: Names of the molecules.
+
+\item \code{length(compphysiol_molecules)}: Number of molecules.
+
+\item \code{as.list(compphysiol_molecules)}: Convert to a list of lists, one per molecule, holding its properties.
+
+}}
 \examples{
 # No compartment specified: molecules are assumed to be present in all compartments
 molecules(name = c("NFkB", "IkB"), unit = "mol/L")
