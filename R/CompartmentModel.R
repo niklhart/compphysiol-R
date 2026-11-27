@@ -73,6 +73,8 @@ print.compphysiol_compartment_model <- function(x, ...) {
 #' 
 #' @param model A `compphysiol_compartment_model` object
 #' @param what What to wire: `"molec"` for molecules, `"cmt"` for compartments, or both (the default)
+#' @returns A `compphysiol_compartment_model` object in which the selected wildcards
+#'   have been replaced by explicit molecule and/or compartment names.
 #' @examples
 #' # wire "drug" into transport rate expressions, replacing the <all molec> wildcard
 #' M <- compartment_model() |>

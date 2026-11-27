@@ -11,6 +11,10 @@ wire(model, what = c("molec", "cmt"))
 
 \item{what}{What to wire: \code{"molec"} for molecules, \code{"cmt"} for compartments, or both (the default)}
 }
+\value{
+A \code{compphysiol_compartment_model} object in which the selected wildcards
+have been replaced by explicit molecule and/or compartment names.
+}
 \description{
 The \code{wire()} function allows users to replace wildcard molecule and compartment names
 in transport and reaction definitions with actual names from the model.

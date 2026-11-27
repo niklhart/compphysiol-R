@@ -33,6 +33,14 @@ transports, reactions, equations and observables.
 \item \code{compphysiol_dosing}: Represents dosing events, including bolus and infusion doses.
 }
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/niklhart/compphysiol-R}
+  \item Report bugs at \url{https://github.com/niklhart/compphysiol-R/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: Niklas Hartung \email{niklas.hartung@uni-potsdam.de} (\href{https://orcid.org/0000-0002-4000-6525}{ORCID})
 
