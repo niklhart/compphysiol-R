@@ -1,0 +1,22 @@
+## Submission
+
+This is a new submission.
+
+## Test environments
+
+* local macOS (aarch64-apple-darwin20), R 4.5.2
+* <!-- TODO: win-builder (devel and release) -->
+* <!-- TODO: macOS builder / R-hub / GitHub Actions -->
+
+## R CMD check results
+
+0 errors | 0 warnings | 1 note
+
+* This is a new submission.
+
+## References
+
+There are currently no publications describing the methods implemented in this
+package. Work in progress has been presented at scientific conferences, and we
+will add a reference to the Description field once a paper describing the
+package is published.
