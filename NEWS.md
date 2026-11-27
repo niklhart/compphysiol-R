@@ -1,3 +1,8 @@
+# compphysiol (development version)
+
+* Added examples for `estimate()`, `to_nlmixr2()` and `from_nlmixr2()`; the
+  `to_nlmixr2()` example is now self-contained.
+
 # compphysiol 0.5.5
 
 * Added generalized estimation API for nlmixr2, supporting SAEM, likelihood evaluation methods, and correlated random effects.
