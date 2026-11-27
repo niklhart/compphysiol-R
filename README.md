@@ -189,10 +189,3 @@ The package vignettes cover the main workflows in more detail:
 > **Note** RStudio versions before 2026.11.0+203 may flag the unit
 > shorthand, e.g. `100 [mg]`, as a syntax error, although it is valid R
 > code. Please update RStudio if you see this diagnostic.
-
-## AI Agent Guidance
-
-This repository intentionally includes an AI-agent guidance file
-`AGENTS.md` and project-specific Codex skills. These files document
-repository conventions, modeling vocabulary, testing expectations, and
-review workflows for AI-assisted development.
