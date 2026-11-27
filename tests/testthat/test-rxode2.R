@@ -19,6 +19,7 @@ test_that("rxode2 model and engine have the public taxonomy", {
 
 test_that("rxode2 agrees with deSolve for equations, nonlinear rates, and units", {
     skip_if_not_installed("rxode2")
+    skip_on_cran()
     model <- compartment_model() |>
         add_compartment(name = "Central", volume = "V") |>
         add_molecule(name = "drug", initial = "A0", type = "amount") |>
@@ -38,6 +39,7 @@ test_that("rxode2 agrees with deSolve for equations, nonlinear rates, and units"
 
 test_that("rxode2 handles bolus, infusion, experiments, and cache reuse", {
     skip_if_not_installed("rxode2")
+    skip_on_cran()
     model <- compartment_model() |>
         add_compartment(name = "Central", volume = 10 [L]) |>
         add_molecule(name = "drug", initial = 100 [mg], type = "amount") |>
@@ -76,6 +78,7 @@ test_that("rxode2 handles bolus, infusion, experiments, and cache reuse", {
 
 test_that("rxode2 identifiers are safe and unsupported calls are diagnosed", {
     skip_if_not_installed("rxode2")
+    skip_on_cran()
     model <- compartment_model() |>
         add_compartment(name = "rx_central", volume = NA_real_) |>
         add_molecule(name = "nlmixr_drug", initial = "rx_initial", type = "amount") |>
@@ -106,6 +109,7 @@ test_that("non-ODE routes reject the rxode2 engine", {
 
 test_that("rxode2 batches experiment collections by individual", {
     skip_if_not_installed("rxode2")
+    skip_on_cran()
     model <- compartment_model() |>
         add_compartment(name = "Central", volume = 10 [L]) |>
         add_molecule(name = "drug", initial = "A0", type = "amount") |>
@@ -137,6 +141,7 @@ test_that("rxode2 batches experiment collections by individual", {
 
 test_that("rxode2 uses length-one output shape for a one-experiment collection", {
     skip_if_not_installed("rxode2")
+    skip_on_cran()
     model <- compartment_model() |>
         add_compartment(name = "Central", volume = 10 [L]) |>
         add_molecule(name = "drug", initial = "A0", type = "amount") |>
@@ -158,6 +163,7 @@ test_that("rxode2 uses length-one output shape for a one-experiment collection",
 
 test_that("rxode2 homogeneous preparation agrees with the fallback path", {
     skip_if_not_installed("rxode2")
+    skip_on_cran()
     model <- compartment_model() |>
         add_compartment(name = "Central", volume = 10 [L]) |>
         add_molecule(name = "drug", initial = "A0", type = "amount") |>

@@ -466,6 +466,7 @@ test_that("estimation forwards the configured simulation engine", {
     expect_s3_class(compiled, "compphysiol_estimation_result")
 
     skip_if_not_installed("rxode2")
+    skip_on_cran()
     expect_error(
         estimate(
             problem,

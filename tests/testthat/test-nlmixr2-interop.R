@@ -1,5 +1,6 @@
 test_that("native export/import likelihoods agree with analytic marginal densities", {
     skip_if_not_installed("nlmixr2est")
+    skip_on_cran()
     for (family in c("normal","lognormal")) {
         x <- interop_fixture(family)
         fit <- from_nlmixr2(x$fit,x$export)
@@ -25,6 +26,7 @@ test_that("native export/import likelihoods agree with analytic marginal densiti
 
 test_that("import rejects incompatible native edits without mutating shared fits", {
     skip_if_not_installed("nlmixr2est")
+    skip_on_cran()
     x <- interop_fixture()
     edited <- unserialize(serialize(x$fit,NULL))
     env <- edited$env
@@ -42,6 +44,7 @@ test_that("import rejects incompatible native edits without mutating shared fits
 
 test_that("SAEM rejects unverified bounds and supports absent or explicit likelihood", {
     skip_if_not_installed("nlmixr2est")
+    skip_on_cran()
     # Reuse the established mixed-effects fixture definition without executing tests.
     problem <- nlmixr2_test_problem()
     expect_error(to_nlmixr2(problem,method="saem"),"constraint")
@@ -65,6 +68,7 @@ test_that("SAEM rejects unverified bounds and supports absent or explicit likeli
 
 test_that("sampling normalization counts responses rather than events and missing records", {
     skip_if_not_installed("nlmixr2est")
+    skip_on_cran()
     x <- interop_fixture()
     exported <- x$export
     exported$data$DV[3] <- NA_real_

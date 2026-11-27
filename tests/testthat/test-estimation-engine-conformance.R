@@ -78,6 +78,7 @@ unit_aware_fixed_effects_conformance_problem <- function() {
 
 test_that("optim and nlmixr2 conform on a fixed-effects problem", {
     skip_if_not_installed("nlmixr2est")
+    skip_on_cran()
     problem <- fixed_effects_conformance_problem()
 
     optim_fit <- estimate(
@@ -125,6 +126,7 @@ test_that("optim and nlmixr2 conform on a fixed-effects problem", {
 
 test_that("optim and nlmixr2 conform on a fully unit-aware workflow", {
     skip_if_not_installed("nlmixr2est")
+    skip_on_cran()
     problem <- unit_aware_fixed_effects_conformance_problem()
 
     optim_fit <- estimate(

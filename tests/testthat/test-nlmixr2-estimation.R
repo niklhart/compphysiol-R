@@ -47,6 +47,7 @@ test_that("nlmixr2_engine represents the initial FOCEi scope", {
 
 test_that("nlmixr2 translation produces executable content and population data", {
     skip_if_not_installed("nlmixr2est")
+    skip_on_cran()
     translated <- .nlmixr2_prepare(nlmixr2_test_problem())
 
     expect_match(translated$source, "cp_eta_1 ~ 4.0000000000000008e-02", fixed = TRUE)
@@ -73,6 +74,7 @@ test_that("nlmixr2 scope rejects invalid correlation targets and combined residu
 
 test_that("nlmixr2 FOCEi estimation maps coefficients and both prediction levels", {
     skip_if_not_installed("nlmixr2est")
+    skip_on_cran()
     fit <- estimate(
         nlmixr2_test_problem(),
         nlmixr2_engine(control = list(print = 0L, maxOuterIterations = 30L))

@@ -57,7 +57,7 @@ test_that("linear time-dependent parameters work in ODE backends", {
     compiled <- simulate(to_compiled_ode_model(model), time = time)
     expect_equal(compiled$observables$value, expected, tolerance = 1e-6)
 
-    if (requireNamespace("rxode2", quietly = TRUE)) {
+    if (compiled_backend_available("rxode2")) {
         rxode <- simulate(model, time = time, engine = rxode2_engine())
         expect_equal(rxode$observables$value, expected, tolerance = 1e-5)
     }
@@ -72,7 +72,7 @@ test_that("a time-dependent parameter can override a scalar or free parameter", 
     interpreted <- simulate(ode, time = 0:2, parameters = profile)
     expect_equal(interpreted$observables$value, expected, tolerance = 1e-6)
 
-    if (requireNamespace("rxode2", quietly = TRUE)) {
+    if (compiled_backend_available("rxode2")) {
         rxode <- simulate(ode, time = 0:2, parameters = profile, engine = rxode2_engine())
         expect_equal(rxode$observables$value, expected, tolerance = 1e-5)
     }
@@ -84,7 +84,7 @@ test_that("a scalar parameter can override a time-dependent default", {
     interpreted <- simulate(ode, time = 0:2, parameters = parameters(k = 2))
     expect_equal(interpreted$observables$value, expected, tolerance = 1e-6)
 
-    if (requireNamespace("rxode2", quietly = TRUE)) {
+    if (compiled_backend_available("rxode2")) {
         rxode <- simulate(
             ode, time = 0:2, parameters = parameters(k = 2), engine = rxode2_engine()
         )
@@ -163,7 +163,7 @@ test_that("compiled backends reuse one model for experiment-specific profiles", 
     expect_identical(artifact$dynamicParameterMethods, c(k = "linear"))
     expect_match(paste(readLines(artifact$source), collapse = "\n"), "initforc", fixed = TRUE)
 
-    if (requireNamespace("rxode2", quietly = TRUE)) {
+    if (compiled_backend_available("rxode2")) {
         executable <- to_rxode2_model(model)
         rxode_result <- simulate(executable, experiment = design)
         expect_equal(

@@ -1,5 +1,6 @@
 test_that("mixed endpoint sampling likelihood restores only lognormal response Jacobians", {
     skip_if_not_installed("nlmixr2est")
+    skip_on_cran()
     base <- interop_fixture()$export$problem
     model <- add_observable(base$model, D = exp(CL/10))
     studies <- c(first=experiment(observations=observation_data(time=c(1,2,4),
@@ -26,6 +27,7 @@ test_that("mixed endpoint sampling likelihood restores only lognormal response J
 
 test_that("proportional normal sampling likelihood agrees with independent integration", {
     skip_if_not_installed("nlmixr2est")
+    skip_on_cran()
     base <- interop_fixture()$export$problem
     specs <- base$parameters
     specs$sigma <- parameter_spec(.2)
@@ -45,6 +47,7 @@ test_that("proportional normal sampling likelihood agrees with independent integ
 
 test_that("unit-aware sampling likelihood matches the analytic density in supplied units", {
     skip_if_not_installed("nlmixr2est")
+    skip_on_cran()
     model <- compartment_model() |>
         add_compartment(name="Central",volume=1 [L]) |>
         add_molecule(name="drug",cmt="Central",initial=100 [mg],type="amount") |>

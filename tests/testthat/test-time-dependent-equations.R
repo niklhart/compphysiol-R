@@ -66,7 +66,7 @@ test_that("time-dependent volumes retain units across ODE backends", {
     expect_equal(interpreted$observables$value, expected, tolerance = 1e-6)
     expect_equal(compiled$observables$value, expected, tolerance = 1e-6)
 
-    if (requireNamespace("rxode2", quietly = TRUE)) {
+    if (compiled_backend_available("rxode2")) {
         rxode <- simulate(model, time = time, engine = rxode2_engine())
         expect_equal(rxode$observables$value, expected, tolerance = 1e-6)
     }
@@ -84,7 +84,7 @@ test_that("time-dependent volumes convert concentration initials at simulation s
     result <- simulate(model, time = 2:4, engine = deSolve_engine())
     expect_equal(result$observables$value, expected, tolerance = 1e-6)
 
-    if (requireNamespace("rxode2", quietly = TRUE)) {
+    if (compiled_backend_available("rxode2")) {
         rxode <- simulate(model, time = 2:4, engine = rxode2_engine())
         expect_equal(rxode$observables$value, expected, tolerance = 1e-6)
     }

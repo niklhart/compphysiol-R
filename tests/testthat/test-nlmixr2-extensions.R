@@ -17,6 +17,7 @@ extension_problem <- function(logit = FALSE, rho = "rho") {
 
 test_that("correlated normal export/import agrees with a multivariate Gaussian density", {
     skip_if_not_installed("nlmixr2est")
+    skip_on_cran()
     problem <- extension_problem()
     exported <- to_nlmixr2(problem)
     native <- suppressMessages(nlmixr2est::nlmixr2(exported$model,exported$data,"focei",
@@ -38,6 +39,7 @@ test_that("correlated normal export/import agrees with a multivariate Gaussian d
 
 test_that("logit-normal individuals translate to bounded latent-normal expressions", {
     skip_if_not_installed("nlmixr2est")
+    skip_on_cran()
     exported <- to_nlmixr2(extension_problem(logit=TRUE))
     expect_match(exported$source,"cp_latent_")
     native <- suppressMessages(nlmixr2est::nlmixr2(exported$model,exported$data,"focei",
@@ -52,6 +54,7 @@ test_that("logit-normal individuals translate to bounded latent-normal expressio
 
 test_that("SAEM wraps correlated lognormal and bounded logit-normal individuals", {
     skip_if_not_installed("nlmixr2est")
+    skip_on_cran()
     fit <- suppressMessages(estimate(extension_problem(logit=TRUE),nlmixr2_engine("saem",
         control=list(nBurn=30L,nEm=50L,print=0L,covMethod=""),likelihood="impmap",
         likelihood_control=list(isample=500L))))
@@ -98,6 +101,7 @@ test_that("zero constraints and fixed marginal spreads are represented explicitl
 
 test_that("normal SAEM disables the native uninformative-eta heuristic", {
     skip_if_not_installed("nlmixr2est")
+    skip_on_cran()
     p <- extension_problem()
     # Avoid testing identifiability of two intercepts: use one normal effect.
     p$model$observables <- observables(C=A)
@@ -120,6 +124,7 @@ test_that("normal SAEM disables the native uninformative-eta heuristic", {
 
 test_that("logit-normal sampling density agrees with independent latent integration", {
     skip_if_not_installed("nlmixr2est")
+    skip_on_cran()
     p <- extension_problem(logit=TRUE,rho=0)
     p$model$observables <- observables(C=A)
     studies <- c(one=experiment(observations=observation_data(time=c(0,.5,1),observable="C",value=c(.35,.4,.5))),
@@ -149,6 +154,7 @@ test_that("covariances use converted normal spreads and dimensionless correlatio
 
 test_that("fixed normal spreads round-trip with an estimated correlation", {
     skip_if_not_installed("nlmixr2est")
+    skip_on_cran()
     p <- extension_problem()
     p <- estimation_problem(p$model,p$experiments,p$parameters[c("ma","mb","sigma","rho")],
         statistical_model(A=normal(mean="ma",sd=.3),B=normal(mean="mb",sd=.2),

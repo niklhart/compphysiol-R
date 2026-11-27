@@ -631,6 +631,7 @@ test_that("prepared compiled experiment designs preserve heterogeneous simulatio
 
 test_that("prepared rxode2 experiment designs preserve heterogeneous simulations", {
     skip_if_not_installed("rxode2")
+    skip_on_cran()
     model <- compartment_model() |>
         add_compartment(name = "Central", volume = 1 [L]) |>
         add_molecule(name = "drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
@@ -1259,6 +1260,7 @@ test_that("simulate accepts unit shorthand in a parameters list for all model fo
         parameters = list(k = 0.2 [1/h]))$states, reference, tolerance = 1e-6)
 
     skip_if_not_installed("rxode2")
+    skip_on_cran()
     expect_equal(simulate(to_ode_model(model), time = c(0, 1) [h],
         parameters = list(k = 0.2 [1/h]), engine = rxode2_engine())$states,
         reference, tolerance = 1e-6)
