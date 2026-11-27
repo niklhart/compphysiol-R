@@ -761,3 +761,46 @@ test_that("estimation uses deSolve engine options on repeated evaluations", {
         )), "initial values|invalid|arg")
     }
 })
+
+test_that("optim estimation lowers a compartment model once, including experiment infusions", {
+    model <- compartment_model() |>
+        add_compartment(name = "Central", volume = 1 [L]) |>
+        add_molecule(name = "drug", cmt = "Central", initial = 100 [mg], type = "amount") |>
+        add_transport(from = "Central", to = NULL, molec = "drug", const = "k") |>
+        add_observable(C = c[drug, Central])
+    studies <- c(
+        infused = experiment(
+            observations = observation_data(
+                time = c(1, 2, 4) [h], observable = "C", value = c(82, 68, 45) [mg/L]
+            ),
+            dosing = dosing(time = 2 [h], amount = 10 [mg], duration = 1 [h],
+                            molec = "drug", cmt = "Central")
+        ),
+        plain = experiment(observations = observation_data(
+            time = c(1, 2, 4) [h], observable = "C", value = c(80, 66, 44) [mg/L]
+        ))
+    )
+    problem <- estimation_problem(
+        model, studies,
+        c(k = parameter_spec(0.1 [1/h], transform = "log"),
+          sigma = parameter_spec(1 [mg/L], transform = "log")),
+        statistical_model(C = normal(sd = "sigma"))
+    )
+
+    expect_s3_class(
+        compphysiol:::.estimation_simulation_model(problem, deSolve_engine()),
+        "compphysiol_ode_model"
+    )
+    fit <- estimate(problem, optim_engine(hessian = FALSE))
+    compiled_fit <- estimate(problem, optim_engine(
+        hessian = FALSE, simulation = deSolve_engine(compiled = TRUE)
+    ))
+    expect_equal(coef(compiled_fit), coef(fit), tolerance = 1e-5)
+
+    # Fitted values agree with simulating the compartment model directly.
+    reference <- simulate(
+        model |> overlay_parameter(k = coef(fit)$k),
+        experiment = studies
+    )$observables
+    expect_equal(as.numeric(fitted(fit)$value), as.numeric(reference$value), tolerance = 1e-6)
+})

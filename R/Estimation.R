@@ -657,6 +657,20 @@ estimate.compphysiol_estimation_problem <- function(
     .new_experiments(elements, plan$component_homogeneity)
 }
 
+# Lower the model once for repeated objective evaluations. A compartment model
+# lowered for deSolve first receives the depot structures required by the
+# experiments' infusions; dosing itself is supplied per experiment.
+.estimation_simulation_model <- function(problem, engine) {
+    model <- problem$model
+    elements <- .experiments_elements(problem$experiments)
+    if (inherits(model, "compphysiol_compartment_model") &&
+        inherits(engine, "compphysiol_desolve_engine") && length(elements)) {
+        model <- .simulation_experiment_depot_template(model, elements)$template
+        model$doses <- dosing()
+    }
+    .simulation_model_for_engine(model, engine)
+}
+
 .estimate_optim <- function(problem, engine, dimensions = NULL, ...) {
     individual <- names(problem$statistics)[vapply(
         problem$statistics, function(x) identical(x$level, "individual"), logical(1)
@@ -669,7 +683,7 @@ estimate.compphysiol_estimation_problem <- function(
     specs <- problem$parameters
     coordinates <- .estimation_coordinates(specs)
     .estimation_validate_optim_method(engine$method, specs, coordinates)
-    simulation_model <- .simulation_model_for_engine(problem$model, engine$simulation)
+    simulation_model <- .estimation_simulation_model(problem, engine$simulation)
     model_parameters <- .estimation_model_parameter_names(problem$model)
     runtime_names <- intersect(names(specs), model_parameters)
     parameter_overlay <- .optim_parameter_overlay_plan(

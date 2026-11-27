@@ -6,6 +6,7 @@
 #' @param partitioning A list of character vectors (each a group of compartments)
 #' @param normalize A named list of quoted calls giving normalizing factors for each compartment
 #' @returns A `compphysiol_compartment_model` object representing the lumped model
+#' @keywords internal
 #' @export
 lump_model <- function(M, partitioning = list(), normalize = list()) {
 

@@ -1,14 +1,49 @@
-#' Install a model unit
+#' Custom model units
 #'
-#' `install_model_unit()` installs a unit through `units::install_unit()` and
-#' records its definition in compphysiol's session-local unit registry.
+#' compphysiol keeps a session-local registry of custom units used in models.
+#' Units in this registry can appear in model components, parameters, and
+#' observations, and are expanded to their definitions where needed.
+#'
+#' - `install_model_unit()` installs a unit through [units::install_unit()] and
+#'   records its definition in the registry.
+#' - `register_model_unit()` records a unit definition without installing it in
+#'   the `units` package. Use this only when the unit has already been installed
+#'   elsewhere.
+#' - `model_unit_registry()` returns the registered units.
+#' - `reset_model_unit_registry()` empties the registry. It does not remove
+#'   units from the `units` package; use [units::remove_unit()] for that.
 #'
 #' @param symbol Character scalar unit symbol.
-#' @param def Optional character scalar unit definition. If omitted, `symbol`
-#'   is installed as a new base unit. The special `units::install_unit()`
-#'   definition `"unitless"` is intentionally not supported.
+#' @param def Optional character scalar unit definition. If omitted, `symbol` is
+#'   a new (custom) base unit. The special `units::install_unit()` definition
+#'   `"unitless"` is intentionally not supported.
+#' @returns `install_model_unit()` and `register_model_unit()` invisibly return
+#'   the registered unit table row. `model_unit_registry()` returns a data frame
+#'   with registered unit symbols and definitions. `reset_model_unit_registry()`
+#'   invisibly returns `NULL`.
+#' @examples
+#' # Save the current registry so that it can be restored at the end
+#' saved <- model_unit_registry()
 #'
-#' @returns Invisibly returns the registered unit table row.
+#' # Install a custom base unit and a unit derived from it
+#' install_model_unit("cellcount")
+#' install_model_unit("kilocell", def = "1000 cellcount")
+#' model_unit_registry()
+#'
+#' # Custom units can then be used like any other unit
+#' parameters(N0 = 5 [kilocell])
+#'
+#' # Restore the previous state: remove the units from the 'units' package and
+#' # re-register the saved entries in compphysiol's registry
+#' units::remove_unit(c("kilocell", "cellcount"))
+#' reset_model_unit_registry()
+#' for (i in seq_len(nrow(saved))) {
+#'     register_model_unit(saved$symbol[[i]], saved$def[[i]])
+#' }
+#' @name model_units
+NULL
+
+#' @rdname model_units
 #' @export
 install_model_unit <- function(symbol, def = character(0)) {
     .check_model_unit_args(symbol, def)
@@ -18,18 +53,7 @@ install_model_unit <- function(symbol, def = character(0)) {
     .register_model_unit(symbol = symbol, def = def)
 }
 
-#' Register a model unit definition
-#'
-#' `register_model_unit()` records a unit definition for compphysiol without
-#' installing it in the `units` package. Use this only when the unit has already
-#' been installed elsewhere.
-#'
-#' @param symbol Character scalar unit symbol.
-#' @param def Optional character scalar unit definition. If omitted, `symbol`
-#'   is treated as a custom base unit. The special definition `"unitless"` is
-#'   intentionally not supported.
-#'
-#' @returns Invisibly returns the registered unit table row.
+#' @rdname model_units
 #' @export
 register_model_unit <- function(symbol, def = character(0)) {
     .check_model_unit_args(symbol, def)
@@ -37,20 +61,13 @@ register_model_unit <- function(symbol, def = character(0)) {
     .register_model_unit(symbol = symbol, def = def)
 }
 
-#' Inspect registered model units
-#'
-#' @returns A data frame with registered unit symbols and definitions.
+#' @rdname model_units
 #' @export
 model_unit_registry <- function() {
     .the$model_units
 }
 
-#' Reset registered model units
-#'
-#' This resets only compphysiol's session-local registry. It does not remove
-#' units from the `units` package registry.
-#'
-#' @returns Invisibly returns `NULL`.
+#' @rdname model_units
 #' @export
 reset_model_unit_registry <- function() {
     .the$model_units <- data.frame(

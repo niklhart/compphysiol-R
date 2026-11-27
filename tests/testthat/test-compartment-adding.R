@@ -60,3 +60,13 @@ test_that("Infusion dosing creates bag and rate compartments only if requested",
     expect_length(M2$doses, 3)
 })
 
+
+test_that("make_depot asks for wiring when an infusion molecule is unresolved", {
+    model <- compartment_model() |>
+        add_compartment(name = "cen") |>
+        add_molecule(name = "drug", cmt = "cen", type = "amount") |>
+        add_dosing(time = 0, amount = 10, duration = 2, cmt = "cen")
+
+    expect_error(make_depot(model), "Call wire\\(\\) on the model first")
+    expect_true("Depot_drug_cen" %in% names(make_depot(wire(model))$compartments))
+})

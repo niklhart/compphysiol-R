@@ -19,3 +19,4 @@ A compphysiol_compartment_model object representing the lumped model
 \description{
 General symbolic lumping (experimental version)
 }
+\keyword{internal}

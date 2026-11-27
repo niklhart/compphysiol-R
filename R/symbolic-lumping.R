@@ -4,6 +4,7 @@
 #' @param partitioning A list of character vectors (each a group of compartments)
 #' @param refstate A string specifying a reference state (defaults to the one with most incoming transports)
 #' @returns A compphysiol_compartment_model object representing the lumped model
+#' @keywords internal
 #' @export
 symbolic_lumping <- function(M, partitioning = list(), refstate = .get_default_refstate(M)) {
 
@@ -78,6 +79,7 @@ symbolic_lumping <- function(M, partitioning = list(), refstate = .get_default_r
 #' # Example: Pilari/Huisinga (2010) lumping conditions for PBPK 12-compartment model
 #' M <- sMD_PBPK_12CMT_wellstirred()
 #' res <- get_lumping_conditions(M, refstate = "ven", simplify = "Ryacas")
+#' @keywords internal
 #' @export
 get_lumping_conditions <- function(M, refstate, maxdegree = 2, simplify = c("none", "Ryacas")) {
 

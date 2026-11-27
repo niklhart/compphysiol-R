@@ -93,7 +93,11 @@ rxode2_engine <- function(...) {
     if (isTRUE(engine$compiled) && !inherits(model, "compphysiol_desolve_compiled_model")) {
         return(to_compiled_ode_model(model))
     }
-    if (inherits(model, "compphysiol_process_model")) return(to_ode_model(model))
+    # Lower once so that repeated simulations (e.g. objective evaluations during
+    # estimation) do not repeat wiring, depot construction, and ODE export.
+    if (inherits(model, c("compphysiol_compartment_model", "compphysiol_process_model"))) {
+        return(to_ode_model(model))
+    }
     model
 }
 

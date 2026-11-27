@@ -20,7 +20,6 @@
 #' @param A A square list matrix of expressions
 #' @param b A list of right-hand side expressions
 #' @returns A named list of solution expressions
-#' @export
 #' @noRd
 .solve_linear_expr <- function(A, b) {
     switch(

@@ -9,6 +9,13 @@
   parameter lists passed to `simulate()`.
 * Fixed `parameters(name = , value = )` failing for more than one parameter
   when no `unit` was given.
+* Estimation with the optim engine and the default (non-compiled) deSolve
+  backend now lowers a compartment model to an ODE model once, instead of
+  preparing it again for every objective evaluation.
+* Fixed optim estimation with `deSolve_engine(compiled = TRUE)` failing for
+  experiments containing infusions.
+* `make_depot()` is now exported. It requires a wired model and gives an
+  informative error when an infusion's molecule or compartment is unresolved.
 
 # compphysiol 0.5.5
 

@@ -7,7 +7,7 @@
 make_depot(model)
 }
 \arguments{
-\item{model}{A \code{compphysiol_compartment_model} object}
+\item{model}{A wired \code{compphysiol_compartment_model} object}
 }
 \value{
 An updated \code{compphysiol_compartment_model} object with the auxiliary compartments and events added.
@@ -21,4 +21,22 @@ This function adds auxiliary compartments and events to the model to handle cont
 \item 3 (instantaneous) dosing events per infusion (fill depot at infusion start,
 increase release rate at infusion start, decrease release rate at infusion end)
 }
+}
+\details{
+Simulation and ODE export call \code{make_depot()} automatically after \code{\link[=wire]{wire()}}.
+When calling it directly, wire the model first so that the molecule and
+compartment of every infusion are resolved.
+}
+\examples{
+# A two-hour infusion into the central compartment
+model <- compartment_model() |>
+    add_compartment(name = "Central", volume = 10 [L]) |>
+    add_molecule(name = "drug", cmt = "Central", type = "amount") |>
+    add_transport(from = "Central", to = NULL, const = "k") |>
+    add_parameter(k = 0.1 [1/h]) |>
+    add_dosing(time = 0 [h], amount = 100 [mg], duration = 2 [h], cmt = "Central")
+
+# The infusion becomes a depot, a release rate, and three bolus-type events
+depot_model <- model |> wire() |> make_depot()
+depot_model
 }

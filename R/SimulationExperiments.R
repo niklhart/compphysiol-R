@@ -68,16 +68,9 @@
     }
     prepared_doses <- NULL
     if (inherits(object, "compphysiol_compartment_model") && length(experiments)) {
-        # Wire each protocol before adding auxiliaries, then prepare their union.
-        prepared <- lapply(experiments, function(e) {
-            m <- object
-            m$doses <- e$dosing
-            wire(m)
-        })
-        prepared_doses <- lapply(prepared, function(m) make_depot(m)$doses)
-        template <- prepared[[1]]
-        template$doses <- do.call(c, c(list(dosing()), lapply(prepared, `[[`, "doses")))
-        object <- make_depot(template)
+        depot <- .simulation_experiment_depot_template(object, experiments)
+        prepared_doses <- depot$prepared_doses
+        object <- depot$template
     }
     has_start_dependent_initials <- FALSE
     if (inherits(object, "compphysiol_compartment_model")) {
@@ -140,6 +133,22 @@
     })
     names(out) <- names(experiments)
     if (multiple) .simulation_bind_experiment_results(out, experiment) else out[[1]]
+}
+
+.simulation_experiment_depot_template <- function(object, experiments) {
+    # Wire each protocol before adding auxiliaries, then prepare their union, so
+    # that one model holds the depot structures needed by every experiment.
+    prepared <- lapply(experiments, function(e) {
+        m <- object
+        m$doses <- e$dosing
+        wire(m)
+    })
+    template <- prepared[[1]]
+    template$doses <- do.call(c, c(list(dosing()), lapply(prepared, `[[`, "doses")))
+    list(
+        template = make_depot(template),
+        prepared_doses = lapply(prepared, function(m) make_depot(m)$doses)
+    )
 }
 
 .simulation_bind_experiment_results <- function(results, experiments) {

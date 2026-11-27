@@ -19,3 +19,4 @@ A \code{compphysiol_compartment_model} object representing the lumped model
 \description{
 Lump a \code{compphysiol_compartment_model} object
 }
+\keyword{internal}

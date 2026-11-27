@@ -36,3 +36,4 @@ M <- sMD_PBPK_12CMT_wellstirred()
 res <- get_lumping_conditions(M, refstate = "ven", simplify = "Ryacas")
 \dontshow{\}) # examplesIf}
 }
+\keyword{internal}

@@ -15,3 +15,9 @@
 ^README_files$
 ^cran-comments\.md$
 ^man-roxygen$
+^\.Rprofile$
+^\.Renviron$
+^\.RData$
+^\.Rhistory$
+^\.DS_Store$
+^design$

@@ -550,8 +550,25 @@ initials <- function(model, type = c("a[] or c[]", "c[] or a[]", "a[] only", "c[
 #' - transports from the depot to its target compartment, at rate `a[ReleaseRate_{molec}_{cmt}]`
 #' - 3 (instantaneous) dosing events per infusion (fill depot at infusion start, 
 #'   increase release rate at infusion start, decrease release rate at infusion end)
-#' @param model A `compphysiol_compartment_model` object
+#'
+#' Simulation and ODE export call `make_depot()` automatically after [wire()].
+#' When calling it directly, wire the model first so that the molecule and
+#' compartment of every infusion are resolved.
+#' @param model A wired `compphysiol_compartment_model` object
 #' @returns An updated `compphysiol_compartment_model` object with the auxiliary compartments and events added.
+#' @examples
+#' # A two-hour infusion into the central compartment
+#' model <- compartment_model() |>
+#'     add_compartment(name = "Central", volume = 10 [L]) |>
+#'     add_molecule(name = "drug", cmt = "Central", type = "amount") |>
+#'     add_transport(from = "Central", to = NULL, const = "k") |>
+#'     add_parameter(k = 0.1 [1/h]) |>
+#'     add_dosing(time = 0 [h], amount = 100 [mg], duration = 2 [h], cmt = "Central")
+#'
+#' # The infusion becomes a depot, a release rate, and three bolus-type events
+#' depot_model <- model |> wire() |> make_depot()
+#' depot_model
+#' @export
 make_depot <- function(model) {
 
     dose <- model$doses
@@ -559,6 +576,14 @@ make_depot <- function(model) {
 
     # Early return if no infusion is defined
     if (length(infus) == 0) return(model)
+
+    if (anyNA(infus$molec) || anyNA(infus$cmt)) {
+        stop(
+            "Cannot create infusion depots: the molecule or compartment of an ",
+            "infusion is unresolved. Call wire() on the model first.",
+            call. = FALSE
+        )
+    }
 
     model$doses <- dose[!is_infusion(dose)]
 
