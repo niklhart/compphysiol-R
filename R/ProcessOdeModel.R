@@ -268,7 +268,6 @@ to_ode_model.compphysiol_process_model <- function(model) {
 #' @param ... Unused.
 #' @returns A `compphysiol_desolve_compiled_model` object.
 #' @examples
-#' \donttest{
 #' model <- compartment_model() |>
 #'     add_compartment(name = "Central", volume = 1) |>
 #'     add_molecule(name = "drug", cmt = "Central", initial = 100, type = "amount") |>
@@ -278,7 +277,6 @@ to_ode_model.compphysiol_process_model <- function(model) {
 #' compiled <- to_compiled_ode_model(model)
 #' compiled
 #' simulate(compiled, time = c(0, 1, 2, 4, 8))$states
-#' }
 #' @seealso [simulate()][simulation] for running the returned model.
 #' @export
 to_compiled_ode_model <- function(model) {

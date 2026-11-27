@@ -82,7 +82,10 @@ test_that("optim and nlmixr2 conform on a fixed-effects problem", {
 
     optim_fit <- estimate(
         problem,
-        optim_engine(method = "L-BFGS-B", control = list(maxit = 500L))
+        optim_engine(
+            method = "L-BFGS-B", control = list(maxit = 500L),
+            simulation = deSolve_engine(compiled = TRUE)
+        )
     )
     nlmixr2_fit <- estimate(
         problem,
@@ -126,7 +129,10 @@ test_that("optim and nlmixr2 conform on a fully unit-aware workflow", {
 
     optim_fit <- estimate(
         problem,
-        optim_engine(method = "L-BFGS-B", control = list(maxit = 500L))
+        optim_engine(
+            method = "L-BFGS-B", control = list(maxit = 500L),
+            simulation = deSolve_engine(compiled = TRUE)
+        )
     )
     nlmixr2_fit <- estimate(
         problem,

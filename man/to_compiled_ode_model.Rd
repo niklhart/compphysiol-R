@@ -31,7 +31,6 @@ the parameter interface, and output metadata for reuse in subsequent runs.
 
 }}
 \examples{
-\donttest{
 model <- compartment_model() |>
     add_compartment(name = "Central", volume = 1) |>
     add_molecule(name = "drug", cmt = "Central", initial = 100, type = "amount") |>
@@ -41,7 +40,6 @@ model <- compartment_model() |>
 compiled <- to_compiled_ode_model(model)
 compiled
 simulate(compiled, time = c(0, 1, 2, 4, 8))$states
-}
 }
 \seealso{
 \link[=simulation]{simulate()} for running the returned model.
