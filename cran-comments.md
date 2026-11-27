@@ -5,8 +5,9 @@ This is a new submission.
 ## Test environments
 
 * local macOS (aarch64-apple-darwin20), R 4.5.2
-* <!-- TODO: win-builder (devel and release) -->
-* <!-- TODO: macOS builder / R-hub / GitHub Actions -->
+* GitHub Actions: macOS-latest (release), windows-latest (release),
+  ubuntu-latest (devel, release, oldrel-1)
+* <!-- TODO: win-builder (devel) -->
 
 ## R CMD check results
 
